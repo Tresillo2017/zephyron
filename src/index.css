@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  /* Surface colors — widened contrast steps for clear elevation hierarchy */
+  --color-surface: #0a0a0a;
+  --color-surface-raised: #141414;
+  --color-surface-overlay: #1e1e1e;
+  --color-surface-hover: #2a2a2a;
+
+  /* Accent */
+  --color-accent: #1db954;
+  --color-accent-hover: #1ed760;
+  --color-accent-dim: #1a7f3f;
+
+  /* Text */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a7a7a7;
+  --color-text-muted: #6a6a6a;
+
+  /* Borders */
+  --color-border: #282828;
+  --color-border-light: #383838;
+
+  /* Semantic */
+  --color-danger: #e74c3c;
+  --color-warning: #f39c12;
+  --color-success: #1db954;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--color-surface); }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-border-light); }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
