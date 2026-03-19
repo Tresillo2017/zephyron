@@ -124,6 +124,8 @@ function SetsListTab() {
   const [reuploadFile, setReuploadFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
 
+  const [detectResult, setDetectResult] = useState<Record<string, { detections: number; error?: string } | null>>({})
+
   const loadSets = () => {
     setIsLoading(true)
     fetchSets({ pageSize: 50 })
@@ -136,10 +138,15 @@ function SetsListTab() {
 
   const handleTrigger = async (setId: string) => {
     setTriggering(setId)
+    setDetectResult((prev) => ({ ...prev, [setId]: null }))
     try {
-      await triggerDetection(setId)
-      setSets((prev) => prev.map((s) => s.id === setId ? { ...s, detection_status: 'processing' as const } : s))
-    } catch { /* silent */ }
+      const res = await triggerDetection(setId)
+      const data = (res as any).data || {}
+      setSets((prev) => prev.map((s) => s.id === setId ? { ...s, detection_status: (data.status || 'complete') as any } : s))
+      setDetectResult((prev) => ({ ...prev, [setId]: { detections: data.detections || 0, error: data.error } }))
+    } catch (err) {
+      setDetectResult((prev) => ({ ...prev, [setId]: { detections: 0, error: err instanceof Error ? err.message : 'Failed' } }))
+    }
     finally { setTriggering(null) }
   }
 
@@ -186,8 +193,9 @@ function SetsListTab() {
         {sets.map((set, index) => (
           <div
             key={set.id}
-            className={`flex items-center gap-3 px-4 py-3 ${index > 0 ? 'border-t border-border' : ''}`}
+            className={`px-4 py-3 ${index > 0 ? 'border-t border-border' : ''}`}
           >
+            <div className="flex items-center gap-3">
             <Link to={`/app/sets/${set.id}`} className="flex-1 min-w-0 no-underline">
               <p className="text-sm text-text-primary truncate hover:underline">{set.title}</p>
               <p className="text-xs text-text-secondary truncate">{set.artist}{set.genre ? ` · ${set.genre}` : ''}</p>
@@ -226,6 +234,24 @@ function SetsListTab() {
                 Delete
               </Button>
             </div>
+            </div>
+            {/* Inline detection result */}
+            {detectResult[set.id] && (
+              <div className={`mt-2 px-3 py-2 rounded-lg text-xs ${
+                detectResult[set.id]!.error
+                  ? 'bg-danger/10 text-danger'
+                  : 'bg-accent/10 text-accent'
+              }`}>
+                {detectResult[set.id]!.error
+                  ? `Detection failed: ${detectResult[set.id]!.error}`
+                  : `Detected ${detectResult[set.id]!.detections} tracks`}
+              </div>
+            )}
+            {triggering === set.id && (
+              <div className="mt-2 px-3 py-2 rounded-lg bg-surface-overlay text-xs text-text-muted animate-pulse">
+                Analyzing YouTube description &amp; comments, enriching with Last.fm...
+              </div>
+            )}
           </div>
         ))}
       </div>

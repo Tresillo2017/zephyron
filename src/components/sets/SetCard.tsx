@@ -29,7 +29,9 @@ export function SetCard({ set }: SetCardProps) {
   return (
     <Link to={`/app/sets/${set.id}`} className="group flex flex-col gap-3 no-underline">
       {/* Cover art */}
-      <div className="relative aspect-square bg-surface-overlay rounded-lg overflow-hidden">
+      <div className={`relative aspect-square bg-surface-overlay rounded-lg overflow-hidden transition-shadow duration-300 ${
+        isCurrentlyPlaying ? 'ring-1 ring-accent/40 shadow-lg shadow-accent/10' : 'group-hover:shadow-lg group-hover:shadow-accent/5'
+      }`}>
         {set.cover_image_r2_key ? (
           <img
             src={getCoverUrl(set.id)}
@@ -55,11 +57,11 @@ export function SetCard({ set }: SetCardProps) {
           } hover:scale-105 hover:bg-accent-hover`}
         >
           {isCurrentlyPlaying ? (
-            <svg className="w-5 h-5 text-black" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
             </svg>
           ) : (
-            <svg className="w-5 h-5 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7z" />
             </svg>
           )}

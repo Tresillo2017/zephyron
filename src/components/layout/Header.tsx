@@ -34,7 +34,7 @@ export function Header() {
       <header className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-6 bg-surface-raised border-b border-border shrink-0">
         <Link to="/app" className="flex items-center gap-2 no-underline">
           <div className="w-7 h-7 sm:w-8 sm:h-8 bg-accent rounded-lg flex items-center justify-center">
-            <svg viewBox="0 0 24 24" className="w-4 h-4 sm:w-5 sm:h-5 text-black" fill="currentColor">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
             </svg>
           </div>

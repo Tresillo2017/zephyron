@@ -11,10 +11,10 @@ interface WaveformProps {
 }
 
 const DETECTION_COLORS = [
-  'rgba(29, 185, 84, 0.12)',
-  'rgba(30, 215, 96, 0.10)',
-  'rgba(29, 185, 84, 0.08)',
-  'rgba(30, 215, 96, 0.14)',
+  'rgba(139, 92, 246, 0.12)',
+  'rgba(167, 139, 250, 0.10)',
+  'rgba(139, 92, 246, 0.08)',
+  'rgba(167, 139, 250, 0.14)',
 ]
 
 export function Waveform({
@@ -97,7 +97,7 @@ export function Waveform({
       const x = i * step
       const progressX = progress * w
 
-      ctx.fillStyle = x < progressX ? '#1db954' : '#4a4a4a'
+      ctx.fillStyle = x < progressX ? '#8b5cf6' : '#3f3f46'
       const halfBar = barHeight / 2
       ctx.fillRect(x, centerY - halfBar, barWidth, barHeight)
     }

@@ -374,14 +374,37 @@ export async function createSet(
     .run()
 
   // If a thumbnail URL was provided, fetch it and store in R2
+  // Also try to get the maxres version for a better hero background
   if (body.thumbnail_url) {
     try {
-      const thumbResp = await fetch(body.thumbnail_url)
-      if (thumbResp.ok && thumbResp.body) {
+      // Try maxresdefault first for the best quality hero background
+      let imageResp: Response | null = null
+      let imageContentType = 'image/jpeg'
+
+      if (body.source_url) {
+        const { extractVideoId } = await import('../services/youtube')
+        const videoId = extractVideoId(body.source_url)
+        if (videoId) {
+          const maxresUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+          const maxresResp = await fetch(maxresUrl)
+          const contentLength = parseInt(maxresResp.headers.get('Content-Length') || '0')
+          if (maxresResp.ok && contentLength > 5000) {
+            imageResp = maxresResp
+            imageContentType = maxresResp.headers.get('Content-Type') || 'image/jpeg'
+          }
+        }
+      }
+
+      // Fallback to the provided thumbnail URL
+      if (!imageResp) {
+        imageResp = await fetch(body.thumbnail_url)
+        imageContentType = imageResp.headers.get('Content-Type') || 'image/jpeg'
+      }
+
+      if (imageResp.ok && imageResp.body) {
         const thumbKey = `sets/${id}/cover.webp`
-        const contentType = thumbResp.headers.get('Content-Type') || 'image/jpeg'
-        await env.AUDIO_BUCKET.put(thumbKey, thumbResp.body, {
-          httpMetadata: { contentType },
+        await env.AUDIO_BUCKET.put(thumbKey, imageResp.body, {
+          httpMetadata: { contentType: imageContentType },
         })
         await env.DB.prepare(
           'UPDATE sets SET cover_image_r2_key = ? WHERE id = ?'

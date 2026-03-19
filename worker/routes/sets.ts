@@ -67,10 +67,13 @@ export async function getSet(
 ): Promise<Response> {
   const { id } = params
 
-  const [setResult, detectionsResult] = await env.DB.batch([
+  const [setResult, detectionsResult, artistResult] = await env.DB.batch([
     env.DB.prepare('SELECT * FROM sets WHERE id = ?').bind(id),
     env.DB.prepare(
       'SELECT * FROM detections WHERE set_id = ? ORDER BY start_time_seconds ASC'
+    ).bind(id),
+    env.DB.prepare(
+      'SELECT a.id, a.name, a.slug, a.image_url, a.bio_summary, a.tags, a.lastfm_url, a.listeners FROM artists a JOIN sets s ON s.artist_id = a.id WHERE s.id = ?'
     ).bind(id),
   ])
 
@@ -79,10 +82,22 @@ export async function getSet(
     return errorResponse('Set not found', 404)
   }
 
+  const artist = artistResult.results[0] as Record<string, unknown> | undefined
+
   return json({
     data: {
       ...set,
-      detections: detectionsResult.results as Detection[],
+      detections: detectionsResult.results as unknown as Detection[],
+      artist_info: artist ? {
+        id: artist.id,
+        name: artist.name,
+        slug: artist.slug,
+        image_url: artist.image_url,
+        bio_summary: artist.bio_summary,
+        tags: artist.tags,
+        lastfm_url: artist.lastfm_url,
+        listeners: artist.listeners,
+      } : null,
     },
     ok: true,
   })

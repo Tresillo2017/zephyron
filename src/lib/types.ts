@@ -44,6 +44,16 @@ export interface Detection {
 
 export interface DjSetWithDetections extends DjSet {
   detections: Detection[]
+  artist_info?: {
+    id: string
+    name: string
+    slug: string | null
+    image_url: string | null
+    bio_summary: string | null
+    tags: string | null
+    lastfm_url: string | null
+    listeners: number
+  } | null
 }
 
 export interface Annotation {

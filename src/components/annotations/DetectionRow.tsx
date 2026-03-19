@@ -27,8 +27,8 @@ export function DetectionRow({
   return (
     <>
       <div
-        className={`flex items-center gap-3 px-4 py-3 transition-colors ${
-          isActive ? 'bg-accent/5' : 'hover:bg-surface-hover'
+        className={`flex items-center gap-3 px-4 py-3 transition-all duration-200 ${
+          isActive ? 'bg-accent/10 border-l-2 border-l-accent' : 'hover:bg-surface-hover border-l-2 border-l-transparent'
         } ${index > 0 ? 'border-t border-border' : ''}`}
       >
         {/* Clickable area for seeking */}
@@ -37,17 +37,17 @@ export function DetectionRow({
           className="flex items-center gap-3 flex-1 min-w-0 text-left"
         >
           {/* Timestamp */}
-          <span className="text-xs text-accent font-mono w-14 flex-shrink-0">
+          <span className={`text-xs font-mono w-14 flex-shrink-0 tabular-nums ${isActive ? 'text-accent' : 'text-text-muted'}`}>
             {formatTime(detection.start_time_seconds)}
           </span>
 
-          {/* Now playing indicator */}
+          {/* Now playing indicator — real equalizer animation */}
           {isActive && (
             <div className="w-3 flex-shrink-0 flex items-center">
-              <div className="flex gap-[2px] items-end h-3">
-                <div className="w-[3px] bg-accent rounded-full animate-pulse" style={{ height: '8px', animationDelay: '0ms' }} />
-                <div className="w-[3px] bg-accent rounded-full animate-pulse" style={{ height: '12px', animationDelay: '150ms' }} />
-                <div className="w-[3px] bg-accent rounded-full animate-pulse" style={{ height: '6px', animationDelay: '300ms' }} />
+              <div className="flex gap-[2px] items-end h-3.5">
+                <div className="w-[3px] bg-accent rounded-sm" style={{ animation: 'eq-bar-1 0.8s ease-in-out infinite' }} />
+                <div className="w-[3px] bg-accent rounded-sm" style={{ animation: 'eq-bar-2 0.6s ease-in-out infinite' }} />
+                <div className="w-[3px] bg-accent rounded-sm" style={{ animation: 'eq-bar-3 0.7s ease-in-out infinite' }} />
               </div>
             </div>
           )}

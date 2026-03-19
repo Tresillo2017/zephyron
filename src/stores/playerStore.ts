@@ -10,6 +10,7 @@ interface PlayerState {
   duration: number
   volume: number
   isMuted: boolean
+  isFullScreen: boolean
 
   // Queue
   queue: DjSet[]
@@ -40,6 +41,7 @@ interface PlayerState {
   setDetections: (detections: Detection[]) => void
   updateCurrentDetection: () => void
   savePosition: () => void
+  toggleFullScreen: () => void
 }
 
 // Debounce position saving
@@ -52,6 +54,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   duration: 0,
   volume: 0.8,
   isMuted: false,
+  isFullScreen: false,
   queue: [],
   queueIndex: -1,
   detections: [],
@@ -204,4 +207,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       updateListenPosition(currentSet.id, currentTime).catch(() => {})
     }
   },
+
+  toggleFullScreen: () => set((state) => ({ isFullScreen: !state.isFullScreen })),
 }))

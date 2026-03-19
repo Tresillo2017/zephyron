@@ -26,9 +26,9 @@ Clean with expressive touches. Dark, Spotify-adjacent foundation with moments of
 5. **Community as a Feature** — Corrections and votes feel like natural listening extensions.
 
 ### Design Tokens
-- Dark mode only: `#0a0a0a` surface, `#141414` raised, `#1a1a1a` overlay
-- Accent: `#1db954` (green), text: white/`#a7a7a7`/`#6a6a6a`
-- Font: Inter, pill-shaped buttons/badges, `rounded-lg` cards
+- Dark mode only: `#09090b` surface (violet-tinted), `#131318` raised, `#1c1c24` overlay
+- Accent: `#8b5cf6` (electric violet), text: `#fafafa`/`#a1a1aa`/`#52525b`
+- Font: Geist (variable), Geist Mono for timestamps/data, `rounded-lg` cards
 - WCAG AA accessibility target
 
 ### Tech Stack

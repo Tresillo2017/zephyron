@@ -206,7 +206,7 @@ export async function runDetectionPipeline(
 
 /**
  * Ensure an artist record exists in the DB, creating + enriching from Last.fm if needed.
- * Uses the set's cover image as fallback for artist photo (Last.fm deprecated their image CDN).
+ * Fetches the YouTube video thumbnail as background image for the artist hero banner.
  */
 async function ensureArtist(
   artistName: string,
@@ -226,7 +226,7 @@ async function ensureArtist(
   // Look up on Last.fm
   const lfm = await lookupArtist(artistName, lastfmKey)
 
-  // If Last.fm has no image, use the set's cover image as fallback
+  // Use set's cover image as artist photo fallback
   let imageUrl = lfm?.imageUrl || null
   if (!imageUrl) {
     const setCover = await env.DB.prepare(
@@ -240,9 +240,48 @@ async function ensureArtist(
 
   const id = generateId()
 
+  // Fetch YouTube maxres thumbnail as artist background
+  let backgroundUrl: string | null = null
+  try {
+    const setData = await env.DB.prepare(
+      'SELECT source_url FROM sets WHERE id = ?'
+    ).bind(setId).first<{ source_url: string | null }>()
+
+    if (setData?.source_url) {
+      const videoId = extractVideoId(setData.source_url)
+      if (videoId) {
+        // Try maxresdefault first (1920x1080), fall back to hqdefault (480x360)
+        const thumbUrls = [
+          `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+          `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+        ]
+
+        for (const thumbUrl of thumbUrls) {
+          const resp = await fetch(thumbUrl)
+          if (resp.ok && resp.body) {
+            const contentType = resp.headers.get('Content-Type') || 'image/jpeg'
+            // Check it's not the YouTube "no thumbnail" placeholder (120x90 gray image)
+            const contentLength = parseInt(resp.headers.get('Content-Length') || '0')
+            if (contentLength > 5000) {
+              const bgKey = `artists/${id}/background.jpg`
+              await env.AUDIO_BUCKET.put(bgKey, resp.body, {
+                httpMetadata: { contentType },
+              })
+              backgroundUrl = `/api/artists/${id}/background`
+              console.log(`[detect] Stored artist background: ${bgKey} (${contentLength} bytes)`)
+              break
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[detect] Artist background fetch failed (non-blocking):', err)
+  }
+
   await env.DB.prepare(
-    `INSERT INTO artists (id, name, slug, lastfm_url, lastfm_mbid, image_url, bio_summary, bio_full, tags, similar_artists, listeners, playcount, last_synced_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+    `INSERT INTO artists (id, name, slug, lastfm_url, lastfm_mbid, image_url, background_url, bio_summary, bio_full, tags, similar_artists, listeners, playcount, last_synced_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
   )
     .bind(
       id,
@@ -251,6 +290,7 @@ async function ensureArtist(
       lfm?.url || null,
       lfm?.mbid || null,
       imageUrl,
+      backgroundUrl,
       lfm?.bioSummary || null,
       lfm?.bioFull || null,
       lfm?.tags ? JSON.stringify(lfm.tags) : null,
@@ -260,6 +300,6 @@ async function ensureArtist(
     )
     .run()
 
-  console.log(`[detect] Created artist: ${lfm?.name || artistName} (${id})`)
+  console.log(`[detect] Created artist: ${lfm?.name || artistName} (${id})${backgroundUrl ? ' with background' : ''}`)
   return id
 }

@@ -18,7 +18,7 @@ import {
   deleteSet, updateSet,
   listPendingAnnotations, moderateAnnotation,
 } from './routes/admin-beta'
-import { listArtists, getArtist, syncArtist, updateArtist, deleteArtist } from './routes/artists'
+import { listArtists, getArtist, syncArtist, updateArtist, deleteArtist, getArtistBackground } from './routes/artists'
 import {
   getListenerCount, joinListeners, heartbeatListener, leaveListeners,
 } from './routes/listeners'
@@ -64,6 +64,7 @@ router.get('/api/annotations/set/:setId', getAnnotations)
 
 // Artists
 router.get('/api/artists', listArtists)
+router.get('/api/artists/:id/background', getArtistBackground)
 router.get('/api/artists/:id', getArtist)
 router.post('/api/admin/artists/:id/sync', syncArtist)
 router.put('/api/admin/artists/:id', updateArtist)

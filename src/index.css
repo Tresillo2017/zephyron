@@ -1,33 +1,51 @@
 @import "tailwindcss";
 
-@theme {
-  /* Surface colors — widened contrast steps for clear elevation hierarchy */
-  --color-surface: #0a0a0a;
-  --color-surface-raised: #141414;
-  --color-surface-overlay: #1e1e1e;
-  --color-surface-hover: #2a2a2a;
+/* Geist — Variable fonts */
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: normal;
+}
 
-  /* Accent */
-  --color-accent: #1db954;
-  --color-accent-hover: #1ed760;
-  --color-accent-dim: #1a7f3f;
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/GeistMono-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: normal;
+}
+
+@theme {
+  /* Surface — violet-tinted for subconscious cohesion */
+  --color-surface: #09090b;
+  --color-surface-raised: #131318;
+  --color-surface-overlay: #1c1c24;
+  --color-surface-hover: #27272f;
+
+  /* Accent — electric violet */
+  --color-accent: #8b5cf6;
+  --color-accent-hover: #a78bfa;
+  --color-accent-dim: #6d28d9;
 
   /* Text */
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #a7a7a7;
-  --color-text-muted: #6a6a6a;
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #a1a1aa;
+  --color-text-muted: #52525b;
 
   /* Borders */
-  --color-border: #282828;
-  --color-border-light: #383838;
+  --color-border: #27272a;
+  --color-border-light: #3f3f46;
 
   /* Semantic */
-  --color-danger: #e74c3c;
-  --color-warning: #f39c12;
-  --color-success: #1db954;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-success: #22c55e;
 
   /* Typography */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
 }
 
 html, body, #root {
@@ -35,13 +53,50 @@ html, body, #root {
   margin: 0;
   background-color: var(--color-surface);
   color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: var(--color-surface); }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-border-light); }
+
+/* Selection */
+::selection {
+  background: oklch(0.55 0.15 280 / 0.4);
+  color: var(--color-text-primary);
+}
+
+/* ═══ Motion vocabulary ═══ */
+
+/* Equalizer bars for now-playing indicator */
+@keyframes eq-bar-1 {
+  0%, 100% { height: 4px; }
+  50% { height: 14px; }
+}
+@keyframes eq-bar-2 {
+  0%, 100% { height: 10px; }
+  50% { height: 4px; }
+}
+@keyframes eq-bar-3 {
+  0%, 100% { height: 6px; }
+  50% { height: 12px; }
+}
+
+/* Gentle glow pulse for active elements */
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+/* Ambient drift for background blobs */
+@keyframes drift {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(20px, -10px); }
+  66% { transform: translate(-10px, 15px); }
+}
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {

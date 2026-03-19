@@ -74,7 +74,7 @@ export function HistoryPage() {
                 {/* Resume button */}
                 <button
                   onClick={() => handleResume(item)}
-                  className="w-10 h-10 bg-surface-overlay rounded-full flex items-center justify-center hover:bg-accent hover:text-black transition-colors flex-shrink-0"
+                  className="w-10 h-10 bg-surface-overlay rounded-full flex items-center justify-center hover:bg-accent hover:text-white transition-colors flex-shrink-0"
                   title={`Resume at ${formatTime(item.last_position_seconds)}`}
                 >
                   <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24">

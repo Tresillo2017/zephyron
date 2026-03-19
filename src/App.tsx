@@ -1,6 +1,6 @@
 import { Routes, Route, Outlet, Navigate } from 'react-router'
 import { useSession } from './lib/auth-client'
-import { Header } from './components/layout/Header'
+import { Sidebar } from './components/layout/Sidebar'
 import { PlayerBar } from './components/layout/PlayerBar'
 
 // Public pages
@@ -21,15 +21,17 @@ import { ProfilePage } from './pages/ProfilePage'
 import { ArtistsPage } from './pages/ArtistsPage'
 import { ArtistPage } from './pages/ArtistPage'
 
-/** Layout for authenticated app pages */
+/** Layout for authenticated app pages — sidebar + content + player */
 function AppLayout() {
   return (
-    <div className="h-screen flex flex-col bg-surface text-text-primary">
-      <Header />
-      <main className="flex-1 overflow-auto">
-        <Outlet />
-      </main>
-      <PlayerBar />
+    <div className="h-screen flex bg-surface text-text-primary">
+      <Sidebar />
+      <div className="flex-1 flex flex-col min-w-0">
+        <main className="flex-1 overflow-y-auto">
+          <Outlet />
+        </main>
+        <PlayerBar />
+      </div>
     </div>
   )
 }
