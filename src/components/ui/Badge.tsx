@@ -1,19 +1,23 @@
 interface BadgeProps {
   children: React.ReactNode
-  variant?: 'default' | 'accent' | 'muted'
+  variant?: 'default' | 'accent' | 'muted' | 'tag'
   className?: string
 }
 
 const variantClasses: Record<string, string> = {
-  default: 'bg-surface-overlay text-text-secondary shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]',
-  accent: 'bg-accent/15 text-accent shadow-[inset_0_0_0_1px_hsl(var(--h3)/0.2)]',
-  muted: 'bg-surface-raised text-text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]',
+  default: 'bg-surface-overlay text-text-secondary',
+  accent: 'bg-accent/15 text-accent',
+  muted: 'bg-surface-raised text-text-muted',
+  tag: 'tag',
 }
 
 export function Badge({ children, variant = 'default', className = '' }: BadgeProps) {
+  if (variant === 'tag') {
+    return <span className={`tag ${className}`}>#{children}</span>
+  }
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variantClasses[variant]} ${className}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium ${variantClasses[variant]} ${className}`}
     >
       {children}
     </span>

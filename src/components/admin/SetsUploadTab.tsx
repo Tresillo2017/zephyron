@@ -295,19 +295,19 @@ export function SetsUploadTab() {
         </div>
       )}
 
-      <div className="border-t border-border pt-6 space-y-4">
+      <div className="pt-6 space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Title<AiBadge field="title" />
             </label>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Set title" className="w-full px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors" />
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Set title" className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:outline-none transition-colors" />
           </div>
           <div>
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Artist / DJ<AiBadge field="artist" />
             </label>
-            <input value={artist} onChange={(e) => setArtist(e.target.value)} placeholder="DJ name" className="w-full px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors" />
+            <input value={artist} onChange={(e) => setArtist(e.target.value)} placeholder="DJ name" className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:outline-none transition-colors" />
           </div>
         </div>
 
@@ -316,13 +316,13 @@ export function SetsUploadTab() {
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Venue<AiBadge field="venue" />
             </label>
-            <input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Berghain" className="w-full px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors" />
+            <input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Berghain" className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:outline-none transition-colors" />
           </div>
           <div>
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Event<AiBadge field="event" />
             </label>
-            <input value={event} onChange={(e) => setEvent(e.target.value)} placeholder="Boiler Room Berlin" className="w-full px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors" />
+            <input value={event} onChange={(e) => setEvent(e.target.value)} placeholder="Boiler Room Berlin" className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:outline-none transition-colors" />
           </div>
         </div>
 
@@ -334,7 +334,7 @@ export function SetsUploadTab() {
             <select
               value={genre}
               onChange={(e) => setGenre(e.target.value)}
-              className="w-full px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-accent"
+              className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary focus:outline-none focus:outline-none"
             >
               <option value="">Select...</option>
               {GENRES.map((g) => (
@@ -346,19 +346,19 @@ export function SetsUploadTab() {
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Subgenre<AiBadge field="subgenre" />
             </label>
-            <input value={subgenre} onChange={(e) => setSubgenre(e.target.value)} placeholder="e.g. Dark Techno" className="w-full px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors" />
+            <input value={subgenre} onChange={(e) => setSubgenre(e.target.value)} placeholder="e.g. Dark Techno" className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:outline-none transition-colors" />
           </div>
           <div>
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Recorded Date<AiBadge field="recorded_date" />
             </label>
-            <input type="date" value={recordedDate} onChange={(e) => setRecordedDate(e.target.value)} className="w-full px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-accent transition-colors" />
+            <input type="date" value={recordedDate} onChange={(e) => setRecordedDate(e.target.value)} className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary focus:outline-none focus:outline-none transition-colors" />
           </div>
           <div>
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Duration (min)<AiBadge field="duration" />
             </label>
-            <input type="number" value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} placeholder="90" className="w-full px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors" />
+            <input type="number" value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} placeholder="90" className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:outline-none transition-colors" />
           </div>
         </div>
 
@@ -371,7 +371,7 @@ export function SetsUploadTab() {
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Set description..."
             rows={3}
-            className="w-full px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent resize-none"
+            className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:outline-none resize-none"
           />
         </div>
 

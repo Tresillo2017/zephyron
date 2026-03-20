@@ -7,7 +7,7 @@ export function HomePage() {
   const { sets, isLoading } = useSets({ pageSize: 10, sort: 'newest' })
 
   return (
-    <div className="px-5 sm:px-8 py-8 sm:py-12 max-w-7xl mx-auto">
+    <div className="px-6 lg:px-10 py-6">
       {/* Hero — bold, opinionated, not "Welcome to" */}
       <section className="mb-16 sm:mb-20">
         <p className="text-xs font-mono text-accent tracking-wider mb-4">NOW STREAMING</p>

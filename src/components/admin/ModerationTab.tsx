@@ -69,7 +69,7 @@ export function ModerationTab() {
 
       <div className="space-y-3">
         {annotations.map((ann) => (
-          <div key={ann.id} className="bg-surface-raised border border-border rounded-xl p-4">
+          <div key={ann.id} className="card p-4">
             <div className="flex items-start justify-between mb-3">
               <div>
                 <Badge

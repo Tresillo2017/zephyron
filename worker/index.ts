@@ -26,6 +26,10 @@ import {
   searchSimilarSets, searchByTrack, indexSetRoute,
 } from './routes/semantic-search'
 import { getSetWaveform, regenerateWaveform } from './routes/waveform'
+import {
+  listEvents, getEvent, getEventCover,
+  createEvent, updateEvent, deleteEvent, uploadEventCover, linkSetToEvent, unlinkSetFromEvent,
+} from './routes/events'
 import { handleDetectionQueue, handleFeedbackQueue } from './queues/index'
 
 // Re-export Durable Object class for Cloudflare runtime
@@ -69,6 +73,17 @@ router.get('/api/artists/:id', getArtist)
 router.post('/api/admin/artists/:id/sync', syncArtist)
 router.put('/api/admin/artists/:id', updateArtist)
 router.delete('/api/admin/artists/:id', deleteArtist)
+
+// Events
+router.get('/api/events', listEvents)
+router.get('/api/events/:id/cover', getEventCover)
+router.get('/api/events/:id', getEvent)
+router.post('/api/admin/events', createEvent)
+router.put('/api/admin/events/:id', updateEvent)
+router.delete('/api/admin/events/:id', deleteEvent)
+router.put('/api/admin/events/:id/cover', uploadEventCover)
+router.post('/api/admin/events/:id/link-set', linkSetToEvent)
+router.post('/api/admin/events/:id/unlink-set', unlinkSetFromEvent)
 
 // Playlists
 router.get('/api/playlists', listPlaylists)

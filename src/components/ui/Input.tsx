@@ -7,16 +7,21 @@ export function Input({ label, error, className = '', ...props }: InputProps) {
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label className="text-sm font-medium text-text-secondary">{label}</label>
+        <label className="text-sm font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c2))' }}>{label}</label>
       )}
       <input
-        className={`w-full px-3 py-2 bg-surface-overlay border border-border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/60 transition-all duration-200 shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)] ${
-          error ? 'border-danger' : ''
-        } ${className}`}
-        style={{ transitionTimingFunction: 'var(--ease-out-custom)' }}
+        className={`w-full px-3 py-2 rounded-[var(--button-radius)] text-sm placeholder:text-text-muted focus:outline-none transition-all duration-200 ${className}`}
+        style={{
+          background: 'hsl(var(--b4) / 0.4)',
+          color: 'hsl(var(--c1))',
+          boxShadow: error ? 'inset 0 0 0 1px hsl(0, 60%, 50%)' : 'none',
+          transitionTimingFunction: 'var(--ease-out-custom)',
+        }}
+        onFocus={(e) => { e.currentTarget.style.boxShadow = 'inset 0 0 0 1px hsl(var(--h3) / 0.5)'; props.onFocus?.(e) }}
+        onBlur={(e) => { e.currentTarget.style.boxShadow = error ? 'inset 0 0 0 1px hsl(0, 60%, 50%)' : 'none'; props.onBlur?.(e) }}
         {...props}
       />
-      {error && <p className="text-xs text-danger">{error}</p>}
+      {error && <p className="text-xs" style={{ color: 'hsl(0, 60%, 55%)' }}>{error}</p>}
     </div>
   )
 }
@@ -30,16 +35,19 @@ export function Textarea({ label, error, className = '', ...props }: TextareaPro
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label className="text-sm font-medium text-text-secondary">{label}</label>
+        <label className="text-sm font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c2))' }}>{label}</label>
       )}
       <textarea
-        className={`w-full px-3 py-2 bg-surface-overlay border border-border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/60 transition-all duration-200 shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)] resize-none ${
-          error ? 'border-danger' : ''
-        } ${className}`}
-        style={{ transitionTimingFunction: 'var(--ease-out-custom)' }}
+        className={`w-full px-3 py-2 rounded-[var(--button-radius)] text-sm placeholder:text-text-muted focus:outline-none transition-all duration-200 resize-none ${className}`}
+        style={{
+          background: 'hsl(var(--b4) / 0.4)',
+          color: 'hsl(var(--c1))',
+          boxShadow: error ? 'inset 0 0 0 1px hsl(0, 60%, 50%)' : 'none',
+          transitionTimingFunction: 'var(--ease-out-custom)',
+        }}
         {...props}
       />
-      {error && <p className="text-xs text-danger">{error}</p>}
+      {error && <p className="text-xs" style={{ color: 'hsl(0, 60%, 55%)' }}>{error}</p>}
     </div>
   )
 }

@@ -68,13 +68,13 @@ export function ArtistsTab() {
 
   return (
     <>
-      <div className="border border-border rounded-xl overflow-hidden">
+      <div className="card !p-0 overflow-hidden">
         {artists.map((artist, index) => {
           const tags = (() => { try { return JSON.parse(artist.tags || '[]') } catch { return [] } })()
           return (
             <div
               key={artist.id}
-              className={`flex items-center gap-4 px-4 py-3 ${index > 0 ? 'border-t border-border' : ''}`}
+              className={`flex items-center gap-4 px-4 py-3 ${index > 0 ? '' : ''}`}
             >
               {/* Avatar */}
               <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-surface-overlay">
@@ -192,7 +192,7 @@ function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose
             <img
               src={imageUrl}
               alt="Preview"
-              className="w-24 h-24 rounded-full object-cover border-2 border-border"
+              className="w-24 h-24 rounded-full object-cover "
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
           </div>
@@ -211,7 +211,7 @@ function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose
             value={bioSummary}
             onChange={(e) => setBioSummary(e.target.value)}
             rows={4}
-            className="w-full px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent resize-none"
+            className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:outline-none resize-none"
           />
         </div>
         <Input

@@ -22,10 +22,11 @@ import { SetsUploadTab } from '../components/admin/SetsUploadTab'
 import { ModerationTab } from '../components/admin/ModerationTab'
 import { UsersTab } from '../components/admin/UsersTab'
 import { ArtistsTab } from '../components/admin/ArtistsTab'
+import { EventsTab } from '../components/admin/EventsTab'
 import { GENRES } from '../lib/constants'
 import type { DjSet } from '../lib/types'
 
-type Tab = 'sets' | 'upload' | 'artists' | 'users' | 'invites' | 'ml' | 'moderation'
+type Tab = 'sets' | 'upload' | 'artists' | 'events' | 'users' | 'invites' | 'ml' | 'moderation'
 
 interface MLStats {
   totalDetections: number
@@ -56,6 +57,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'sets', label: 'Sets' },
   { id: 'upload', label: 'Add Set' },
   { id: 'artists', label: 'Artists' },
+  { id: 'events', label: 'Events' },
   { id: 'users', label: 'Users' },
   { id: 'invites', label: 'Invite Codes' },
   { id: 'moderation', label: 'Moderation' },
@@ -77,20 +79,25 @@ export function AdminPage() {
   }
 
   return (
-    <div className="px-5 sm:px-8 py-8 sm:py-12 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold text-text-primary mb-6">Admin Dashboard</h1>
+    <div className="px-6 lg:px-10 py-6">
+      <h1 className="text-xl font-[var(--font-weight-bold)] mb-6" style={{ color: 'hsl(var(--c1))' }}>Admin Dashboard</h1>
 
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-border mb-6">
+      <div className="flex gap-0.5 mb-6 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            className={`px-3 py-2 rounded-lg text-sm whitespace-nowrap cursor-pointer transition-colors ${
               activeTab === tab.id
-                ? 'text-accent border-accent'
-                : 'text-text-muted border-transparent hover:text-text-secondary'
+                ? 'text-accent'
+                : 'text-text-muted hover:text-text-secondary'
             }`}
+            style={{
+              background: activeTab === tab.id ? 'hsl(var(--h3) / 0.1)' : undefined,
+              transitionDuration: 'var(--trans)',
+              transitionTimingFunction: 'var(--ease-out-custom)',
+            }}
           >
             {tab.label}
           </button>
@@ -101,6 +108,7 @@ export function AdminPage() {
       {activeTab === 'sets' && <SetsListTab />}
       {activeTab === 'upload' && <SetsUploadTab />}
       {activeTab === 'artists' && <ArtistsTab />}
+      {activeTab === 'events' && <EventsTab />}
       {activeTab === 'users' && <UsersTab />}
       {activeTab === 'invites' && <InviteCodesTab />}
       {activeTab === 'moderation' && <ModerationTab />}
@@ -189,11 +197,11 @@ function SetsListTab() {
 
   return (
     <>
-      <div className="border border-border rounded-xl overflow-hidden">
+      <div className="card !p-0 overflow-hidden">
         {sets.map((set, index) => (
           <div
             key={set.id}
-            className={`px-4 py-3 ${index > 0 ? 'border-t border-border' : ''}`}
+            className={`px-4 py-3 ${index > 0 ? '' : ''}`}
           >
             <div className="flex items-center gap-3">
             <Link to={`/app/sets/${set.id}`} className="flex-1 min-w-0 no-underline">
@@ -358,7 +366,7 @@ function EditSetModal({ set, onClose, onSaved }: { set: DjSet; onClose: () => vo
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-sm font-medium text-text-secondary block mb-1.5">Genre</label>
-            <select value={genre} onChange={(e) => setGenre(e.target.value)} className="w-full px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-accent">
+            <select value={genre} onChange={(e) => setGenre(e.target.value)} className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary focus:outline-none focus:outline-none">
               <option value="">None</option>
               {GENRES.map((g) => <option key={g} value={g}>{g}</option>)}
             </select>
@@ -367,7 +375,7 @@ function EditSetModal({ set, onClose, onSaved }: { set: DjSet; onClose: () => vo
         </div>
         <div>
           <label className="text-sm font-medium text-text-secondary block mb-1.5">Description</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent resize-none" />
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:outline-none resize-none" />
         </div>
         {error && <p className="text-xs text-danger">{error}</p>}
         <div className="flex gap-3 pt-2">
@@ -437,9 +445,9 @@ function MLPipelineTab() {
         <Button variant="secondary" onClick={loadData}>Refresh</Button>
       </div>
       {jobs.length > 0 && (
-        <div className="border border-border rounded-xl overflow-hidden">
+        <div className="card !p-0 overflow-hidden">
           {jobs.map((job, index) => (
-            <div key={job.id} className={`flex items-center gap-4 px-4 py-3 ${index > 0 ? 'border-t border-border' : ''}`}>
+            <div key={job.id} className={`flex items-center gap-4 px-4 py-3 ${index > 0 ? '' : ''}`}>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-text-primary truncate">{job.set_title} - {job.set_artist}</p>
                 <p className="text-xs text-text-muted">{job.completed_segments}/{job.total_segments} segments{job.detections_found > 0 && ` · ${job.detections_found} tracks`}</p>
@@ -456,7 +464,7 @@ function MLPipelineTab() {
 
 function StatCard({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
   return (
-    <div className="bg-surface-raised border border-border rounded-xl p-4">
+    <div className="card p-4">
       <p className="text-xs text-text-muted mb-1">{label}</p>
       <p className={`text-2xl font-bold ${accent ? 'text-accent' : 'text-text-primary'}`}>{value}</p>
     </div>

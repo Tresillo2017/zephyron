@@ -45,7 +45,7 @@ export function PlaylistPage() {
 
   if (isLoading || !playlist) {
     return (
-      <div className="px-5 sm:px-8 py-8 sm:py-12 max-w-4xl mx-auto">
+      <div className="px-6 lg:px-10 py-6">
         <Skeleton className="h-8 w-64 mb-4" />
         <Skeleton className="h-4 w-40 mb-8" />
         {[1, 2, 3].map((i) => (
@@ -58,7 +58,7 @@ export function PlaylistPage() {
   const totalDuration = playlist.items.reduce((sum, item) => sum + (item.duration_seconds || 0), 0)
 
   return (
-    <div className="px-5 sm:px-8 py-8 sm:py-12 max-w-4xl mx-auto">
+    <div className="px-6 lg:px-10 py-6">
       {/* Header */}
       <div className="mb-8">
         <Link to="/app/playlists" className="text-xs text-text-muted hover:text-text-secondary transition-colors no-underline mb-2 inline-block">

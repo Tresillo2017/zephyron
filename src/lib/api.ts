@@ -336,3 +336,37 @@ export async function updateArtistAdmin(id: string, data: Record<string, unknown
 export async function deleteArtistAdmin(id: string): Promise<void> {
   await fetchApi(`/admin/artists/${id}`, { method: 'DELETE' })
 }
+
+// Events
+export async function fetchEvents(q?: string): Promise<{ data: any[] }> {
+  const params = q ? `?q=${encodeURIComponent(q)}` : ''
+  return fetchApi(`/events${params}`)
+}
+
+export async function fetchEvent(id: string): Promise<{ data: any }> {
+  return fetchApi(`/events/${id}`)
+}
+
+export function getEventCoverUrl(id: string): string {
+  return `${API_BASE}/events/${id}/cover`
+}
+
+export async function createEventAdmin(data: Record<string, unknown>): Promise<{ data: { id: string; slug: string } }> {
+  return fetchApi('/admin/events', { method: 'POST', body: JSON.stringify(data) })
+}
+
+export async function updateEventAdmin(id: string, data: Record<string, unknown>): Promise<void> {
+  await fetchApi(`/admin/events/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+}
+
+export async function deleteEventAdmin(id: string): Promise<void> {
+  await fetchApi(`/admin/events/${id}`, { method: 'DELETE' })
+}
+
+export async function linkSetToEvent(eventId: string, setId: string): Promise<void> {
+  await fetchApi(`/admin/events/${eventId}/link-set`, { method: 'POST', body: JSON.stringify({ set_id: setId }) })
+}
+
+export async function unlinkSetFromEvent(eventId: string, setId: string): Promise<void> {
+  await fetchApi(`/admin/events/${eventId}/unlink-set`, { method: 'POST', body: JSON.stringify({ set_id: setId }) })
+}

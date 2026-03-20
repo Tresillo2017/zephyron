@@ -71,9 +71,9 @@
     "vars": {
         "BETTER_AUTH_URL": "http://localhost:5173",
         "BETTER_AUTH_SECRET": "zephyron-dev-secret-change-in-production-32chars!!",
-		"YOUTUBE_API_KEY": "",
-		"LASTFM_API_KEY": ""
-	},
+        "YOUTUBE_API_KEY": "",
+        "LASTFM_API_KEY": "",
+    },
     // Durable Objects
     "durable_objects": {
         "bindings": [

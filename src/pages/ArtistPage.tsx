@@ -3,14 +3,23 @@ import { useParams } from 'react-router'
 import { fetchArtist } from '../lib/api'
 import { Skeleton } from '../components/ui/Skeleton'
 import { Badge } from '../components/ui/Badge'
+import { TabBar } from '../components/ui/TabBar'
 import { SetGrid } from '../components/sets/SetGrid'
 import { formatPlayCount } from '../lib/formatTime'
+
+const TABS = [
+  { id: 'home', label: 'Home', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+  { id: 'sets', label: 'Live Sets', icon: 'M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z' },
+  { id: 'bio', label: 'Biography', icon: 'M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12' },
+  { id: 'similar', label: 'Similar Artists', icon: 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z' },
+]
 
 export function ArtistPage() {
   const { id } = useParams<{ id: string }>()
   const [artist, setArtist] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState('home')
   const [showFullBio, setShowFullBio] = useState(false)
 
   useEffect(() => {
@@ -23,23 +32,19 @@ export function ArtistPage() {
   }, [id])
 
   if (error) {
-    return (
-      <div className="px-6 py-16 text-center">
-        <p className="text-danger text-sm">{error}</p>
-      </div>
-    )
+    return <div className="flex items-center justify-center h-full"><p className="text-danger text-sm">{error}</p></div>
   }
 
   if (isLoading || !artist) {
     return (
-      <div className="relative">
+      <div>
         <div className="h-[280px] bg-surface-raised" />
-        <div className="px-5 sm:px-8 -mt-20 max-w-5xl mx-auto">
+        <div className="px-6 -mt-24 relative z-10 max-w-[1300px] mx-auto">
           <div className="flex gap-6">
-            <Skeleton className="w-40 h-40 rounded-lg flex-shrink-0" />
-            <div className="flex-1 space-y-3 pt-8">
-              <Skeleton className="h-8 w-1/2" />
-              <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="w-[180px] h-[180px] rounded-xl flex-shrink-0" />
+            <div className="flex-1 space-y-3 pt-16">
+              <Skeleton className="h-10 w-1/2" />
+              <Skeleton className="h-5 w-1/3" />
             </div>
           </div>
         </div>
@@ -55,121 +60,99 @@ export function ArtistPage() {
 
   return (
     <div>
-      {/* Hero banner — YouTube video frame background, fallback to blurred artist image */}
-      <div className="relative h-[280px] sm:h-[340px] overflow-hidden">
+      {/* ═══ BANNER — full photo, minimal gradient ═══ */}
+      <div className="relative h-[280px] overflow-hidden">
         {artist.background_url ? (
-          <>
-            <img src={artist.background_url} alt="" className="w-full h-full object-cover object-center" />
-            <div className="absolute inset-0 bg-gradient-to-b from-surface/50 via-surface/70 to-surface" />
-          </>
+          <img src={artist.background_url} alt="" className="w-full h-full object-cover object-top" />
         ) : artist.image_url ? (
-          <>
-            <img src={artist.image_url} alt="" className="w-full h-full object-cover scale-110 blur-[40px] opacity-20" />
-            <div className="absolute inset-0 bg-gradient-to-b from-surface/40 via-surface/70 to-surface" />
-          </>
+          <img src={artist.image_url} alt="" className="w-full h-full object-cover scale-150 blur-[30px] opacity-40" />
         ) : (
-          <div className="absolute inset-0">
-            <div className="absolute top-1/4 left-1/3 w-[500px] h-[500px] bg-accent/8 rounded-full blur-[120px]" />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-surface" />
-          </div>
+          <div className="w-full h-full bg-surface-raised" />
         )}
+        <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/30 to-transparent" />
       </div>
 
-      {/* Content overlapping the hero */}
-      <div className="px-5 sm:px-8 max-w-5xl mx-auto -mt-28 sm:-mt-32 relative z-10">
-
-        {/* Header: image + info side by side */}
-        <div className="flex flex-col sm:flex-row gap-6 mb-10">
-          {/* Artist image — square with rounded corners, not circle */}
-          <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-lg overflow-hidden flex-shrink-0 bg-surface-overlay shadow-2xl border border-border/50">
-            {artist.image_url ? (
-              <img src={artist.image_url} alt={artist.name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/20 to-surface-overlay">
-                <span className="text-4xl font-bold text-text-muted/30">{artist.name?.charAt(0)}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-col justify-end">
-            <p className="text-[10px] font-mono text-accent tracking-wider mb-2">ARTIST</p>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-text-primary leading-tight mb-3">{artist.name}</h1>
-
-            {/* Tags */}
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {tags.map((tag: string) => (
-                  <Badge key={tag} variant="muted">{tag}</Badge>
-                ))}
-              </div>
-            )}
-
-            {/* Stats — as distinct items */}
-            <div className="flex items-center gap-5 text-sm">
-              {artist.listeners > 0 && (
-                <div>
-                  <span className="font-semibold text-text-primary">{formatPlayCount(artist.listeners)}</span>
-                  <span className="text-text-muted ml-1">listeners</span>
-                </div>
-              )}
-              {artist.playcount > 0 && (
-                <div>
-                  <span className="font-semibold text-text-primary">{formatPlayCount(artist.playcount)}</span>
-                  <span className="text-text-muted ml-1">plays</span>
-                </div>
-              )}
-              {sets.length > 0 && (
-                <div>
-                  <span className="font-semibold text-text-primary">{sets.length}</span>
-                  <span className="text-text-muted ml-1">{sets.length === 1 ? 'set' : 'sets'} on Zephyron</span>
+      {/* ═══ HEADER — overlapping banner ═══ */}
+      <div className="relative -mt-[100px] z-10">
+        <div className="px-6 lg:px-10">
+          <div className="flex items-end gap-5 mb-5">
+            <div className="w-[130px] h-[130px] sm:w-[160px] sm:h-[160px] rounded-[var(--card-radius)] overflow-hidden flex-shrink-0 bg-surface-overlay"
+              style={{ boxShadow: 'var(--subtle-shadow)' }}>
+              {artist.image_url ? (
+                <img src={artist.image_url} alt={artist.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/15 to-surface-overlay">
+                  <span className="text-5xl font-bold text-text-muted/30">{artist.name?.charAt(0)}</span>
                 </div>
               )}
             </div>
-
-            {/* External link */}
-            {artist.lastfm_url && (
-              <a
-                href={artist.lastfm_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-accent hover:text-accent-hover transition-colors mt-3 inline-flex items-center gap-1 no-underline"
-              >
-                View on Last.fm
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            )}
+            <div className="pb-2">
+              <p className="text-sm text-text-secondary banner-text mb-1">Artist</p>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-text-primary leading-tight banner-text">{artist.name}</h1>
+            </div>
           </div>
         </div>
 
-        {/* Two-column layout for bio + similar artists */}
-        {(bio || similarArtists.length > 0) && (
-          <div className="flex flex-col lg:flex-row gap-10 mb-12">
-            {/* Bio */}
-            {bio && (
-              <div className="flex-1">
-                <p className="text-[10px] font-mono text-text-muted tracking-wider mb-3">ABOUT</p>
-                <p className="text-sm text-text-secondary leading-relaxed">
-                  {bio}
-                </p>
-                {hasLongBio && !showFullBio && (
-                  <button onClick={() => setShowFullBio(true)} className="text-xs text-accent hover:text-accent-hover transition-colors mt-2">
-                    Read more
-                  </button>
+        {/* Tab bar */}
+        <div className="px-6 lg:px-10">
+          <TabBar tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
+        </div>
+      </div>
+
+      {/* ═══ CONTENT ═══ */}
+      <div className="px-6 lg:px-10 py-5">
+        <div className="flex flex-col lg:flex-row gap-5">
+
+          {/* MAIN COLUMN */}
+          <div className="flex-1 min-w-0">
+
+            {/* Home tab or Bio tab */}
+            {(activeTab === 'home' || activeTab === 'bio') && (
+              <>
+                {/* About */}
+                {bio && (
+                  <div className="card p-5 mb-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-semibold text-text-primary">About</h3>
+                      {hasLongBio && (
+                        <button onClick={() => setShowFullBio(!showFullBio)} className="text-xs text-accent hover:text-accent-hover transition-colors">
+                          {showFullBio ? 'show less' : 'read more'}
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-sm text-text-secondary leading-relaxed">{bio}</p>
+                  </div>
                 )}
-                {showFullBio && (
-                  <button onClick={() => setShowFullBio(false)} className="text-xs text-accent hover:text-accent-hover transition-colors mt-2">
-                    Show less
-                  </button>
+
+                {/* Tags */}
+                {tags.length > 0 && (
+                  <div className="card p-5 mb-5">
+                    <h3 className="text-sm font-semibold text-text-primary mb-3">Tags</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tag: string) => (
+                        <Badge key={tag} variant="tag">{tag}</Badge>
+                      ))}
+                    </div>
+                  </div>
                 )}
+              </>
+            )}
+
+            {/* Sets tab or Home tab */}
+            {(activeTab === 'home' || activeTab === 'sets') && sets.length > 0 && (
+              <div className="card p-5 mb-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-text-primary">Live Sets on Zephyron</h3>
+                  <span className="text-xs text-text-muted font-mono">{sets.length} {sets.length === 1 ? 'set' : 'sets'}</span>
+                </div>
+                <SetGrid sets={sets} />
               </div>
             )}
 
-            {/* Similar Artists */}
-            {similarArtists.length > 0 && (
-              <div className="lg:w-[280px] shrink-0">
-                <p className="text-[10px] font-mono text-text-muted tracking-wider mb-3">SIMILAR ARTISTS</p>
+            {/* Similar Artists tab */}
+            {activeTab === 'similar' && similarArtists.length > 0 && (
+              <div className="card p-5 mb-5">
+                <h3 className="text-sm font-semibold text-text-primary mb-4">Similar Artists</h3>
                 <div className="space-y-1">
                   {similarArtists.map((sa: { name: string; url: string }) => (
                     <a
@@ -177,47 +160,82 @@ export function ArtistPage() {
                       href={sa.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-hover transition-colors no-underline group"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-hover transition-colors no-underline"
                     >
-                      <div className="w-8 h-8 bg-surface-overlay rounded-full flex items-center justify-center text-text-muted text-xs font-bold shrink-0">
+                      <div className="w-10 h-10 bg-surface-overlay rounded-lg flex items-center justify-center text-text-muted text-sm font-bold shrink-0">
                         {sa.name.charAt(0)}
                       </div>
-                      <span className="text-sm text-text-secondary group-hover:text-text-primary transition-colors truncate">{sa.name}</span>
+                      <span className="text-sm text-text-secondary hover:text-text-primary transition-colors">{sa.name}</span>
                     </a>
                   ))}
                 </div>
               </div>
             )}
-          </div>
-        )}
 
-        {/* Divider */}
-        <div className="h-px bg-gradient-to-r from-border via-border-light to-border mb-10" />
-
-        {/* Sets on Zephyron */}
-        <div className="pb-12">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <p className="text-[10px] font-mono text-text-muted tracking-wider mb-1">LIVE SETS</p>
-              <h2 className="text-lg font-semibold text-text-primary">Sets on Zephyron</h2>
-            </div>
-            {sets.length > 0 && (
-              <span className="text-xs font-mono text-text-muted tabular-nums">{sets.length} {sets.length === 1 ? 'set' : 'sets'}</span>
+            {/* Empty state for tabs with no content */}
+            {activeTab === 'sets' && sets.length === 0 && (
+              <div className="card p-8 text-center">
+                <p className="text-text-muted text-sm">No sets from {artist.name} on Zephyron yet.</p>
+              </div>
+            )}
+            {activeTab === 'similar' && similarArtists.length === 0 && (
+              <div className="card p-8 text-center">
+                <p className="text-text-muted text-sm">No similar artist data available.</p>
+              </div>
             )}
           </div>
-          {sets.length > 0 ? (
-            <SetGrid sets={sets} />
-          ) : (
-            <div className="text-center py-16 border border-border rounded-xl">
-              <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-surface-raised border border-border flex items-center justify-center">
-                <svg className="w-6 h-6 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z" />
-                </svg>
+
+          {/* SIDEBAR */}
+          <div className="lg:w-[300px] xl:w-[340px] shrink-0 space-y-5">
+
+            {/* Stats */}
+            <div className="card p-5">
+              <div className="flex gap-6">
+                {artist.listeners > 0 && (
+                  <div className="stat-block">
+                    <span className="stat-value">{formatPlayCount(artist.listeners)}</span>
+                    <span className="stat-label">Listeners</span>
+                  </div>
+                )}
+                {artist.playcount > 0 && (
+                  <div className="stat-block">
+                    <span className="stat-value">{formatPlayCount(artist.playcount)}</span>
+                    <span className="stat-label">Scrobbles</span>
+                  </div>
+                )}
+                {sets.length > 0 && (
+                  <div className="stat-block">
+                    <span className="stat-value">{sets.length}</span>
+                    <span className="stat-label">{sets.length === 1 ? 'Set' : 'Sets'}</span>
+                  </div>
+                )}
               </div>
-              <p className="text-text-secondary text-sm font-medium mb-1">No sets yet</p>
-              <p className="text-text-muted text-xs">Sets from {artist.name} will appear here when added.</p>
             </div>
-          )}
+
+            {/* External links */}
+            {artist.lastfm_url && (
+              <div className="card p-5">
+                <h3 className="text-xs text-text-muted mb-3">Find on</h3>
+                <div className="flex flex-wrap gap-2">
+                  <a href={artist.lastfm_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors no-underline shadow-[inset_0_0_0_1px_rgba(239,68,68,0.2)]">
+                    Last.fm
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* Tags (also in sidebar for quick reference) */}
+            {tags.length > 0 && activeTab !== 'home' && (
+              <div className="card p-5">
+                <h3 className="text-xs text-text-muted mb-3">Tags</h3>
+                <div className="flex flex-wrap gap-1.5">
+                  {tags.slice(0, 6).map((tag: string) => (
+                    <Badge key={tag} variant="tag">{tag}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -37,7 +37,7 @@ export function SearchPage() {
   }
 
   return (
-    <div className="px-5 sm:px-8 py-8 sm:py-12 max-w-7xl mx-auto">
+    <div className="px-6 lg:px-10 py-6">
       <h1 className="text-2xl font-bold text-text-primary mb-2">
         Search results for "{query}"
       </h1>

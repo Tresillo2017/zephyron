@@ -26,7 +26,7 @@ export async function runDetectionPipeline(
 ): Promise<{ detections: number; artist_id?: string; error?: string }> {
   // 1. Fetch set metadata
   const set = await env.DB.prepare(
-    'SELECT id, title, artist, source_url, genre, duration_seconds FROM sets WHERE id = ?'
+    'SELECT id, title, artist, source_url, genre, event, duration_seconds FROM sets WHERE id = ?'
   )
     .bind(setId)
     .first<{
@@ -35,6 +35,7 @@ export async function runDetectionPipeline(
       artist: string
       source_url: string | null
       genre: string | null
+      event: string | null
       duration_seconds: number
     }>()
 
@@ -183,6 +184,35 @@ export async function runDetectionPipeline(
         await env.DB.prepare('UPDATE sets SET artist_id = ? WHERE id = ?')
           .bind(artistId, setId)
           .run()
+      }
+    }
+
+    // 5b. Auto-link to event if event name detected
+    if (set.event) {
+      try {
+        const existingEvent = await env.DB.prepare(
+          'SELECT id FROM events WHERE name LIKE ? OR series LIKE ?'
+        ).bind(`%${set.event}%`, `%${set.event}%`).first<{ id: string }>()
+
+        if (existingEvent) {
+          await env.DB.prepare('UPDATE sets SET event_id = ? WHERE id = ?')
+            .bind(existingEvent.id, setId).run()
+
+          // If event has no cover, use this set's thumbnail
+          const eventCover = await env.DB.prepare('SELECT cover_image_r2_key FROM events WHERE id = ?')
+            .bind(existingEvent.id).first<{ cover_image_r2_key: string | null }>()
+          if (!eventCover?.cover_image_r2_key) {
+            const setCover = await env.DB.prepare('SELECT cover_image_r2_key FROM sets WHERE id = ?')
+              .bind(setId).first<{ cover_image_r2_key: string | null }>()
+            if (setCover?.cover_image_r2_key) {
+              await env.DB.prepare('UPDATE events SET cover_image_r2_key = ? WHERE id = ?')
+                .bind(setCover.cover_image_r2_key, existingEvent.id).run()
+            }
+          }
+          console.log(`[detect] Auto-linked set to event: ${set.event} (${existingEvent.id})`)
+        }
+      } catch (err) {
+        console.error('[detect] Event auto-link failed (non-blocking):', err)
       }
     }
 

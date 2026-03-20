@@ -1,6 +1,6 @@
 import { Routes, Route, Outlet, Navigate } from 'react-router'
 import { useSession } from './lib/auth-client'
-import { Sidebar } from './components/layout/Sidebar'
+import { TopNav } from './components/layout/TopNav'
 import { PlayerBar } from './components/layout/PlayerBar'
 
 // Public pages
@@ -25,18 +25,18 @@ import { ProfilePage } from './pages/ProfilePage'
 import { SettingsPage } from './pages/SettingsPage'
 import { ArtistsPage } from './pages/ArtistsPage'
 import { ArtistPage } from './pages/ArtistPage'
+import { EventsPage } from './pages/EventsPage'
+import { EventPage } from './pages/EventPage'
 
-/** Layout for authenticated app pages — sidebar + content + player */
+/** Layout for authenticated app pages — top nav over content + player */
 function AppLayout() {
   return (
-    <div className="h-screen flex bg-surface text-text-primary">
-      <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0">
-        <main className="flex-1 overflow-y-auto">
-          <Outlet />
-        </main>
-        <PlayerBar />
+    <div className="h-screen flex flex-col bg-surface text-text-primary">
+      <div className="flex-1 overflow-y-auto relative">
+        <TopNav />
+        <Outlet />
       </div>
+      <PlayerBar />
     </div>
   )
 }
@@ -102,6 +102,8 @@ function App() {
         <Route path="history" element={<HistoryPage />} />
         <Route path="artists" element={<ArtistsPage />} />
         <Route path="artists/:id" element={<ArtistPage />} />
+        <Route path="events" element={<EventsPage />} />
+        <Route path="events/:id" element={<EventPage />} />
         <Route path="admin" element={<AdminPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="settings" element={<SettingsPage />} />

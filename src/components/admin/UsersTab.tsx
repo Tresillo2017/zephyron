@@ -99,7 +99,7 @@ export function UsersTab() {
       {users.length === 0 ? (
         <p className="text-sm text-text-muted text-center py-8">No users yet.</p>
       ) : (
-        <div className="border border-border rounded-xl overflow-hidden">
+        <div className="card !p-0 overflow-hidden">
           {/* Header row */}
           <div className="flex items-center gap-4 px-4 py-2 bg-surface-overlay text-xs text-text-muted font-medium">
             <span className="flex-1">User</span>
@@ -112,7 +112,7 @@ export function UsersTab() {
           {users.map((user, index) => (
             <div
               key={user.id}
-              className={`flex items-center gap-4 px-4 py-3 ${index > 0 ? 'border-t border-border' : 'border-t border-border'}`}
+              className={`flex items-center gap-4 px-4 py-3 ${index > 0 ? '' : ''}`}
             >
               {/* User info */}
               <div className="flex-1 min-w-0">

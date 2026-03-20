@@ -22,41 +22,109 @@
    Change it to shift the whole UI (e.g. per-artist, per-set theming). */
 
 :root {
-  --hue: 270;
+  --hue: 255;
   --sat: 1;
   --lit: 1;
 
-  /* Background scale (dark → light) — hue-tinted neutrals */
-  --b6: var(--hue), calc(var(--sat) * 4%), calc(var(--lit) * 6%);
-  --b5: var(--hue), calc(var(--sat) * 5%), calc(var(--lit) * 11%);
-  --b4: var(--hue), calc(var(--sat) * 6%), calc(var(--lit) * 16%);
-  --b3: var(--hue), calc(var(--sat) * 6%), calc(var(--lit) * 21%);
-  --b2: var(--hue), calc(var(--sat) * 7%), calc(var(--lit) * 28%);
+  /* Background scale — default "dark" theme */
+  --b7: 0, 0%, 0%;
+  --b6: var(--hue), calc(var(--sat) * 4%), calc(var(--lit) * 14%);
+  --b5: var(--hue), calc(var(--sat) * 5%), calc(var(--lit) * 18%);
+  --b4: var(--hue), calc(var(--sat) * 5%), calc(var(--lit) * 26%);
+  --b3: var(--hue), calc(var(--sat) * 6%), calc(var(--lit) * 30%);
+  --b2: var(--hue), calc(var(--sat) * 7%), calc(var(--lit) * 40%);
 
   /* Text scale */
-  --c1: var(--hue), calc(var(--sat) * 5%), 98%;
-  --c2: var(--hue), calc(var(--sat) * 5%), 67%;
-  --c3: var(--hue), calc(var(--sat) * 3%), 36%;
+  --c1: var(--hue), calc(var(--sat) * 40%), 100%;
+  --c2: var(--hue), calc(var(--sat) * 30%), 87%;
+  --c3: var(--hue), calc(var(--sat) * 7%), 60%;
 
   /* Accent scale */
-  --h2: var(--hue), calc(var(--sat) * 80%), 76%;
-  --h3: var(--hue), calc(var(--sat) * 80%), 66%;
-  --h4: var(--hue), calc(var(--sat) * 70%), 45%;
+  --h2: var(--hue), calc(var(--sat) * 50%), 83%;
+  --h3: var(--hue), calc(var(--sat) * 60%), 70%;
+  --h4: var(--hue), calc(var(--sat) * 70%), 50%;
 
   /* Border scale */
-  --br1: var(--hue), calc(var(--sat) * 3%), 17%;
-  --br2: var(--hue), calc(var(--sat) * 3%), 26%;
+  --br1: var(--hue), calc(var(--sat) * 5%), calc(var(--lit) * 26%);
+  --br2: var(--hue), calc(var(--sat) * 6%), calc(var(--lit) * 30%);
 
   /* Glass / blur */
   --blur-saturate: 240%;
   --blur-brightness: 0.7;
-  --card-blur: blur(8px) saturate(var(--blur-saturate)) brightness(var(--blur-brightness));
+  --card-blur: blur(6px) saturate(var(--blur-saturate)) brightness(var(--blur-brightness)) contrast(1);
+
+  /* Shadows */
+  --card-shadow: 0 8px 35px rgba(0, 0, 0, 0.35);
+  --card-border: inset 0 0 0 1px hsl(var(--b4) / 0.25);
+  --menu-shadow: 0 5px 15px 11px hsl(var(--b7) / 0.4);
+  --avatar-shadow: 0 6px 15px 10px hsl(var(--b7) / 0.05);
+  --subtle-shadow: 0 6px 20px 7px hsl(var(--b7) / 0.2);
+
+  /* Layout */
+  --banner-height: 280px;
+  --banner-offset: 240px;
+  --header-avatar-size: 180px;
+  --card-padding: 20px;
+  --card-radius: 12px;
+  --button-radius: 12px;
+  --button-height: 30px;
+  --font-weight: 480;
+  --font-weight-medium: 650;
+  --font-weight-bold: 730;
 
   /* Transitions */
   --ease-out-custom: cubic-bezier(0.095, 0.41, 0.055, 0.96);
   --ease-spring: cubic-bezier(0.205, 0.06, 0.05, 0.965);
   --trans: 0.2s;
 }
+
+/* ═══ Theme variants ═══ */
+
+/* Darker — deeper blacks, less contrast between levels */
+[data-theme="darker"] {
+  --b6: var(--hue), calc(var(--sat) * 3%), calc(var(--lit) * 6%);
+  --b5: var(--hue), calc(var(--sat) * 4%), calc(var(--lit) * 9%);
+  --b4: var(--hue), calc(var(--sat) * 4%), calc(var(--lit) * 14%);
+  --b3: var(--hue), calc(var(--sat) * 5%), calc(var(--lit) * 19%);
+  --b2: var(--hue), calc(var(--sat) * 6%), calc(var(--lit) * 29%);
+}
+
+/* OLED — true blacks for AMOLED screens */
+[data-theme="oled"] {
+  --b6: 0, 0%, 0%;
+  --b5: var(--hue), calc(var(--sat) * 3%), calc(var(--lit) * 4%);
+  --b4: var(--hue), calc(var(--sat) * 3%), calc(var(--lit) * 10%);
+  --b3: var(--hue), calc(var(--sat) * 4%), calc(var(--lit) * 11%);
+  --b2: var(--hue), calc(var(--sat) * 5%), calc(var(--lit) * 23%);
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+/* Light — inverted for daytime use */
+[data-theme="light"] {
+  --b6: var(--hue), calc(var(--sat) * 5%), 94%;
+  --b5: var(--hue), calc(var(--sat) * 5%), 100%;
+  --b4: var(--hue), calc(var(--sat) * 5%), 91%;
+  --b3: var(--hue), calc(var(--sat) * 4%), 98%;
+  --b2: var(--hue), calc(var(--sat) * 3%), 82%;
+  --c1: var(--hue), calc(var(--sat) * 6%), 0%;
+  --c2: var(--hue), calc(var(--sat) * 4%), 6%;
+  --c3: var(--hue), calc(var(--sat) * 2%), 38%;
+  --blur-saturate: 130%;
+  --blur-brightness: 1.2;
+  --card-shadow: 0 1.5px 4px 0 hsl(var(--b7) / 0.05);
+}
+
+/* ═══ Preset accent hues ═══ */
+[data-accent="violet"]  { --hue: 255; }
+[data-accent="blue"]    { --hue: 220; }
+[data-accent="cyan"]    { --hue: 190; }
+[data-accent="teal"]    { --hue: 170; }
+[data-accent="green"]   { --hue: 145; }
+[data-accent="yellow"]  { --hue: 50; }
+[data-accent="orange"]  { --hue: 25; }
+[data-accent="red"]     { --hue: 0; }
+[data-accent="pink"]    { --hue: 330; }
+[data-accent="rose"]    { --hue: 350; }
 
 @theme {
   /* Surface — derived from HSL scale */
@@ -94,8 +162,29 @@ html, body, #root {
   margin: 0;
   background-color: var(--color-surface);
   color: var(--color-text-primary);
+  font-weight: var(--font-weight);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ═══ Range slider thumb ═══ */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 4px hsl(var(--b7) / 0.3);
+  cursor: pointer;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  border: none;
+  box-shadow: 0 1px 4px hsl(var(--b7) / 0.3);
+  cursor: pointer;
 }
 
 /* ═══ Noise overlay ═══
@@ -140,6 +229,88 @@ body::after {
   background: hsl(var(--b5) / 0.5);
   backdrop-filter: blur(12px) saturate(180%);
   -webkit-backdrop-filter: blur(12px) saturate(180%);
+}
+
+/* ═══ Card utility (bleh-matched) ═══ */
+.card {
+  background: hsl(var(--b5));
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-border), var(--card-shadow);
+  padding: var(--card-padding);
+}
+
+.card-hover {
+  transition: background var(--trans) var(--ease-out-custom),
+              box-shadow var(--trans) var(--ease-out-custom);
+}
+.card-hover:hover {
+  background: hsl(var(--b4) / 0.8);
+}
+
+/* ═══ Tab bar ═══ */
+.tab-bar {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid hsl(var(--br1));
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: hsl(var(--c3));
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color var(--trans) var(--ease-out-custom),
+              border-color var(--trans) var(--ease-out-custom);
+  cursor: pointer;
+}
+.tab-item:hover { color: hsl(var(--c2)); }
+.tab-item.active {
+  color: hsl(var(--c1));
+  border-bottom-color: hsl(var(--h3));
+}
+
+/* ═══ Tag pill (bleh-style) ═══ */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 12px;
+  color: hsl(var(--c2));
+  background: hsl(var(--b4) / 0.4);
+  border-radius: 6px;
+  transition: background var(--trans) var(--ease-out-custom);
+}
+.tag:hover {
+  background: hsl(var(--b3) / 0.5);
+}
+
+/* ═══ Stat block ═══ */
+.stat-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: hsl(var(--c1));
+  line-height: 1.2;
+}
+.stat-label {
+  font-size: 11px;
+  color: hsl(var(--c3));
+}
+
+/* ═══ Banner text shadow for readability ═══ */
+.banner-text {
+  text-shadow: 0 2px 12px hsl(0 0% 0% / 0.6), 0 0 4px hsl(0 0% 0% / 0.3);
 }
 
 /* ═══ Motion vocabulary ═══ */

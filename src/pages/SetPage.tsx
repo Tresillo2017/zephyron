@@ -52,24 +52,19 @@ export function SetPage() {
   }
 
   if (error) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-danger text-sm">{error}</p>
-      </div>
-    )
+    return <div className="flex items-center justify-center h-full"><p className="text-danger text-sm">{error}</p></div>
   }
 
   if (isLoading || !set) {
     return (
       <div>
         <div className="h-[280px] bg-surface-raised" />
-        <div className="px-5 sm:px-8 -mt-24 relative z-10">
+        <div className="px-6 -mt-24 relative z-10 max-w-[1300px] mx-auto">
           <div className="flex gap-6">
-            <Skeleton className="w-44 h-44 rounded-lg flex-shrink-0" />
-            <div className="flex-1 space-y-3 pt-8">
-              <Skeleton className="h-8 w-2/3" />
+            <Skeleton className="w-[180px] h-[180px] rounded-xl flex-shrink-0" />
+            <div className="flex-1 space-y-3 pt-16">
+              <Skeleton className="h-10 w-2/3" />
               <Skeleton className="h-5 w-1/3" />
-              <Skeleton className="h-4 w-1/4" />
             </div>
           </div>
         </div>
@@ -88,196 +83,119 @@ export function SetPage() {
 
   return (
     <div>
-      {/* ═══ HERO BANNER — cinematic YouTube thumbnail background ═══ */}
-      <div className="relative h-[300px] sm:h-[360px] overflow-hidden">
+      {/* ═══ BANNER — bleh style ═══ */}
+      <div className="relative h-[280px] overflow-hidden">
         {set.cover_image_r2_key ? (
-          <>
-            <img src={getCoverUrl(set.id)} alt="" className="w-full h-full object-cover object-center" />
-            <div className="absolute inset-0 bg-gradient-to-b from-surface/50 via-surface/70 to-surface" />
-          </>
+          <img src={getCoverUrl(set.id)} alt="" className="w-full h-full object-cover object-center" />
         ) : (
-          <div className="absolute inset-0">
-            <div className="absolute top-1/4 left-1/3 w-[500px] h-[500px] bg-accent/8 rounded-full blur-[120px]" />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-surface" />
-          </div>
+          <div className="w-full h-full bg-surface-raised" />
         )}
+        <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/30 to-transparent" />
       </div>
 
-      {/* ═══ CONTENT — overlapping into the hero ═══ */}
-      <div className="px-5 sm:px-8 -mt-28 sm:-mt-32 relative z-10">
-
-        {/* Header: cover + info side by side */}
-        <div className="flex flex-col sm:flex-row gap-6 mb-8">
-          {/* Cover art */}
-          <div className="w-40 h-40 sm:w-48 sm:h-48 rounded-lg overflow-hidden flex-shrink-0 bg-surface-overlay shadow-2xl border border-border/50">
-            {set.cover_image_r2_key ? (
-              <img src={getCoverUrl(set.id)} alt={set.title} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/15 to-surface-overlay">
-                <svg className="w-14 h-14 text-text-muted/20" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
-                </svg>
-              </div>
-            )}
-          </div>
-
-          {/* Info */}
-          <div className="flex flex-col justify-end">
-            <p className="text-[10px] font-mono text-accent tracking-wider mb-2">DJ SET</p>
-            <h1 className="text-3xl sm:text-4xl font-bold text-text-primary leading-tight mb-2">{set.title}</h1>
-            {artistInfo ? (
-              <Link
-                to={`/app/artists/${artistInfo.slug || artistInfo.id}`}
-                className="text-lg text-text-secondary hover:text-accent transition-colors no-underline inline-flex items-center gap-1.5 group mb-3"
-              >
-                {set.artist}
-                <svg className="w-3.5 h-3.5 text-text-muted group-hover:text-accent transition-colors opacity-0 group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            ) : (
-              <p className="text-lg text-text-secondary mb-3">{set.artist}</p>
-            )}
-
-            {/* Metadata */}
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              {set.genre && <Badge variant="accent">{set.genre}</Badge>}
-              {set.subgenre && <Badge variant="muted">{set.subgenre}</Badge>}
-              {set.venue && <span className="text-sm text-text-secondary">{set.venue}</span>}
-              {set.event && <span className="text-sm text-text-muted">· {set.event}</span>}
-            </div>
-            <div className="flex items-center gap-4 text-xs font-mono text-text-muted tabular-nums">
-              <span>{formatDuration(set.duration_seconds)}</span>
-              {set.play_count > 0 && <span>{formatPlayCount(set.play_count)} plays</span>}
-              {set.recorded_date && <span>{set.recorded_date}</span>}
-              {listenerCount > 0 && (
-                <span className="text-accent flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" />
-                  {listenerCount} live
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Actions + Waveform row */}
-        <div className="flex flex-col sm:flex-row items-start gap-4 mb-8">
-          <div className="flex items-center gap-2 shrink-0">
-            <Button variant="primary" size="lg" onClick={handlePlay} className="shadow-lg shadow-accent/20">
-              {isCurrentlyPlaying ? (
-                <><svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>Pause</>
+      {/* ═══ HEADER — overlapping banner ═══ */}
+      <div className="relative -mt-[100px] z-10">
+        <div className="px-6 lg:px-10">
+          <div className="flex items-end gap-5 mb-6">
+            {/* Cover art */}
+            <div className="w-[130px] h-[130px] sm:w-[160px] sm:h-[160px] rounded-[var(--card-radius)] overflow-hidden flex-shrink-0 bg-surface-overlay"
+              style={{ boxShadow: 'var(--subtle-shadow)' }}>
+              {set.cover_image_r2_key ? (
+                <img src={getCoverUrl(set.id)} alt={set.title} className="w-full h-full object-cover" />
               ) : (
-                <><svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>Play Set</>
-              )}
-            </Button>
-            <Button variant="secondary" size="lg" onClick={() => setShowPlaylistModal(true)} title="Add to playlist">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" /></svg>
-            </Button>
-          </div>
-          <div className="flex-1 min-w-0 w-full bg-surface-raised/50 border border-border rounded-xl p-3">
-            <Waveform peaks={waveformPeaks} duration={set.duration_seconds} detections={set.detections} height={48} />
-          </div>
-        </div>
-
-        {/* Gradient divider */}
-        <div className="h-px bg-gradient-to-r from-border via-border-light to-border mb-8" />
-
-        {/* ═══ TWO COLUMN: description/DJ info + tracklist ═══ */}
-        <div className="flex flex-col lg:flex-row gap-8 pb-12">
-
-          {/* LEFT: description + about DJ */}
-          <div className="lg:w-[320px] xl:w-[360px] shrink-0 space-y-6">
-            {/* Description */}
-            {set.description && (
-              <div>
-                <p className="text-[10px] font-mono text-text-muted tracking-wider mb-3">ABOUT THIS SET</p>
-                <p className="text-sm text-text-secondary leading-relaxed">{set.description}</p>
-              </div>
-            )}
-
-            {/* About the DJ */}
-            {artistInfo && artistInfo.bio_summary && (
-              <div>
-                <p className="text-[10px] font-mono text-text-muted tracking-wider mb-3">ABOUT THE DJ</p>
-                <Link
-                  to={`/app/artists/${artistInfo.slug || artistInfo.id}`}
-                  className="flex items-center gap-3 mb-3 no-underline group"
-                >
-                  {artistInfo.image_url ? (
-                    <img src={artistInfo.image_url} alt={artistInfo.name} className="w-11 h-11 rounded-lg object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-11 h-11 rounded-lg bg-surface-overlay flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-bold text-text-muted">{artistInfo.name.charAt(0)}</span>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-text-primary group-hover:text-accent transition-colors">{artistInfo.name}</p>
-                    {artistInfo.listeners > 0 && (
-                      <p className="text-[10px] font-mono text-text-muted">{formatPlayCount(artistInfo.listeners)} listeners</p>
-                    )}
-                  </div>
-                </Link>
-                <p className="text-xs text-text-muted leading-relaxed line-clamp-4">{artistInfo.bio_summary}</p>
-                {artistTags.length > 0 && (
-                  <div className="flex gap-1 mt-3 flex-wrap">
-                    {artistTags.slice(0, 5).map((tag) => (
-                      <span key={tag} className="text-[10px] text-text-muted bg-surface-overlay px-2 py-0.5 rounded">{tag}</span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* No description and no artist info — show nothing, the right column fills the space */}
-          </div>
-
-          {/* RIGHT: tracklist */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <p className="text-[10px] font-mono text-text-muted tracking-wider mb-1">TRACKLIST</p>
-                <p className="text-sm text-text-secondary">
-                  {set.detections.length > 0
-                    ? `${set.detections.length} tracks detected`
-                    : DETECTION_STATUS_LABELS[set.detection_status] || set.detection_status}
-                </p>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => setShowAddTrack(true)}>
-                <svg className="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" /></svg>
-                Add Track
-              </Button>
-            </div>
-
-            {set.detections.length === 0 ? (
-              <div className="text-center py-20 border border-border rounded-xl bg-surface-raised/30">
-                <div className="w-14 h-14 mx-auto mb-4 rounded-lg bg-surface-overlay border border-border flex items-center justify-center">
-                  <svg className="w-7 h-7 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z" />
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/15 to-surface-overlay">
+                  <svg className="w-14 h-14 text-text-muted/20" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
                   </svg>
                 </div>
-                <p className="text-text-primary text-sm font-medium mb-1">
-                  {set.detection_status === 'pending' ? 'Awaiting detection' : set.detection_status === 'processing' ? 'Analyzing tracks...' : 'No tracks detected'}
-                </p>
-                <p className="text-text-muted text-xs mb-5 max-w-xs mx-auto">
-                  {set.detection_status === 'pending'
-                    ? 'Run AI detection from the admin panel to identify tracks.'
-                    : 'Add tracks manually or wait for community contributions.'}
-                </p>
-                <Button variant="secondary" size="sm" onClick={() => setShowAddTrack(true)}>
-                  Add a track manually
+              )}
+            </div>
+
+            {/* Title on banner */}
+            <div className="pb-2">
+              <p className="text-sm text-text-secondary banner-text mb-1">DJ Set</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-text-primary leading-tight banner-text mb-1">{set.title}</h1>
+              {artistInfo ? (
+                <Link to={`/app/artists/${artistInfo.slug || artistInfo.id}`} className="text-base text-text-secondary hover:text-accent transition-colors no-underline banner-text inline-flex items-center gap-1 group">
+                  {set.artist}
+                  <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              ) : (
+                <p className="text-base text-text-secondary banner-text">{set.artist}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ CONTENT ═══ */}
+      <div className="px-6 lg:px-10 py-4">
+        <div className="flex flex-col lg:flex-row gap-5">
+
+          {/* MAIN — tracklist */}
+          <div className="flex-1 min-w-0">
+            {/* Actions bar */}
+            <div className="flex items-center gap-3 mb-5">
+              <Button variant="primary" size="lg" onClick={handlePlay} className="shadow-lg shadow-accent/20">
+                {isCurrentlyPlaying ? (
+                  <><svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>Pause</>
+                ) : (
+                  <><svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>Play Set</>
+                )}
+              </Button>
+              <Button variant="secondary" size="lg" onClick={() => setShowPlaylistModal(true)} title="Add to playlist">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" /></svg>
+              </Button>
+              <div className="ml-auto flex items-center gap-4 text-xs font-mono text-text-muted tabular-nums">
+                <span>{formatDuration(set.duration_seconds)}</span>
+                {set.play_count > 0 && <span>{formatPlayCount(set.play_count)} plays</span>}
+                {listenerCount > 0 && (
+                  <span className="text-accent flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" />
+                    {listenerCount} live
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Waveform */}
+            <div className="card p-4 mb-5">
+              <Waveform peaks={waveformPeaks} duration={set.duration_seconds} detections={set.detections} height={56} />
+            </div>
+
+            {/* Tracklist */}
+            <div className="card overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+                <div>
+                  <h3 className="text-sm font-semibold text-text-primary">Tracklist</h3>
+                  <p className="text-[10px] text-text-muted mt-0.5">
+                    {set.detections.length > 0
+                      ? `${set.detections.length} tracks detected`
+                      : DETECTION_STATUS_LABELS[set.detection_status] || set.detection_status}
+                  </p>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setShowAddTrack(true)}>
+                  <svg className="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" /></svg>
+                  Add Track
                 </Button>
               </div>
-            ) : (
-              <div className="border border-border rounded-xl overflow-hidden">
-                {set.detections.map((detection, index) => {
+
+              {set.detections.length === 0 ? (
+                <div className="text-center py-16 px-5">
+                  <p className="text-text-muted text-sm mb-4">
+                    {set.detection_status === 'pending' ? 'Awaiting detection — run from admin panel.' : 'No tracks detected yet.'}
+                  </p>
+                  <Button variant="secondary" size="sm" onClick={() => setShowAddTrack(true)}>Add a track manually</Button>
+                </div>
+              ) : (
+                set.detections.map((detection, index) => {
                   const endTime = detection.end_time_seconds
                     ?? (index + 1 < set.detections.length
                       ? set.detections[index + 1].start_time_seconds
                       : set.duration_seconds)
-                  const isActive = isThisSetLoaded &&
-                    currentTime >= detection.start_time_seconds &&
-                    currentTime < endTime
-
+                  const isActive = isThisSetLoaded && currentTime >= detection.start_time_seconds && currentTime < endTime
                   return (
                     <DetectionRow
                       key={detection.id}
@@ -289,7 +207,86 @@ export function SetPage() {
                       isActive={isActive}
                     />
                   )
-                })}
+                })
+              )}
+            </div>
+          </div>
+
+          {/* SIDEBAR */}
+          <div className="lg:w-[300px] xl:w-[340px] shrink-0 space-y-5">
+            {/* Metadata */}
+            <div className="card p-5">
+              <div className="flex items-center gap-2 flex-wrap mb-3">
+                {set.genre && <Badge variant="accent">{set.genre}</Badge>}
+                {set.subgenre && <Badge variant="muted">{set.subgenre}</Badge>}
+              </div>
+              {(set.venue || set.event) && (
+                <p className="text-sm text-text-secondary mb-2">
+                  {set.venue}{set.venue && set.event && ' · '}{set.event}
+                </p>
+              )}
+              {set.recorded_date && (
+                <p className="text-xs font-mono text-text-muted">{set.recorded_date}</p>
+              )}
+            </div>
+
+            {/* Stats */}
+            <div className="card p-5">
+              <div className="flex gap-6">
+                <div className="stat-block">
+                  <span className="stat-value">{formatDuration(set.duration_seconds)}</span>
+                  <span className="stat-label">Duration</span>
+                </div>
+                {set.play_count > 0 && (
+                  <div className="stat-block">
+                    <span className="stat-value">{formatPlayCount(set.play_count)}</span>
+                    <span className="stat-label">Plays</span>
+                  </div>
+                )}
+                {set.detections.length > 0 && (
+                  <div className="stat-block">
+                    <span className="stat-value">{set.detections.length}</span>
+                    <span className="stat-label">Tracks</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Description */}
+            {set.description && (
+              <div className="card p-5">
+                <h3 className="text-xs text-text-muted mb-3">About this set</h3>
+                <p className="text-sm text-text-secondary leading-relaxed">{set.description}</p>
+              </div>
+            )}
+
+            {/* About the DJ */}
+            {artistInfo && artistInfo.bio_summary && (
+              <div className="card p-5">
+                <h3 className="text-xs text-text-muted mb-3">About the DJ</h3>
+                <Link to={`/app/artists/${artistInfo.slug || artistInfo.id}`} className="flex items-center gap-3 mb-3 no-underline group">
+                  {artistInfo.image_url ? (
+                    <img src={artistInfo.image_url} alt={artistInfo.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-surface-overlay flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-bold text-text-muted">{artistInfo.name.charAt(0)}</span>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-text-primary group-hover:text-accent transition-colors">{artistInfo.name}</p>
+                    {artistInfo.listeners > 0 && (
+                      <p className="text-[10px] font-mono text-text-muted">{formatPlayCount(artistInfo.listeners)} listeners</p>
+                    )}
+                  </div>
+                </Link>
+                <p className="text-xs text-text-muted leading-relaxed line-clamp-3">{artistInfo.bio_summary}</p>
+                {artistTags.length > 0 && (
+                  <div className="flex gap-1.5 mt-3 flex-wrap">
+                    {artistTags.slice(0, 4).map((tag) => (
+                      <Badge key={tag} variant="tag">{tag}</Badge>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -297,16 +294,8 @@ export function SetPage() {
       </div>
 
       {/* Modals */}
-      <AnnotationEditor
-        setId={set.id}
-        duration={set.duration_seconds}
-        initialTime={isThisSetLoaded ? currentTime : 0}
-        isOpen={showAddTrack}
-        onClose={() => setShowAddTrack(false)}
-      />
-      {id && (
-        <AddToPlaylist setId={id} isOpen={showPlaylistModal} onClose={() => setShowPlaylistModal(false)} />
-      )}
+      <AnnotationEditor setId={set.id} duration={set.duration_seconds} initialTime={isThisSetLoaded ? currentTime : 0} isOpen={showAddTrack} onClose={() => setShowAddTrack(false)} />
+      {id && <AddToPlaylist setId={id} isOpen={showPlaylistModal} onClose={() => setShowPlaylistModal(false)} />}
     </div>
   )
 }

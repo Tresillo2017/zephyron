@@ -17,7 +17,7 @@ export function ArtistsPage() {
 
   if (isLoading) {
     return (
-      <div className="px-5 sm:px-8 py-8 sm:py-12">
+      <div className="px-6 lg:px-10 py-6">
         <h1 className="text-2xl font-bold text-text-primary mb-2">Artists</h1>
         <p className="text-sm text-text-muted mb-8">DJs and producers on Zephyron</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -30,7 +30,7 @@ export function ArtistsPage() {
   }
 
   return (
-    <div className="px-5 sm:px-8 py-8 sm:py-12">
+    <div className="px-6 lg:px-10 py-6">
       <p className="text-[10px] font-mono text-accent tracking-wider mb-2">ARTISTS</p>
       <h1 className="text-2xl font-bold text-text-primary mb-1">Artists</h1>
       <p className="text-sm text-text-muted mb-8">DJs and producers on Zephyron</p>

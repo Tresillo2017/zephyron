@@ -87,7 +87,7 @@ export function InviteCodesTab() {
       ) : codes.length === 0 ? (
         <p className="text-sm text-text-muted text-center py-8">No invite codes yet.</p>
       ) : (
-        <div className="border border-border rounded-xl overflow-hidden">
+        <div className="card !p-0 overflow-hidden">
           {codes.map((code, i) => {
             const isExpired = code.expires_at && new Date(code.expires_at) < new Date()
             const isFullyUsed = code.max_uses > 0 && code.used_count >= code.max_uses
@@ -95,7 +95,7 @@ export function InviteCodesTab() {
             return (
               <div
                 key={code.id}
-                className={`flex items-center gap-4 px-4 py-3 ${i > 0 ? 'border-t border-border' : ''}`}
+                className={`flex items-center gap-4 px-4 py-3 ${i > 0 ? '' : ''}`}
               >
                 <span className="font-mono text-sm text-accent font-bold tracking-wider w-24">
                   {code.code}

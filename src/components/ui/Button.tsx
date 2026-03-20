@@ -6,16 +6,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<string, string> = {
-  primary: 'bg-accent text-white font-semibold hover:bg-accent-hover shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15),0_3px_12px_hsl(var(--h4)/0.35)]',
-  secondary: 'bg-surface-raised text-text-primary border border-border hover:bg-surface-hover hover:border-border-light shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]',
-  ghost: 'bg-transparent text-text-secondary hover:text-text-primary hover:bg-surface-hover',
+  primary: 'bg-accent text-white font-[var(--font-weight-medium)] shadow-[0_3px_12px_hsl(var(--h4)/0.32)]',
+  secondary: 'bg-[hsl(var(--b3))] text-text-secondary',
+  ghost: 'bg-transparent text-text-secondary hover:bg-[hsl(var(--b4)/0.6)]',
   danger: 'bg-danger/10 text-danger hover:bg-danger/20',
 }
 
 const sizeClasses: Record<string, string> = {
-  sm: 'px-3 py-1.5 text-xs',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-3 text-base',
+  sm: 'px-[9px] py-[5px] text-xs h-[26px]',
+  md: 'px-[9px] py-[6px] text-sm h-[var(--button-height)]',
+  lg: 'px-4 py-[8px] text-sm h-[36px]',
 }
 
 export function Button({
@@ -26,8 +26,24 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
-      style={{ transitionTimingFunction: 'var(--ease-out-custom)' }}
+      className={`inline-flex items-center justify-center rounded-[var(--button-radius)] cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      style={{
+        transitionProperty: 'background-color, transform, box-shadow, color, opacity',
+        transitionDuration: 'var(--trans)',
+        transitionTimingFunction: 'var(--ease-out-custom)',
+      }}
+      onMouseDown={(e) => {
+        (e.currentTarget as HTMLElement).style.transform = 'scale(0.98)'
+        props.onMouseDown?.(e)
+      }}
+      onMouseUp={(e) => {
+        (e.currentTarget as HTMLElement).style.transform = ''
+        props.onMouseUp?.(e)
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.transform = ''
+        props.onMouseLeave?.(e)
+      }}
       {...props}
     />
   )
