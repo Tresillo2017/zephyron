@@ -7,6 +7,10 @@ import { PlayerBar } from './components/layout/PlayerBar'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
+import { AboutPage } from './pages/AboutPage'
+import { PrivacyPage } from './pages/PrivacyPage'
+import { TermsPage } from './pages/TermsPage'
+import { TwoFactorPage } from './pages/TwoFactorPage'
 
 // App pages (authenticated)
 import { HomePage } from './pages/HomePage'
@@ -18,6 +22,7 @@ import { PlaylistPage } from './pages/PlaylistPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { AdminPage } from './pages/AdminPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { SettingsPage } from './pages/SettingsPage'
 import { ArtistsPage } from './pages/ArtistsPage'
 import { ArtistPage } from './pages/ArtistPage'
 
@@ -81,6 +86,10 @@ function App() {
       <Route index element={<RedirectIfAuth><LandingPage /></RedirectIfAuth>} />
       <Route path="login" element={<RedirectIfAuth><LoginPage /></RedirectIfAuth>} />
       <Route path="register" element={<RedirectIfAuth><RegisterPage /></RedirectIfAuth>} />
+      <Route path="2fa" element={<TwoFactorPage />} />
+      <Route path="about" element={<AboutPage />} />
+      <Route path="privacy" element={<PrivacyPage />} />
+      <Route path="terms" element={<TermsPage />} />
 
       {/* Protected app routes */}
       <Route path="app" element={<RequireAuth />}>
@@ -95,6 +104,7 @@ function App() {
         <Route path="artists/:id" element={<ArtistPage />} />
         <Route path="admin" element={<AdminPage />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
 
       {/* Catch-all redirect */}

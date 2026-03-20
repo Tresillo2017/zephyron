@@ -2,7 +2,7 @@
 // Instantiated per-request because env.DB is only available in fetch()
 
 import { betterAuth } from 'better-auth'
-import { admin } from 'better-auth/plugins'
+import { admin, twoFactor } from 'better-auth/plugins'
 import { D1Dialect } from 'kysely-d1'
 import { Kysely } from 'kysely'
 
@@ -17,6 +17,7 @@ export function createAuth(env: Env) {
   })
 
   return betterAuth({
+    appName: 'Zephyron',
     database: {
       db,
       type: 'sqlite',
@@ -26,8 +27,12 @@ export function createAuth(env: Env) {
     baseURL: env.BETTER_AUTH_URL || 'http://localhost:5173',
     emailAndPassword: {
       enabled: true,
+      // Password change is enabled by default via changePassword endpoint
     },
     user: {
+      changeEmail: {
+        enabled: true,
+      },
       additionalFields: {
         reputation: {
           type: 'number',
@@ -63,6 +68,17 @@ export function createAuth(env: Env) {
     },
     plugins: [
       admin(),
+      twoFactor({
+        issuer: 'Zephyron',
+        totpOptions: {
+          digits: 6,
+          period: 30,
+        },
+        backupCodeOptions: {
+          amount: 10,
+          length: 10,
+        },
+      }),
     ],
     databaseHooks: {
       user: {

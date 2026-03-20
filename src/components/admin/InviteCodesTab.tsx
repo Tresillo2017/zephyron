@@ -87,7 +87,7 @@ export function InviteCodesTab() {
       ) : codes.length === 0 ? (
         <p className="text-sm text-text-muted text-center py-8">No invite codes yet.</p>
       ) : (
-        <div className="border border-border rounded-lg overflow-hidden">
+        <div className="border border-border rounded-xl overflow-hidden">
           {codes.map((code, i) => {
             const isExpired = code.expires_at && new Date(code.expires_at) < new Date()
             const isFullyUsed = code.max_uses > 0 && code.used_count >= code.max_uses

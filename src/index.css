@@ -17,26 +17,67 @@
   font-style: normal;
 }
 
-@theme {
-  /* Surface — violet-tinted for subconscious cohesion */
-  --color-surface: #09090b;
-  --color-surface-raised: #131318;
-  --color-surface-overlay: #1c1c24;
-  --color-surface-hover: #27272f;
+/* ═══ HSL-parametric color system ═══
+   One --hue variable drives the entire palette.
+   Change it to shift the whole UI (e.g. per-artist, per-set theming). */
 
-  /* Accent — electric violet */
-  --color-accent: #8b5cf6;
-  --color-accent-hover: #a78bfa;
-  --color-accent-dim: #6d28d9;
+:root {
+  --hue: 270;
+  --sat: 1;
+  --lit: 1;
+
+  /* Background scale (dark → light) — hue-tinted neutrals */
+  --b6: var(--hue), calc(var(--sat) * 4%), calc(var(--lit) * 6%);
+  --b5: var(--hue), calc(var(--sat) * 5%), calc(var(--lit) * 11%);
+  --b4: var(--hue), calc(var(--sat) * 6%), calc(var(--lit) * 16%);
+  --b3: var(--hue), calc(var(--sat) * 6%), calc(var(--lit) * 21%);
+  --b2: var(--hue), calc(var(--sat) * 7%), calc(var(--lit) * 28%);
+
+  /* Text scale */
+  --c1: var(--hue), calc(var(--sat) * 5%), 98%;
+  --c2: var(--hue), calc(var(--sat) * 5%), 67%;
+  --c3: var(--hue), calc(var(--sat) * 3%), 36%;
+
+  /* Accent scale */
+  --h2: var(--hue), calc(var(--sat) * 80%), 76%;
+  --h3: var(--hue), calc(var(--sat) * 80%), 66%;
+  --h4: var(--hue), calc(var(--sat) * 70%), 45%;
+
+  /* Border scale */
+  --br1: var(--hue), calc(var(--sat) * 3%), 17%;
+  --br2: var(--hue), calc(var(--sat) * 3%), 26%;
+
+  /* Glass / blur */
+  --blur-saturate: 240%;
+  --blur-brightness: 0.7;
+  --card-blur: blur(8px) saturate(var(--blur-saturate)) brightness(var(--blur-brightness));
+
+  /* Transitions */
+  --ease-out-custom: cubic-bezier(0.095, 0.41, 0.055, 0.96);
+  --ease-spring: cubic-bezier(0.205, 0.06, 0.05, 0.965);
+  --trans: 0.2s;
+}
+
+@theme {
+  /* Surface — derived from HSL scale */
+  --color-surface: hsl(var(--b6));
+  --color-surface-raised: hsl(var(--b5));
+  --color-surface-overlay: hsl(var(--b4));
+  --color-surface-hover: hsl(var(--b3));
+
+  /* Accent — derived from hue */
+  --color-accent: hsl(var(--h3));
+  --color-accent-hover: hsl(var(--h2));
+  --color-accent-dim: hsl(var(--h4));
 
   /* Text */
-  --color-text-primary: #fafafa;
-  --color-text-secondary: #a1a1aa;
-  --color-text-muted: #52525b;
+  --color-text-primary: hsl(var(--c1));
+  --color-text-secondary: hsl(var(--c2));
+  --color-text-muted: hsl(var(--c3));
 
   /* Borders */
-  --color-border: #27272a;
-  --color-border-light: #3f3f46;
+  --color-border: hsl(var(--br1));
+  --color-border-light: hsl(var(--br2));
 
   /* Semantic */
   --color-danger: #ef4444;
@@ -57,16 +98,48 @@ html, body, #root {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ═══ Noise overlay ═══
+   Subtle film-grain texture for tactile depth.
+   Inspired by bleh's solarium noise system. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px 128px;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-border-light); }
+::-webkit-scrollbar-thumb { background: hsl(var(--br1)); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--br2)); }
 
 /* Selection */
 ::selection {
-  background: oklch(0.55 0.15 280 / 0.4);
-  color: var(--color-text-primary);
+  background: hsl(var(--h3) / 0.4);
+  color: hsl(var(--c1));
+}
+
+/* ═══ Glass card utility ═══ */
+.glass {
+  background: hsl(var(--b5) / 0.7);
+  backdrop-filter: var(--card-blur);
+  -webkit-backdrop-filter: var(--card-blur);
+  box-shadow:
+    inset 0 0 0 1px hsl(var(--br1) / 0.5),
+    0 8px 32px hsl(0 0% 0% / 0.3);
+}
+
+.glass-subtle {
+  background: hsl(var(--b5) / 0.5);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
 }
 
 /* ═══ Motion vocabulary ═══ */
@@ -98,11 +171,48 @@ html, body, #root {
   66% { transform: translate(-10px, 15px); }
 }
 
+/* Card/modal entrance — scale + blur reveal */
+@keyframes solarium {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+/* List item stagger entrance */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fade in */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  body::after {
+    display: none;
   }
 }

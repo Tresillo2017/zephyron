@@ -155,7 +155,7 @@ export function FullScreenPlayer() {
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto min-h-0 rounded-lg border border-border bg-surface-raised/50">
+            <div className="flex-1 overflow-y-auto min-h-0 rounded-xl border border-border bg-surface-raised/50">
               {detections.map((detection, i) => {
                 const endTime = detection.end_time_seconds
                   ?? (i + 1 < detections.length ? detections[i + 1].start_time_seconds : duration)

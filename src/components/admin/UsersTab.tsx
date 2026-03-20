@@ -99,7 +99,7 @@ export function UsersTab() {
       {users.length === 0 ? (
         <p className="text-sm text-text-muted text-center py-8">No users yet.</p>
       ) : (
-        <div className="border border-border rounded-lg overflow-hidden">
+        <div className="border border-border rounded-xl overflow-hidden">
           {/* Header row */}
           <div className="flex items-center gap-4 px-4 py-2 bg-surface-overlay text-xs text-text-muted font-medium">
             <span className="flex-1">User</span>

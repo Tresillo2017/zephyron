@@ -6,8 +6,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<string, string> = {
-  primary: 'bg-accent text-white font-semibold hover:bg-accent-hover',
-  secondary: 'bg-surface-raised text-text-primary border border-border hover:bg-surface-hover hover:border-border-light',
+  primary: 'bg-accent text-white font-semibold hover:bg-accent-hover shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15),0_3px_12px_hsl(var(--h4)/0.35)]',
+  secondary: 'bg-surface-raised text-text-primary border border-border hover:bg-surface-hover hover:border-border-light shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]',
   ghost: 'bg-transparent text-text-secondary hover:text-text-primary hover:bg-surface-hover',
   danger: 'bg-danger/10 text-danger hover:bg-danger/20',
 }
@@ -26,7 +26,8 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-full transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      style={{ transitionTimingFunction: 'var(--ease-out-custom)' }}
       {...props}
     />
   )

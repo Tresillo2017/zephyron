@@ -1,0 +1,13 @@
+# Zephyron — Environment Variables
+# Copy this file to .dev.vars and fill in the values
+# See wrangler.jsonc for Cloudflare bindings (DB, R2, AI, etc.)
+
+# Better Auth — Required
+# Generate a secret: openssl rand -base64 32
+BETTER_AUTH_SECRET=your-secret-here-min-32-chars
+
+# YouTube Data API v3 — Required for tracklist detection from YouTube
+YOUTUBE_API_KEY=
+
+# Last.fm API — Required for artist/track enrichment
+LASTFM_API_KEY=

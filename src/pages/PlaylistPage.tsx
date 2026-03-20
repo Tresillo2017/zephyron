@@ -76,14 +76,14 @@ export function PlaylistPage() {
 
       {/* Items */}
       {playlist.items.length === 0 ? (
-        <div className="text-center py-16 border border-border rounded-lg">
+        <div className="text-center py-16 border border-border rounded-xl">
           <p className="text-text-muted text-sm">This playlist is empty.</p>
           <Link to="/app/browse" className="text-accent text-sm mt-2 inline-block no-underline hover:underline">
             Browse sets to add
           </Link>
         </div>
       ) : (
-        <div className="border border-border rounded-lg overflow-hidden">
+        <div className="border border-border rounded-xl overflow-hidden">
           {playlist.items.map((item, index) => (
             <div
               key={item.id}

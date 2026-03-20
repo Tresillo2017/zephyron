@@ -29,9 +29,11 @@ export function SetCard({ set }: SetCardProps) {
   return (
     <Link to={`/app/sets/${set.id}`} className="group flex flex-col gap-3 no-underline">
       {/* Cover art */}
-      <div className={`relative aspect-square bg-surface-overlay rounded-lg overflow-hidden transition-shadow duration-300 ${
+      <div className={`relative aspect-square bg-surface-overlay rounded-xl overflow-hidden transition-all duration-200 ${
         isCurrentlyPlaying ? 'ring-1 ring-accent/40 shadow-lg shadow-accent/10' : 'group-hover:shadow-lg group-hover:shadow-accent/5'
-      }`}>
+      }`}
+        style={{ transitionTimingFunction: 'var(--ease-out-custom)' }}
+      >
         {set.cover_image_r2_key ? (
           <img
             src={getCoverUrl(set.id)}
@@ -50,11 +52,11 @@ export function SetCard({ set }: SetCardProps) {
         {/* Play button overlay */}
         <button
           onClick={handlePlay}
-          className={`absolute bottom-2 right-2 w-10 h-10 bg-accent rounded-full flex items-center justify-center shadow-lg transition-all duration-200 ${
+          className={`absolute bottom-2 right-2 w-10 h-10 bg-accent rounded-full flex items-center justify-center shadow-[0_3px_12px_hsl(var(--h4)/0.35)] transition-all duration-200 cursor-pointer ${
             isCurrentlyPlaying
               ? 'opacity-100 translate-y-0'
               : 'opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0'
-          } hover:scale-105 hover:bg-accent-hover`}
+          } hover:scale-105 hover:bg-accent-hover active:scale-95`}
         >
           {isCurrentlyPlaying ? (
             <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">

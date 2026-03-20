@@ -49,22 +49,22 @@ export function ProfilePage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-surface-raised border border-border rounded-lg p-4 text-center">
+        <div className="bg-surface-raised border border-border rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-accent">{user.reputation || 0}</p>
           <p className="text-xs text-text-muted">Reputation</p>
         </div>
-        <div className="bg-surface-raised border border-border rounded-lg p-4 text-center">
+        <div className="bg-surface-raised border border-border rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-text-primary">{user.totalAnnotations || user.total_annotations || 0}</p>
           <p className="text-xs text-text-muted">Annotations</p>
         </div>
-        <div className="bg-surface-raised border border-border rounded-lg p-4 text-center">
+        <div className="bg-surface-raised border border-border rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-text-primary">{user.totalVotes || user.total_votes || 0}</p>
           <p className="text-xs text-text-muted">Votes</p>
         </div>
       </div>
 
       {/* Reputation breakdown */}
-      <div className="bg-surface-raised border border-border rounded-lg p-4">
+      <div className="bg-surface-raised border border-border rounded-xl p-4">
         <h3 className="text-sm font-semibold text-text-primary mb-3">How reputation works</h3>
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="flex justify-between text-text-secondary">

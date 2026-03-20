@@ -53,7 +53,7 @@ export function PlayerBar() {
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
           )}
 
-          <div className="bg-surface-raised border-t border-border">
+          <div className="bg-[hsl(var(--b5)/0.85)] backdrop-blur-xl border-t border-[hsl(var(--br1)/0.5)]">
           {/* Mobile: full-width thin progress bar on top */}
           <div className="sm:hidden"><ProgressBar currentTime={currentTime} duration={duration} detections={detections} /></div>
 

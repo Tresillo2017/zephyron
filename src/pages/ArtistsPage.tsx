@@ -47,7 +47,7 @@ export function ArtistsPage() {
               <Link
                 key={artist.id}
                 to={`/app/artists/${artist.slug || artist.id}`}
-                className="group flex items-center gap-4 px-4 py-4 rounded-lg bg-surface-raised border border-border hover:border-border-light hover:bg-surface-hover transition-all no-underline"
+                className="group flex items-center gap-4 px-4 py-4 rounded-xl bg-surface-raised border border-border hover:border-border-light hover:bg-surface-hover transition-all no-underline"
               >
                 {/* Artist image */}
                 <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-surface-overlay">

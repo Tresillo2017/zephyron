@@ -1,7 +1,7 @@
 {
 	"name": "zephyron",
 	"private": true,
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
@@ -9,7 +9,10 @@
 		"lint": "eslint .",
 		"preview": "bun run build && vite preview",
 		"deploy": "bun run build && wrangler deploy",
-		"cf-typegen": "wrangler types"
+		"cf-typegen": "wrangler types",
+		"changeset": "changeset",
+		"changeset:version": "changeset version",
+		"changeset:tag": "changeset tag"
 	},
 	"dependencies": {
 		"better-auth": "^1.5.5",
@@ -17,10 +20,12 @@
 		"nanoid": "^5.1.7",
 		"react": "^19.2.0",
 		"react-dom": "^19.2.0",
+		"react-qr-code": "^2.0.18",
 		"react-router": "^7.13.1",
 		"zustand": "^5.0.12"
 	},
 	"devDependencies": {
+		"@changesets/cli": "^2.30.0",
 		"@cloudflare/vite-plugin": "^1.29.1",
 		"@eslint/js": "^9.39.1",
 		"@tailwindcss/vite": "^4.2.2",

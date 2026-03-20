@@ -189,7 +189,7 @@ function SetsListTab() {
 
   return (
     <>
-      <div className="border border-border rounded-lg overflow-hidden">
+      <div className="border border-border rounded-xl overflow-hidden">
         {sets.map((set, index) => (
           <div
             key={set.id}
@@ -437,7 +437,7 @@ function MLPipelineTab() {
         <Button variant="secondary" onClick={loadData}>Refresh</Button>
       </div>
       {jobs.length > 0 && (
-        <div className="border border-border rounded-lg overflow-hidden">
+        <div className="border border-border rounded-xl overflow-hidden">
           {jobs.map((job, index) => (
             <div key={job.id} className={`flex items-center gap-4 px-4 py-3 ${index > 0 ? 'border-t border-border' : ''}`}>
               <div className="flex-1 min-w-0">
@@ -456,7 +456,7 @@ function MLPipelineTab() {
 
 function StatCard({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
   return (
-    <div className="bg-surface-raised border border-border rounded-lg p-4">
+    <div className="bg-surface-raised border border-border rounded-xl p-4">
       <p className="text-xs text-text-muted mb-1">{label}</p>
       <p className={`text-2xl font-bold ${accent ? 'text-accent' : 'text-text-primary'}`}>{value}</p>
     </div>

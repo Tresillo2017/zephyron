@@ -58,7 +58,7 @@ export function HistoryPage() {
           </Link>
         </div>
       ) : (
-        <div className="border border-border rounded-lg overflow-hidden">
+        <div className="border border-border rounded-xl overflow-hidden">
           {history.map((item, index) => {
             const progressPct = item.duration_seconds
               ? Math.min(100, (item.last_position_seconds / item.duration_seconds) * 100)

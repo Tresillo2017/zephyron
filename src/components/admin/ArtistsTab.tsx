@@ -68,7 +68,7 @@ export function ArtistsTab() {
 
   return (
     <>
-      <div className="border border-border rounded-lg overflow-hidden">
+      <div className="border border-border rounded-xl overflow-hidden">
         {artists.map((artist, index) => {
           const tags = (() => { try { return JSON.parse(artist.tags || '[]') } catch { return [] } })()
           return (

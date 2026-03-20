@@ -58,7 +58,7 @@ export function SearchPage() {
               <h2 className="text-lg font-semibold text-text-primary mb-4">
                 Tracks ({results.tracks.length})
               </h2>
-              <div className="border border-border rounded-lg overflow-hidden">
+              <div className="border border-border rounded-xl overflow-hidden">
                 {results.tracks.map((track) => (
                   <Link
                     key={track.id}

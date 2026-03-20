@@ -64,7 +64,7 @@ export function Sidebar() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search..."
-              className="w-full pl-9 pr-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+              className="w-full pl-9 pr-3 py-2 bg-surface-overlay border border-border rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-all duration-200"
             />
           </div>
         </form>
@@ -77,11 +77,12 @@ export function Sidebar() {
             key={item.to}
             to={item.to}
             onClick={() => setMobileOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors no-underline ${
+            className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-200 no-underline ${
               isActive(item.to)
-                ? 'bg-accent/10 text-accent font-medium'
+                ? 'bg-accent/10 text-accent font-medium shadow-[inset_0_0_0_1px_hsl(var(--h3)/0.15)]'
                 : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
             }`}
+            style={{ transitionTimingFunction: 'var(--ease-out-custom)' }}
           >
             <svg className="w-4.5 h-4.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
@@ -100,11 +101,12 @@ export function Sidebar() {
               key={item.to}
               to={item.to}
               onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors no-underline ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-200 no-underline ${
                 isActive(item.to)
-                  ? 'bg-accent/10 text-accent font-medium'
+                  ? 'bg-accent/10 text-accent font-medium shadow-[inset_0_0_0_1px_hsl(var(--h3)/0.15)]'
                   : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
               }`}
+              style={{ transitionTimingFunction: 'var(--ease-out-custom)' }}
             >
               <svg className="w-4.5 h-4.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
@@ -122,11 +124,12 @@ export function Sidebar() {
           <Link
             to="/app/admin"
             onClick={() => setMobileOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors no-underline ${
+            className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-200 no-underline ${
               isActive('/app/admin')
-                ? 'bg-accent/10 text-accent font-medium'
+                ? 'bg-accent/10 text-accent font-medium shadow-[inset_0_0_0_1px_hsl(var(--h3)/0.15)]'
                 : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
             }`}
+            style={{ transitionTimingFunction: 'var(--ease-out-custom)' }}
           >
             <svg className="w-4.5 h-4.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -143,31 +146,45 @@ export function Sidebar() {
       {/* User */}
       <div className="px-3 pb-3 border-t border-border pt-3 mt-3">
         {session?.user ? (
-          <div className="flex items-center gap-3 px-2">
+          <div className="space-y-1">
             <Link
               to="/app/profile"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2.5 flex-1 min-w-0 no-underline"
+              className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-surface-hover transition-colors no-underline"
             >
               <div className="w-8 h-8 bg-accent/15 rounded-full flex items-center justify-center text-accent text-xs font-bold flex-shrink-0">
                 {session.user.name?.charAt(0).toUpperCase() || '?'}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm text-text-primary truncate">{session.user.name}</p>
                 <p className="text-[10px] text-text-muted truncate">{session.user.email}</p>
               </div>
             </Link>
-            <button onClick={handleSignOut} className="text-text-muted hover:text-text-primary transition-colors p-1 flex-shrink-0" title="Sign out">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-1 px-2">
+              <Link
+                to="/app/settings"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors no-underline flex-1"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Settings
+              </Link>
+              <button onClick={handleSignOut} className="text-text-muted hover:text-text-primary transition-colors p-1.5 rounded-lg hover:bg-surface-hover flex-shrink-0" title="Sign out">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+            </div>
           </div>
         ) : (
           <Link to="/login" className="block px-3 py-2 text-sm text-accent hover:text-accent-hover transition-colors no-underline">
             Sign In
           </Link>
         )}
+        <p className="text-[10px] font-mono text-text-muted/50 text-center mt-2 select-none">v{__APP_VERSION__}</p>
       </div>
     </div>
   )
@@ -175,12 +192,12 @@ export function Sidebar() {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-60 lg:w-64 bg-surface-raised border-r border-border flex-col shrink-0 h-full overflow-y-auto">
+      <aside className="hidden md:flex w-60 lg:w-64 bg-[hsl(var(--b5)/0.8)] backdrop-blur-xl border-r border-[hsl(var(--br1)/0.5)] flex-col shrink-0 h-full overflow-y-auto">
         {sidebarContent}
       </aside>
 
       {/* Mobile: top bar with hamburger */}
-      <div className="md:hidden flex items-center justify-between h-14 px-4 bg-surface-raised border-b border-border shrink-0">
+      <div className="md:hidden flex items-center justify-between h-14 px-4 bg-[hsl(var(--b5)/0.85)] backdrop-blur-xl border-b border-[hsl(var(--br1)/0.5)] shrink-0">
         <Link to="/app" className="flex items-center gap-2 no-underline">
           <div className="w-7 h-7 bg-accent/90 rounded-lg flex items-center justify-center">
             <svg viewBox="0 0 24 24" className="w-4 h-4 text-white" fill="currentColor">
@@ -201,7 +218,7 @@ export function Sidebar() {
       {/* Mobile sidebar overlay */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 top-14 z-50 flex">
-          <div className="w-72 bg-surface-raised border-r border-border h-full overflow-y-auto">
+          <div className="w-72 bg-[hsl(var(--b5)/0.9)] backdrop-blur-xl border-r border-[hsl(var(--br1)/0.5)] h-full overflow-y-auto">
             {sidebarContent}
           </div>
           <div className="flex-1 bg-black/50" onClick={() => setMobileOpen(false)} />

@@ -54,7 +54,7 @@ export function PlaylistsPage() {
 
       {/* Create form */}
       {showCreate && (
-        <div className="bg-surface-raised border border-border rounded-lg p-4 mb-6 space-y-3">
+        <div className="bg-surface-raised border border-border rounded-xl p-4 mb-6 space-y-3">
           <Input
             label="Playlist name"
             value={newTitle}
@@ -97,7 +97,7 @@ export function PlaylistsPage() {
             <Link
               key={pl.id}
               to={`/playlists/${pl.id}`}
-              className="flex items-center gap-4 px-4 py-4 bg-surface-raised border border-border rounded-lg hover:border-border-light transition-colors no-underline"
+              className="flex items-center gap-4 px-4 py-4 bg-surface-raised border border-border rounded-xl hover:border-border-light transition-colors no-underline"
             >
               <div className="w-12 h-12 bg-surface-overlay rounded flex items-center justify-center flex-shrink-0">
                 <svg className="w-6 h-6 text-text-muted" fill="currentColor" viewBox="0 0 24 24">

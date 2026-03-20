@@ -174,7 +174,7 @@ export function SetPage() {
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" /></svg>
             </Button>
           </div>
-          <div className="flex-1 min-w-0 w-full bg-surface-raised/50 border border-border rounded-lg p-3">
+          <div className="flex-1 min-w-0 w-full bg-surface-raised/50 border border-border rounded-xl p-3">
             <Waveform peaks={waveformPeaks} duration={set.duration_seconds} detections={set.detections} height={48} />
           </div>
         </div>
@@ -249,7 +249,7 @@ export function SetPage() {
             </div>
 
             {set.detections.length === 0 ? (
-              <div className="text-center py-20 border border-border rounded-lg bg-surface-raised/30">
+              <div className="text-center py-20 border border-border rounded-xl bg-surface-raised/30">
                 <div className="w-14 h-14 mx-auto mb-4 rounded-lg bg-surface-overlay border border-border flex items-center justify-center">
                   <svg className="w-7 h-7 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z" />
@@ -268,7 +268,7 @@ export function SetPage() {
                 </Button>
               </div>
             ) : (
-              <div className="border border-border rounded-lg overflow-hidden">
+              <div className="border border-border rounded-xl overflow-hidden">
                 {set.detections.map((detection, index) => {
                   const endTime = detection.end_time_seconds
                     ?? (index + 1 < set.detections.length
