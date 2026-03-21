@@ -70,7 +70,7 @@ function withAuth(handler: RouteHandler): RouteHandler {
 const router = new Router()
 
 // Health check
-router.get('/api/health', () => json({ status: 'ok', version: '0.2.0' }))
+router.get('/api/health', () => json({ status: 'ok', version: '0.2.1' }))
 
 // Sets (public)
 router.get('/api/sets', listSets)

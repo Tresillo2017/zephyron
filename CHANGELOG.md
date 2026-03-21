@@ -5,6 +5,16 @@ All notable changes to Zephyron will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-03-21
+
+### Fixed
+- Invite codes no longer consumed when user registration fails (moved usage increment from `before` to `after` database hook)
+- Apply missing D1 migrations for events table and two-factor auth columns (`twoFactorEnabled`)
+- Fix migration ordering: rename duplicate `0006` prefix to `0007_two-factor-auth.sql`
+
+### Changed
+- GitHub repo: added description, 16 topics, enabled Discussions
+
 ## [0.2.0] - 2026-03-21
 
 ### Added

@@ -90,7 +90,7 @@ export function createAuth(env: Env) {
               throw new Error('Invite code is required')
             }
 
-            // Check invite code validity
+            // Check invite code validity (do NOT consume yet — wait for successful creation)
             const code = await env.DB.prepare(
               'SELECT id, max_uses, used_count, expires_at FROM invite_codes WHERE code = ?'
             )
@@ -109,13 +109,6 @@ export function createAuth(env: Env) {
               throw new Error('Invite code has expired')
             }
 
-            // Consume the invite code
-            await env.DB.prepare(
-              'UPDATE invite_codes SET used_count = used_count + 1 WHERE id = ?'
-            )
-              .bind(code.id)
-              .run()
-
             return {
               data: {
                 ...user,
@@ -123,6 +116,17 @@ export function createAuth(env: Env) {
                 total_annotations: 0,
                 total_votes: 0,
               },
+            }
+          },
+          after: async (user) => {
+            // User was successfully created — now consume the invite code
+            const inviteCode = (user as any).invite_code || (user as any).inviteCode
+            if (inviteCode) {
+              await env.DB.prepare(
+                'UPDATE invite_codes SET used_count = used_count + 1 WHERE code = ?'
+              )
+                .bind(inviteCode)
+                .run()
             }
           },
         },
