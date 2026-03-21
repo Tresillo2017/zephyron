@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { fetchEvents, fetchSets, createEventAdmin, updateEventAdmin, deleteEventAdmin, linkSetToEvent } from '../../lib/api'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
@@ -18,12 +18,23 @@ export function EventsTab() {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [linkingEvent, setLinkingEvent] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
 
   const loadEvents = () => {
     setIsLoading(true)
     fetchEvents().then((r) => setEvents(r.data)).catch(() => {}).finally(() => setIsLoading(false))
   }
   useEffect(() => { loadEvents() }, [])
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return events
+    const q = search.toLowerCase()
+    return events.filter((e) =>
+      e.name.toLowerCase().includes(q) ||
+      (e.series || '').toLowerCase().includes(q) ||
+      (e.location || '').toLowerCase().includes(q)
+    )
+  }, [events, search])
 
   const handleDelete = async (id: string) => {
     await deleteEventAdmin(id); setEvents((p) => p.filter((e) => e.id !== id)); setConfirmDelete(null)
@@ -33,18 +44,32 @@ export function EventsTab() {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-5">
-        <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>{events.length} events</p>
+      <div className="flex items-center justify-between mb-5 gap-4">
+        <p className="text-sm shrink-0" style={{ color: 'hsl(var(--c3))' }}>{filtered.length} event{filtered.length !== 1 ? 's' : ''}</p>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search events..."
+          className="flex-1 max-w-xs px-3 py-1.5 rounded-lg text-sm placeholder:text-text-muted focus:outline-none transition-all duration-200"
+          style={{
+            background: 'hsl(var(--b4) / 0.4)',
+            color: 'hsl(var(--c1))',
+          }}
+          onFocus={(e) => { e.currentTarget.style.boxShadow = 'inset 0 0 0 1px hsl(var(--h3) / 0.5)' }}
+          onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
+        />
         <Button variant="primary" size="sm" onClick={() => setShowCreate(true)}>Create Event</Button>
       </div>
 
-      {events.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="card text-center py-12">
-          <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>No events yet.</p>
+          <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+            {search ? 'No events match your search.' : 'No events yet.'}
+          </p>
         </div>
       ) : (
         <div className="space-y-2">
-          {events.map((event) => (
+          {filtered.map((event) => (
             <div key={event.id} className="card !p-4 flex items-center gap-4">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-[var(--font-weight-medium)] truncate" style={{ color: 'hsl(var(--c1))' }}>{event.name}</p>

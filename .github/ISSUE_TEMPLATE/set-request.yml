@@ -1,0 +1,60 @@
+name: Set Request
+description: Request a DJ set to be added to Zephyron
+labels: ["set-request"]
+body:
+  - type: input
+    id: artist
+    attributes:
+      label: DJ / Artist
+      description: Name of the DJ or artist performing the set
+      placeholder: e.g. Ben Klock
+    validations:
+      required: true
+  - type: input
+    id: set_name
+    attributes:
+      label: Set Name / Title
+      description: Name or title of the DJ set
+      placeholder: e.g. Boiler Room Berlin 2024
+    validations:
+      required: true
+  - type: input
+    id: youtube_url
+    attributes:
+      label: YouTube URL
+      description: Link to the DJ set on YouTube
+      placeholder: https://youtube.com/watch?v=...
+    validations:
+      required: true
+  - type: input
+    id: event
+    attributes:
+      label: Event / Festival / Venue
+      description: Where was this set recorded?
+      placeholder: e.g. Berghain, Tomorrowland
+  - type: dropdown
+    id: genre
+    attributes:
+      label: Genre
+      options:
+        - Techno
+        - House
+        - Trance
+        - Drum & Bass
+        - Dubstep
+        - Minimal
+        - Progressive
+        - Hardstyle
+        - Disco
+        - Electro
+        - Ambient
+        - Breaks
+        - Downtempo
+        - Garage
+        - Acid
+        - Industrial
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other details about the set (year, special occasion, tracklist link, etc.)

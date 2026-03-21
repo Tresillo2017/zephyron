@@ -8,5 +8,6 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), cloudflare()],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
+    __TURNSTILE_SITE_KEY__: JSON.stringify(process.env.TURNSTILE_SITE_KEY || ''),
   },
 })

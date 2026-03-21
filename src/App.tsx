@@ -2,6 +2,7 @@ import { Routes, Route, Outlet, Navigate } from 'react-router'
 import { useSession } from './lib/auth-client'
 import { TopNav } from './components/layout/TopNav'
 import { PlayerBar } from './components/layout/PlayerBar'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 // Public pages
 import { LandingPage } from './pages/LandingPage'
@@ -11,6 +12,8 @@ import { AboutPage } from './pages/AboutPage'
 import { PrivacyPage } from './pages/PrivacyPage'
 import { TermsPage } from './pages/TermsPage'
 import { TwoFactorPage } from './pages/TwoFactorPage'
+import { NotFoundPage } from './pages/NotFoundPage'
+import { ChangelogPage as PublicChangelogPage } from './pages/ChangelogPage'
 
 // App pages (authenticated)
 import { HomePage } from './pages/HomePage'
@@ -27,6 +30,8 @@ import { ArtistsPage } from './pages/ArtistsPage'
 import { ArtistPage } from './pages/ArtistPage'
 import { EventsPage } from './pages/EventsPage'
 import { EventPage } from './pages/EventPage'
+import { ChangelogPage } from './pages/ChangelogPage'
+import { RequestSetPage } from './pages/RequestSetPage'
 
 /** Layout for authenticated app pages — top nav over content + player */
 function AppLayout() {
@@ -81,37 +86,42 @@ function RedirectIfAuth({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <Routes>
-      {/* Public routes */}
-      <Route index element={<RedirectIfAuth><LandingPage /></RedirectIfAuth>} />
-      <Route path="login" element={<RedirectIfAuth><LoginPage /></RedirectIfAuth>} />
-      <Route path="register" element={<RedirectIfAuth><RegisterPage /></RedirectIfAuth>} />
-      <Route path="2fa" element={<TwoFactorPage />} />
-      <Route path="about" element={<AboutPage />} />
-      <Route path="privacy" element={<PrivacyPage />} />
-      <Route path="terms" element={<TermsPage />} />
+    <ErrorBoundary>
+      <Routes>
+        {/* Public routes */}
+        <Route index element={<RedirectIfAuth><LandingPage /></RedirectIfAuth>} />
+        <Route path="login" element={<RedirectIfAuth><LoginPage /></RedirectIfAuth>} />
+        <Route path="register" element={<RedirectIfAuth><RegisterPage /></RedirectIfAuth>} />
+        <Route path="2fa" element={<TwoFactorPage />} />
+        <Route path="about" element={<AboutPage />} />
+        <Route path="privacy" element={<PrivacyPage />} />
+        <Route path="terms" element={<TermsPage />} />
+        <Route path="changelog" element={<PublicChangelogPage />} />
 
-      {/* Protected app routes */}
-      <Route path="app" element={<RequireAuth />}>
-        <Route index element={<HomePage />} />
-        <Route path="browse" element={<BrowsePage />} />
-        <Route path="sets/:id" element={<SetPage />} />
-        <Route path="search" element={<SearchPage />} />
-        <Route path="playlists" element={<PlaylistsPage />} />
-        <Route path="playlists/:id" element={<PlaylistPage />} />
-        <Route path="history" element={<HistoryPage />} />
-        <Route path="artists" element={<ArtistsPage />} />
-        <Route path="artists/:id" element={<ArtistPage />} />
-        <Route path="events" element={<EventsPage />} />
-        <Route path="events/:id" element={<EventPage />} />
-        <Route path="admin" element={<AdminPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-        <Route path="settings" element={<SettingsPage />} />
-      </Route>
+        {/* Protected app routes */}
+        <Route path="app" element={<RequireAuth />}>
+          <Route index element={<HomePage />} />
+          <Route path="browse" element={<BrowsePage />} />
+          <Route path="sets/:id" element={<SetPage />} />
+          <Route path="search" element={<SearchPage />} />
+          <Route path="playlists" element={<PlaylistsPage />} />
+          <Route path="playlists/:id" element={<PlaylistPage />} />
+          <Route path="history" element={<HistoryPage />} />
+          <Route path="artists" element={<ArtistsPage />} />
+          <Route path="artists/:id" element={<ArtistPage />} />
+          <Route path="events" element={<EventsPage />} />
+          <Route path="events/:id" element={<EventPage />} />
+          <Route path="admin" element={<AdminPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="changelog" element={<ChangelogPage />} />
+          <Route path="request-set" element={<RequestSetPage />} />
+        </Route>
 
-      {/* Catch-all redirect */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* 404 */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </ErrorBoundary>
   )
 }
 

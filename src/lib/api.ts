@@ -14,20 +14,33 @@ function getHeaders(): HeadersInit {
 }
 
 async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: {
-      ...getHeaders(),
-      ...init?.headers,
-    },
-  })
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 30000)
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Request failed' }))
-    throw new Error((error as { error: string }).error || `HTTP ${response.status}`)
+  try {
+    const response = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        ...getHeaders(),
+        ...init?.headers,
+      },
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Request failed' }))
+      throw new Error((error as { error: string }).error || `HTTP ${response.status}`)
+    }
+
+    return response.json()
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.')
+    }
+    throw err
+  } finally {
+    clearTimeout(timeout)
   }
-
-  return response.json()
 }
 
 // Sets
@@ -369,4 +382,20 @@ export async function linkSetToEvent(eventId: string, setId: string): Promise<vo
 
 export async function unlinkSetFromEvent(eventId: string, setId: string): Promise<void> {
   await fetchApi(`/admin/events/${eventId}/unlink-set`, { method: 'POST', body: JSON.stringify({ set_id: setId }) })
+}
+
+// ═══════════════════════════════════════════
+// SET REQUEST PETITIONS
+// ═══════════════════════════════════════════
+
+export async function submitSetRequest(data: {
+  name: string
+  artist: string
+  youtube_url: string
+  event?: string
+  genre?: string
+  notes?: string
+  turnstile_token: string
+}): Promise<{ data: { issue_url: string; issue_number: number }; ok: boolean }> {
+  return fetchApi('/petitions', { method: 'POST', body: JSON.stringify(data) })
 }

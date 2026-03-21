@@ -11,3 +11,11 @@ YOUTUBE_API_KEY=
 
 # Last.fm API — Required for artist/track enrichment
 LASTFM_API_KEY=
+
+# GitHub Personal Access Token — Required for "Request a Set" feature
+# Needs: repo scope (or fine-grained with issues write permission)
+GITHUB_TOKEN=
+
+# Cloudflare Turnstile — Required for "Request a Set" form protection
+# Get keys at: https://dash.cloudflare.com/turnstile
+TURNSTILE_SECRET_KEY=

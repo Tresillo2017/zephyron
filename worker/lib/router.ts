@@ -83,25 +83,28 @@ export class Router {
   }
 }
 
-// CORS headers helper
-export function corsHeaders(origin = '*'): Headers {
+// CORS headers helper — validates origin against allowed list
+export function corsHeaders(requestOrigin?: string | null): Headers {
   const headers = new Headers()
+  // Allow the production URL, plus localhost for dev
+  const allowed = ['http://localhost:5173', 'http://localhost:4173']
+  const origin = requestOrigin && (allowed.includes(requestOrigin) || requestOrigin.endsWith('.zephyron.app') || requestOrigin.endsWith('.workers.dev'))
+    ? requestOrigin
+    : allowed[0]
   headers.set('Access-Control-Allow-Origin', origin)
   headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Anonymous-Id, Authorization, Range')
   headers.set('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges')
+  headers.set('Access-Control-Allow-Credentials', 'true')
   headers.set('Access-Control-Max-Age', '86400')
   return headers
 }
 
 // JSON response helper
-export function json<T>(data: T, status = 200): Response {
+export function json<T>(data: T, status = 200, requestOrigin?: string | null): Response {
   return Response.json(data, {
     status,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type, X-Anonymous-Id',
-    },
+    headers: corsHeaders(requestOrigin),
   })
 }
 

@@ -187,29 +187,14 @@ export async function runDetectionPipeline(
       }
     }
 
-    // 5b. Auto-link to event if event name detected
+    // 5b. Auto-link to event if event name detected (auto-creates if needed)
     if (set.event) {
       try {
-        const existingEvent = await env.DB.prepare(
-          'SELECT id FROM events WHERE name LIKE ? OR series LIKE ?'
-        ).bind(`%${set.event}%`, `%${set.event}%`).first<{ id: string }>()
-
-        if (existingEvent) {
+        const eventId = await ensureEvent(set.event, setId, env)
+        if (eventId) {
           await env.DB.prepare('UPDATE sets SET event_id = ? WHERE id = ?')
-            .bind(existingEvent.id, setId).run()
-
-          // If event has no cover, use this set's thumbnail
-          const eventCover = await env.DB.prepare('SELECT cover_image_r2_key FROM events WHERE id = ?')
-            .bind(existingEvent.id).first<{ cover_image_r2_key: string | null }>()
-          if (!eventCover?.cover_image_r2_key) {
-            const setCover = await env.DB.prepare('SELECT cover_image_r2_key FROM sets WHERE id = ?')
-              .bind(setId).first<{ cover_image_r2_key: string | null }>()
-            if (setCover?.cover_image_r2_key) {
-              await env.DB.prepare('UPDATE events SET cover_image_r2_key = ? WHERE id = ?')
-                .bind(setCover.cover_image_r2_key, existingEvent.id).run()
-            }
-          }
-          console.log(`[detect] Auto-linked set to event: ${set.event} (${existingEvent.id})`)
+            .bind(eventId, setId).run()
+          console.log(`[detect] Linked set to event: ${set.event} (${eventId})`)
         }
       } catch (err) {
         console.error('[detect] Event auto-link failed (non-blocking):', err)
@@ -332,4 +317,80 @@ async function ensureArtist(
 
   console.log(`[detect] Created artist: ${lfm?.name || artistName} (${id})${backgroundUrl ? ' with background' : ''}`)
   return id
+}
+
+/**
+ * Ensure an event record exists in the DB for the given event name.
+ * Searches for an existing event first (exact match, then fuzzy LIKE).
+ * If not found, auto-creates a new event record and inherits the set's cover image.
+ * Returns the event ID, or null if the event name is empty.
+ */
+async function ensureEvent(
+  eventName: string,
+  setId: string,
+  env: Env
+): Promise<string | null> {
+  if (!eventName.trim()) return null
+
+  const name = eventName.trim()
+
+  // 1. Exact match on name
+  let existing = await env.DB.prepare(
+    'SELECT id FROM events WHERE name = ?'
+  ).bind(name).first<{ id: string }>()
+
+  // 2. Fuzzy match on name or series
+  if (!existing) {
+    existing = await env.DB.prepare(
+      'SELECT id FROM events WHERE name LIKE ? OR series LIKE ?'
+    ).bind(`%${name}%`, `%${name}%`).first<{ id: string }>()
+  }
+
+  if (existing) {
+    // Inherit cover image if the event doesn't have one yet
+    await inheritEventCover(existing.id, setId, env)
+    return existing.id
+  }
+
+  // 3. No match — create a new event record
+  const id = generateId()
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
+  // Extract series name: strip trailing year/edition (e.g. "Boiler Room Berlin 2024" -> "Boiler Room Berlin")
+  const seriesMatch = name.match(/^(.+?)\s*(?:\d{4}|\d{1,2}(?:st|nd|rd|th)\s+edition)$/i)
+  const series = seriesMatch ? seriesMatch[1].trim() : null
+
+  await env.DB.prepare(
+    `INSERT INTO events (id, name, slug, series, created_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`
+  ).bind(id, name, slug, series).run()
+
+  // Inherit cover from the set
+  await inheritEventCover(id, setId, env)
+
+  console.log(`[detect] Auto-created event: ${name} (${id})${series ? ` [series: ${series}]` : ''}`)
+  return id
+}
+
+/**
+ * If the event has no cover image, copy the set's cover image to it.
+ */
+async function inheritEventCover(
+  eventId: string,
+  setId: string,
+  env: Env
+): Promise<void> {
+  const eventCover = await env.DB.prepare(
+    'SELECT cover_image_r2_key FROM events WHERE id = ?'
+  ).bind(eventId).first<{ cover_image_r2_key: string | null }>()
+
+  if (eventCover?.cover_image_r2_key) return
+
+  const setCover = await env.DB.prepare(
+    'SELECT cover_image_r2_key FROM sets WHERE id = ?'
+  ).bind(setId).first<{ cover_image_r2_key: string | null }>()
+
+  if (setCover?.cover_image_r2_key) {
+    await env.DB.prepare('UPDATE events SET cover_image_r2_key = ? WHERE id = ?')
+      .bind(setCover.cover_image_r2_key, eventId).run()
+  }
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { useSearchParams, Link } from 'react-router'
 import { useSession, authClient } from '../lib/auth-client'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
@@ -666,7 +666,7 @@ function AccountTab() {
           </div>
           <div className="flex justify-between">
             <span className="text-text-muted">App version</span>
-            <span className="text-text-secondary font-mono text-xs">v{__APP_VERSION__}</span>
+            <Link to="/app/changelog" className="text-accent text-xs font-mono hover:underline no-underline">v{__APP_VERSION__}</Link>
           </div>
         </div>
       </div>

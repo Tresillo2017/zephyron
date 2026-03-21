@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { fetchArtists, syncArtistAdmin, updateArtistAdmin, deleteArtistAdmin } from '../../lib/api'
 import { Button } from '../ui/Button'
 import { Badge } from '../ui/Badge'
@@ -28,6 +28,7 @@ export function ArtistsTab() {
   const [syncing, setSyncing] = useState<string | null>(null)
   const [editingArtist, setEditingArtist] = useState<Artist | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
 
   const loadArtists = () => {
     setIsLoading(true)
@@ -38,6 +39,15 @@ export function ArtistsTab() {
   }
 
   useEffect(() => { loadArtists() }, [])
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return artists
+    const q = search.toLowerCase()
+    return artists.filter((a) => {
+      const tags = (() => { try { return JSON.parse(a.tags || '[]').join(' ') } catch { return '' } })()
+      return a.name.toLowerCase().includes(q) || a.slug.includes(q) || tags.toLowerCase().includes(q)
+    })
+  }, [artists, search])
 
   const handleSync = async (id: string) => {
     setSyncing(id)
@@ -56,80 +66,93 @@ export function ArtistsTab() {
     } catch { /* silent */ }
   }
 
-  if (isLoading) return <Skeleton className="h-64 w-full rounded-lg" />
-
-  if (artists.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-text-muted text-sm">No artists yet. Artists are created when you run detection on sets.</p>
-      </div>
-    )
-  }
+  if (isLoading) return <Skeleton className="h-64 w-full rounded-xl" />
 
   return (
     <>
-      <div className="card !p-0 overflow-hidden">
-        {artists.map((artist, index) => {
-          const tags = (() => { try { return JSON.parse(artist.tags || '[]') } catch { return [] } })()
-          return (
-            <div
-              key={artist.id}
-              className={`flex items-center gap-4 px-4 py-3 ${index > 0 ? '' : ''}`}
-            >
-              {/* Avatar */}
-              <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-surface-overlay">
-                {artist.image_url ? (
-                  <img src={artist.image_url} alt={artist.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-text-muted text-lg font-bold">
-                    {artist.name.charAt(0)}
-                  </div>
-                )}
-              </div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5 gap-4">
+        <p className="text-sm shrink-0" style={{ color: 'hsl(var(--c3))' }}>{filtered.length} artist{filtered.length !== 1 ? 's' : ''}</p>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search artists..."
+          className="flex-1 max-w-xs px-3 py-1.5 rounded-lg text-sm placeholder:text-text-muted focus:outline-none transition-all duration-200"
+          style={{
+            background: 'hsl(var(--b4) / 0.4)',
+            color: 'hsl(var(--c1))',
+          }}
+          onFocus={(e) => { e.currentTarget.style.boxShadow = 'inset 0 0 0 1px hsl(var(--h3) / 0.5)' }}
+          onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
+        />
+      </div>
 
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-text-primary truncate">{artist.name}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  {tags.slice(0, 3).map((tag: string) => (
-                    <Badge key={tag} variant="muted">{tag}</Badge>
-                  ))}
-                  {artist.set_count > 0 && (
-                    <span className="text-xs text-text-muted">{artist.set_count} set{artist.set_count !== 1 ? 's' : ''}</span>
+      {/* List */}
+      {filtered.length === 0 ? (
+        <div className="card text-center py-12">
+          <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+            {search ? 'No artists match your search.' : 'No artists yet. Artists are created when you run detection on sets.'}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filtered.map((artist) => {
+            const tags = (() => { try { return JSON.parse(artist.tags || '[]') } catch { return [] } })()
+            return (
+              <div key={artist.id} className="card !p-4 flex items-center gap-4">
+                {/* Avatar */}
+                <div
+                  className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center"
+                  style={{ background: 'hsl(var(--b4) / 0.6)' }}
+                >
+                  {artist.image_url ? (
+                    <img src={artist.image_url} alt={artist.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-sm font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c3))' }}>
+                      {artist.name.charAt(0)}
+                    </span>
                   )}
                 </div>
-                <p className="text-[10px] text-text-muted mt-0.5">
-                  {artist.listeners > 0 ? `${formatPlayCount(artist.listeners)} listeners` : 'No Last.fm data'}
-                  {artist.last_synced_at && ` · Synced ${formatRelativeTime(artist.last_synced_at)}`}
-                </p>
-              </div>
 
-              {/* Image status */}
-              <Badge variant={artist.image_url ? 'accent' : 'muted'}>
-                {artist.image_url ? 'Has image' : 'No image'}
-              </Badge>
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-[var(--font-weight-medium)] truncate" style={{ color: 'hsl(var(--c1))' }}>{artist.name}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {tags.slice(0, 3).map((tag: string) => (
+                      <Badge key={tag} variant="muted">{tag}</Badge>
+                    ))}
+                    {artist.listeners > 0 && (
+                      <span className="text-xs" style={{ color: 'hsl(var(--c3))' }}>{formatPlayCount(artist.listeners)} listeners</span>
+                    )}
+                    {artist.last_synced_at && (
+                      <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>synced {formatRelativeTime(artist.last_synced_at)}</span>
+                    )}
+                  </div>
+                </div>
 
-              {/* Actions */}
-              <div className="flex gap-1.5 flex-shrink-0">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSync(artist.id)}
-                  disabled={syncing === artist.id}
-                >
-                  {syncing === artist.id ? '...' : 'Sync Last.fm'}
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setEditingArtist(artist)}>
-                  Edit
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => setConfirmDelete(artist.id)}>
-                  Delete
-                </Button>
+                {/* Set count */}
+                <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>
+                  {artist.set_count} set{artist.set_count !== 1 ? 's' : ''}
+                </span>
+
+                {/* Actions */}
+                <div className="flex gap-1.5 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSync(artist.id)}
+                    disabled={syncing === artist.id}
+                  >
+                    {syncing === artist.id ? '...' : 'Sync'}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setEditingArtist(artist)}>Edit</Button>
+                  <Button variant="danger" size="sm" onClick={() => setConfirmDelete(artist.id)}>Delete</Button>
+                </div>
               </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Edit modal */}
       {editingArtist && (
@@ -142,7 +165,7 @@ export function ArtistsTab() {
 
       {/* Delete confirmation */}
       <Modal isOpen={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Delete Artist">
-        <p className="text-sm text-text-secondary mb-4">
+        <p className="text-sm mb-4" style={{ color: 'hsl(var(--c2))' }}>
           This will delete the artist record. Their sets will remain but will be unlinked. This cannot be undone.
         </p>
         <div className="flex gap-3">
@@ -185,14 +208,15 @@ function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose
 
   return (
     <Modal isOpen onClose={onClose} title={`Edit: ${artist.name}`}>
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Image preview */}
         {imageUrl && (
           <div className="flex justify-center">
             <img
               src={imageUrl}
               alt="Preview"
-              className="w-24 h-24 rounded-full object-cover "
+              className="w-20 h-20 rounded-full object-cover"
+              style={{ boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)' }}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
           </div>
@@ -206,12 +230,13 @@ function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose
           placeholder="https://... (paste any image URL)"
         />
         <div>
-          <label className="text-sm font-medium text-text-secondary block mb-1.5">Bio</label>
+          <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>Bio</label>
           <textarea
             value={bioSummary}
             onChange={(e) => setBioSummary(e.target.value)}
             rows={4}
-            className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:outline-none resize-none"
+            className="w-full px-3 py-2 rounded-lg text-sm resize-none focus:outline-none"
+            style={{ background: 'hsl(var(--b4) / 0.4)', color: 'hsl(var(--c1))' }}
           />
         </div>
         <Input
@@ -227,7 +252,7 @@ function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose
           </a>
         )}
 
-        {error && <p className="text-xs text-danger">{error}</p>}
+        {error && <p className="text-xs" style={{ color: 'hsl(0, 60%, 55%)' }}>{error}</p>}
 
         <div className="flex gap-3 pt-2">
           <Button variant="secondary" onClick={onClose} className="flex-1">Cancel</Button>

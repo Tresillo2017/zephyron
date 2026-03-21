@@ -1,92 +1,94 @@
 {
-    "$schema": "node_modules/wrangler/config-schema.json",
-    "name": "zephyron",
-    "main": "worker/index.ts",
-    "compatibility_date": "2026-03-17",
-    "compatibility_flags": ["nodejs_compat"],
-    "observability": {
-        "enabled": true,
-    },
-    "assets": {
-        "not_found_handling": "single-page-application",
-    },
-    // D1 Database
-    "d1_databases": [
-        {
-            "binding": "DB",
-            "database_name": "zephyron-db",
-            "database_id": "ecd53dc6-31cb-4d3c-90a2-328d7044d6b1",
-            "migrations_dir": "migrations",
-            "remote": true,
-        },
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "zephyron",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-02-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "not_found_handling": "single-page-application"
+  },
+  // D1 Database
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "zephyron-db",
+      "database_id": "ecd53dc6-31cb-4d3c-90a2-328d7044d6b1",
+      "migrations_dir": "migrations",
+      "remote": true
+    }
+  ],
+  // R2 Audio Storage
+  "r2_buckets": [
+    {
+      "binding": "AUDIO_BUCKET",
+      "bucket_name": "zephyron-audio",
+      "remote": true
+    }
+  ],
+  // Workers AI
+  "ai": {
+    "binding": "AI"
+  },
+  // Vectorize (semantic search)
+  "vectorize": [
+    {
+      "binding": "VECTORIZE",
+      "index_name": "zephyron-sets"
+    }
+  ],
+  // Queues
+  "queues": {
+    "producers": [
+      {
+        "queue": "ml-detection-queue",
+        "binding": "ML_QUEUE"
+      },
+      {
+        "queue": "feedback-queue",
+        "binding": "FEEDBACK_QUEUE"
+      }
     ],
-    // R2 Audio Storage
-    "r2_buckets": [
-        {
-            "binding": "AUDIO_BUCKET",
-            "bucket_name": "zephyron-audio",
-            "remote": true,
-        },
-    ],
-    // Workers AI
-    "ai": {
-        "binding": "AI",
-    },
-    // Vectorize (semantic search)
-    "vectorize": [
-        {
-            "binding": "VECTORIZE",
-            "index_name": "zephyron-sets",
-        },
-    ],
-    // Queues
-    "queues": {
-        "producers": [
-            {
-                "queue": "ml-detection-queue",
-                "binding": "ML_QUEUE",
-            },
-            {
-                "queue": "feedback-queue",
-                "binding": "FEEDBACK_QUEUE",
-            },
-        ],
-        "consumers": [
-            {
-                "queue": "ml-detection-queue",
-                "max_batch_size": 1,
-                "max_batch_timeout": 0,
-                "max_retries": 3,
-                "dead_letter_queue": "ml-detection-dlq",
-            },
-            {
-                "queue": "feedback-queue",
-                "max_batch_size": 10,
-                "max_batch_timeout": 30,
-                "max_retries": 5,
-            },
-        ],
-    },
-    // Environment variables (override via wrangler secret for production)
-    "vars": {
-        "BETTER_AUTH_URL": "http://localhost:5173",
-        "BETTER_AUTH_SECRET": "zephyron-dev-secret-change-in-production-32chars!!",
-        "YOUTUBE_API_KEY": "",
-        "LASTFM_API_KEY": "",
-    },
-    // Durable Objects
-    "durable_objects": {
-        "bindings": [
-            {
-                "name": "AUDIO_SESSION",
-                "class_name": "AudioSessionDO",
-            },
-        ],
-    },
-    "migrations": [
-        {
-            "tag": "v1",
-            "new_classes": ["AudioSessionDO"],
-        },
-    ],
+    "consumers": [
+      {
+        "queue": "ml-detection-queue",
+        "max_batch_size": 1,
+        "max_batch_timeout": 0,
+        "max_retries": 3,
+        "dead_letter_queue": "ml-detection-dlq"
+      },
+      {
+        "queue": "feedback-queue",
+        "max_batch_size": 10,
+        "max_batch_timeout": 30,
+        "max_retries": 5
+      }
+    ]
+  },
+  // Environment variables (override via wrangler secret for production)
+  "vars": {
+    "BETTER_AUTH_URL": "http://localhost:5173",
+    "BETTER_AUTH_SECRET": "zephyron-dev-secret-change-in-production-32chars!!",
+    "YOUTUBE_API_KEY": "",
+    "LASTFM_API_KEY": "",
+    "GITHUB_TOKEN": "",
+    "TURNSTILE_SECRET_KEY": ""
+  },
+  // Durable Objects
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "AUDIO_SESSION",
+        "class_name": "AudioSessionDO"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_classes": ["AudioSessionDO"]
+    }
+  ]
 }

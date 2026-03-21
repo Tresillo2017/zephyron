@@ -23,7 +23,7 @@ export function createAuth(env: Env) {
       type: 'sqlite',
     },
     basePath: '/api/auth',
-    secret: env.BETTER_AUTH_SECRET || 'zephyron-dev-secret-change-in-production-32chars!!',
+    secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL || 'http://localhost:5173',
     emailAndPassword: {
       enabled: true,
@@ -137,3 +137,68 @@ export function createAuth(env: Env) {
 }
 
 export type Auth = ReturnType<typeof createAuth>
+
+/**
+ * Validate that the request has an active admin session.
+ * Returns the user object if valid, or a 401/403 Response if not.
+ */
+export async function requireAdmin(
+  request: Request,
+  env: Env
+): Promise<{ user: { id: string; role: string; name: string; email: string } } | Response> {
+  try {
+    const auth = createAuth(env)
+    const session = await auth.api.getSession({ headers: request.headers })
+
+    if (!session?.user) {
+      return new Response(JSON.stringify({ error: 'Authentication required', ok: false }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      })
+    }
+
+    if (session.user.role !== 'admin') {
+      return new Response(JSON.stringify({ error: 'Admin access required', ok: false }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      })
+    }
+
+    return { user: session.user as any }
+  } catch (err) {
+    console.error('[auth] Admin check failed:', err)
+    return new Response(JSON.stringify({ error: 'Authentication failed', ok: false }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    })
+  }
+}
+
+/**
+ * Validate that the request has an active session (any role).
+ * Returns the user object if valid, or a 401 Response if not.
+ */
+export async function requireAuth(
+  request: Request,
+  env: Env
+): Promise<{ user: { id: string; role: string; name: string; email: string } } | Response> {
+  try {
+    const auth = createAuth(env)
+    const session = await auth.api.getSession({ headers: request.headers })
+
+    if (!session?.user) {
+      return new Response(JSON.stringify({ error: 'Authentication required', ok: false }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      })
+    }
+
+    return { user: session.user as any }
+  } catch (err) {
+    console.error('[auth] Auth check failed:', err)
+    return new Response(JSON.stringify({ error: 'Authentication failed', ok: false }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    })
+  }
+}

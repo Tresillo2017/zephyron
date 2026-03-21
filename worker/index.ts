@@ -1,5 +1,5 @@
-import { Router, corsHeaders, errorResponse } from './lib/router'
-import { createAuth } from './lib/auth'
+import { Router, corsHeaders, errorResponse, json } from './lib/router'
+import { createAuth, requireAdmin, requireAuth } from './lib/auth'
 import { listSets, getSet, streamSet, debugStream, incrementPlayCount, listGenres, getSetCover } from './routes/sets'
 import { search } from './routes/search'
 import { getHistory, updateHistory } from './routes/history'
@@ -30,14 +30,49 @@ import {
   listEvents, getEvent, getEventCover,
   createEvent, updateEvent, deleteEvent, uploadEventCover, linkSetToEvent, unlinkSetFromEvent,
 } from './routes/events'
+import { submitSetRequest } from './routes/petitions'
 import { handleDetectionQueue, handleFeedbackQueue } from './queues/index'
 
 // Re-export Durable Object class for Cloudflare runtime
 export { AudioSessionDO } from './durable-objects/audio-session'
 
+// ═══════════════════════════════════════════
+// Admin route wrapper — validates session + admin role
+// ═══════════════════════════════════════════
+
+type RouteHandler = (
+  request: Request,
+  env: Env,
+  ctx: ExecutionContext,
+  params: Record<string, string>
+) => Promise<Response> | Response
+
+function withAdmin(handler: RouteHandler): RouteHandler {
+  return async (request, env, ctx, params) => {
+    const result = await requireAdmin(request, env)
+    if (result instanceof Response) return result
+    return handler(request, env, ctx, params)
+  }
+}
+
+function withAuth(handler: RouteHandler): RouteHandler {
+  return async (request, env, ctx, params) => {
+    const result = await requireAuth(request, env)
+    if (result instanceof Response) return result
+    return handler(request, env, ctx, params)
+  }
+}
+
+// ═══════════════════════════════════════════
+// Router setup
+// ═══════════════════════════════════════════
+
 const router = new Router()
 
-// Sets
+// Health check
+router.get('/api/health', () => json({ status: 'ok', version: '0.2.0' }))
+
+// Sets (public)
 router.get('/api/sets', listSets)
 router.get('/api/sets/genres', listGenres)
 router.get('/api/sets/:id', getSet)
@@ -53,12 +88,12 @@ router.post('/api/sets/:id/listeners/join', joinListeners)
 router.post('/api/sets/:id/listeners/heartbeat', heartbeatListener)
 router.post('/api/sets/:id/listeners/leave', leaveListeners)
 
-// Search
+// Search (public)
 router.get('/api/search', search)
 router.get('/api/search/similar/:id', searchSimilarSets)
 router.get('/api/search/by-track', searchByTrack)
 
-// Detections
+// Detections (public read, voting needs anonymous ID)
 router.get('/api/detections/set/:setId', getDetections)
 router.post('/api/detections/:id/vote', voteDetection)
 
@@ -66,26 +101,17 @@ router.post('/api/detections/:id/vote', voteDetection)
 router.post('/api/annotations', createAnnotation)
 router.get('/api/annotations/set/:setId', getAnnotations)
 
-// Artists
+// Artists (public read)
 router.get('/api/artists', listArtists)
 router.get('/api/artists/:id/background', getArtistBackground)
 router.get('/api/artists/:id', getArtist)
-router.post('/api/admin/artists/:id/sync', syncArtist)
-router.put('/api/admin/artists/:id', updateArtist)
-router.delete('/api/admin/artists/:id', deleteArtist)
 
-// Events
+// Events (public read)
 router.get('/api/events', listEvents)
 router.get('/api/events/:id/cover', getEventCover)
 router.get('/api/events/:id', getEvent)
-router.post('/api/admin/events', createEvent)
-router.put('/api/admin/events/:id', updateEvent)
-router.delete('/api/admin/events/:id', deleteEvent)
-router.put('/api/admin/events/:id/cover', uploadEventCover)
-router.post('/api/admin/events/:id/link-set', linkSetToEvent)
-router.post('/api/admin/events/:id/unlink-set', unlinkSetFromEvent)
 
-// Playlists
+// Playlists (authenticated)
 router.get('/api/playlists', listPlaylists)
 router.post('/api/playlists', createPlaylist)
 router.get('/api/playlists/:id', getPlaylist)
@@ -94,37 +120,61 @@ router.delete('/api/playlists/:id', deletePlaylist)
 router.post('/api/playlists/:id/items', addPlaylistItem)
 router.delete('/api/playlists/:id/items/:setId', removePlaylistItem)
 
-// History
+// History (authenticated)
 router.get('/api/history', getHistory)
 router.post('/api/history', updateHistory)
 
+// Set request petitions (authenticated + Turnstile)
+router.post('/api/petitions', withAuth(submitSetRequest))
+
+// ═══════════════════════════════════════════
+// Admin routes — all protected by withAdmin()
+// ═══════════════════════════════════════════
+
+// Admin / Artists
+router.post('/api/admin/artists/:id/sync', withAdmin(syncArtist))
+router.put('/api/admin/artists/:id', withAdmin(updateArtist))
+router.delete('/api/admin/artists/:id', withAdmin(deleteArtist))
+
+// Admin / Events
+router.post('/api/admin/events', withAdmin(createEvent))
+router.put('/api/admin/events/:id', withAdmin(updateEvent))
+router.delete('/api/admin/events/:id', withAdmin(deleteEvent))
+router.put('/api/admin/events/:id/cover', withAdmin(uploadEventCover))
+router.post('/api/admin/events/:id/link-set', withAdmin(linkSetToEvent))
+router.post('/api/admin/events/:id/unlink-set', withAdmin(unlinkSetFromEvent))
+
 // Admin / ML Pipeline
-router.post('/api/admin/sets/:id/detect', triggerDetection)
-router.get('/api/admin/sets/:id/detect/status', getDetectionStatus)
-router.post('/api/admin/sets/:id/redetect-low', redetectLowConfidence)
-router.get('/api/admin/ml/stats', mlStats)
-router.post('/api/admin/ml/evolve', evolvePromptRoute)
-router.get('/api/admin/jobs', listJobs)
+router.post('/api/admin/sets/:id/detect', withAdmin(triggerDetection))
+router.get('/api/admin/sets/:id/detect/status', withAdmin(getDetectionStatus))
+router.post('/api/admin/sets/:id/redetect-low', withAdmin(redetectLowConfidence))
+router.get('/api/admin/ml/stats', withAdmin(mlStats))
+router.post('/api/admin/ml/evolve', withAdmin(evolvePromptRoute))
+router.get('/api/admin/jobs', withAdmin(listJobs))
 
 // Admin / Beta management
-router.post('/api/admin/invite-codes', generateInviteCode)
-router.get('/api/admin/invite-codes', listInviteCodes)
-router.delete('/api/admin/invite-codes/:id', revokeInviteCode)
-router.post('/api/admin/sets/from-youtube', createSetFromYoutube)
-router.post('/api/admin/sets/upload-url', getUploadUrl)
-router.put('/api/admin/sets/:id/upload', uploadSetAudio)
-router.post('/api/admin/sets', createSet)
-router.delete('/api/admin/sets/:id', deleteSet)
-router.put('/api/admin/sets/:id', updateSet)
-router.get('/api/admin/annotations/pending', listPendingAnnotations)
-router.post('/api/admin/annotations/:id/moderate', moderateAnnotation)
-router.post('/api/admin/sets/:id/index', indexSetRoute)
-router.post('/api/admin/sets/:id/waveform', regenerateWaveform)
+router.post('/api/admin/invite-codes', withAdmin(generateInviteCode))
+router.get('/api/admin/invite-codes', withAdmin(listInviteCodes))
+router.delete('/api/admin/invite-codes/:id', withAdmin(revokeInviteCode))
+router.post('/api/admin/sets/from-youtube', withAdmin(createSetFromYoutube))
+router.post('/api/admin/sets/upload-url', withAdmin(getUploadUrl))
+router.put('/api/admin/sets/:id/upload', withAdmin(uploadSetAudio))
+router.post('/api/admin/sets', withAdmin(createSet))
+router.delete('/api/admin/sets/:id', withAdmin(deleteSet))
+router.put('/api/admin/sets/:id', withAdmin(updateSet))
+router.get('/api/admin/annotations/pending', withAdmin(listPendingAnnotations))
+router.post('/api/admin/annotations/:id/moderate', withAdmin(moderateAnnotation))
+router.post('/api/admin/sets/:id/index', withAdmin(indexSetRoute))
+router.post('/api/admin/sets/:id/waveform', withAdmin(regenerateWaveform))
+
+// ═══════════════════════════════════════════
+// Worker export
+// ═══════════════════════════════════════════
 
 export default {
   async fetch(request, env, ctx) {
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders() })
+      return new Response(null, { headers: corsHeaders(request.headers.get('Origin')) })
     }
 
     const url = new URL(request.url)
@@ -172,11 +222,8 @@ export default {
 
 /**
  * Inject OG meta tags for set pages when shared on social media.
- * Crawlers (Facebook, Twitter, Slack, Discord) request the page URL
- * and parse <meta> tags from the HTML.
  */
 async function handleOgMetaTags(url: URL, env: Env): Promise<Response> {
-  // Extract set ID from path
   const match = url.pathname.match(/^\/app\/sets\/([^/]+)$/)
   if (!match) return new Response(null, { status: 404 })
 
@@ -195,8 +242,6 @@ async function handleOgMetaTags(url: URL, env: Env): Promise<Response> {
     const description = set.description
       || `${set.artist} DJ set${set.venue ? ` at ${set.venue}` : ''}${set.event ? ` - ${set.event}` : ''} (${durationMin} min)`
 
-    // Return an HTML page with OG meta tags
-    // The SPA will load and take over for real users
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>

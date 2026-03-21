@@ -5,7 +5,7 @@ import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
 import { GENRES } from '../../lib/constants'
 
-export function SetsUploadTab() {
+export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = {}) {
   const [youtubeUrl, setYoutubeUrl] = useState('')
   const [isFetching, setIsFetching] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -232,6 +232,7 @@ export function SetsUploadTab() {
       setYoutubeUrl(''); setSelectedFile(null); setUploadSetId(''); setUploadR2Key('')
       setAiFields(new Set()); setYoutubeSource(null); setHasTracklist(false); setRawTags([])
       setUploadPercent(null); setThumbnailUrl('')
+      onSetCreated?.()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create set')
       setUploadProgress(null)
