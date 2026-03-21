@@ -12,7 +12,7 @@ import { DetectionRow } from '../components/annotations/DetectionRow'
 import { AnnotationEditor } from '../components/annotations/AnnotationEditor'
 import { AddToPlaylist } from '../components/playlists/AddToPlaylist'
 import { formatDuration, formatPlayCount } from '../lib/formatTime'
-import { getCoverUrl } from '../lib/api'
+import { getCoverUrl, getVideoPreviewUrl } from '../lib/api'
 import { DETECTION_STATUS_LABELS } from '../lib/constants'
 import type { Detection } from '../lib/types'
 
@@ -83,9 +83,19 @@ export function SetPage() {
 
   return (
     <div>
-      {/* ═══ BANNER — bleh style ═══ */}
+      {/* ═══ BANNER — bleh style, video if available ═══ */}
       <div className="relative h-[280px] overflow-hidden">
-        {set.cover_image_r2_key ? (
+        {set.video_preview_r2_key ? (
+          <video
+            src={getVideoPreviewUrl(set.id)}
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full h-full object-cover object-center"
+            poster={set.cover_image_r2_key ? getCoverUrl(set.id) : undefined}
+          />
+        ) : set.cover_image_r2_key ? (
           <img src={getCoverUrl(set.id)} alt="" className="w-full h-full object-cover object-center" />
         ) : (
           <div className="w-full h-full bg-surface-raised" />

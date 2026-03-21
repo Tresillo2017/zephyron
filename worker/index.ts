@@ -1,6 +1,6 @@
 import { Router, corsHeaders, errorResponse, json } from './lib/router'
 import { createAuth, requireAdmin, requireAuth } from './lib/auth'
-import { listSets, getSet, streamSet, debugStream, incrementPlayCount, listGenres, getSetCover } from './routes/sets'
+import { listSets, getSet, streamSet, debugStream, incrementPlayCount, listGenres, getSetCover, getSetVideo } from './routes/sets'
 import { search } from './routes/search'
 import { getHistory, updateHistory } from './routes/history'
 import { getDetections, voteDetection, createAnnotation, getAnnotations } from './routes/detections'
@@ -15,7 +15,7 @@ import {
 import {
   generateInviteCode, listInviteCodes, revokeInviteCode,
   createSetFromYoutube, getUploadUrl, uploadSetAudio, createSet,
-  deleteSet, updateSet,
+  deleteSet, updateSet, uploadSetVideo,
   listPendingAnnotations, moderateAnnotation,
 } from './routes/admin-beta'
 import { listArtists, getArtist, syncArtist, updateArtist, deleteArtist, getArtistBackground } from './routes/artists'
@@ -81,6 +81,7 @@ router.get('/api/sets/:id/stream/debug', debugStream)
 router.post('/api/sets/:id/play', incrementPlayCount)
 router.get('/api/sets/:id/waveform', getSetWaveform)
 router.get('/api/sets/:id/cover', getSetCover)
+router.get('/api/sets/:id/video', getSetVideo)
 
 // Listeners (Durable Objects)
 router.get('/api/sets/:id/listeners', getListenerCount)
@@ -166,6 +167,7 @@ router.get('/api/admin/annotations/pending', withAdmin(listPendingAnnotations))
 router.post('/api/admin/annotations/:id/moderate', withAdmin(moderateAnnotation))
 router.post('/api/admin/sets/:id/index', withAdmin(indexSetRoute))
 router.post('/api/admin/sets/:id/waveform', withAdmin(regenerateWaveform))
+router.put('/api/admin/sets/:id/video', withAdmin(uploadSetVideo))
 
 // ═══════════════════════════════════════════
 // Worker export

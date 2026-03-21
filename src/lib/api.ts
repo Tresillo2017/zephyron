@@ -273,6 +273,10 @@ export function getCoverUrl(setId: string): string {
   return `${API_BASE}/sets/${setId}/cover`
 }
 
+export function getVideoPreviewUrl(setId: string): string {
+  return `${API_BASE}/sets/${setId}/video`
+}
+
 export async function fetchPendingAnnotations(): Promise<{ data: any[] }> {
   return fetchApi('/admin/annotations/pending')
 }

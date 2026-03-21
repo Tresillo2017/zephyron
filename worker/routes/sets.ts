@@ -246,3 +246,66 @@ export async function getSetCover(
 
   return new Response(object.body, { status: 200, headers })
 }
+
+// GET /api/sets/:id/video — Serve video preview from R2 (supports Range requests)
+export async function getSetVideo(
+  request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>
+): Promise<Response> {
+  const { id } = params
+
+  const set = await env.DB.prepare(
+    'SELECT video_preview_r2_key FROM sets WHERE id = ?'
+  )
+    .bind(id)
+    .first<{ video_preview_r2_key: string | null }>()
+
+  if (!set?.video_preview_r2_key) {
+    return new Response(null, { status: 404 })
+  }
+
+  // Support Range requests for video streaming
+  const range = request.headers.get('Range')
+  const options: R2GetOptions = range ? { range: parseRange(range) } : {}
+
+  const object = await env.AUDIO_BUCKET.get(set.video_preview_r2_key, options)
+  if (!object) {
+    return new Response(null, { status: 404 })
+  }
+
+  const headers = new Headers()
+  headers.set('Content-Type', object.httpMetadata?.contentType || 'video/mp4')
+  headers.set('Cache-Control', 'public, max-age=604800') // 7 days
+  headers.set('Accept-Ranges', 'bytes')
+  headers.set('Access-Control-Allow-Origin', '*')
+
+  if (range && object.size !== undefined) {
+    const r2Range = (object as any).range as { offset: number; length: number } | undefined
+    if (r2Range) {
+      const start = r2Range.offset
+      const end = start + r2Range.length - 1
+      headers.set('Content-Range', `bytes ${start}-${end}/${object.size}`)
+      headers.set('Content-Length', String(r2Range.length))
+      return new Response(object.body, { status: 206, headers })
+    }
+  }
+
+  if (object.size !== undefined) {
+    headers.set('Content-Length', String(object.size))
+  }
+
+  return new Response(object.body, { status: 200, headers })
+}
+
+/** Parse HTTP Range header into R2-compatible range object */
+function parseRange(rangeHeader: string): { offset: number; length?: number } | undefined {
+  const match = rangeHeader.match(/bytes=(\d+)-(\d*)/)
+  if (!match) return undefined
+  const start = parseInt(match[1])
+  const end = match[2] ? parseInt(match[2]) : undefined
+  return end !== undefined
+    ? { offset: start, length: end - start + 1 }
+    : { offset: start }
+}

@@ -641,3 +641,86 @@ export async function moderateAnnotation(
 
   return json({ ok: true, action: newStatus })
 }
+
+// ═══════════════════════════════════════════
+// VIDEO PREVIEW UPLOAD
+// ═══════════════════════════════════════════
+
+// PUT /api/admin/sets/:id/video — Upload a video preview clip to R2
+export async function uploadSetVideo(
+  request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>
+): Promise<Response> {
+  const { id } = params
+
+  // Verify set exists
+  const set = await env.DB.prepare('SELECT id FROM sets WHERE id = ?')
+    .bind(id).first<{ id: string }>()
+  if (!set) return errorResponse('Set not found', 404)
+
+  if (!request.body) return errorResponse('Request body is required', 400)
+
+  const contentLength = parseInt(request.headers.get('Content-Length') || '0')
+  const maxSize = 25 * 1024 * 1024 // 25MB max
+  if (contentLength > maxSize) {
+    return errorResponse(`Video file too large (${(contentLength / 1048576).toFixed(1)}MB). Maximum is 25MB.`, 400)
+  }
+
+  const r2Key = `sets/${id}/preview.mp4`
+
+  try {
+    const multipart = await env.AUDIO_BUCKET.createMultipartUpload(r2Key, {
+      httpMetadata: { contentType: 'video/mp4' },
+    })
+
+    const reader = request.body.getReader()
+    const partSize = 10 * 1024 * 1024 // 10MB per part
+    const uploadedParts: R2UploadedPart[] = []
+    let partNumber = 1
+    let buffer = new Uint8Array(0)
+
+    while (true) {
+      const { done, value } = await reader.read()
+
+      if (value) {
+        const newBuffer = new Uint8Array(buffer.length + value.length)
+        newBuffer.set(buffer)
+        newBuffer.set(value, buffer.length)
+        buffer = newBuffer
+      }
+
+      while (buffer.length >= partSize || (done && buffer.length > 0)) {
+        const chunk = buffer.slice(0, partSize)
+        buffer = buffer.slice(chunk.length)
+
+        const part = await multipart.uploadPart(partNumber, chunk)
+        uploadedParts.push(part)
+        partNumber++
+
+        if (done && buffer.length === 0) break
+      }
+
+      if (done) break
+    }
+
+    await multipart.complete(uploadedParts)
+
+    // Update DB
+    await env.DB.prepare(
+      'UPDATE sets SET video_preview_r2_key = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+    ).bind(r2Key, id).run()
+
+    const head = await env.AUDIO_BUCKET.head(r2Key)
+    console.log(`[video-upload] Complete: ${r2Key}, ${head?.size ?? 0} bytes`)
+
+    return json({
+      data: { r2_key: r2Key, size: head?.size ?? 0 },
+      ok: true,
+    })
+  } catch (err) {
+    console.error('[video-upload] Error:', err)
+    return errorResponse(err instanceof Error ? err.message : 'Video upload failed', 500)
+  }
+}

@@ -14,6 +14,7 @@ export interface DjSet {
   r2_key: string
   r2_waveform_key: string | null
   cover_image_r2_key: string | null
+  video_preview_r2_key: string | null
   audio_format: string
   bitrate: number | null
   sample_rate: number | null

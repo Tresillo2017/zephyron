@@ -10,6 +10,9 @@
   "assets": {
     "not_found_handling": "single-page-application"
   },
+  "placement": {
+    "mode": "smart"
+  },
   // D1 Database
   "d1_databases": [
     {
@@ -67,14 +70,12 @@
       }
     ]
   },
-  // Environment variables (override via wrangler secret for production)
+  // Environment variables
+  // IMPORTANT: Secrets (BETTER_AUTH_SECRET, YOUTUBE_API_KEY, LASTFM_API_KEY,
+  // GITHUB_TOKEN, TURNSTILE_SECRET_KEY) must be set via `wrangler secret put`.
+  // Do NOT define them here — vars override secrets on every deploy.
   "vars": {
-    "BETTER_AUTH_URL": "",
-    "BETTER_AUTH_SECRET": "",
-    "YOUTUBE_API_KEY": "",
-    "LASTFM_API_KEY": "",
-    "GITHUB_TOKEN": "",
-    "TURNSTILE_SECRET_KEY": ""
+    "BETTER_AUTH_URL": "https://zephyron.tomasps.com"
   },
   // Durable Objects
   "durable_objects": {

@@ -3,6 +3,7 @@ import { useSession } from './lib/auth-client'
 import { TopNav } from './components/layout/TopNav'
 import { PlayerBar } from './components/layout/PlayerBar'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { WhatsNew } from './components/WhatsNew'
 
 // Public pages
 import { LandingPage } from './pages/LandingPage'
@@ -42,6 +43,7 @@ function AppLayout() {
         <Outlet />
       </div>
       <PlayerBar />
+      <WhatsNew />
     </div>
   )
 }

@@ -55,7 +55,7 @@ export function TopNav() {
           </svg>
         </div>
         <span className="text-sm font-[var(--font-weight-bold)] text-text-primary tracking-tight hidden sm:inline">Zephyron</span>
-        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'hsl(var(--h3) / 0.15)', color: 'hsl(var(--h3))' }}>ALPHA</span>
+        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'hsl(var(--h3) / 0.15)', color: 'hsl(var(--h3))' }}>ALPHA v{__APP_VERSION__}</span>
       </Link>
 
       {/* Main nav links */}

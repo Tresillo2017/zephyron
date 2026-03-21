@@ -29,6 +29,7 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
   const [uploadR2Key, setUploadR2Key] = useState('')
   const [audioFormat, setAudioFormat] = useState('mp3')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null)
   const [uploadProgress, setUploadProgress] = useState<string | null>(null)
   const [uploadPercent, setUploadPercent] = useState<number | null>(null)
 
@@ -223,13 +224,36 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
         setUploadPercent(null)
       }
 
-      setSuccess(`Set created (ID: ${createdId}).${selectedFile ? ' Audio uploaded.' : ' No audio file — upload later from the Sets tab.'} You can now trigger ML detection.`)
+      // Step 3: Upload video preview if provided
+      if (selectedVideo) {
+        setUploadProgress('Uploading video preview...')
+        setUploadPercent(null)
+        try {
+          const videoResp = await fetch(`/api/admin/sets/${createdId}/video`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'video/mp4' },
+            body: selectedVideo,
+          })
+          if (!videoResp.ok) {
+            const errText = await videoResp.text()
+            console.error('Video upload failed:', errText)
+            // Non-blocking: set was created, audio uploaded, just video failed
+          } else {
+            setUploadProgress('Video preview uploaded!')
+            await new Promise((r) => setTimeout(r, 300))
+          }
+        } catch (err) {
+          console.error('Video upload error:', err)
+        }
+      }
+
+      setSuccess(`Set created (ID: ${createdId}).${selectedFile ? ' Audio uploaded.' : ' No audio file — upload later from the Sets tab.'}${selectedVideo ? ' Video preview uploaded.' : ''} You can now trigger ML detection.`)
       setUploadProgress(null)
 
       // Reset form
       setTitle(''); setArtist(''); setDescription(''); setGenre(''); setSubgenre('')
       setVenue(''); setEvent(''); setRecordedDate(''); setDurationMinutes('')
-      setYoutubeUrl(''); setSelectedFile(null); setUploadSetId(''); setUploadR2Key('')
+      setYoutubeUrl(''); setSelectedFile(null); setSelectedVideo(null); setUploadSetId(''); setUploadR2Key('')
       setAiFields(new Set()); setYoutubeSource(null); setHasTracklist(false); setRawTags([])
       setUploadPercent(null); setThumbnailUrl('')
       onSetCreated?.()
@@ -388,6 +412,28 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
           {selectedFile && (
             <p className="text-xs text-text-muted mt-1">
               {selectedFile.name} ({(selectedFile.size / 1048576).toFixed(1)} MB)
+            </p>
+          )}
+        </div>
+
+        {/* Video preview upload */}
+        <div>
+          <label className="text-sm font-medium text-text-secondary block mb-1.5">
+            Video Preview (optional)
+            <span className="text-text-muted font-normal ml-1">— 30s MP4 clip for banner background</span>
+          </label>
+          <input
+            type="file"
+            accept="video/mp4,.mp4"
+            onChange={(e) => setSelectedVideo(e.target.files?.[0] || null)}
+            className="block w-full text-sm text-text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent/10 file:text-accent hover:file:bg-accent/20 cursor-pointer"
+          />
+          {selectedVideo && (
+            <p className="text-xs text-text-muted mt-1">
+              {selectedVideo.name} ({(selectedVideo.size / 1048576).toFixed(1)} MB)
+              {selectedVideo.size > 25 * 1048576 && (
+                <span className="text-danger ml-1">— exceeds 25MB limit</span>
+              )}
             </p>
           )}
         </div>
