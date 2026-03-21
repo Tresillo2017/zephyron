@@ -75,7 +75,7 @@
   // GITHUB_TOKEN, TURNSTILE_SECRET_KEY) must be set via `wrangler secret put`.
   // Do NOT define them here — vars override secrets on every deploy.
   "vars": {
-    "BETTER_AUTH_URL": "https://zephyron.tomasps.com"
+    "BETTER_AUTH_URL": "https://zephyron.app"
   },
   // Durable Objects
   "durable_objects": {
