@@ -4,6 +4,7 @@ import { TopNav } from './components/layout/TopNav'
 import { PlayerBar } from './components/layout/PlayerBar'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { WhatsNew } from './components/WhatsNew'
+import { CookieConsent } from './components/CookieConsent'
 
 // Public pages
 import { LandingPage } from './pages/LandingPage'
@@ -89,6 +90,7 @@ function RedirectIfAuth({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <ErrorBoundary>
+      <CookieConsent />
       <Routes>
         {/* Public routes */}
         <Route index element={<RedirectIfAuth><LandingPage /></RedirectIfAuth>} />

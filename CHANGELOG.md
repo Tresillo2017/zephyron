@@ -5,65 +5,59 @@ All notable changes to Zephyron will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-03-21
+
+### Added
+- Cookie consent banner — you'll now be asked whether you'd like to allow analytics cookies before any tracking happens
+- Your choice is remembered, so you'll only see the banner once
+
+### Changed
+- Analytics only loads after you explicitly accept — declining means zero tracking scripts are loaded
+
 ## [0.2.1] - 2026-03-21
 
 ### Fixed
-- Invite codes no longer consumed when user registration fails (moved usage increment from `before` to `after` database hook)
-- Apply missing D1 migrations for events table and two-factor auth columns (`twoFactorEnabled`)
-- Fix migration ordering: rename duplicate `0006` prefix to `0007_two-factor-auth.sql`
+- Invite codes are no longer used up when registration fails
+- Fixed missing database updates for events and two-factor authentication
+- Fixed a migration ordering issue that could prevent updates from applying
 
 ### Changed
-- GitHub repo: added description, 16 topics, enabled Discussions
+- GitHub repo: added description, topics, and enabled Discussions
 
 ## [0.2.0] - 2026-03-21
 
 ### Added
-- Server-side admin route authentication (all `/api/admin/*` routes now require valid admin session)
-- React error boundary for graceful crash recovery
-- 404 "Page Not Found" page (replaces silent redirect)
-- Health check API endpoint (`GET /api/health`)
-- "Request a Set" petition form with Cloudflare Turnstile verification (creates GitHub Issues)
-- Changelog page accessible from navigation and settings
-- "Report Issue" links in user dropdown, settings, and about page
-- Proper HTML meta tags, Open Graph tags, and theme-color for the root page
-- GitHub Issue template for set requests
-- CORS origin validation (locked to production domain)
-- API client request timeouts (30s)
-- Changesets configuration for release management
+- "Request a Set" — submit a set you'd like to see on Zephyron, complete with bot protection
+- Changelog page — see what's new from the navigation menu or settings
+- "Report Issue" button — quickly report bugs from the user menu, settings, or about page
+- Proper page not found screen instead of a silent redirect
+- Better link previews when sharing Zephyron on social media
 
 ### Changed
-- Admin page now uses sidebar navigation instead of horizontal tabs
-- Sets, Artists, and Events admin tabs redesigned with consistent card-based layout and search
-- "Add Set" merged into the Sets tab as a collapsible form
-- Events are now auto-created during detection when no matching event exists (`ensureEvent`)
-- Removed hardcoded auth secret fallback (production must set `BETTER_AUTH_SECRET`)
+- Admin dashboard redesigned with sidebar navigation and search across all sections
+- "Add Set" is now part of the Sets tab as a collapsible form
+- Events are automatically created when detecting a new set if they don't exist yet
 
 ### Fixed
-- Event auto-detection during set detection now creates new event records instead of silently failing
-- Events tab, Artists tab, and Sets tab search now filters client-side across all relevant fields
+- Event creation during set detection no longer silently fails
+- Search in the admin panel now works across all relevant fields
 
 ### Security
-- All admin API routes now validate session cookie and admin role server-side
-- Removed hardcoded development auth secret from production fallback path
-- CORS locked to production origin instead of wildcard `*`
+- Admin pages are now fully protected with server-side authentication
+- Stronger security for cross-origin requests
 
 ## [0.1.0] - 2026-03-20
 
 ### Added
-- Audio streaming from Cloudflare R2 with waveform visualization and live listener counts
-- AI-powered tracklist detection from YouTube metadata (Llama 3.2 3B + regex fallback)
-- Last.fm track enrichment with album art, tags, and listener counts
-- Community annotation system with voting (upvote/downvote/verify)
+- Stream DJ sets with waveform visualization and live listener counts
+- AI-powered tracklist detection — tracks are automatically identified from YouTube metadata
+- Track details enriched with album art, tags, and listener counts from Last.fm
+- Community annotations — suggest corrections and vote on tracklist accuracy
 - Artist pages with auto-created profiles and Last.fm enrichment
-- Event pages with set linking
-- Full-text and semantic search (Cloudflare Vectorize)
-- Playlist creation and management
-- Listening history with resume-from-position
-- HSL-parametric color system with 4 themes and 10 accent presets
-- Custom hue slider and font weight customization
-- Two-factor authentication with TOTP and backup codes
-- Invite code system for beta access
-- Admin dashboard with set management, ML pipeline controls, and moderation queue
-- Self-evolving ML prompts based on community feedback
-- Server-side OG meta tags for social sharing
-- CI/CD with GitHub Actions, Dependabot, PR template, issue templates
+- Event pages linking related sets together
+- Search across sets, artists, and tracks
+- Create and manage playlists
+- Listening history with resume-from-where-you-left-off
+- 4 themes (Dark, Darker, OLED, Light) and 10 accent color presets with a custom hue slider
+- Two-factor authentication with authenticator apps and backup codes
+- Invite-only beta access system
