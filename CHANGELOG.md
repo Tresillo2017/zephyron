@@ -5,6 +5,41 @@ All notable changes to Zephyron will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0-alpha] - 2026-03-29
+
+### Added
+- 1001Tracklists integration — paste a tracklist page source to import tracks with artwork, cue times, labels, and streaming links
+- Songs are now a first-class entity — each track in a tracklist links to a song record with rich metadata
+- CoverFlow mode in the fullscreen player — 3D album art display with previous/next track perspective, reflection effect, and track info
+- Songs admin tab — browse, search, edit, and manage all songs with cover art, 8 streaming service URLs, and Last.fm data
+- Autocomplete for Artist and Event fields when creating or editing a set — searches existing records as you type
+- Cover art queue — Cloudflare Queue processes cover art downloads and Last.fm enrichment in the background with rate limiting
+- Video stream URL storage — YouTube video URLs are resolved from Invidious for future video features
+- Streaming service icons throughout the UI using react-icons (Spotify, Apple Music, SoundCloud, Beatport, YouTube, Deezer, Bandcamp, Traxsource)
+
+### Changed
+- Tracklist design — tracks now show album art thumbnails and clickable streaming service icons
+- Simultaneous tracks ("w/" / played together) are visually grouped with the parent track, showing nested sub-rows with smaller artwork
+- Set editing consolidated into a single tabbed panel (Metadata, Tracklist, Danger Zone) replacing separate buttons
+- Set list in admin simplified to one "Edit" button per row instead of five
+- Detection pipeline uses 1001Tracklists as the primary source (0.98 confidence) with YouTube/Invidious as fallback
+- Tracklist HTML parsing runs entirely client-side — no large payloads sent to the server
+- Detection imports use batched D1 writes instead of individual INSERT statements
+- Cover art caching moved from blocking inline calls to an async Cloudflare Queue
+- Artist search endpoint now supports `?q=` query parameter
+
+### Fixed
+- Tracklist timestamps now correctly inherit from parent tracks for sub-position/mashup entries
+- Equalizer animation only shows when the set is actively playing, not just loaded
+- Cover art caching no longer fails on streams without known content length (reads into ArrayBuffer first)
+- Cover art fetches have a 10-second timeout and 2MB size limit to prevent hanging
+- Labels are correctly extracted from HTML-encoded publisher metadata
+
+### Removed
+- Browser Rendering / Puppeteer dependency — replaced with pure fetch challenge solver and client-side HTML parsing
+- Legacy audio upload UI from the set creation form
+- Hover vote/edit overlay on tracklist rows (will return in a future release)
+
 ## [0.2.3] - 2026-03-29
 
 ### Added
