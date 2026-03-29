@@ -15,7 +15,8 @@ declare namespace Cloudflare {
 		AI: Ai;
 		BETTER_AUTH_URL: "http://localhost:5173";
 		BETTER_AUTH_SECRET: "zephyron-dev-secret-change-in-production-32chars!!";
-		YOUTUBE_API_KEY: string;
+		INVIDIOUS_BASE_URL: string;
+		YOUTUBE_API_KEY: string; // Deprecated: kept for potential fallback
 		LASTFM_API_KEY: string;
 		AUDIO_SESSION: DurableObjectNamespace<import("./worker/index").AudioSessionDO>;
 	}
@@ -25,7 +26,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "BETTER_AUTH_URL" | "BETTER_AUTH_SECRET" | "YOUTUBE_API_KEY" | "LASTFM_API_KEY">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "BETTER_AUTH_URL" | "BETTER_AUTH_SECRET" | "INVIDIOUS_BASE_URL" | "YOUTUBE_API_KEY" | "LASTFM_API_KEY">> {}
 }
 
 // Begin runtime types

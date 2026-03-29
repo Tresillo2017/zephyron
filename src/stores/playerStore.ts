@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { DjSet, Detection } from '../lib/types'
-import { getStreamUrl, incrementPlayCount, updateListenPosition } from '../lib/api'
+import { fetchStreamUrl, incrementPlayCount, updateListenPosition } from '../lib/api'
 
 interface PlayerState {
   // Current playback
@@ -11,6 +11,7 @@ interface PlayerState {
   volume: number
   isMuted: boolean
   isFullScreen: boolean
+  isLoadingStream: boolean
 
   // Queue
   queue: DjSet[]
@@ -55,6 +56,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   volume: 0.8,
   isMuted: false,
   isFullScreen: false,
+  isLoadingStream: false,
   queue: [],
   queueIndex: -1,
   detections: [],
@@ -63,7 +65,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   setAudioElement: (el) => set({ audioElement: el }),
 
-  play: (djSet, detections) => {
+  play: async (djSet, detections) => {
     const { audioElement, currentSet } = get()
     if (!audioElement) return
 
@@ -74,21 +76,52 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       return
     }
 
-    // New set
-    audioElement.src = getStreamUrl(djSet.id)
-    audioElement.load()
-    audioElement.play().catch(() => {})
-
+    // New set — resolve the stream URL
     set({
       currentSet: djSet,
-      isPlaying: true,
+      isPlaying: false,
+      isLoadingStream: true,
       currentTime: 0,
       detections: detections || [],
       currentDetection: null,
     })
 
-    // Track play count (fire and forget)
-    incrementPlayCount(djSet.id).catch(() => {})
+    try {
+      const streamData = await fetchStreamUrl(djSet.id)
+      const { audioElement: el } = get()
+      if (!el) return
+
+      // Check if user changed to a different set while we were loading
+      if (get().currentSet?.id !== djSet.id) return
+
+      el.src = streamData.url
+      el.load()
+      el.play().catch((err) => {
+        console.error('[player] Playback failed:', err)
+      })
+
+      set({ isPlaying: true, isLoadingStream: false })
+
+      // Track play count (fire and forget)
+      incrementPlayCount(djSet.id).catch(() => {})
+    } catch (err) {
+      console.error('[player] Failed to resolve stream URL:', err)
+      set({ isLoadingStream: false })
+
+      // Retry: the audio URL may have expired, try re-fetching
+      try {
+        const streamData = await fetchStreamUrl(djSet.id)
+        const { audioElement: el } = get()
+        if (!el || get().currentSet?.id !== djSet.id) return
+
+        el.src = streamData.url
+        el.load()
+        el.play().catch(() => {})
+        set({ isPlaying: true })
+      } catch {
+        console.error('[player] Retry also failed')
+      }
+    }
   },
 
   resume: () => {

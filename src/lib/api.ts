@@ -69,12 +69,49 @@ export async function fetchGenres(): Promise<{ data: Genre[] }> {
   return fetchApi('/sets/genres')
 }
 
-export function getStreamUrl(setId: string): string {
+// Stream URL — resolves the audio stream URL for a set.
+// For Invidious sets: returns a fresh YouTube audio URL (expires ~6h).
+// For legacy R2 sets: returns the Worker stream endpoint.
+export interface StreamUrlResponse {
+  url: string
+  type: string
+  bitrate?: string
+  container?: string
+  encoding?: string
+  audioQuality?: string
+  source: 'invidious' | 'r2'
+}
+
+export async function fetchStreamUrl(setId: string): Promise<StreamUrlResponse> {
+  const res = await fetchApi<{ data: StreamUrlResponse }>(`/sets/${setId}/stream-url`)
+  return res.data
+}
+
+// Legacy stream URL (for R2 sets that use the proxy endpoint)
+export function getLegacyStreamUrl(setId: string): string {
   return `${API_BASE}/sets/${setId}/stream`
 }
 
 export async function incrementPlayCount(setId: string): Promise<void> {
   await fetchApi(`/sets/${setId}/play`, { method: 'POST' })
+}
+
+// Storyboard data for thumbnail scrubber
+export interface StoryboardData {
+  url: string
+  templateUrl: string
+  width: number
+  height: number
+  count: number
+  interval: number
+  storyboardWidth: number
+  storyboardHeight: number
+  storyboardCount: number
+}
+
+export async function fetchStoryboard(setId: string): Promise<StoryboardData | null> {
+  const res = await fetchApi<{ data: StoryboardData | null }>(`/sets/${setId}/storyboard`)
+  return res.data
 }
 
 // Search
@@ -236,17 +273,25 @@ export async function fetchYoutubeMetadata(url: string): Promise<{
     source_url: string
     has_tracklist: boolean
     llm_extracted: boolean
-    youtube_source: 'youtube_api' | 'oembed'
-    raw_youtube_title: string
-    raw_youtube_channel: string
-    raw_youtube_tags: string[]
+    data_source: 'invidious'
+    // Invidious-specific fields
+    youtube_video_id: string
+    youtube_channel_id: string
+    youtube_channel_name: string
+    youtube_published_at: string
+    youtube_view_count: number
+    youtube_like_count: number
+    keywords: string[]
+    storyboard_data: string | null
+    music_tracks: { song: string; artist: string; album: string; license: string }[]
+    // Raw data for admin reference
+    raw_title: string
+    raw_channel: string
+    raw_keywords: string[]
+    raw_genre: string
   }
 }> {
   return fetchApi('/admin/sets/from-youtube', { method: 'POST', body: JSON.stringify({ url }) })
-}
-
-export async function getSetUploadUrl(filename: string, contentType: string): Promise<{ data: { set_id: string; r2_key: string; upload_endpoint: string; audio_format: string } }> {
-  return fetchApi('/admin/sets/upload-url', { method: 'POST', body: JSON.stringify({ filename, content_type: contentType }) })
 }
 
 export async function adminCreateSet(data: {
@@ -260,11 +305,18 @@ export async function adminCreateSet(data: {
   event?: string
   recorded_date?: string
   duration_seconds: number
-  r2_key: string
-  audio_format?: string
-  bitrate?: number
   thumbnail_url?: string
   source_url?: string
+  // Invidious-specific fields
+  youtube_video_id?: string
+  youtube_channel_id?: string
+  youtube_channel_name?: string
+  youtube_published_at?: string
+  youtube_view_count?: number
+  youtube_like_count?: number
+  storyboard_data?: string
+  keywords?: string[]
+  youtube_music_tracks?: string
 }): Promise<{ data: { id: string } }> {
   return fetchApi('/admin/sets', { method: 'POST', body: JSON.stringify(data) })
 }
@@ -328,7 +380,7 @@ export async function searchByTrack(query: string): Promise<{ data: { tracks: { 
   return fetchApi(`/search/by-track?q=${encodeURIComponent(query)}`)
 }
 
-// Waveform
+// Waveform (legacy — kept for R2 sets)
 export async function fetchWaveform(setId: string): Promise<{ data: { peaks: number[]; source: string } }> {
   return fetchApi(`/sets/${setId}/waveform`)
 }
@@ -368,12 +420,52 @@ export function getEventCoverUrl(id: string): string {
   return `${API_BASE}/events/${id}/cover`
 }
 
+export function getEventLogoUrl(id: string): string {
+  return `${API_BASE}/events/${id}/logo`
+}
+
 export async function createEventAdmin(data: Record<string, unknown>): Promise<{ data: { id: string; slug: string } }> {
   return fetchApi('/admin/events', { method: 'POST', body: JSON.stringify(data) })
 }
 
 export async function updateEventAdmin(id: string, data: Record<string, unknown>): Promise<void> {
   await fetchApi(`/admin/events/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+}
+
+export async function uploadEventCoverAdmin(id: string, file: File): Promise<void> {
+  const headers: Record<string, string> = {
+    'Content-Type': file.type || 'image/jpeg',
+  }
+  const anonId = localStorage.getItem('zephyron_anonymous_id')
+  if (anonId) headers['X-Anonymous-Id'] = anonId
+
+  const resp = await fetch(`${API_BASE}/admin/events/${id}/cover`, {
+    method: 'PUT',
+    headers,
+    body: file,
+  })
+  if (!resp.ok) {
+    const err = await resp.text().catch(() => 'Upload failed')
+    throw new Error(err)
+  }
+}
+
+export async function uploadEventLogoAdmin(id: string, file: File): Promise<void> {
+  const headers: Record<string, string> = {
+    'Content-Type': file.type || 'image/png',
+  }
+  const anonId = localStorage.getItem('zephyron_anonymous_id')
+  if (anonId) headers['X-Anonymous-Id'] = anonId
+
+  const resp = await fetch(`${API_BASE}/admin/events/${id}/logo`, {
+    method: 'PUT',
+    headers,
+    body: file,
+  })
+  if (!resp.ok) {
+    const err = await resp.text().catch(() => 'Upload failed')
+    throw new Error(err)
+  }
 }
 
 export async function deleteEventAdmin(id: string): Promise<void> {

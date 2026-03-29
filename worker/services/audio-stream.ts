@@ -1,4 +1,7 @@
-// Audio streaming from R2 with Range request support
+// Audio streaming service
+// Supports two modes:
+// - R2: Legacy sets with audio files stored in R2 (range request support)
+// - Invidious: New sets streamed from YouTube via Invidious API
 
 export async function streamAudio(
   request: Request,
@@ -6,7 +9,7 @@ export async function streamAudio(
   env: Env,
   _ctx: ExecutionContext
 ): Promise<Response> {
-  console.log(`[stream] Key: ${r2Key}`)
+  console.log(`[stream] R2 key: ${r2Key}`)
 
   const rangeHeader = request.headers.get('Range')
 

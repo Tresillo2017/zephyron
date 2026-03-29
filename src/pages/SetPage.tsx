@@ -12,7 +12,7 @@ import { DetectionRow } from '../components/annotations/DetectionRow'
 import { AnnotationEditor } from '../components/annotations/AnnotationEditor'
 import { AddToPlaylist } from '../components/playlists/AddToPlaylist'
 import { formatDuration, formatPlayCount } from '../lib/formatTime'
-import { getCoverUrl, getVideoPreviewUrl } from '../lib/api'
+import { getCoverUrl, getVideoPreviewUrl, getEventCoverUrl, getEventLogoUrl } from '../lib/api'
 import { DETECTION_STATUS_LABELS } from '../lib/constants'
 import type { Detection } from '../lib/types'
 
@@ -30,7 +30,7 @@ export function SetPage() {
   const isThisSetLoaded = currentSet?.id === id
   const currentTime = usePlayerStore((s) => s.currentTime)
   const listenerCount = useListeners(id, isCurrentlyPlaying)
-  const { peaks: waveformPeaks } = useWaveform(id)
+  const { peaks: waveformPeaks } = useWaveform(id, set?.stream_type)
 
   const handlePlay = () => {
     if (!set) return
@@ -224,20 +224,60 @@ export function SetPage() {
 
           {/* SIDEBAR */}
           <div className="lg:w-[300px] xl:w-[340px] shrink-0 space-y-5">
-            {/* Metadata */}
-            <div className="card p-5">
-              <div className="flex items-center gap-2 flex-wrap mb-3">
-                {set.genre && <Badge variant="accent">{set.genre}</Badge>}
-                {set.subgenre && <Badge variant="muted">{set.subgenre}</Badge>}
+            {/* Metadata card — with event banner on top if event exists */}
+            <div className="overflow-hidden rounded-[var(--card-radius)]" style={{ boxShadow: 'var(--card-border), var(--card-shadow)' }}>
+              {/* Event banner section */}
+              {set.event_info && (
+                <Link
+                  to={`/app/events/${set.event_info.slug || set.event_info.id}`}
+                  className="block no-underline group relative h-[110px] overflow-hidden"
+                >
+                  {set.event_info.cover_image_r2_key ? (
+                    <img
+                      src={getEventCoverUrl(set.event_info.id)}
+                      alt={set.event_info.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, hsl(var(--h3) / 0.2), hsl(var(--b4)))' }} />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
+                  <div className="absolute bottom-3 left-4 right-4 flex items-end gap-3">
+                    {/* Logo thumbnail */}
+                    {set.event_info.logo_r2_key && (
+                      <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
+                        <img src={getEventLogoUrl(set.event_info.id)} alt="" className="w-full h-full object-cover" loading="lazy" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-mono tracking-wider text-white/50 mb-0.5">EVENT</p>
+                      <h3 className="text-sm font-[var(--font-weight-bold)] text-white truncate leading-snug">{set.event_info.name}</h3>
+                      {set.event_info.location && (
+                        <p className="text-[11px] text-white/60 truncate mt-0.5">{set.event_info.location}</p>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              )}
+
+              {/* Metadata section */}
+              <div className="p-5" style={{ background: 'hsl(var(--b5))' }}>
+                <div className="flex items-center gap-2 flex-wrap mb-3">
+                  {set.genre && <Badge variant="accent">{set.genre}</Badge>}
+                  {set.subgenre && <Badge variant="muted">{set.subgenre}</Badge>}
+                </div>
+                {(set.venue || (set.event && !set.event_info)) && (
+                  <p className="text-sm text-text-secondary mb-2">
+                    {set.venue}
+                    {set.venue && set.event && !set.event_info && ' · '}
+                    {!set.event_info && set.event}
+                  </p>
+                )}
+                {set.recorded_date && (
+                  <p className="text-xs font-mono text-text-muted">{set.recorded_date}</p>
+                )}
               </div>
-              {(set.venue || set.event) && (
-                <p className="text-sm text-text-secondary mb-2">
-                  {set.venue}{set.venue && set.event && ' · '}{set.event}
-                </p>
-              )}
-              {set.recorded_date && (
-                <p className="text-xs font-mono text-text-muted">{set.recorded_date}</p>
-              )}
             </div>
 
             {/* Stats */}

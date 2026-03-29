@@ -1,11 +1,10 @@
-// ML Detection Pipeline v2
-// Extracts tracklists from YouTube description + comments via LLM,
+// ML Detection Pipeline v2 — Invidious Edition
+// Extracts tracklists from YouTube description + comments via Invidious API + LLM,
 // then enriches each track with Last.fm data.
-// Replaces the broken Whisper-based approach.
 
 import { generateId } from '../lib/id'
-import { extractVideoId, fetchVideoData } from './youtube'
-import { fetchRelevantComments } from './youtube-comments'
+import { extractVideoId } from './youtube'
+import { fetchVideoData, fetchRelevantComments, type InvidiousVideoData } from './invidious'
 import { parseTracklist, type ParsedTrack } from './tracklist-parser'
 import { lookupTrack, lookupArtist, searchTrack } from './lastfm'
 
@@ -14,7 +13,7 @@ import { lookupTrack, lookupArtist, searchTrack } from './lastfm'
  * This is now synchronous (called directly, not via queue).
  *
  * Flow:
- * 1. Fetch YouTube description + comments (if source_url exists)
+ * 1. Fetch YouTube description + comments via Invidious (if source_url or youtube_video_id exists)
  * 2. Extract tracklist via LLM + regex fallback
  * 3. Enrich each track with Last.fm data
  * 4. Create/update artist record
@@ -26,7 +25,7 @@ export async function runDetectionPipeline(
 ): Promise<{ detections: number; artist_id?: string; error?: string }> {
   // 1. Fetch set metadata
   const set = await env.DB.prepare(
-    'SELECT id, title, artist, source_url, genre, event, duration_seconds FROM sets WHERE id = ?'
+    'SELECT id, title, artist, source_url, youtube_video_id, genre, event, duration_seconds FROM sets WHERE id = ?'
   )
     .bind(setId)
     .first<{
@@ -34,6 +33,7 @@ export async function runDetectionPipeline(
       title: string
       artist: string
       source_url: string | null
+      youtube_video_id: string | null
       genre: string | null
       event: string | null
       duration_seconds: number
@@ -49,30 +49,51 @@ export async function runDetectionPipeline(
   ).bind(setId).run()
 
   try {
-    const apiKey = env.YOUTUBE_API_KEY && env.YOUTUBE_API_KEY.length > 5 ? env.YOUTUBE_API_KEY : undefined
     const lastfmKey = env.LASTFM_API_KEY && env.LASTFM_API_KEY.length > 5 ? env.LASTFM_API_KEY : undefined
 
     let tracks: ParsedTrack[] = []
 
-    // 2. Try to extract tracklist from YouTube data
-    if (set.source_url && apiKey) {
-      console.log(`[detect] Fetching YouTube data for ${set.source_url}`)
+    // 2. Try to extract tracklist from Invidious data
+    const videoId = set.youtube_video_id || (set.source_url ? extractVideoId(set.source_url) : null)
 
-      // Fetch full video data (description, etc.)
-      const videoId = extractVideoId(set.source_url)
+    if (videoId) {
+      console.log(`[detect] Fetching Invidious data for video ${videoId}`)
 
-      if (videoId) {
-        const videoData = await fetchVideoData(videoId, apiKey, set.source_url)
-        console.log(`[detect] YouTube description: ${videoData.description.length} chars`)
-
-        // Fetch comments
-        const comments = await fetchRelevantComments(set.source_url, apiKey, 2)
-        console.log(`[detect] Found ${comments.length} relevant comments`)
-
-        // Parse tracklist from description + comments
-        tracks = await parseTracklist(videoData.description, comments, env)
-        console.log(`[detect] Parsed ${tracks.length} tracks from YouTube data`)
+      // Fetch full video data via Invidious
+      let videoData: InvidiousVideoData
+      try {
+        videoData = await fetchVideoData(videoId, env)
+        console.log(`[detect] Invidious description: ${videoData.description.length} chars`)
+      } catch (err) {
+        console.error(`[detect] Invidious fetch failed:`, err)
+        await env.DB.prepare(
+          "UPDATE sets SET detection_status = 'failed', updated_at = CURRENT_TIMESTAMP WHERE id = ?"
+        ).bind(setId).run()
+        return { detections: 0, error: `Invidious API error: ${err instanceof Error ? err.message : String(err)}` }
       }
+
+      // Fetch comments via Invidious
+      const comments = await fetchRelevantComments(videoId, env, 2)
+      console.log(`[detect] Found ${comments.length} relevant comments`)
+
+      // Use musicTracks from Invidious as additional hint for the parser
+      // Convert musicTracks to a "tracklist-like" string for the parser
+      let musicTracksText = ''
+      if (videoData.musicTracks.length > 0) {
+        musicTracksText = videoData.musicTracks
+          .map((t, i) => `${i + 1}. ${t.artist} - ${t.song}${t.album ? ` [${t.album}]` : ''}`)
+          .join('\n')
+        console.log(`[detect] Found ${videoData.musicTracks.length} musicTracks from Invidious`)
+      }
+
+      // Combine description with musicTracks for better parsing
+      const combinedDescription = musicTracksText
+        ? `${videoData.description}\n\n--- YouTube Music Tracks ---\n${musicTracksText}`
+        : videoData.description
+
+      // Parse tracklist from description + comments
+      tracks = await parseTracklist(combinedDescription, comments, env)
+      console.log(`[detect] Parsed ${tracks.length} tracks from Invidious data`)
     }
 
     if (tracks.length === 0) {
@@ -221,7 +242,7 @@ export async function runDetectionPipeline(
 
 /**
  * Ensure an artist record exists in the DB, creating + enriching from Last.fm if needed.
- * Fetches the YouTube video thumbnail as background image for the artist hero banner.
+ * Uses the set's cover image (from Invidious thumbnail, stored in R2) as artist background.
  */
 async function ensureArtist(
   artistName: string,
@@ -255,43 +276,27 @@ async function ensureArtist(
 
   const id = generateId()
 
-  // Fetch YouTube maxres thumbnail as artist background
+  // Use the set's cover image as artist background (no more direct YouTube thumbnail fetch)
   let backgroundUrl: string | null = null
   try {
-    const setData = await env.DB.prepare(
-      'SELECT source_url FROM sets WHERE id = ?'
-    ).bind(setId).first<{ source_url: string | null }>()
+    const setCover = await env.DB.prepare(
+      'SELECT cover_image_r2_key FROM sets WHERE id = ?'
+    ).bind(setId).first<{ cover_image_r2_key: string | null }>()
 
-    if (setData?.source_url) {
-      const videoId = extractVideoId(setData.source_url)
-      if (videoId) {
-        // Try maxresdefault first (1920x1080), fall back to hqdefault (480x360)
-        const thumbUrls = [
-          `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-          `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-        ]
-
-        for (const thumbUrl of thumbUrls) {
-          const resp = await fetch(thumbUrl)
-          if (resp.ok && resp.body) {
-            const contentType = resp.headers.get('Content-Type') || 'image/jpeg'
-            // Check it's not the YouTube "no thumbnail" placeholder (120x90 gray image)
-            const contentLength = parseInt(resp.headers.get('Content-Length') || '0')
-            if (contentLength > 5000) {
-              const bgKey = `artists/${id}/background.jpg`
-              await env.AUDIO_BUCKET.put(bgKey, resp.body, {
-                httpMetadata: { contentType },
-              })
-              backgroundUrl = `/api/artists/${id}/background`
-              console.log(`[detect] Stored artist background: ${bgKey} (${contentLength} bytes)`)
-              break
-            }
-          }
-        }
+    if (setCover?.cover_image_r2_key) {
+      // Copy the set's cover to the artist background
+      const coverObject = await env.AUDIO_BUCKET.get(setCover.cover_image_r2_key)
+      if (coverObject && coverObject.body) {
+        const bgKey = `artists/${id}/background.jpg`
+        await env.AUDIO_BUCKET.put(bgKey, coverObject.body, {
+          httpMetadata: { contentType: coverObject.httpMetadata?.contentType || 'image/jpeg' },
+        })
+        backgroundUrl = `/api/artists/${id}/background`
+        console.log(`[detect] Stored artist background from set cover: ${bgKey}`)
       }
     }
   } catch (err) {
-    console.error('[detect] Artist background fetch failed (non-blocking):', err)
+    console.error('[detect] Artist background from set cover failed (non-blocking):', err)
   }
 
   await env.DB.prepare(

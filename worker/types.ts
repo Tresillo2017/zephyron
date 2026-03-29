@@ -8,10 +8,11 @@ export interface DjSet {
   subgenre: string | null
   venue: string | null
   event: string | null
+  event_id: string | null
   recorded_date: string | null
   duration_seconds: number
-  r2_key: string
-  r2_waveform_key: string | null
+  r2_key: string // Deprecated for Invidious sets (empty string)
+  r2_waveform_key: string | null // Deprecated for Invidious sets
   cover_image_r2_key: string | null
   audio_format: string
   bitrate: number | null
@@ -20,6 +21,17 @@ export interface DjSet {
   detection_status: 'pending' | 'processing' | 'complete' | 'failed'
   detection_version: number
   play_count: number
+  // Invidious/YouTube fields (v0.2.3+)
+  stream_type: 'invidious' | 'r2' | null
+  youtube_video_id: string | null
+  youtube_channel_id: string | null
+  youtube_channel_name: string | null
+  youtube_published_at: string | null
+  youtube_view_count: number | null
+  youtube_like_count: number | null
+  storyboard_data: string | null
+  keywords: string | null
+  youtube_music_tracks: string | null
   created_at: string
   updated_at: string
 }
@@ -124,4 +136,33 @@ export interface PaginatedResponse<T> {
   pageSize: number
   totalPages: number
   ok: true
+}
+
+// Events
+export interface EventInfo {
+  id: string
+  name: string
+  slug: string | null
+  series: string | null
+  description: string | null
+  website: string | null
+  location: string | null
+  start_date: string | null
+  end_date: string | null
+  cover_image_r2_key: string | null
+  logo_r2_key: string | null
+  tags: string | null
+  created_at: string
+}
+
+export interface EventArtist {
+  id: string
+  name: string
+  slug: string | null
+  image_url: string | null
+}
+
+export interface EventGenreBreakdown {
+  genre: string
+  count: number
 }

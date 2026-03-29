@@ -1,9 +1,9 @@
-// Admin routes for beta management: invite codes, set upload, annotation moderation
+// Admin routes for beta management: invite codes, set creation (Invidious-based), annotation moderation
 import { json, errorResponse } from '../lib/router'
 import { generateId } from '../lib/id'
 import { nanoid } from 'nanoid'
-import { generateWaveform } from '../services/waveform'
-import { extractVideoId, fetchVideoData } from '../services/youtube'
+import { extractVideoId } from '../services/youtube'
+import { fetchVideoData, getBestThumbnail, getStoryboardData } from '../services/invidious'
 import { extractSetMetadata } from '../services/metadata-extractor'
 
 // ═══════════════════════════════════════════
@@ -67,10 +67,10 @@ export async function revokeInviteCode(
 }
 
 // ═══════════════════════════════════════════
-// DJ SET UPLOAD
+// DJ SET CREATION (Invidious-based)
 // ═══════════════════════════════════════════
 
-// POST /api/admin/sets/from-youtube — Fetch metadata from YouTube URL + LLM extraction
+// POST /api/admin/sets/from-youtube — Fetch metadata from YouTube URL via Invidious + LLM extraction
 export async function createSetFromYoutube(
   request: Request,
   env: Env,
@@ -95,224 +95,69 @@ export async function createSetFromYoutube(
       return errorResponse('Could not extract video ID from URL', 400)
     }
 
-    // 2. Fetch video data (YouTube API v3 if key available, oEmbed fallback)
-    const apiKey = env.YOUTUBE_API_KEY && env.YOUTUBE_API_KEY.length > 5 ? env.YOUTUBE_API_KEY : undefined
-    const videoData = await fetchVideoData(videoId, apiKey, body.url)
+    // 2. Fetch video data via Invidious API
+    const videoData = await fetchVideoData(videoId, env)
 
     // 3. Run LLM extraction on the video data
     const extracted = await extractSetMetadata(videoData, env)
 
-    // 4. Merge: LLM fields take priority over raw YouTube data for structured fields
+    // 4. Get best thumbnail
+    const thumbnailUrl = getBestThumbnail(videoData.videoThumbnails)
+
+    // 5. Get storyboard data
+    const storyboard = getStoryboardData(videoData.storyboards)
+
+    // 6. Format publish date from Unix epoch
+    const publishedDate = videoData.published
+      ? new Date(videoData.published * 1000).toISOString()
+      : ''
+
+    // 7. Merge: LLM fields take priority over raw Invidious data for structured fields
     return json({
       data: {
         // Core fields
         title: extracted.title || videoData.title,
-        artist: extracted.dj_name || videoData.channelTitle,
+        artist: extracted.dj_name || videoData.author,
         description: extracted.description || '',
         genre: extracted.genre || '',
         subgenre: extracted.subgenre || '',
         venue: extracted.venue || '',
         event: extracted.event || '',
         recorded_date: extracted.recorded_date || '',
-        duration_seconds: videoData.durationSeconds || 0,
-        thumbnail_url: videoData.thumbnailUrl || '',
+        duration_seconds: videoData.lengthSeconds || 0,
+        thumbnail_url: thumbnailUrl || '',
         source_url: body.url,
         has_tracklist: extracted.has_tracklist,
+        // YouTube/Invidious metadata
+        youtube_video_id: videoId,
+        youtube_channel_id: videoData.authorId,
+        youtube_channel_name: videoData.author,
+        youtube_published_at: publishedDate,
+        youtube_view_count: videoData.viewCount,
+        youtube_like_count: videoData.likeCount,
+        keywords: videoData.keywords,
+        storyboard_data: storyboard ? JSON.stringify(storyboard) : null,
+        music_tracks: videoData.musicTracks,
         // Meta: how the data was obtained
         llm_extracted: extracted.llm_extracted,
-        youtube_source: videoData.source,
+        data_source: 'invidious',
         // Raw data for admin reference
-        raw_youtube_title: videoData.title,
-        raw_youtube_channel: videoData.channelTitle,
-        raw_youtube_tags: videoData.tags,
+        raw_title: videoData.title,
+        raw_channel: videoData.author,
+        raw_keywords: videoData.keywords,
+        raw_genre: videoData.genre,
         // Debug: LLM raw response (remove in production)
         _debug_llm: extracted._debug_response,
       },
       ok: true,
     })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to fetch YouTube data'
+    const message = err instanceof Error ? err.message : 'Failed to fetch video data from Invidious'
     return errorResponse(message, 500)
   }
 }
 
-// POST /api/admin/sets/upload-url — Generate presigned R2 upload URL
-export async function getUploadUrl(
-  request: Request,
-  _env: Env,
-  _ctx: ExecutionContext,
-  _params: Record<string, string>
-): Promise<Response> {
-  let body: { filename: string; content_type: string }
-  try {
-    body = await request.json()
-  } catch {
-    return errorResponse('Invalid JSON body', 400)
-  }
-
-  if (!body.filename || !body.content_type) {
-    return errorResponse('filename and content_type are required', 400)
-  }
-
-  const setId = generateId()
-  const ext = body.filename.split('.').pop() || 'mp3'
-  const r2Key = `sets/${setId}/audio.${ext}`
-
-  // Create a presigned URL for direct upload to R2
-  // For R2, we use a temporary upload endpoint approach
-  // The client uploads via a POST to our worker, which streams to R2
-  // (True presigned URLs require R2's S3 API which needs additional config)
-  return json({
-    data: {
-      set_id: setId,
-      r2_key: r2Key,
-      upload_endpoint: `/api/admin/sets/${setId}/upload`,
-      audio_format: ext,
-    },
-    ok: true,
-  })
-}
-
-// PUT /api/admin/sets/:id/upload — Upload audio file to R2 with progress streaming
-export async function uploadSetAudio(
-  request: Request,
-  env: Env,
-  _ctx: ExecutionContext,
-  params: Record<string, string>
-): Promise<Response> {
-  const { id } = params
-
-  if (!request.body) {
-    return errorResponse('Request body is required', 400)
-  }
-
-  const contentType = request.headers.get('Content-Type') || 'audio/mpeg'
-  const contentLength = parseInt(request.headers.get('Content-Length') || '0')
-  const ext = contentType.includes('flac') ? 'flac' : contentType.includes('wav') ? 'wav' : 'mp3'
-  const r2Key = `sets/${id}/audio.${ext}`
-  const actualContentType = contentType.includes('flac') ? 'audio/flac' : contentType.includes('wav') ? 'audio/wav' : 'audio/mpeg'
-
-  console.log(`[upload] Starting multipart upload to ${r2Key}, size=${contentLength}`)
-
-  // Use a TransformStream to send SSE progress events back to the client
-  // while simultaneously uploading parts to R2
-  const { readable, writable } = new TransformStream()
-  const writer = writable.getWriter()
-  const encoder = new TextEncoder()
-
-  const sendEvent = async (data: Record<string, unknown>) => {
-    await writer.write(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
-  }
-
-  // Run the upload in the background while streaming progress
-  const uploadPromise = (async () => {
-    try {
-      const multipart = await env.AUDIO_BUCKET.createMultipartUpload(r2Key, {
-        httpMetadata: { contentType: actualContentType },
-      })
-
-      const reader = request.body!.getReader()
-      const partSize = 10 * 1024 * 1024 // 10MB per part
-      const uploadedParts: R2UploadedPart[] = []
-      let partNumber = 1
-      let buffer = new Uint8Array(0)
-      let bytesReceived = 0
-
-      await sendEvent({ type: 'start', total: contentLength })
-
-      while (true) {
-        const { done, value } = await reader.read()
-
-        if (value) {
-          const newBuffer = new Uint8Array(buffer.length + value.length)
-          newBuffer.set(buffer)
-          newBuffer.set(value, buffer.length)
-          buffer = newBuffer
-          bytesReceived += value.length
-
-          // Send receive progress
-          await sendEvent({
-            type: 'receiving',
-            received: bytesReceived,
-            total: contentLength,
-            percent: contentLength > 0 ? Math.round((bytesReceived / contentLength) * 50) : 0,
-          })
-        }
-
-        while (buffer.length >= partSize || (done && buffer.length > 0)) {
-          const chunk = buffer.slice(0, partSize)
-          buffer = buffer.slice(chunk.length)
-
-          await sendEvent({
-            type: 'uploading_part',
-            part: partNumber,
-            partSize: chunk.length,
-            percent: contentLength > 0
-              ? 50 + Math.round(((partNumber - 1) * partSize / contentLength) * 50)
-              : 50,
-          })
-
-          const part = await multipart.uploadPart(partNumber, chunk)
-          uploadedParts.push(part)
-          partNumber++
-
-          if (done && buffer.length === 0) break
-        }
-
-        if (done) break
-      }
-
-      await sendEvent({ type: 'finalizing', percent: 95 })
-      await multipart.complete(uploadedParts)
-
-      // Update DB
-      const head = await env.AUDIO_BUCKET.head(r2Key)
-      if (head) {
-        await env.DB.prepare(
-          'UPDATE sets SET r2_key = ?, file_size_bytes = ?, audio_format = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-        )
-          .bind(r2Key, head.size, ext, id)
-          .run()
-      }
-
-      // Waveform generation
-      try {
-        await generateWaveform(id, env)
-      } catch (err) {
-        console.error('Waveform generation failed:', err)
-      }
-
-      await sendEvent({
-        type: 'complete',
-        percent: 100,
-        r2_key: r2Key,
-        size: head?.size ?? 0,
-      })
-
-      console.log(`[upload] Complete: ${r2Key}, ${head?.size ?? 0} bytes, ${partNumber - 1} parts`)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Upload failed'
-      console.error(`[upload] Error:`, err)
-      await sendEvent({ type: 'error', message })
-    } finally {
-      await writer.close()
-    }
-  })()
-
-  // Don't await — let it run while we stream the response
-  _ctx.waitUntil(uploadPromise)
-
-  return new Response(readable, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': '*',
-    },
-  })
-}
-
-// POST /api/admin/sets — Create a new DJ set record
+// POST /api/admin/sets — Create a new DJ set record (Invidious-based, no audio upload)
 export async function createSet(
   request: Request,
   env: Env,
@@ -330,11 +175,18 @@ export async function createSet(
     event?: string
     recorded_date?: string
     duration_seconds: number
-    r2_key: string
-    audio_format?: string
-    bitrate?: number
     source_url?: string
     thumbnail_url?: string
+    // Invidious-specific fields
+    youtube_video_id?: string
+    youtube_channel_id?: string
+    youtube_channel_name?: string
+    youtube_published_at?: string
+    youtube_view_count?: number
+    youtube_like_count?: number
+    storyboard_data?: string
+    keywords?: string[]
+    youtube_music_tracks?: string
   }
   try {
     body = await request.json()
@@ -342,17 +194,32 @@ export async function createSet(
     return errorResponse('Invalid JSON body', 400)
   }
 
-  if (!body.title?.trim() || !body.artist?.trim() || !body.duration_seconds || !body.r2_key) {
-    return errorResponse('title, artist, duration_seconds, and r2_key are required', 400)
+  if (!body.title?.trim() || !body.artist?.trim() || !body.duration_seconds) {
+    return errorResponse('title, artist, and duration_seconds are required', 400)
   }
 
   const id = body.id || generateId()
 
-  // Use INSERT OR REPLACE to handle retries where the set record already exists
-  // (e.g. previous upload attempt failed after the record was created)
+  // For Invidious sets: no r2_key needed (stream from YouTube)
+  // Legacy r2_key is set to empty string for new sets
   await env.DB.prepare(
-    `INSERT OR REPLACE INTO sets (id, title, artist, description, genre, subgenre, venue, event, recorded_date, duration_seconds, r2_key, audio_format, bitrate, source_url, detection_status, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', COALESCE((SELECT created_at FROM sets WHERE id = ?), CURRENT_TIMESTAMP), CURRENT_TIMESTAMP)`
+    `INSERT OR REPLACE INTO sets (
+      id, title, artist, description, genre, subgenre, venue, event,
+      recorded_date, duration_seconds, r2_key, audio_format, source_url,
+      stream_type, youtube_video_id, youtube_channel_id, youtube_channel_name,
+      youtube_published_at, youtube_view_count, youtube_like_count,
+      storyboard_data, keywords, youtube_music_tracks,
+      detection_status, created_at, updated_at
+    ) VALUES (
+      ?, ?, ?, ?, ?, ?, ?, ?,
+      ?, ?, '', 'opus', ?,
+      'invidious', ?, ?, ?,
+      ?, ?, ?,
+      ?, ?, ?,
+      'pending',
+      COALESCE((SELECT created_at FROM sets WHERE id = ?), CURRENT_TIMESTAMP),
+      CURRENT_TIMESTAMP
+    )`
   )
     .bind(
       id,
@@ -365,56 +232,63 @@ export async function createSet(
       body.event?.trim() || null,
       body.recorded_date || null,
       body.duration_seconds,
-      body.r2_key,
-      body.audio_format || 'mp3',
-      body.bitrate || null,
       body.source_url || null,
+      body.youtube_video_id || null,
+      body.youtube_channel_id || null,
+      body.youtube_channel_name || null,
+      body.youtube_published_at || null,
+      body.youtube_view_count || null,
+      body.youtube_like_count || null,
+      body.storyboard_data || null,
+      body.keywords ? JSON.stringify(body.keywords) : null,
+      body.youtube_music_tracks || null,
       id
     )
     .run()
 
   // If a thumbnail URL was provided, fetch it and store in R2
-  // Also try to get the maxres version for a better hero background
-  if (body.thumbnail_url) {
+  // Prefer YouTube's CDN directly (more reliable than Invidious proxy)
+  if (body.thumbnail_url || body.youtube_video_id) {
     try {
-      // Try maxresdefault first for the best quality hero background
-      let imageResp: Response | null = null
-      let imageContentType = 'image/jpeg'
+      const videoId = body.youtube_video_id
+      // Try YouTube CDN first (most reliable), then fall back to the provided URL
+      const thumbUrls = videoId
+        ? [
+            `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+            `https://i.ytimg.com/vi/${videoId}/sddefault.jpg`,
+            `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+            ...(body.thumbnail_url ? [body.thumbnail_url] : []),
+          ]
+        : [body.thumbnail_url!]
 
-      if (body.source_url) {
-        const { extractVideoId } = await import('../services/youtube')
-        const videoId = extractVideoId(body.source_url)
-        if (videoId) {
-          const maxresUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
-          const maxresResp = await fetch(maxresUrl)
-          const contentLength = parseInt(maxresResp.headers.get('Content-Length') || '0')
-          if (maxresResp.ok && contentLength > 5000) {
-            imageResp = maxresResp
-            imageContentType = maxresResp.headers.get('Content-Type') || 'image/jpeg'
-          }
+      for (const thumbUrl of thumbUrls) {
+        try {
+          const imageResp = await fetch(thumbUrl)
+          if (!imageResp.ok || !imageResp.body) continue
+
+          const contentLength = parseInt(imageResp.headers.get('Content-Length') || '0')
+          // Skip YouTube's placeholder "no thumbnail" image (tiny gray image)
+          if (contentLength > 0 && contentLength < 2000) continue
+
+          const imageContentType = imageResp.headers.get('Content-Type') || 'image/jpeg'
+          const thumbKey = `sets/${id}/cover.webp`
+          await env.AUDIO_BUCKET.put(thumbKey, imageResp.body, {
+            httpMetadata: { contentType: imageContentType },
+          })
+          await env.DB.prepare(
+            'UPDATE sets SET cover_image_r2_key = ? WHERE id = ?'
+          )
+            .bind(thumbKey, id)
+            .run()
+          console.log(`[createSet] Thumbnail stored: ${thumbKey} from ${thumbUrl}`)
+          break
+        } catch (err) {
+          console.error(`[createSet] Thumbnail fetch failed for ${thumbUrl}:`, err)
+          continue
         }
       }
-
-      // Fallback to the provided thumbnail URL
-      if (!imageResp) {
-        imageResp = await fetch(body.thumbnail_url)
-        imageContentType = imageResp.headers.get('Content-Type') || 'image/jpeg'
-      }
-
-      if (imageResp.ok && imageResp.body) {
-        const thumbKey = `sets/${id}/cover.webp`
-        await env.AUDIO_BUCKET.put(thumbKey, imageResp.body, {
-          httpMetadata: { contentType: imageContentType },
-        })
-        await env.DB.prepare(
-          'UPDATE sets SET cover_image_r2_key = ? WHERE id = ?'
-        )
-          .bind(thumbKey, id)
-          .run()
-        console.log(`[createSet] Thumbnail stored: ${thumbKey}`)
-      }
     } catch (err) {
-      console.error('[createSet] Thumbnail fetch failed (non-blocking):', err)
+      console.error('[createSet] Thumbnail storage failed (non-blocking):', err)
     }
   }
 
@@ -432,10 +306,10 @@ export async function deleteSet(
 
   // Get the set's R2 keys before deleting
   const set = await env.DB.prepare(
-    'SELECT r2_key, r2_waveform_key, cover_image_r2_key FROM sets WHERE id = ?'
+    'SELECT r2_key, r2_waveform_key, cover_image_r2_key, stream_type FROM sets WHERE id = ?'
   )
     .bind(id)
-    .first<{ r2_key: string; r2_waveform_key: string | null; cover_image_r2_key: string | null }>()
+    .first<{ r2_key: string; r2_waveform_key: string | null; cover_image_r2_key: string | null; stream_type: string | null }>()
 
   if (!set) {
     return errorResponse('Set not found', 404)
@@ -453,14 +327,18 @@ export async function deleteSet(
   ])
 
   // Delete R2 files (best-effort, don't fail if they don't exist)
-  const r2Deletes: string[] = [set.r2_key]
+  const r2Deletes: string[] = []
+  // Only delete audio file if it's a legacy R2 set
+  if (set.stream_type === 'r2' && set.r2_key) r2Deletes.push(set.r2_key)
   if (set.r2_waveform_key) r2Deletes.push(set.r2_waveform_key)
   if (set.cover_image_r2_key) r2Deletes.push(set.cover_image_r2_key)
 
-  try {
-    await env.AUDIO_BUCKET.delete(r2Deletes)
-  } catch {
-    console.error('Failed to delete some R2 objects (non-blocking)')
+  if (r2Deletes.length > 0) {
+    try {
+      await env.AUDIO_BUCKET.delete(r2Deletes)
+    } catch {
+      console.error('Failed to delete some R2 objects (non-blocking)')
+    }
   }
 
   return json({ ok: true })
@@ -640,87 +518,4 @@ export async function moderateAnnotation(
   }
 
   return json({ ok: true, action: newStatus })
-}
-
-// ═══════════════════════════════════════════
-// VIDEO PREVIEW UPLOAD
-// ═══════════════════════════════════════════
-
-// PUT /api/admin/sets/:id/video — Upload a video preview clip to R2
-export async function uploadSetVideo(
-  request: Request,
-  env: Env,
-  _ctx: ExecutionContext,
-  params: Record<string, string>
-): Promise<Response> {
-  const { id } = params
-
-  // Verify set exists
-  const set = await env.DB.prepare('SELECT id FROM sets WHERE id = ?')
-    .bind(id).first<{ id: string }>()
-  if (!set) return errorResponse('Set not found', 404)
-
-  if (!request.body) return errorResponse('Request body is required', 400)
-
-  const contentLength = parseInt(request.headers.get('Content-Length') || '0')
-  const maxSize = 25 * 1024 * 1024 // 25MB max
-  if (contentLength > maxSize) {
-    return errorResponse(`Video file too large (${(contentLength / 1048576).toFixed(1)}MB). Maximum is 25MB.`, 400)
-  }
-
-  const r2Key = `sets/${id}/preview.mp4`
-
-  try {
-    const multipart = await env.AUDIO_BUCKET.createMultipartUpload(r2Key, {
-      httpMetadata: { contentType: 'video/mp4' },
-    })
-
-    const reader = request.body.getReader()
-    const partSize = 10 * 1024 * 1024 // 10MB per part
-    const uploadedParts: R2UploadedPart[] = []
-    let partNumber = 1
-    let buffer = new Uint8Array(0)
-
-    while (true) {
-      const { done, value } = await reader.read()
-
-      if (value) {
-        const newBuffer = new Uint8Array(buffer.length + value.length)
-        newBuffer.set(buffer)
-        newBuffer.set(value, buffer.length)
-        buffer = newBuffer
-      }
-
-      while (buffer.length >= partSize || (done && buffer.length > 0)) {
-        const chunk = buffer.slice(0, partSize)
-        buffer = buffer.slice(chunk.length)
-
-        const part = await multipart.uploadPart(partNumber, chunk)
-        uploadedParts.push(part)
-        partNumber++
-
-        if (done && buffer.length === 0) break
-      }
-
-      if (done) break
-    }
-
-    await multipart.complete(uploadedParts)
-
-    // Update DB
-    await env.DB.prepare(
-      'UPDATE sets SET video_preview_r2_key = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-    ).bind(r2Key, id).run()
-
-    const head = await env.AUDIO_BUCKET.head(r2Key)
-    console.log(`[video-upload] Complete: ${r2Key}, ${head?.size ?? 0} bytes`)
-
-    return json({
-      data: { r2_key: r2Key, size: head?.size ?? 0 },
-      ok: true,
-    })
-  } catch (err) {
-    console.error('[video-upload] Error:', err)
-    return errorResponse(err instanceof Error ? err.message : 'Video upload failed', 500)
-  }
 }

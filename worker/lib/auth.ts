@@ -25,6 +25,11 @@ export function createAuth(env: Env) {
     basePath: '/api/auth',
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL || 'http://localhost:5173',
+    trustedOrigins: [
+      'http://localhost:5173',
+      'http://localhost:4173',
+      env.BETTER_AUTH_URL || '',
+    ].filter(Boolean),
     emailAndPassword: {
       enabled: true,
       // Password change is enabled by default via changePassword endpoint
