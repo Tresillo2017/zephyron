@@ -10,12 +10,18 @@ import {
   redetectLowConfidence,
   deleteSetAdmin,
   updateSetAdmin,
+  fetchArtists,
+  fetchEvents,
+  import1001Tracklists,
+  type Track1001Preview,
 } from '../lib/api'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { Skeleton } from '../components/ui/Skeleton'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
+import { AutocompleteInput, type AutocompleteOption } from '../components/ui/AutocompleteInput'
+import { parse1001TracklistFromHtml } from '../lib/parse-1001tracklists'
 import { formatRelativeTime, formatDuration } from '../lib/formatTime'
 import { InviteCodesTab } from '../components/admin/InviteCodesTab'
 import { SetsUploadTab } from '../components/admin/SetsUploadTab'
@@ -23,10 +29,11 @@ import { ModerationTab } from '../components/admin/ModerationTab'
 import { UsersTab } from '../components/admin/UsersTab'
 import { ArtistsTab } from '../components/admin/ArtistsTab'
 import { EventsTab } from '../components/admin/EventsTab'
+import { SongsTab } from '../components/admin/SongsTab'
 import { GENRES } from '../lib/constants'
 import type { DjSet } from '../lib/types'
 
-type Tab = 'sets' | 'artists' | 'events' | 'users' | 'invites' | 'ml' | 'moderation'
+type Tab = 'sets' | 'songs' | 'artists' | 'events' | 'users' | 'invites' | 'ml' | 'moderation'
 
 interface MLStats {
   totalDetections: number
@@ -55,6 +62,7 @@ interface DetectionJob {
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'sets', label: 'Sets', icon: 'M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z' },
+  { id: 'songs', label: 'Songs', icon: 'M12 3l.01 10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4.01 4S14 19.21 14 17V7h4V3h-6zm-1.99 16c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z' },
   { id: 'artists', label: 'Artists', icon: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z' },
   { id: 'events', label: 'Events', icon: 'M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z' },
   { id: 'users', label: 'Users', icon: 'M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z' },
@@ -118,6 +126,7 @@ export function AdminPage() {
       {/* Content */}
       <main className="flex-1 min-w-0 py-6 pr-6 lg:pr-10 pl-4">
         {activeTab === 'sets' && <SetsListTab />}
+        {activeTab === 'songs' && <SongsTab />}
         {activeTab === 'artists' && <ArtistsTab />}
         {activeTab === 'events' && <EventsTab />}
         {activeTab === 'users' && <UsersTab />}
@@ -136,17 +145,9 @@ export function AdminPage() {
 function SetsListTab() {
   const [sets, setSets] = useState<DjSet[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [triggering, setTriggering] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState<string | null>(null)
   const [editingSet, setEditingSet] = useState<DjSet | null>(null)
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
-  const [reuploadId, setReuploadId] = useState<string | null>(null)
-  const [reuploadFile, setReuploadFile] = useState<File | null>(null)
-  const [uploading, setUploading] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [search, setSearch] = useState('')
-
-  const [detectResult, setDetectResult] = useState<Record<string, { detections: number; error?: string } | null>>({})
 
   const loadSets = () => {
     setIsLoading(true)
@@ -172,46 +173,6 @@ function SetsListTab() {
   const handleSetCreated = () => {
     setShowAddForm(false)
     loadSets()
-  }
-
-  const handleTrigger = async (setId: string) => {
-    setTriggering(setId)
-    setDetectResult((prev) => ({ ...prev, [setId]: null }))
-    try {
-      const res = await triggerDetection(setId)
-      const data = (res as any).data || {}
-      setSets((prev) => prev.map((s) => s.id === setId ? { ...s, detection_status: (data.status || 'complete') as any } : s))
-      setDetectResult((prev) => ({ ...prev, [setId]: { detections: data.detections || 0, error: data.error } }))
-    } catch (err) {
-      setDetectResult((prev) => ({ ...prev, [setId]: { detections: 0, error: err instanceof Error ? err.message : 'Failed' } }))
-    }
-    finally { setTriggering(null) }
-  }
-
-  const handleDelete = async (setId: string) => {
-    setDeleting(setId)
-    try {
-      await deleteSetAdmin(setId)
-      setSets((prev) => prev.filter((s) => s.id !== setId))
-      setConfirmDelete(null)
-    } catch { /* silent */ }
-    finally { setDeleting(null) }
-  }
-
-  const handleReupload = async (setId: string) => {
-    if (!reuploadFile) return
-    setUploading(true)
-    try {
-      await fetch(`/api/admin/sets/${setId}/upload`, {
-        method: 'PUT',
-        headers: { 'Content-Type': reuploadFile.type || 'audio/mpeg' },
-        body: reuploadFile,
-      })
-      setReuploadId(null)
-      setReuploadFile(null)
-      loadSets()
-    } catch { /* silent */ }
-    finally { setUploading(false) }
   }
 
   if (isLoading) return <Skeleton className="h-64 w-full rounded-xl" />
@@ -275,107 +236,31 @@ function SetsListTab() {
                 >
                   {set.detection_status}
                 </Badge>
-                <div className="flex gap-1.5 shrink-0">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => handleTrigger(set.id)}
-                    disabled={triggering === set.id || set.detection_status === 'processing'}
-                  >
-                    {triggering === set.id ? '...' : 'Detect'}
-                  </Button>
-                  {set.detection_status === 'complete' && (
-                    <Button variant="ghost" size="sm" onClick={async () => { await redetectLowConfidence(set.id) }}>
-                      Re-detect
-                    </Button>
-                  )}
-                  <Button variant="ghost" size="sm" onClick={() => setEditingSet(set)}>Edit</Button>
-                  <Button variant="ghost" size="sm" onClick={() => setReuploadId(set.id)}>Upload</Button>
-                  <Button variant="danger" size="sm" onClick={() => setConfirmDelete(set.id)}>Delete</Button>
-                </div>
+                <Button variant="ghost" size="sm" onClick={() => setEditingSet(set)}>Edit</Button>
               </div>
-              {/* Inline detection result */}
-              {detectResult[set.id] && (
-                <div className={`mt-3 px-3 py-2 rounded-lg text-xs ${
-                  detectResult[set.id]!.error
-                    ? 'bg-danger/10 text-danger'
-                    : 'bg-accent/10 text-accent'
-                }`}>
-                  {detectResult[set.id]!.error
-                    ? `Detection failed: ${detectResult[set.id]!.error}`
-                    : `Detected ${detectResult[set.id]!.detections} tracks`}
-                </div>
-              )}
-              {triggering === set.id && (
-                <div className="mt-3 px-3 py-2 rounded-lg text-xs animate-pulse" style={{ background: 'hsl(var(--b4) / 0.4)', color: 'hsl(var(--c3))' }}>
-                  Analyzing YouTube description &amp; comments, enriching with Last.fm...
-                </div>
-              )}
             </div>
           ))}
         </div>
       )}
 
-      {/* Delete confirmation modal */}
-      <Modal isOpen={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Delete Set">
-        <p className="text-sm mb-4" style={{ color: 'hsl(var(--c2))' }}>
-          Are you sure you want to delete this set? This will remove all detections, annotations, votes, and the audio file from R2. This cannot be undone.
-        </p>
-        <div className="flex gap-3">
-          <Button variant="secondary" onClick={() => setConfirmDelete(null)} className="flex-1">Cancel</Button>
-          <Button
-            variant="danger"
-            onClick={() => confirmDelete && handleDelete(confirmDelete)}
-            disabled={deleting === confirmDelete}
-            className="flex-1"
-          >
-            {deleting ? 'Deleting...' : 'Delete Set'}
-          </Button>
-        </div>
-      </Modal>
-
-      {/* Edit set modal */}
+      {/* Edit set panel */}
       {editingSet && (
         <EditSetModal
           set={editingSet}
           onClose={() => setEditingSet(null)}
           onSaved={() => { setEditingSet(null); loadSets() }}
+          onDeleted={(id) => { setSets((prev) => prev.filter((s) => s.id !== id)); setEditingSet(null) }}
         />
       )}
-
-      {/* Re-upload audio modal */}
-      <Modal isOpen={!!reuploadId} onClose={() => { setReuploadId(null); setReuploadFile(null) }} title="Upload / Replace Audio">
-        <p className="text-sm mb-4" style={{ color: 'hsl(var(--c2))' }}>
-          Select an audio file to upload (or replace existing audio) for this set.
-        </p>
-        <input
-          type="file"
-          accept="audio/mpeg,audio/flac,audio/wav,.mp3,.flac,.wav"
-          onChange={(e) => setReuploadFile(e.target.files?.[0] || null)}
-          className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent/10 file:text-accent hover:file:bg-accent/20 cursor-pointer mb-4"
-          style={{ color: 'hsl(var(--c2))' }}
-        />
-        {reuploadFile && (
-          <p className="text-xs mb-4" style={{ color: 'hsl(var(--c3))' }}>{reuploadFile.name} ({(reuploadFile.size / 1048576).toFixed(1)} MB)</p>
-        )}
-        <div className="flex gap-3">
-          <Button variant="secondary" onClick={() => { setReuploadId(null); setReuploadFile(null) }} className="flex-1">Cancel</Button>
-          <Button
-            variant="primary"
-            onClick={() => reuploadId && handleReupload(reuploadId)}
-            disabled={!reuploadFile || uploading}
-            className="flex-1"
-          >
-            {uploading ? 'Uploading...' : 'Upload'}
-          </Button>
-        </div>
-      </Modal>
     </>
   )
 }
 
 /** Modal for editing set metadata */
-function EditSetModal({ set, onClose, onSaved }: { set: DjSet; onClose: () => void; onSaved: () => void }) {
+function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClose: () => void; onSaved: () => void; onDeleted: (id: string) => void }) {
+  const [tab, setTab] = useState<'metadata' | 'tracklist' | 'danger'>('metadata')
+
+  // Metadata fields
   const [title, setTitle] = useState(set.title)
   const [artist, setArtist] = useState(set.artist)
   const [description, setDescription] = useState(set.description || '')
@@ -383,23 +268,60 @@ function EditSetModal({ set, onClose, onSaved }: { set: DjSet; onClose: () => vo
   const [subgenre, setSubgenre] = useState(set.subgenre || '')
   const [venue, setVenue] = useState(set.venue || '')
   const [event, setEvent] = useState(set.event || '')
+  const [tracklistUrl, setTracklistUrl] = useState(set.tracklist_1001_url || '')
   const [isSaving, setIsSaving] = useState(false)
+
+  // Autocomplete
+  const [artistId, setArtistId] = useState<string | null>(null)
+  const [eventId, setEventId] = useState<string | null>(null)
+
+  const fetchArtistOptions = useCallback(async (q: string): Promise<AutocompleteOption[]> => {
+    const res = await fetchArtists(q)
+    return (res.data || []).map((a: any) => ({ id: a.id, label: a.name, sublabel: a.set_count ? `${a.set_count} sets` : undefined }))
+  }, [])
+
+  const fetchEventOptions = useCallback(async (q: string): Promise<AutocompleteOption[]> => {
+    const res = await fetchEvents(q)
+    return (res.data || []).map((e: any) => ({ id: e.id, label: e.name, sublabel: e.series || undefined }))
+  }, [])
+
+  // 1001Tracklists import
+  const [tracklistHtml, setTracklistHtml] = useState('')
+  const [isParsing, setIsParsing] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
+  const [importProgress, setImportProgress] = useState('')
+  const [parsedTracks, setParsedTracks] = useState<Track1001Preview[]>([])
+  const [tracklistMsg, setTracklistMsg] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
+
+  // Detection
+  const [isDetecting, setIsDetecting] = useState(false)
+  const [detectMsg, setDetectMsg] = useState<string | null>(null)
+
+  // Delete
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [confirmDeleteText, setConfirmDeleteText] = useState('')
+
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+
+  const inputClass = 'w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none'
 
   const handleSave = async () => {
     setIsSaving(true)
     setError(null)
+    setSuccess(null)
     try {
       await updateSetAdmin(set.id, {
-        title: title.trim(),
-        artist: artist.trim(),
-        description: description.trim() || null,
-        genre: genre || null,
-        subgenre: subgenre.trim() || null,
-        venue: venue.trim() || null,
+        title: title.trim(), artist: artist.trim(),
+        description: description.trim() || null, genre: genre || null,
+        subgenre: subgenre.trim() || null, venue: venue.trim() || null,
         event: event.trim() || null,
+        tracklist_1001_url: tracklistUrl.trim() || null,
+        artist_id: artistId || null,
+        event_id: eventId || null,
       })
-      onSaved()
+      setSuccess('Saved')
+      setTimeout(() => { setSuccess(null); onSaved() }, 1000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save')
     } finally {
@@ -407,36 +329,302 @@ function EditSetModal({ set, onClose, onSaved }: { set: DjSet; onClose: () => vo
     }
   }
 
+  const handleParse = () => {
+    if (!tracklistHtml.trim()) return
+    setIsParsing(true)
+    setTracklistMsg(null)
+    try {
+      // Parse entirely client-side — no server round-trip needed
+      const tracks = parse1001TracklistFromHtml(tracklistHtml)
+      if (tracks.length === 0) {
+        setTracklistMsg({ type: 'error', text: 'No tracks found. Paste the full page source (Ctrl+U).' })
+      } else {
+        setParsedTracks(tracks as Track1001Preview[])
+      }
+    } catch (err) {
+      setTracklistMsg({ type: 'error', text: err instanceof Error ? err.message : 'Parse failed' })
+    } finally {
+      setIsParsing(false)
+    }
+  }
+
+  const handleImport = async () => {
+    if (parsedTracks.length === 0) return
+    setIsImporting(true)
+    setTracklistMsg(null)
+    setImportProgress(`Importing ${parsedTracks.length} tracks...`)
+
+    // Simulate progress steps while the server processes
+    const steps = [
+      { delay: 800, msg: 'Creating song records...' },
+      { delay: 2500, msg: 'Enriching with Last.fm metadata...' },
+      { delay: 5000, msg: 'Caching cover artwork...' },
+      { delay: 8000, msg: 'Writing detections...' },
+      { delay: 12000, msg: 'Almost done...' },
+    ]
+    const timers = steps.map((step) =>
+      setTimeout(() => setImportProgress(step.msg), step.delay)
+    )
+
+    try {
+      const res = await import1001Tracklists(set.id, parsedTracks)
+      timers.forEach(clearTimeout)
+      setTracklistMsg({ type: 'success', text: `Imported ${res.data.imported} tracks with song records. Tracklist is live.` })
+      setParsedTracks([])
+      setTracklistHtml('')
+    } catch (err) {
+      timers.forEach(clearTimeout)
+      setTracklistMsg({ type: 'error', text: err instanceof Error ? err.message : 'Import failed' })
+    } finally {
+      setIsImporting(false)
+      setImportProgress('')
+    }
+  }
+
+  const handleDetect = async () => {
+    setIsDetecting(true)
+    setDetectMsg(null)
+    try {
+      const res = await triggerDetection(set.id)
+      const data = (res as any).data || {}
+      setDetectMsg(data.error ? `Failed: ${data.error}` : `Detected ${data.detections || 0} tracks`)
+    } catch (err) {
+      setDetectMsg(err instanceof Error ? err.message : 'Detection failed')
+    } finally {
+      setIsDetecting(false)
+    }
+  }
+
+  const handleRedetect = async () => {
+    setIsDetecting(true)
+    setDetectMsg(null)
+    try {
+      await redetectLowConfidence(set.id)
+      setDetectMsg('Re-detection triggered')
+    } catch {
+      setDetectMsg('Re-detection failed')
+    } finally {
+      setIsDetecting(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    setIsDeleting(true)
+    try {
+      await deleteSetAdmin(set.id)
+      onDeleted(set.id)
+    } catch { /* silent */ }
+    finally { setIsDeleting(false) }
+  }
+
+  const tabs = [
+    { id: 'metadata' as const, label: 'Metadata' },
+    { id: 'tracklist' as const, label: 'Tracklist' },
+    { id: 'danger' as const, label: 'Danger Zone' },
+  ]
+
   return (
-    <Modal isOpen onClose={onClose} title="Edit Set">
-      <div className="space-y-3">
-        <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <Input label="Artist / DJ" value={artist} onChange={(e) => setArtist(e.target.value)} />
-        <div className="grid grid-cols-2 gap-3">
-          <Input label="Venue" value={venue} onChange={(e) => setVenue(e.target.value)} />
-          <Input label="Event" value={event} onChange={(e) => setEvent(e.target.value)} />
+    <Modal isOpen onClose={onClose} title={`Edit: ${set.title}`}>
+      <div className="min-w-0" style={{ maxHeight: '75vh', overflow: 'auto' }}>
+        {/* Tabs */}
+        <div className="flex gap-1 mb-4 p-1 rounded-lg" style={{ background: 'hsl(var(--b5) / 0.5)' }}>
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className="flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all"
+              style={{
+                background: tab === t.id ? 'hsl(var(--h3) / 0.15)' : 'transparent',
+                color: tab === t.id ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>Genre</label>
-            <select value={genre} onChange={(e) => setGenre(e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none" style={{ background: 'hsl(var(--b4) / 0.4)', color: 'hsl(var(--c1))' }}>
-              <option value="">None</option>
-              {GENRES.map((g) => <option key={g} value={g}>{g}</option>)}
-            </select>
+
+        {/* ═══ METADATA TAB ═══ */}
+        {tab === 'metadata' && (
+          <div className="space-y-3">
+            <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>Artist / DJ</label>
+                <AutocompleteInput
+                  value={artist} onChange={setArtist}
+                  onSelect={(opt) => setArtistId(opt.id)}
+                  onClear={() => setArtistId(null)}
+                  selectedId={artistId}
+                  fetchOptions={fetchArtistOptions}
+                  placeholder="DJ name"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>Event</label>
+                <AutocompleteInput
+                  value={event} onChange={setEvent}
+                  onSelect={(opt) => setEventId(opt.id)}
+                  onClear={() => setEventId(null)}
+                  selectedId={eventId}
+                  fetchOptions={fetchEventOptions}
+                  placeholder="Boiler Room Berlin"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Input label="Venue" value={venue} onChange={(e) => setVenue(e.target.value)} />
+              <Input label="Subgenre" value={subgenre} onChange={(e) => setSubgenre(e.target.value)} placeholder="e.g. Dark Techno" />
+            </div>
+            <div>
+              <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>Genre</label>
+              <select value={genre} onChange={(e) => setGenre(e.target.value)} className={inputClass}>
+                <option value="">None</option>
+                {GENRES.map((g) => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>1001Tracklists URL</label>
+              <input value={tracklistUrl} onChange={(e) => setTracklistUrl(e.target.value)} placeholder="https://www.1001tracklists.com/tracklist/..." className={inputClass} />
+            </div>
+            <div>
+              <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>Description</label>
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className={`${inputClass} resize-none`} />
+            </div>
+            {error && <p className="text-xs" style={{ color: 'hsl(0, 60%, 55%)' }}>{error}</p>}
+            {success && <p className="text-xs" style={{ color: 'hsl(var(--h3))' }}>{success}</p>}
+            <div className="flex gap-3 pt-2">
+              <Button variant="secondary" onClick={onClose} className="flex-1">Cancel</Button>
+              <Button variant="primary" onClick={handleSave} disabled={isSaving || !title.trim() || !artist.trim()} className="flex-1">
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
           </div>
-          <Input label="Subgenre" value={subgenre} onChange={(e) => setSubgenre(e.target.value)} placeholder="e.g. Dark Techno" />
-        </div>
-        <div>
-          <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>Description</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full px-3 py-2 rounded-lg text-sm resize-none focus:outline-none" style={{ background: 'hsl(var(--b4) / 0.4)', color: 'hsl(var(--c1))' }} />
-        </div>
-        {error && <p className="text-xs" style={{ color: 'hsl(0, 60%, 55%)' }}>{error}</p>}
-        <div className="flex gap-3 pt-2">
-          <Button variant="secondary" onClick={onClose} className="flex-1">Cancel</Button>
-          <Button variant="primary" onClick={handleSave} disabled={isSaving || !title.trim() || !artist.trim()} className="flex-1">
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </div>
+        )}
+
+        {/* ═══ TRACKLIST TAB ═══ */}
+        {tab === 'tracklist' && (
+          <div className="space-y-4">
+            {/* Auto-detect section */}
+            <div className="rounded-xl p-4" style={{ background: 'hsl(var(--b5) / 0.5)', boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.3)' }}>
+              <p className="text-xs font-medium mb-2" style={{ color: 'hsl(var(--c1))' }}>Auto-detect from YouTube</p>
+              <p className="text-[10px] mb-3" style={{ color: 'hsl(var(--c3))' }}>
+                Parses the YouTube description and comments via Invidious + AI. Falls back if no 1001tracklists data is available.
+              </p>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleDetect} disabled={isDetecting}>
+                  {isDetecting ? 'Detecting...' : 'Run Detection'}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleRedetect} disabled={isDetecting}>
+                  Re-detect Low Confidence
+                </Button>
+              </div>
+              {detectMsg && (
+                <p className="text-[10px] mt-2" style={{ color: detectMsg.includes('Failed') || detectMsg.includes('failed') ? 'hsl(0, 60%, 55%)' : 'hsl(var(--h3))' }}>
+                  {detectMsg}
+                </p>
+              )}
+            </div>
+
+            {/* Manual 1001tracklists paste */}
+            <div className="rounded-xl p-4" style={{ background: 'hsl(var(--b5) / 0.5)', boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.3)' }}>
+              <p className="text-xs font-medium mb-1" style={{ color: 'hsl(var(--c1))' }}>Import from 1001Tracklists</p>
+              <p className="text-[10px] mb-3" style={{ color: 'hsl(var(--c3))' }}>
+                Open the 1001tracklists page → <kbd className="px-1 py-0.5 rounded text-[10px] font-mono" style={{ background: 'hsl(var(--b3))', color: 'hsl(var(--c2))' }}>Ctrl+U</kbd> → <kbd className="px-1 py-0.5 rounded text-[10px] font-mono" style={{ background: 'hsl(var(--b3))', color: 'hsl(var(--c2))' }}>Ctrl+A</kbd> → copy → paste below. This replaces all existing detections.
+              </p>
+              <textarea
+                value={tracklistHtml}
+                onChange={(e) => setTracklistHtml(e.target.value)}
+                placeholder="Paste full page source HTML..."
+                rows={4}
+                className="w-full px-3 py-2 rounded-lg text-xs font-mono placeholder:text-text-muted focus:outline-none resize-none"
+                style={{ background: 'hsl(var(--b6))', color: 'hsl(var(--c2))', boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)' }}
+              />
+              <div className="flex items-center gap-2 mt-2">
+                <Button size="sm" onClick={handleParse} disabled={isParsing || !tracklistHtml.trim()}>
+                  {isParsing ? 'Parsing...' : 'Parse'}
+                </Button>
+                {parsedTracks.length > 0 && (
+                  <Button variant="primary" size="sm" onClick={handleImport} disabled={isImporting}>
+                    {isImporting ? 'Importing...' : `Import ${parsedTracks.length} tracks`}
+                  </Button>
+                )}
+                {tracklistHtml.trim() && (
+                  <span className="text-[10px] font-mono ml-auto" style={{ color: 'hsl(var(--c3))' }}>
+                    {(tracklistHtml.length / 1024).toFixed(0)} KB
+                  </span>
+                )}
+              </div>
+              {tracklistMsg && (
+                <p className="text-[10px] mt-2" style={{ color: tracklistMsg.type === 'error' ? 'hsl(0, 60%, 55%)' : 'hsl(var(--h3))' }}>
+                  {tracklistMsg.text}
+                </p>
+              )}
+              {isImporting && importProgress && (
+                <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'hsl(var(--h3) / 0.06)' }}>
+                  <div className="w-3.5 h-3.5 border-2 rounded-full animate-spin shrink-0" style={{ borderColor: 'hsl(var(--h3) / 0.3)', borderTopColor: 'hsl(var(--h3))' }} />
+                  <span className="text-[11px]" style={{ color: 'hsl(var(--h3))' }}>{importProgress}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Parsed tracks preview */}
+            {parsedTracks.length > 0 && (
+              <div className="rounded-xl overflow-hidden" style={{ boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)' }}>
+                <div className="px-3 py-2 flex items-center justify-between" style={{ background: 'hsl(var(--b5) / 0.5)' }}>
+                  <span className="text-xs font-medium" style={{ color: 'hsl(var(--h3))' }}>{parsedTracks.length} tracks</span>
+                  <button className="text-[10px]" style={{ color: 'hsl(var(--c3))' }} onClick={() => { setParsedTracks([]); setTracklistHtml('') }}>Clear</button>
+                </div>
+                <div className="max-h-52 overflow-y-auto">
+                  {parsedTracks.map((t, i) => (
+                    <div key={i} className="flex items-center gap-2 px-3 py-1.5 text-[11px]" style={{ borderTop: i > 0 ? '1px solid hsl(var(--b4) / 0.1)' : undefined }}>
+                      {t.artwork_url ? (
+                        <img src={t.artwork_url} alt="" className="w-7 h-7 rounded object-cover shrink-0" />
+                      ) : (
+                        <div className="w-7 h-7 rounded shrink-0" style={{ background: 'hsl(var(--b4) / 0.4)' }} />
+                      )}
+                      <span className="w-8 text-right font-mono shrink-0" style={{ color: t.is_continuation ? 'hsl(var(--h3) / 0.5)' : 'hsl(var(--c3))' }}>
+                        {t.is_continuation ? 'w/' : t.cue_time || String(t.position).padStart(2, '0')}
+                      </span>
+                      <span className="truncate flex-1" style={{ color: 'hsl(var(--c1))' }}>
+                        {t.artist} - {t.title}
+                      </span>
+                      {t.label && <span className="shrink-0 truncate max-w-20" style={{ color: 'hsl(var(--c3))' }}>[{t.label}]</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ═══ DANGER ZONE ═══ */}
+        {tab === 'danger' && (
+          <div className="space-y-4">
+            <div className="rounded-xl p-4" style={{ background: 'hsl(0, 50%, 15% / 0.3)', boxShadow: 'inset 0 0 0 1px hsl(0, 50%, 30% / 0.3)' }}>
+              <p className="text-xs font-medium mb-1" style={{ color: 'hsl(0, 60%, 65%)' }}>Delete this set</p>
+              <p className="text-[10px] mb-3" style={{ color: 'hsl(var(--c3))' }}>
+                Permanently removes this set, all detections, annotations, votes, and audio. This cannot be undone.
+              </p>
+              <div className="flex items-center gap-2">
+                <input
+                  value={confirmDeleteText}
+                  onChange={(e) => setConfirmDeleteText(e.target.value)}
+                  placeholder={`Type "${set.id.slice(0, 6)}" to confirm`}
+                  className="flex-1 px-3 py-1.5 rounded-lg text-xs font-mono focus:outline-none"
+                  style={{ background: 'hsl(var(--b6))', color: 'hsl(var(--c2))', boxShadow: 'inset 0 0 0 1px hsl(0, 50%, 30% / 0.3)' }}
+                />
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={isDeleting || confirmDeleteText !== set.id.slice(0, 6)}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete Set'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Modal>
   )

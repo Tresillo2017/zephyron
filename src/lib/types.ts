@@ -34,6 +34,12 @@ export interface DjSet {
   storyboard_data: string | null
   keywords: string | null
   youtube_music_tracks: string | null
+  // 1001Tracklists fields
+  tracklist_1001_url: string | null
+  tracklist_1001_id: string | null
+  // Video streaming
+  youtube_video_stream_url: string | null
+  youtube_video_stream_expires: number | null
   created_at: string
   updated_at: string
 }
@@ -51,8 +57,38 @@ export interface Detection {
   upvotes: number
   downvotes: number
   is_verified: number
+  song_id: string | null
+  song: Song | null
   created_at: string
   updated_at: string
+}
+
+export interface Song {
+  id: string
+  title: string
+  artist: string
+  label: string | null
+  album: string | null
+  cover_art_url: string | null
+  cover_art_r2_key: string | null
+  spotify_url: string | null
+  apple_music_url: string | null
+  soundcloud_url: string | null
+  beatport_url: string | null
+  youtube_url: string | null
+  deezer_url: string | null
+  bandcamp_url: string | null
+  traxsource_url: string | null
+  lastfm_url: string | null
+  lastfm_album_art: string | null
+  lastfm_album: string | null
+  lastfm_tags: string | null
+  lastfm_listeners: number | null
+  source?: string | null
+  external_id?: string | null
+  detection_count?: number
+  created_at?: string
+  updated_at?: string
 }
 
 export interface DjSetWithDetections extends DjSet {

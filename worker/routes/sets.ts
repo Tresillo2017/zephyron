@@ -2,7 +2,7 @@ import { json, errorResponse } from '../lib/router'
 import { paginatedQuery } from '../lib/db'
 import { streamAudio } from '../services/audio-stream'
 import { getBestAudioStream } from '../services/invidious'
-import type { DjSet, Detection } from '../types'
+import type { DjSet } from '../types'
 
 // GET /api/sets — List all sets (paginated)
 export async function listSets(
@@ -71,7 +71,21 @@ export async function getSet(
   const [setResult, detectionsResult, artistResult, eventResult] = await env.DB.batch([
     env.DB.prepare('SELECT * FROM sets WHERE id = ?').bind(id),
     env.DB.prepare(
-      'SELECT * FROM detections WHERE set_id = ? ORDER BY start_time_seconds ASC'
+      `SELECT d.*,
+         s.id as song__id, s.title as song__title, s.artist as song__artist,
+         s.label as song__label, s.album as song__album,
+         s.cover_art_url as song__cover_art_url, s.cover_art_r2_key as song__cover_art_r2_key,
+         s.spotify_url as song__spotify_url, s.apple_music_url as song__apple_music_url,
+         s.soundcloud_url as song__soundcloud_url, s.beatport_url as song__beatport_url,
+         s.youtube_url as song__youtube_url, s.deezer_url as song__deezer_url,
+         s.bandcamp_url as song__bandcamp_url, s.traxsource_url as song__traxsource_url,
+         s.lastfm_url as song__lastfm_url, s.lastfm_album_art as song__lastfm_album_art,
+         s.lastfm_album as song__lastfm_album, s.lastfm_tags as song__lastfm_tags,
+         s.lastfm_listeners as song__lastfm_listeners
+       FROM detections d
+       LEFT JOIN songs s ON d.song_id = s.id
+       WHERE d.set_id = ?
+       ORDER BY d.start_time_seconds ASC`
     ).bind(id),
     env.DB.prepare(
       'SELECT a.id, a.name, a.slug, a.image_url, a.bio_summary, a.tags, a.lastfm_url, a.listeners FROM artists a JOIN sets s ON s.artist_id = a.id WHERE s.id = ?'
@@ -86,6 +100,24 @@ export async function getSet(
     return errorResponse('Set not found', 404)
   }
 
+  // Reshape flat detection+song rows into nested objects
+  const detections = (detectionsResult.results as Record<string, unknown>[] || []).map((row) => {
+    const detection: Record<string, unknown> = {}
+    let song: Record<string, unknown> | null = null
+
+    for (const [key, value] of Object.entries(row)) {
+      if (key.startsWith('song__')) {
+        if (!song) song = {}
+        song[key.replace('song__', '')] = value
+      } else {
+        detection[key] = value
+      }
+    }
+
+    detection.song = (song && song.id) ? song : null
+    return detection
+  })
+
   const artist = artistResult.results[0] as Record<string, unknown> | undefined
   const eventRow = eventResult.results[0] as Record<string, unknown> | undefined
 
@@ -98,7 +130,7 @@ export async function getSet(
   return json({
     data: {
       ...set,
-      detections: detectionsResult.results as unknown as Detection[],
+      detections,
       artist_info: artist ? {
         id: artist.id,
         name: artist.name,

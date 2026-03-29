@@ -1,112 +1,241 @@
-import { useState } from 'react'
-import { VoteButtons } from './VoteButtons'
-import { AnnotationEditor } from './AnnotationEditor'
-import { formatTime, formatConfidence } from '../../lib/formatTime'
-import { Badge } from '../ui/Badge'
+import { formatTime } from '../../lib/formatTime'
+import { getSongCoverUrl } from '../../lib/api'
+import { getAvailableServices, ServiceIconLink } from '../../lib/services'
 import type { Detection } from '../../lib/types'
 
-interface DetectionRowProps {
+// ═══════════════════════════════════════════
+// Types
+// ═══════════════════════════════════════════
+
+export interface DetectionGroupProps {
+  /** The main track (first in the group) */
+  primary: Detection
+  /** Tracks playing simultaneously ("w/" tracks) */
+  withTracks: Detection[]
+  index: number
+  setId: string
+  duration: number
+  onClickTrack: (detection: Detection) => void
+  isActive?: boolean
+  isPlaying?: boolean
+}
+
+export interface DetectionRowProps {
   detection: Detection
   index: number
   setId: string
   duration: number
   onClick: () => void
   isActive?: boolean
+  isPlaying?: boolean
 }
 
-export function DetectionRow({
-  detection,
-  index,
-  setId,
-  duration,
-  onClick,
-  isActive,
-}: DetectionRowProps) {
-  const [showEditor, setShowEditor] = useState(false)
+// ═══════════════════════════════════════════
+// Helpers
+// ═══════════════════════════════════════════
+
+function getCoverUrl(song: Detection['song']) {
+  if (!song) return null
+  return song.cover_art_r2_key ? getSongCoverUrl(song.id) : song.cover_art_url || song.lastfm_album_art || null
+}
+
+// ═══════════════════════════════════════════
+// Detection Group — handles w/ tracks
+// ═══════════════════════════════════════════
+
+/**
+ * Renders a primary track with optional "w/" (played with) tracks nested below.
+ * Groups tracks that play simultaneously into a visual unit.
+ */
+export function DetectionGroup({
+  primary, withTracks, onClickTrack, isActive, isPlaying,
+}: DetectionGroupProps) {
+  const hasWithTracks = withTracks.length > 0
+
+  const song = primary.song
+  const coverUrl = getCoverUrl(song)
+  const serviceLinks = song ? getAvailableServices(song as unknown as Record<string, unknown>) : []
 
   return (
     <>
       <div
-        className={`flex items-center gap-3 px-4 py-3 transition-all duration-200 ${
-          isActive ? 'bg-accent/10 border-l-2 border-l-accent' : 'hover:bg-surface-hover border-l-2 border-l-transparent'
-        } ${index > 0 ? 'border-t border-border' : ''}`}
+        className="group relative transition-colors duration-150"
+        style={{ background: isActive ? 'hsl(var(--h3) / 0.06)' : 'transparent' }}
       >
-        {/* Clickable area for seeking */}
+        {/* Active indicator bar */}
+        {isActive && (
+          <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-r-full" style={{ background: 'hsl(var(--h3))' }} />
+        )}
+
+        {/* ═══ PRIMARY TRACK ═══ */}
         <button
-          onClick={onClick}
-          className="flex items-center gap-3 flex-1 min-w-0 text-left"
+          onClick={() => onClickTrack(primary)}
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-left"
         >
-          {/* Timestamp */}
-          <span className={`text-xs font-mono w-14 flex-shrink-0 tabular-nums ${isActive ? 'text-accent' : 'text-text-muted'}`}>
-            {formatTime(detection.start_time_seconds)}
+          {/* Timestamp / equalizer */}
+          <span
+            className="w-10 text-center font-mono text-[11px] tabular-nums shrink-0"
+            style={{ color: isActive ? 'hsl(var(--h3))' : 'hsl(var(--c3) / 0.6)' }}
+          >
+            {isActive && isPlaying ? (
+              <span className="flex items-center justify-center">
+                <span className="flex gap-[2px] items-end h-3">
+                  <span className="w-[2.5px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-1 0.8s ease-in-out infinite' }} />
+                  <span className="w-[2.5px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-2 0.6s ease-in-out infinite' }} />
+                  <span className="w-[2.5px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-3 0.7s ease-in-out infinite' }} />
+                </span>
+              </span>
+            ) : (
+              formatTime(primary.start_time_seconds)
+            )}
           </span>
 
-          {/* Now playing indicator — real equalizer animation */}
-          {isActive && (
-            <div className="w-3 flex-shrink-0 flex items-center">
-              <div className="flex gap-[2px] items-end h-3.5">
-                <div className="w-[3px] bg-accent rounded-sm" style={{ animation: 'eq-bar-1 0.8s ease-in-out infinite' }} />
-                <div className="w-[3px] bg-accent rounded-sm" style={{ animation: 'eq-bar-2 0.6s ease-in-out infinite' }} />
-                <div className="w-[3px] bg-accent rounded-sm" style={{ animation: 'eq-bar-3 0.7s ease-in-out infinite' }} />
-              </div>
-            </div>
-          )}
+          {/* Artwork */}
+          <TrackArtwork coverUrl={coverUrl} size={40} />
 
           {/* Track info */}
           <div className="flex-1 min-w-0">
-            <p className={`text-sm truncate ${isActive ? 'text-accent font-medium' : 'text-text-primary'}`}>
-              {detection.track_title}
+            <p
+              className="text-[13px] leading-tight truncate"
+              style={{
+                color: isActive ? 'hsl(var(--h3))' : 'hsl(var(--c1))',
+                fontWeight: isActive ? 'var(--font-weight-medium)' : 'var(--font-weight-default)',
+              }}
+            >
+              {primary.track_title}
             </p>
-            {detection.track_artist && (
-              <p className="text-xs text-text-secondary truncate">{detection.track_artist}</p>
-            )}
+            <div className="flex items-center gap-1.5 mt-0.5">
+              {primary.track_artist && (
+                <span className="text-xs truncate" style={{ color: 'hsl(var(--c2))' }}>{primary.track_artist}</span>
+              )}
+              {song?.label && (
+                <>
+                  <span className="text-[10px]" style={{ color: 'hsl(var(--c3) / 0.4)' }}>·</span>
+                  <span className="text-[10px] truncate" style={{ color: 'hsl(var(--c3))' }}>{song.label}</span>
+                </>
+              )}
+            </div>
           </div>
+
+          {/* Service links */}
+          {serviceLinks.length > 0 && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              {serviceLinks.slice(0, 5).map(({ url, service }) => (
+                <ServiceIconLink key={service.key} url={url} service={service} size={14} />
+              ))}
+            </div>
+          )}
         </button>
 
-        {/* Confidence */}
-        <span
-          className={`text-[10px] font-medium flex-shrink-0 px-1.5 py-0.5 rounded ${
-            detection.confidence >= 0.8
-              ? 'text-success bg-success/10'
-              : detection.confidence >= 0.5
-              ? 'text-warning bg-warning/10'
-              : 'text-text-muted bg-surface-overlay'
-          }`}
-        >
-          {formatConfidence(detection.confidence)}
-        </span>
+        {/* ═══ "W/" TRACKS — nested underneath ═══ */}
+        {hasWithTracks && (
+          <div className="ml-[52px] mr-4 mb-2">
+            {withTracks.map((wt) => {
+              const wtSong = wt.song
+              const wtCover = getCoverUrl(wtSong)
+              const wtLinks = wtSong ? getAvailableServices(wtSong as unknown as Record<string, unknown>) : []
 
-        {/* Verified badge */}
-        {detection.is_verified === 1 && (
-          <Badge variant="accent">Verified</Badge>
+              return (
+                <button
+                  key={wt.id}
+                  onClick={() => onClickTrack(wt)}
+                  className="w-full flex items-center gap-2.5 py-1.5 px-2 rounded-lg text-left transition-colors hover:bg-[hsl(var(--b4)/0.2)]"
+                >
+                  {/* w/ connector */}
+                  <span
+                    className="text-[9px] font-mono shrink-0 w-6 text-center"
+                    style={{ color: 'hsl(var(--c3) / 0.4)' }}
+                  >
+                    w/
+                  </span>
+
+                  {/* Small artwork */}
+                  <TrackArtwork coverUrl={wtCover} size={28} />
+
+                  {/* Track info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] leading-tight truncate" style={{ color: 'hsl(var(--c2))' }}>
+                      {wt.track_title}
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      {wt.track_artist && (
+                        <span className="text-[10px] truncate" style={{ color: 'hsl(var(--c3))' }}>{wt.track_artist}</span>
+                      )}
+                      {wtSong?.label && (
+                        <>
+                          <span className="text-[9px]" style={{ color: 'hsl(var(--c3) / 0.3)' }}>·</span>
+                          <span className="text-[9px] truncate" style={{ color: 'hsl(var(--c3) / 0.6)' }}>{wtSong.label}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Service links (smaller) */}
+                  {wtLinks.length > 0 && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      {wtLinks.slice(0, 3).map(({ url, service }) => (
+                        <ServiceIconLink key={service.key} url={url} service={service} size={12} />
+                      ))}
+                    </div>
+                  )}
+                </button>
+              )
+            })}
+          </div>
         )}
 
-        {/* Vote buttons */}
-        <VoteButtons detection={detection} />
-
-        {/* Edit/Correct button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            setShowEditor(true)
-          }}
-          className="text-text-muted hover:text-text-primary transition-colors p-1 flex-shrink-0"
-          title="Correct this detection"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-          </svg>
-        </button>
+        {/* Separator */}
+        <div className="mx-4" style={{ borderBottom: '1px solid hsl(var(--b4) / 0.15)' }} />
       </div>
-
-      {/* Annotation editor modal */}
-      <AnnotationEditor
-        setId={setId}
-        duration={duration}
-        detection={detection}
-        isOpen={showEditor}
-        onClose={() => setShowEditor(false)}
-      />
     </>
+  )
+}
+
+// ═══════════════════════════════════════════
+// Standalone row (backward compat for non-grouped usage)
+// ═══════════════════════════════════════════
+
+export function DetectionRow({
+  detection, index, setId, duration, onClick, isActive, isPlaying,
+}: DetectionRowProps) {
+  return (
+    <DetectionGroup
+      primary={detection}
+      withTracks={[]}
+      index={index}
+      setId={setId}
+      duration={duration}
+      onClickTrack={() => onClick()}
+      isActive={isActive}
+      isPlaying={isPlaying}
+    />
+  )
+}
+
+// ═══════════════════════════════════════════
+// Shared components
+// ═══════════════════════════════════════════
+
+function TrackArtwork({ coverUrl, size }: { coverUrl: string | null; size: number }) {
+  if (coverUrl) {
+    return (
+      <div
+        className="rounded-lg overflow-hidden shrink-0"
+        style={{ width: size, height: size, boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.2)' }}
+      >
+        <img src={coverUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className="rounded-lg shrink-0 flex items-center justify-center"
+      style={{ width: size, height: size, background: 'hsl(var(--b4) / 0.4)' }}
+    >
+      <svg className="w-4 h-4" style={{ color: 'hsl(var(--c3) / 0.3)' }} fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+      </svg>
+    </div>
   )
 }

@@ -1,14 +1,15 @@
 import { useEffect, useCallback, useRef, useState } from 'react'
 import { usePlayerStore } from '../../stores/playerStore'
 import { StoryboardScrubber } from './StoryboardScrubber'
+import { CoverFlowView } from './CoverFlowView'
 import { formatTime } from '../../lib/formatTime'
 import { getCoverUrl, fetchStoryboard, type StoryboardData } from '../../lib/api'
 
 export function FullScreenPlayer() {
   const {
     currentSet, isPlaying, currentTime, duration, volume, isMuted,
-    currentDetection, detections, isFullScreen,
-    togglePlay, seek, setVolume, toggleMute, playNext, playPrevious, toggleFullScreen,
+    currentDetection, detections, isFullScreen, fullScreenMode,
+    togglePlay, seek, setVolume, toggleMute, playNext, playPrevious, toggleFullScreen, setFullScreenMode,
   } = usePlayerStore()
 
   const activeTrackRef = useRef<HTMLButtonElement>(null)
@@ -81,7 +82,31 @@ export function FullScreenPlayer() {
         {/* Header */}
         <div className="flex items-center justify-between px-6 h-14 shrink-0">
           <span className="text-[10px] font-mono tracking-wider" style={{ color: 'hsl(var(--c3))' }}>NOW PLAYING</span>
-          <button
+          <div className="flex items-center gap-2">
+            {/* Mode toggle: Tracklist / CoverFlow */}
+            <div className="flex items-center rounded-lg overflow-hidden" style={{ background: 'hsl(var(--b3) / 0.5)' }}>
+              <button
+                onClick={() => setFullScreenMode('tracklist')}
+                className="px-3 py-1.5 text-[10px] font-mono tracking-wide transition-all"
+                style={{
+                  background: fullScreenMode === 'tracklist' ? 'hsl(var(--h3) / 0.2)' : 'transparent',
+                  color: fullScreenMode === 'tracklist' ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
+                }}
+              >
+                TRACKLIST
+              </button>
+              <button
+                onClick={() => setFullScreenMode('coverflow')}
+                className="px-3 py-1.5 text-[10px] font-mono tracking-wide transition-all"
+                style={{
+                  background: fullScreenMode === 'coverflow' ? 'hsl(var(--h3) / 0.2)' : 'transparent',
+                  color: fullScreenMode === 'coverflow' ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
+                }}
+              >
+                COVERFLOW
+              </button>
+            </div>
+            <button
             onClick={toggleFullScreen}
             className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
             style={{ color: 'hsl(var(--c3))' }}
@@ -93,10 +118,59 @@ export function FullScreenPlayer() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+          </div>
         </div>
 
         {/* Main content */}
-        <div className="flex-1 flex flex-col lg:flex-row min-h-0 px-6 pb-6 gap-6">
+        {fullScreenMode === 'coverflow' ? (
+          /* ═══ COVERFLOW MODE ═══ */
+          <div className="flex-1 flex flex-col min-h-0 px-6 pb-6">
+            <div className="flex-1 min-h-0">
+              <CoverFlowView />
+            </div>
+
+            {/* Progress bar + controls (compact, centered) */}
+            <div className="max-w-xl mx-auto w-full mt-4">
+              <div className="relative h-[6px] rounded-full cursor-pointer group" style={{ background: 'hsl(var(--b3))' }} onClick={handleSeek}>
+                <div className="absolute top-0 left-0 h-full rounded-full" style={{ width: `${progress}%`, background: 'hsl(var(--h3))', transition: 'width 0.1s linear' }} />
+                <div
+                  className="absolute top-1/2 w-4 h-4 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }}
+                />
+                <StoryboardScrubber storyboard={storyboard} duration={duration} />
+              </div>
+              <div className="flex justify-between mt-2">
+                <span className="text-[11px] font-mono tabular-nums" style={{ color: 'hsl(var(--c3))' }}>{formatTime(currentTime)}</span>
+                <span className="text-[11px] font-mono tabular-nums" style={{ color: 'hsl(var(--c3))' }}>{formatTime(duration)}</span>
+              </div>
+
+              {/* Controls */}
+              <div className="flex items-center justify-center gap-5 mt-3">
+                <button onClick={playPrevious} className="transition-colors" style={{ color: 'hsl(var(--c3))' }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'hsl(var(--c1))'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'hsl(var(--c3))'}>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" /></svg>
+                </button>
+                <button
+                  onClick={togglePlay}
+                  className="w-14 h-14 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
+                  style={{ background: 'hsl(var(--h3))', boxShadow: '0 4px 20px hsl(var(--h4) / 0.35)' }}
+                >
+                  {isPlaying
+                    ? <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+                    : <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>}
+                </button>
+                <button onClick={playNext} className="transition-colors" style={{ color: 'hsl(var(--c3))' }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'hsl(var(--c1))'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'hsl(var(--c3))'}>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* ═══ TRACKLIST MODE (original layout) ═══ */
+          <div className="flex-1 flex flex-col lg:flex-row min-h-0 px-6 pb-6 gap-6">
 
           {/* LEFT: cover + info + controls */}
           <div className="lg:w-[440px] xl:w-[500px] flex flex-col items-center lg:items-start shrink-0 overflow-y-auto">
@@ -257,6 +331,7 @@ export function FullScreenPlayer() {
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   )

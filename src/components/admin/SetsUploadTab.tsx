@@ -1,8 +1,10 @@
-import { useState } from 'react'
-import { fetchYoutubeMetadata, adminCreateSet } from '../../lib/api'
+import { useState, useCallback } from 'react'
+import { fetchYoutubeMetadata, adminCreateSet, fetchArtists, fetchEvents, import1001Tracklists, type Track1001Preview } from '../../lib/api'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
+import { AutocompleteInput, type AutocompleteOption } from '../ui/AutocompleteInput'
+import { parse1001TracklistFromHtml } from '../../lib/parse-1001tracklists'
 import { GENRES } from '../../lib/constants'
 
 export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = {}) {
@@ -30,7 +32,7 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
   const [rawKeywords, setRawKeywords] = useState<string[]>([])
   const [thumbnailUrl, setThumbnailUrl] = useState('')
 
-  // Invidious-specific metadata (stored for set creation)
+  // Invidious-specific metadata
   const [videoId, setVideoId] = useState('')
   const [channelId, setChannelId] = useState('')
   const [channelName, setChannelName] = useState('')
@@ -39,6 +41,41 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
   const [likeCount, setLikeCount] = useState(0)
   const [storyboardData, setStoryboardData] = useState<string | null>(null)
   const [musicTracks, setMusicTracks] = useState<{ song: string; artist: string; album: string }[]>([])
+
+  // 1001Tracklists
+  const [tracklistUrl, setTracklistUrl] = useState('')
+  const [tracklistHtml, setTracklistHtml] = useState('')
+  const [isParsing1001, setIsParsing1001] = useState(false)
+  const [isImporting1001, setIsImporting1001] = useState(false)
+  const [parsedTracks, setParsedTracks] = useState<Track1001Preview[]>([])
+  const [parseError, setParseError] = useState<string | null>(null)
+  const [importSuccess, setImportSuccess] = useState<string | null>(null)
+
+  // Linked artist/event IDs
+  const [artistId, setArtistId] = useState<string | null>(null)
+  const [eventId, setEventId] = useState<string | null>(null)
+
+  // Created set ID (for post-creation 1001tl paste)
+  const [createdSetId, setCreatedSetId] = useState<string | null>(null)
+
+  // Autocomplete fetch functions
+  const fetchArtistOptions = useCallback(async (q: string): Promise<AutocompleteOption[]> => {
+    const res = await fetchArtists(q)
+    return (res.data || []).map((a: any) => ({
+      id: a.id,
+      label: a.name,
+      sublabel: a.set_count ? `${a.set_count} sets` : undefined,
+    }))
+  }, [])
+
+  const fetchEventOptions = useCallback(async (q: string): Promise<AutocompleteOption[]> => {
+    const res = await fetchEvents(q)
+    return (res.data || []).map((e: any) => ({
+      id: e.id,
+      label: e.name,
+      sublabel: e.series || undefined,
+    }))
+  }, [])
 
   const handleFetchYoutube = async () => {
     if (!youtubeUrl.trim()) return
@@ -49,7 +86,6 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
       const d = res.data
       const filled = new Set<string>()
 
-      // Fill all available fields
       if (d.title) { setTitle(d.title); filled.add('title') }
       if (d.artist) { setArtist(d.artist); filled.add('artist') }
       if (d.description) { setDescription(d.description); filled.add('description') }
@@ -61,7 +97,6 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
         filled.add('duration')
       }
       if (d.genre) {
-        // Match to our genre list (case-insensitive)
         const matched = GENRES.find((g) => g.toLowerCase() === d.genre.toLowerCase())
         if (matched) { setGenre(matched); filled.add('genre') }
         else { setGenre(d.genre); filled.add('genre') }
@@ -74,7 +109,6 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
       setRawKeywords(d.raw_keywords || [])
       if (d.thumbnail_url) setThumbnailUrl(d.thumbnail_url)
 
-      // Store Invidious metadata for set creation
       setVideoId(d.youtube_video_id || '')
       setChannelId(d.youtube_channel_id || '')
       setChannelName(d.youtube_channel_name || '')
@@ -87,6 +121,45 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
       setError(err instanceof Error ? err.message : 'Failed to fetch video data')
     } finally {
       setIsFetching(false)
+    }
+  }
+
+  const handleParse1001Html = () => {
+    if (!tracklistHtml.trim()) return
+
+    setIsParsing1001(true)
+    setParseError(null)
+    setImportSuccess(null)
+    try {
+      const tracks = parse1001TracklistFromHtml(tracklistHtml)
+      if (tracks.length === 0) {
+        setParseError('No tracks found. Make sure you pasted the full page source (Ctrl+U), not just the visible text.')
+      } else {
+        setParsedTracks(tracks as Track1001Preview[])
+      }
+    } catch (err) {
+      setParseError(err instanceof Error ? err.message : 'Failed to parse HTML')
+    } finally {
+      setIsParsing1001(false)
+    }
+  }
+
+  const handleImport1001Tracks = async () => {
+    if (!createdSetId || parsedTracks.length === 0) return
+
+    setIsImporting1001(true)
+    setImportSuccess(null)
+    setParseError(null)
+    try {
+      const res = await import1001Tracklists(createdSetId, parsedTracks)
+      setImportSuccess(`Imported ${res.data.imported} tracks as detections. The tracklist is now live.`)
+      setParsedTracks([])
+      setTracklistHtml('')
+      onSetCreated?.()
+    } catch (err) {
+      setParseError(err instanceof Error ? err.message : 'Failed to import tracks')
+    } finally {
+      setIsImporting1001(false)
     }
   }
 
@@ -120,7 +193,6 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
         duration_seconds: durationSeconds,
         thumbnail_url: thumbnailUrl || undefined,
         source_url: youtubeUrl.trim() || undefined,
-        // Invidious metadata
         youtube_video_id: videoId || undefined,
         youtube_channel_id: channelId || undefined,
         youtube_channel_name: channelName || undefined,
@@ -130,18 +202,38 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
         storyboard_data: storyboardData || undefined,
         keywords: rawKeywords.length > 0 ? rawKeywords : undefined,
         youtube_music_tracks: musicTracks.length > 0 ? JSON.stringify(musicTracks) : undefined,
+        tracklist_1001_url: tracklistUrl.trim() || undefined,
+        artist_id: artistId || undefined,
+        event_id: eventId || undefined,
       })
 
-      const createdId = res.data.id
-      setSuccess(`Set created (ID: ${createdId}). Audio will stream from YouTube via Invidious. You can now trigger ML detection from the ML Pipeline tab.`)
+      const id = res.data.id
+      setCreatedSetId(id)
 
-      // Reset form
+      // If tracks were already parsed from 1001tracklists, import them immediately
+      if (parsedTracks.length > 0) {
+        setSuccess(`Set created. Importing ${parsedTracks.length} tracks...`)
+        try {
+          const importRes = await import1001Tracklists(id, parsedTracks)
+          setSuccess(`Set created. Imported ${importRes.data.imported} tracks from 1001Tracklists.`)
+          setParsedTracks([])
+          setTracklistHtml('')
+        } catch {
+          setSuccess(`Set created (${id}), but track import failed. You can re-import from the Edit panel.`)
+        }
+      } else {
+        setSuccess(`Set created (${id}). Open Edit to import a tracklist from 1001Tracklists, or trigger ML detection.`)
+      }
+
+      // Reset form (keep 1001tl parsed state if import failed)
       setTitle(''); setArtist(''); setDescription(''); setGenre(''); setSubgenre('')
       setVenue(''); setEvent(''); setRecordedDate(''); setDurationMinutes('')
       setYoutubeUrl(''); setThumbnailUrl('')
       setAiFields(new Set()); setDataSource(null); setHasTracklist(false); setRawKeywords([])
       setVideoId(''); setChannelId(''); setChannelName(''); setPublishedAt('')
       setViewCount(0); setLikeCount(0); setStoryboardData(null); setMusicTracks([])
+      setTracklistUrl('')
+      setArtistId(null); setEventId(null)
       onSetCreated?.()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create set')
@@ -150,7 +242,6 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
     }
   }
 
-  /** Small badge showing a field was auto-filled by AI */
   const AiBadge = ({ field }: { field: string }) =>
     aiFields.has(field) ? (
       <span className="ml-1.5 inline-flex items-center px-1.5 py-0 rounded text-[10px] font-medium bg-accent/10 text-accent">
@@ -158,9 +249,11 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
       </span>
     ) : null
 
+  const inputClass = 'w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-colors'
+
   return (
     <div className="max-w-2xl">
-      {/* YouTube fetch */}
+      {/* ═══ STEP 1: YouTube Import ═══ */}
       <div className="mb-6">
         <label className="text-sm font-medium text-text-secondary block mb-2">
           Import from YouTube URL
@@ -184,26 +277,14 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
         )}
       </div>
 
-      {/* Source indicator */}
+      {/* Source indicator badges */}
       {dataSource && (
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           <Badge variant="accent">Invidious API</Badge>
-          {aiFields.size > 0 && (
-            <Badge variant="accent">{aiFields.size} fields auto-detected by AI</Badge>
-          )}
-          {hasTracklist && (
-            <Badge variant="default">Tracklist found in description</Badge>
-          )}
-          {viewCount > 0 && (
-            <span className="text-[10px] text-text-muted">
-              {viewCount.toLocaleString()} views
-            </span>
-          )}
-          {likeCount > 0 && (
-            <span className="text-[10px] text-text-muted">
-              {likeCount.toLocaleString()} likes
-            </span>
-          )}
+          {aiFields.size > 0 && <Badge variant="accent">{aiFields.size} fields auto-detected</Badge>}
+          {hasTracklist && <Badge variant="default">Tracklist in description</Badge>}
+          {viewCount > 0 && <span className="text-[10px] text-text-muted">{viewCount.toLocaleString()} views</span>}
+          {likeCount > 0 && <span className="text-[10px] text-text-muted">{likeCount.toLocaleString()} likes</span>}
           {rawKeywords.length > 0 && (
             <span className="text-[10px] text-text-muted">
               Tags: {rawKeywords.slice(0, 5).join(', ')}{rawKeywords.length > 5 ? ` +${rawKeywords.length - 5}` : ''}
@@ -212,7 +293,7 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
         </div>
       )}
 
-      {/* Music tracks from YouTube auto-detection */}
+      {/* YouTube music tracks preview */}
       {musicTracks.length > 0 && (
         <div className="mb-4 card !p-3">
           <p className="text-xs font-medium text-text-secondary mb-2">
@@ -228,19 +309,191 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
         </div>
       )}
 
-      <div className="pt-6 space-y-4">
+      {/* ═══ STEP 2: 1001Tracklists ═══ */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <label className="text-sm font-medium text-text-secondary">
+            1001Tracklists
+          </label>
+          <span className="text-[10px] text-text-muted">(optional — rich track metadata with artwork + service links)</span>
+        </div>
+
+        {/* URL input */}
+        <Input
+          value={tracklistUrl}
+          onChange={(e) => setTracklistUrl(e.target.value)}
+          placeholder="https://www.1001tracklists.com/tracklist/..."
+          className="w-full mb-3"
+        />
+
+        {/* Manual HTML paste */}
+        <div
+          className="rounded-xl p-4"
+          style={{ background: 'hsl(var(--b5) / 0.5)', boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.3)' }}
+        >
+          <div className="flex items-start gap-2 mb-3">
+            <svg className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'hsl(var(--h3))' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            </svg>
+            <div>
+              <p className="text-xs font-medium" style={{ color: 'hsl(var(--c1))' }}>Paste page source</p>
+              <p className="text-[10px] mt-0.5" style={{ color: 'hsl(var(--c3))' }}>
+                Open the 1001tracklists page in your browser, press <kbd className="px-1 py-0.5 rounded text-[10px] font-mono" style={{ background: 'hsl(var(--b3))', color: 'hsl(var(--c2))' }}>Ctrl+U</kbd> to view source, select all (<kbd className="px-1 py-0.5 rounded text-[10px] font-mono" style={{ background: 'hsl(var(--b3))', color: 'hsl(var(--c2))' }}>Ctrl+A</kbd>), copy, and paste below.
+              </p>
+            </div>
+          </div>
+
+          <textarea
+            value={tracklistHtml}
+            onChange={(e) => setTracklistHtml(e.target.value)}
+            placeholder="Paste the full page source HTML here..."
+            rows={4}
+            className="w-full px-3 py-2 rounded-lg text-xs font-mono placeholder:text-text-muted focus:outline-none resize-none"
+            style={{
+              background: 'hsl(var(--b6))',
+              color: 'hsl(var(--c2))',
+              boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)',
+            }}
+          />
+
+          <div className="flex items-center gap-2 mt-2">
+            <Button
+              size="sm"
+              onClick={handleParse1001Html}
+              disabled={isParsing1001 || !tracklistHtml.trim()}
+            >
+              {isParsing1001 ? 'Parsing...' : 'Parse Tracklist'}
+            </Button>
+            {tracklistHtml.trim() && (
+              <span className="text-[10px] font-mono" style={{ color: 'hsl(var(--c3))' }}>
+                {(tracklistHtml.length / 1024).toFixed(0)} KB pasted
+              </span>
+            )}
+            {parsedTracks.length > 0 && (
+              <button
+                className="text-[10px] ml-auto transition-colors"
+                style={{ color: 'hsl(var(--c3))' }}
+                onClick={() => { setParsedTracks([]); setTracklistHtml(''); setParseError(null) }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          {parseError && <p className="text-[10px] mt-2" style={{ color: 'hsl(0, 60%, 55%)' }}>{parseError}</p>}
+          {importSuccess && <p className="text-[10px] mt-2" style={{ color: 'hsl(var(--h3))' }}>{importSuccess}</p>}
+        </div>
+
+        {/* Parsed tracks preview */}
+        {parsedTracks.length > 0 && (
+          <div className="mt-3 rounded-xl overflow-hidden" style={{ boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)' }}>
+            <div className="flex items-center justify-between px-3 py-2" style={{ background: 'hsl(var(--b5) / 0.5)' }}>
+              <span className="text-xs font-medium" style={{ color: 'hsl(var(--h3))' }}>
+                {parsedTracks.length} tracks parsed
+              </span>
+              <Badge variant="accent">1001Tracklists</Badge>
+            </div>
+            <div className="max-h-64 overflow-y-auto divide-y" style={{ borderColor: 'hsl(var(--b4) / 0.15)' }}>
+              {parsedTracks.map((t, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2.5 px-3 py-2 text-xs"
+                  style={{ background: i % 2 === 0 ? 'transparent' : 'hsl(var(--b5) / 0.2)' }}
+                >
+                  {/* Artwork */}
+                  {t.artwork_url ? (
+                    <img src={t.artwork_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" />
+                  ) : (
+                    <div className="w-8 h-8 rounded shrink-0 flex items-center justify-center" style={{ background: 'hsl(var(--b4) / 0.5)' }}>
+                      <svg className="w-3 h-3" style={{ color: 'hsl(var(--c3) / 0.4)' }} fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                      </svg>
+                    </div>
+                  )}
+
+                  {/* Position */}
+                  <span className="w-6 text-right font-mono tabular-nums shrink-0" style={{ color: t.is_continuation ? 'hsl(var(--h3) / 0.5)' : 'hsl(var(--c3))' }}>
+                    {t.is_continuation ? 'w/' : String(t.position).padStart(2, '0')}
+                  </span>
+
+                  {/* Cue time */}
+                  {t.cue_time && (
+                    <span className="font-mono tabular-nums shrink-0" style={{ color: 'hsl(var(--c3))' }}>
+                      {t.cue_time}
+                    </span>
+                  )}
+
+                  {/* Artist + Title */}
+                  <div className="flex-1 min-w-0">
+                    <span style={{ color: 'hsl(var(--c2))' }}>{t.artist}</span>
+                    <span style={{ color: 'hsl(var(--c3))' }}> — </span>
+                    <span style={{ color: 'hsl(var(--c1))' }}>{t.title}</span>
+                  </div>
+
+                  {/* Label */}
+                  {t.label && (
+                    <span className="font-mono shrink-0 truncate max-w-24" style={{ color: 'hsl(var(--c3))' }}>
+                      [{t.label}]
+                    </span>
+                  )}
+
+                  {/* Service dots */}
+                  <div className="flex gap-1 shrink-0">
+                    {t.spotify_url && <div className="w-2 h-2 rounded-full" style={{ background: '#1DB954' }} title="Spotify" />}
+                    {t.apple_music_url && <div className="w-2 h-2 rounded-full" style={{ background: '#FA243C' }} title="Apple Music" />}
+                    {t.soundcloud_url && <div className="w-2 h-2 rounded-full" style={{ background: '#FF6100' }} title="SoundCloud" />}
+                    {t.beatport_url && <div className="w-2 h-2 rounded-full" style={{ background: '#94D500' }} title="Beatport" />}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Import button — show if set exists and tracks weren't auto-imported */}
+            {createdSetId ? (
+              <div className="px-3 py-2 flex items-center gap-2" style={{ background: 'hsl(var(--b5) / 0.5)', borderTop: '1px solid hsl(var(--b4) / 0.15)' }}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleImport1001Tracks}
+                  disabled={isImporting1001}
+                >
+                  {isImporting1001 ? 'Importing...' : `Import ${parsedTracks.length} tracks`}
+                </Button>
+                <span className="text-[10px]" style={{ color: 'hsl(var(--c3))' }}>
+                  into set {createdSetId.slice(0, 8)}...
+                </span>
+              </div>
+            ) : (
+              <div className="px-3 py-2" style={{ background: 'hsl(var(--b5) / 0.3)', borderTop: '1px solid hsl(var(--b4) / 0.15)' }}>
+                <p className="text-[10px]" style={{ color: 'hsl(var(--c3))' }}>
+                  Tracks will be imported automatically when you create the set.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ═══ STEP 3: Set Metadata ═══ */}
+      <div className="pt-4 space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Title<AiBadge field="title" />
             </label>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Set title" className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-colors" />
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Set title" className={inputClass} />
           </div>
           <div>
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Artist / DJ<AiBadge field="artist" />
             </label>
-            <input value={artist} onChange={(e) => setArtist(e.target.value)} placeholder="DJ name" className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-colors" />
+            <AutocompleteInput
+              value={artist}
+              onChange={setArtist}
+              onSelect={(opt) => setArtistId(opt.id)}
+              onClear={() => setArtistId(null)}
+              selectedId={artistId}
+              fetchOptions={fetchArtistOptions}
+              placeholder="DJ name"
+            />
           </div>
         </div>
 
@@ -249,13 +502,21 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Venue<AiBadge field="venue" />
             </label>
-            <input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Berghain" className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-colors" />
+            <input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Berghain" className={inputClass} />
           </div>
           <div>
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Event<AiBadge field="event" />
             </label>
-            <input value={event} onChange={(e) => setEvent(e.target.value)} placeholder="Boiler Room Berlin" className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-colors" />
+            <AutocompleteInput
+              value={event}
+              onChange={setEvent}
+              onSelect={(opt) => setEventId(opt.id)}
+              onClear={() => setEventId(null)}
+              selectedId={eventId}
+              fetchOptions={fetchEventOptions}
+              placeholder="Boiler Room Berlin"
+            />
           </div>
         </div>
 
@@ -264,34 +525,28 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Genre<AiBadge field="genre" />
             </label>
-            <select
-              value={genre}
-              onChange={(e) => setGenre(e.target.value)}
-              className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary focus:outline-none"
-            >
+            <select value={genre} onChange={(e) => setGenre(e.target.value)} className={inputClass}>
               <option value="">Select...</option>
-              {GENRES.map((g) => (
-                <option key={g} value={g}>{g}</option>
-              ))}
+              {GENRES.map((g) => <option key={g} value={g}>{g}</option>)}
             </select>
           </div>
           <div>
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Subgenre<AiBadge field="subgenre" />
             </label>
-            <input value={subgenre} onChange={(e) => setSubgenre(e.target.value)} placeholder="e.g. Dark Techno" className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-colors" />
+            <input value={subgenre} onChange={(e) => setSubgenre(e.target.value)} placeholder="e.g. Dark Techno" className={inputClass} />
           </div>
           <div>
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Recorded Date<AiBadge field="recorded_date" />
             </label>
-            <input type="date" value={recordedDate} onChange={(e) => setRecordedDate(e.target.value)} className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary focus:outline-none transition-colors" />
+            <input type="date" value={recordedDate} onChange={(e) => setRecordedDate(e.target.value)} className={inputClass} />
           </div>
           <div>
             <label className="text-sm font-medium text-text-secondary block mb-1.5">
               Duration (min)<AiBadge field="duration" />
             </label>
-            <input type="number" value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} placeholder="90" className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-colors" />
+            <input type="number" value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} placeholder="90" className={inputClass} />
           </div>
         </div>
 
@@ -304,7 +559,7 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Set description..."
             rows={3}
-            className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none resize-none"
+            className={`${inputClass} resize-none`}
           />
         </div>
 
@@ -315,7 +570,7 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.348 14.652a3.75 3.75 0 0 1 0-5.304m5.304 0a3.75 3.75 0 0 1 0 5.304m-7.425 2.121a6.75 6.75 0 0 1 0-9.546m9.546 0a6.75 6.75 0 0 1 0 9.546M5.106 18.894c-3.808-3.807-3.808-9.98 0-13.788m13.788 0c3.808 3.807 3.808 9.98 0 13.788" />
             </svg>
             <span className="text-xs text-text-muted">
-              Audio will stream directly from YouTube via Invidious — no file upload needed
+              Audio streams from YouTube via Invidious — no file upload needed
             </span>
           </div>
         )}

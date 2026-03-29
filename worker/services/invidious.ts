@@ -381,3 +381,80 @@ export async function fetchVideoDataFromUrl(
   }
   return fetchVideoData(videoId, env)
 }
+
+// ═══════════════════════════════════════════
+// Video stream resolution
+// ═══════════════════════════════════════════
+
+export interface VideoStreamInfo {
+  url: string
+  itag: string
+  type: string
+  bitrate: string
+  container: string
+  encoding: string
+  qualityLabel: string
+  resolution: string
+  fps: number
+}
+
+/**
+ * Resolve the best video stream URL from Invidious adaptive formats.
+ * Uses local=true so URLs point to the Invidious proxy.
+ * Prefers highest quality video stream (720p+ preferred for a good experience).
+ */
+export async function getBestVideoStream(
+  videoId: string,
+  env: Env
+): Promise<VideoStreamInfo> {
+  const videoData = await fetchVideoData(videoId, env, true)
+  const baseUrl = getBaseUrl(env)
+
+  // Filter for video-only adaptive formats (no audio)
+  const videoFormats = videoData.adaptiveFormats.filter(
+    (f) => f.type.startsWith('video/') && !f.audioQuality
+  )
+
+  if (videoFormats.length === 0) {
+    throw new Error(`No video streams available for video ${videoId}`)
+  }
+
+  // Sort by resolution (prefer 720p for bandwidth balance, then higher)
+  videoFormats.sort((a, b) => {
+    const resA = parseInt(a.resolution || '0')
+    const resB = parseInt(b.resolution || '0')
+    // Prefer 720p, then 1080p, then lower/higher
+    const scoreA = resA === 720 ? 1000 : resA === 1080 ? 999 : resA
+    const scoreB = resB === 720 ? 1000 : resB === 1080 ? 999 : resB
+    return scoreB - scoreA
+  })
+
+  const best = videoFormats[0]
+
+  // Fix URL like getBestAudioStream does
+  let streamUrl = best.url
+  try {
+    const parsed = new URL(streamUrl)
+    const base = new URL(baseUrl)
+    if (parsed.hostname === base.hostname || parsed.hostname.includes('invidious')) {
+      parsed.protocol = base.protocol
+      parsed.hostname = base.hostname
+      parsed.port = base.port || ''
+      streamUrl = parsed.toString()
+    }
+  } catch {
+    // URL parsing failed, use as-is
+  }
+
+  return {
+    url: streamUrl,
+    itag: best.itag,
+    type: best.type,
+    bitrate: best.bitrate,
+    container: best.container,
+    encoding: best.encoding,
+    qualityLabel: best.qualityLabel || 'unknown',
+    resolution: best.resolution || 'unknown',
+    fps: best.fps || 0,
+  }
+}

@@ -1,6 +1,7 @@
-// Queue consumer handlers for ML pipeline
+// Queue consumer handlers for ML pipeline + cover art + enrichment
 import { runDetectionPipeline } from '../services/ml-detection'
 import { processFeedbackBatch } from '../services/feedback-processor'
+import { cacheSongCoverArt, enrichSongWithLastfm } from '../services/songs'
 
 interface DetectionMessage {
   type: 'detect_tracks'
@@ -17,6 +18,14 @@ interface FeedbackMessage {
   track_title: string
   track_artist: string | null
   start_time_seconds: number
+}
+
+interface CoverArtMessage {
+  type: 'cache_cover_art' | 'enrich_lastfm'
+  song_id: string
+  image_url?: string
+  artist?: string
+  title?: string
 }
 
 /**
@@ -70,5 +79,38 @@ export async function handleFeedbackQueue(
   } catch (error) {
     console.error('Feedback queue error:', error)
     batch.retryAll({ delaySeconds: 60 })
+  }
+}
+
+/**
+ * Handle messages from the cover-art-queue.
+ * Processes cover art downloads and Last.fm enrichment with natural rate limiting
+ * via the queue's batch size and retry backoff.
+ */
+export async function handleCoverArtQueue(
+  batch: MessageBatch<CoverArtMessage>,
+  env: Env
+): Promise<void> {
+  const lastfmKey = env.LASTFM_API_KEY && env.LASTFM_API_KEY.length > 5 ? env.LASTFM_API_KEY : undefined
+
+  for (const msg of batch.messages) {
+    try {
+      const { type, song_id } = msg.body
+
+      if (type === 'cache_cover_art') {
+        await cacheSongCoverArt(song_id, env, msg.body.image_url)
+        console.log(`[queue] Cached cover art for song ${song_id}`)
+      } else if (type === 'enrich_lastfm') {
+        if (lastfmKey && msg.body.artist && msg.body.title) {
+          await enrichSongWithLastfm(song_id, msg.body.artist, msg.body.title, env)
+          console.log(`[queue] Enriched song ${song_id} with Last.fm`)
+        }
+      }
+
+      msg.ack()
+    } catch (err) {
+      console.warn(`[queue] Cover art/enrichment failed for ${msg.body.song_id}:`, err instanceof Error ? err.message : String(err))
+      msg.retry({ delaySeconds: 30 })
+    }
   }
 }

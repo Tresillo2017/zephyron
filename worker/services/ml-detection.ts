@@ -1,23 +1,29 @@
-// ML Detection Pipeline v2 — Invidious Edition
-// Extracts tracklists from YouTube description + comments via Invidious API + LLM,
-// then enriches each track with Last.fm data.
+// ML Detection Pipeline v3 — 1001Tracklists + Invidious + Songs
+// Primary source: 1001tracklists.com (via Browser Rendering)
+// Fallback: YouTube description + comments via Invidious API + LLM
+// All tracks are linked to first-class Song records.
 
 import { generateId } from '../lib/id'
 import { extractVideoId } from './youtube'
-import { fetchVideoData, fetchRelevantComments, type InvidiousVideoData } from './invidious'
+import { fetchVideoData, fetchRelevantComments, getBestVideoStream, type InvidiousVideoData } from './invidious'
 import { parseTracklist, type ParsedTrack } from './tracklist-parser'
-import { lookupTrack, lookupArtist, searchTrack } from './lastfm'
+import { lookupArtist } from './lastfm'
+import { fetch1001Tracklist, type Track1001 } from './tracklists-1001'
+import { findOrCreateSong } from './songs'
 
 /**
  * Run the full detection pipeline for a DJ set.
- * This is now synchronous (called directly, not via queue).
  *
  * Flow:
- * 1. Fetch YouTube description + comments via Invidious (if source_url or youtube_video_id exists)
- * 2. Extract tracklist via LLM + regex fallback
- * 3. Enrich each track with Last.fm data
- * 4. Create/update artist record
- * 5. Write detections to D1
+ * 1. If tracklist_1001_url is set: fetch from 1001tracklists.com (BR → HTML fallback)
+ * 2. If no 1001tracklists data: fetch YouTube description + comments via Invidious
+ * 3. For each track: find-or-create a Song record
+ * 4. Enrich songs with Last.fm data
+ * 5. Cache song cover art to R2
+ * 6. Create/update artist record
+ * 7. Auto-link to events
+ * 8. Resolve and store YouTube video stream URL
+ * 9. Write detections to D1
  */
 export async function runDetectionPipeline(
   setId: string,
@@ -25,7 +31,9 @@ export async function runDetectionPipeline(
 ): Promise<{ detections: number; artist_id?: string; error?: string }> {
   // 1. Fetch set metadata
   const set = await env.DB.prepare(
-    'SELECT id, title, artist, source_url, youtube_video_id, genre, event, duration_seconds FROM sets WHERE id = ?'
+    `SELECT id, title, artist, source_url, youtube_video_id, genre, event,
+            duration_seconds, tracklist_1001_url, tracklist_1001_id
+     FROM sets WHERE id = ?`
   )
     .bind(setId)
     .first<{
@@ -37,6 +45,8 @@ export async function runDetectionPipeline(
       genre: string | null
       event: string | null
       duration_seconds: number
+      tracklist_1001_url: string | null
+      tracklist_1001_id: string | null
     }>()
 
   if (!set) {
@@ -51,164 +61,206 @@ export async function runDetectionPipeline(
   try {
     const lastfmKey = env.LASTFM_API_KEY && env.LASTFM_API_KEY.length > 5 ? env.LASTFM_API_KEY : undefined
 
-    let tracks: ParsedTrack[] = []
+    // ─── Phase 1: Get tracks from best available source ───
 
-    // 2. Try to extract tracklist from Invidious data
-    const videoId = set.youtube_video_id || (set.source_url ? extractVideoId(set.source_url) : null)
+    let tracks1001: Track1001[] = []
+    let parsedTracks: ParsedTrack[] = []
+    let detectionMethod = 'youtube_tracklist'
+    let confidence = 0.85
 
-    if (videoId) {
-      console.log(`[detect] Fetching Invidious data for video ${videoId}`)
+    // Try 1001tracklists first (highest quality data)
+    if (set.tracklist_1001_url) {
+      console.log(`[detect] Fetching 1001tracklists: ${set.tracklist_1001_url}`)
+      const result = await fetch1001Tracklist(set.tracklist_1001_url)
 
-      // Fetch full video data via Invidious
-      let videoData: InvidiousVideoData
-      try {
-        videoData = await fetchVideoData(videoId, env)
-        console.log(`[detect] Invidious description: ${videoData.description.length} chars`)
-      } catch (err) {
-        console.error(`[detect] Invidious fetch failed:`, err)
-        await env.DB.prepare(
-          "UPDATE sets SET detection_status = 'failed', updated_at = CURRENT_TIMESTAMP WHERE id = ?"
-        ).bind(setId).run()
-        return { detections: 0, error: `Invidious API error: ${err instanceof Error ? err.message : String(err)}` }
+      if (result.tracks.length > 0) {
+        tracks1001 = result.tracks
+        detectionMethod = '1001tracklists'
+        confidence = 0.98 // Community-verified data
+        console.log(`[detect] Got ${tracks1001.length} tracks from 1001tracklists (${result.source})`)
+      } else if (result.error) {
+        console.warn(`[detect] 1001tracklists failed: ${result.error}`)
       }
-
-      // Fetch comments via Invidious
-      const comments = await fetchRelevantComments(videoId, env, 2)
-      console.log(`[detect] Found ${comments.length} relevant comments`)
-
-      // Use musicTracks from Invidious as additional hint for the parser
-      // Convert musicTracks to a "tracklist-like" string for the parser
-      let musicTracksText = ''
-      if (videoData.musicTracks.length > 0) {
-        musicTracksText = videoData.musicTracks
-          .map((t, i) => `${i + 1}. ${t.artist} - ${t.song}${t.album ? ` [${t.album}]` : ''}`)
-          .join('\n')
-        console.log(`[detect] Found ${videoData.musicTracks.length} musicTracks from Invidious`)
-      }
-
-      // Combine description with musicTracks for better parsing
-      const combinedDescription = musicTracksText
-        ? `${videoData.description}\n\n--- YouTube Music Tracks ---\n${musicTracksText}`
-        : videoData.description
-
-      // Parse tracklist from description + comments
-      tracks = await parseTracklist(combinedDescription, comments, env)
-      console.log(`[detect] Parsed ${tracks.length} tracks from Invidious data`)
     }
 
-    if (tracks.length === 0) {
-      // No tracks found — mark as needing community annotation
+    // Fall back to Invidious if no 1001tracklists data
+    if (tracks1001.length === 0) {
+      const videoId = set.youtube_video_id || (set.source_url ? extractVideoId(set.source_url) : null)
+
+      if (videoId) {
+        console.log(`[detect] Fetching Invidious data for video ${videoId}`)
+
+        let videoData: InvidiousVideoData
+        try {
+          videoData = await fetchVideoData(videoId, env)
+          console.log(`[detect] Invidious description: ${videoData.description.length} chars`)
+        } catch (err) {
+          console.error(`[detect] Invidious fetch failed:`, err)
+          await env.DB.prepare(
+            "UPDATE sets SET detection_status = 'failed', updated_at = CURRENT_TIMESTAMP WHERE id = ?"
+          ).bind(setId).run()
+          return { detections: 0, error: `Invidious API error: ${err instanceof Error ? err.message : String(err)}` }
+        }
+
+        // Fetch comments
+        const comments = await fetchRelevantComments(videoId, env, 2)
+        console.log(`[detect] Found ${comments.length} relevant comments`)
+
+        // Use musicTracks from Invidious as additional hint
+        let musicTracksText = ''
+        if (videoData.musicTracks.length > 0) {
+          musicTracksText = videoData.musicTracks
+            .map((t, i) => `${i + 1}. ${t.artist} - ${t.song}${t.album ? ` [${t.album}]` : ''}`)
+            .join('\n')
+          console.log(`[detect] Found ${videoData.musicTracks.length} musicTracks from Invidious`)
+        }
+
+        const combinedDescription = musicTracksText
+          ? `${videoData.description}\n\n--- YouTube Music Tracks ---\n${musicTracksText}`
+          : videoData.description
+
+        parsedTracks = await parseTracklist(combinedDescription, comments, env)
+        console.log(`[detect] Parsed ${parsedTracks.length} tracks from Invidious data`)
+      }
+    }
+
+    // No tracks from any source
+    if (tracks1001.length === 0 && parsedTracks.length === 0) {
       await env.DB.prepare(
         "UPDATE sets SET detection_status = 'complete', updated_at = CURRENT_TIMESTAMP WHERE id = ?"
       ).bind(setId).run()
-
       return { detections: 0 }
     }
 
-    // 3. Clear old detections
+    // ─── Phase 2: Clear old detections ───
+
     await env.DB.prepare('DELETE FROM detections WHERE set_id = ?').bind(setId).run()
 
-    // 4. Enrich each track with Last.fm data and insert
+    // ─── Phase 3: Process tracks → Song records + Detection records ───
+
+    let insertedCount = 0
     let enrichedCount = 0
-    for (const track of tracks) {
-      const detectionId = generateId()
-      let lastfmData: {
-        url: string
-        mbid: string
-        album: string | null
-        albumArt: string | null
-        durationMs: number
-        tags: string[]
-        listeners: number
-      } | null = null
 
-      // Look up on Last.fm
-      if (lastfmKey && track.title) {
-        const searchArtist = track.artist || ''
-        const searchTitle = track.title
-          .replace(/\s*\((?:Intro Edit|Soundcloud|Free DL|Free Download)\)\s*/gi, '')
-          .trim()
+    if (tracks1001.length > 0) {
+      // Process 1001tracklists data (rich metadata with links)
+      for (const track of tracks1001) {
+        const detectionId = generateId()
 
-        // Try exact match first
-        let lfm = searchArtist
-          ? await lookupTrack(searchArtist, searchTitle, lastfmKey)
-          : null
+        // Find or create a Song record
+        const songId = await findOrCreateSong({
+          title: track.title,
+          artist: track.artist,
+          label: track.label,
+          cover_art_url: track.artwork_url,
+          spotify_url: track.spotify_url,
+          apple_music_url: track.apple_music_url,
+          soundcloud_url: track.soundcloud_url,
+          beatport_url: track.beatport_url,
+          youtube_url: track.youtube_url,
+          deezer_url: track.deezer_url,
+          bandcamp_url: track.bandcamp_url,
+          traxsource_url: track.traxsource_url,
+          source: '1001tracklists',
+        }, env)
 
-        // Try without remix/edit suffix
-        if (!lfm && searchTitle.includes('(')) {
-          const cleanTitle = searchTitle.replace(/\s*\([^)]*(?:remix|edit|bootleg|version|mix)\)$/i, '').trim()
-          if (cleanTitle !== searchTitle) {
-            lfm = await lookupTrack(searchArtist, cleanTitle, lastfmKey)
+        // Queue enrichment + cover art via Cloudflare Queue
+        try {
+          if (lastfmKey) {
+            await env.COVER_ART_QUEUE.send({ type: 'enrich_lastfm', song_id: songId, artist: track.artist, title: track.title })
+            enrichedCount++
           }
+          if (track.artwork_url) {
+            await env.COVER_ART_QUEUE.send({ type: 'cache_cover_art', song_id: songId, image_url: track.artwork_url })
+          }
+        } catch {
+          // Queue send failed — non-blocking
         }
 
-        // Try search as fallback
-        if (!lfm) {
-          const query = searchArtist ? `${searchArtist} ${searchTitle}` : searchTitle
-          const searchResults = await searchTrack(query, lastfmKey, 1)
-          if (searchResults.length > 0) {
-            lfm = searchResults[0]
-          }
-        }
+        // Calculate start/end times
+        const startTime = track.start_seconds ?? 0
+        const trackIndex = tracks1001.indexOf(track)
+        const endTime = trackIndex + 1 < tracks1001.length
+          ? (tracks1001[trackIndex + 1].start_seconds ?? set.duration_seconds)
+          : set.duration_seconds
 
-        if (lfm) {
-          lastfmData = {
-            url: lfm.url,
-            mbid: lfm.mbid,
-            album: lfm.album,
-            albumArt: lfm.albumArt,
-            durationMs: lfm.durationMs,
-            tags: lfm.tags,
-            listeners: lfm.listeners,
-          }
-          enrichedCount++
-        }
+        // Insert detection linked to song
+        await env.DB.prepare(
+          `INSERT INTO detections (
+            id, set_id, track_title, track_artist, start_time_seconds, end_time_seconds,
+            confidence, detection_method, song_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ).bind(
+          detectionId, setId,
+          track.title, track.artist || null,
+          startTime, endTime,
+          confidence, detectionMethod,
+          songId,
+        ).run()
+
+        insertedCount++
       }
+    } else {
+      // Process Invidious-parsed tracks (standard pipeline)
+      for (const track of parsedTracks) {
+        const detectionId = generateId()
 
-      // Calculate end time
-      const trackIndex = tracks.indexOf(track)
-      const endTime = trackIndex + 1 < tracks.length
-        ? tracks[trackIndex + 1].start_seconds
-        : set.duration_seconds
+        // Find or create a Song record
+        const songId = await findOrCreateSong({
+          title: track.title,
+          artist: track.artist || '',
+          source: 'youtube',
+        }, env)
 
-      await env.DB.prepare(
-        `INSERT INTO detections (id, set_id, track_title, track_artist, start_time_seconds, end_time_seconds, confidence, detection_method, lastfm_url, lastfm_track_mbid, lastfm_album, lastfm_album_art, lastfm_duration_ms, lastfm_tags, lastfm_listeners)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      )
-        .bind(
-          detectionId,
-          setId,
-          track.title,
-          track.artist || null,
-          track.start_seconds,
-          endTime,
-          track.source === 'regex' ? 0.85 : 0.95, // LLM-parsed = higher confidence
-          track.source === 'regex' ? 'youtube_regex' : 'youtube_tracklist',
-          lastfmData?.url || null,
-          lastfmData?.mbid || null,
-          lastfmData?.album || null,
-          lastfmData?.albumArt || null,
-          lastfmData?.durationMs || null,
-          lastfmData?.tags ? JSON.stringify(lastfmData.tags) : null,
-          lastfmData?.listeners || null
-        )
-        .run()
+        // Queue enrichment + cover art
+        try {
+          if (lastfmKey && track.title) {
+            await env.COVER_ART_QUEUE.send({ type: 'enrich_lastfm', song_id: songId, artist: track.artist || '', title: track.title })
+            enrichedCount++
+          }
+          await env.COVER_ART_QUEUE.send({ type: 'cache_cover_art', song_id: songId })
+        } catch {
+          // Non-blocking
+        }
+
+        // Calculate end time
+        const trackIndex = parsedTracks.indexOf(track)
+        const endTime = trackIndex + 1 < parsedTracks.length
+          ? parsedTracks[trackIndex + 1].start_seconds
+          : set.duration_seconds
+
+        const trackConfidence = track.source === 'regex' ? 0.85 : 0.95
+        const trackMethod = track.source === 'regex' ? 'youtube_regex' : 'youtube_tracklist'
+
+        await env.DB.prepare(
+          `INSERT INTO detections (
+            id, set_id, track_title, track_artist, start_time_seconds, end_time_seconds,
+            confidence, detection_method, song_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ).bind(
+          detectionId, setId,
+          track.title, track.artist || null,
+          track.start_seconds, endTime,
+          trackConfidence, trackMethod,
+          songId,
+        ).run()
+
+        insertedCount++
+      }
     }
 
-    console.log(`[detect] Inserted ${tracks.length} detections (${enrichedCount} enriched with Last.fm)`)
+    console.log(`[detect] Inserted ${insertedCount} detections (${enrichedCount} enriched with Last.fm)`)
 
-    // 5. Create/update artist record
+    // ─── Phase 4: Artist + Event auto-creation ───
+
     let artistId: string | undefined
     if (lastfmKey && set.artist) {
       artistId = (await ensureArtist(set.artist, lastfmKey, setId, env)) ?? undefined
       if (artistId) {
         await env.DB.prepare('UPDATE sets SET artist_id = ? WHERE id = ?')
-          .bind(artistId, setId)
-          .run()
+          .bind(artistId, setId).run()
       }
     }
 
-    // 5b. Auto-link to event if event name detected (auto-creates if needed)
     if (set.event) {
       try {
         const eventId = await ensureEvent(set.event, setId, env)
@@ -222,12 +274,31 @@ export async function runDetectionPipeline(
       }
     }
 
-    // 6. Update status
+    // ─── Phase 5: Store YouTube video stream URL ───
+
+    const videoId = set.youtube_video_id || (set.source_url ? extractVideoId(set.source_url) : null)
+    if (videoId) {
+      try {
+        const videoStream = await getBestVideoStream(videoId, env)
+        // Stream URLs expire in ~6 hours
+        const expiresAt = Math.floor(Date.now() / 1000) + (6 * 3600)
+        await env.DB.prepare(
+          `UPDATE sets SET youtube_video_stream_url = ?, youtube_video_stream_expires = ?,
+           updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+        ).bind(videoStream.url, expiresAt, setId).run()
+        console.log(`[detect] Stored video stream URL (${videoStream.qualityLabel})`)
+      } catch (err) {
+        console.warn('[detect] Video stream resolution failed (non-blocking):', err)
+      }
+    }
+
+    // ─── Phase 6: Mark complete ───
+
     await env.DB.prepare(
       "UPDATE sets SET detection_status = 'complete', detection_version = detection_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
     ).bind(setId).run()
 
-    return { detections: tracks.length, artist_id: artistId }
+    return { detections: insertedCount, artist_id: artistId }
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : 'Unknown error'
     console.error(`[detect] Pipeline failed for ${setId}:`, err)
@@ -242,7 +313,6 @@ export async function runDetectionPipeline(
 
 /**
  * Ensure an artist record exists in the DB, creating + enriching from Last.fm if needed.
- * Uses the set's cover image (from Invidious thumbnail, stored in R2) as artist background.
  */
 async function ensureArtist(
   artistName: string,
@@ -252,17 +322,14 @@ async function ensureArtist(
 ): Promise<string | null> {
   const slug = artistName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
-  // Check if artist already exists
   const existing = await env.DB.prepare(
     'SELECT id FROM artists WHERE slug = ? OR name = ?'
   ).bind(slug, artistName).first<{ id: string }>()
 
   if (existing) return existing.id
 
-  // Look up on Last.fm
   const lfm = await lookupArtist(artistName, lastfmKey)
 
-  // Use set's cover image as artist photo fallback
   let imageUrl = lfm?.imageUrl || null
   if (!imageUrl) {
     const setCover = await env.DB.prepare(
@@ -276,7 +343,6 @@ async function ensureArtist(
 
   const id = generateId()
 
-  // Use the set's cover image as artist background (no more direct YouTube thumbnail fetch)
   let backgroundUrl: string | null = null
   try {
     const setCover = await env.DB.prepare(
@@ -284,7 +350,6 @@ async function ensureArtist(
     ).bind(setId).first<{ cover_image_r2_key: string | null }>()
 
     if (setCover?.cover_image_r2_key) {
-      // Copy the set's cover to the artist background
       const coverObject = await env.AUDIO_BUCKET.get(setCover.cover_image_r2_key)
       if (coverObject && coverObject.body) {
         const bgKey = `artists/${id}/background.jpg`
@@ -326,9 +391,6 @@ async function ensureArtist(
 
 /**
  * Ensure an event record exists in the DB for the given event name.
- * Searches for an existing event first (exact match, then fuzzy LIKE).
- * If not found, auto-creates a new event record and inherits the set's cover image.
- * Returns the event ID, or null if the event name is empty.
  */
 async function ensureEvent(
   eventName: string,
@@ -339,12 +401,10 @@ async function ensureEvent(
 
   const name = eventName.trim()
 
-  // 1. Exact match on name
   let existing = await env.DB.prepare(
     'SELECT id FROM events WHERE name = ?'
   ).bind(name).first<{ id: string }>()
 
-  // 2. Fuzzy match on name or series
   if (!existing) {
     existing = await env.DB.prepare(
       'SELECT id FROM events WHERE name LIKE ? OR series LIKE ?'
@@ -352,16 +412,13 @@ async function ensureEvent(
   }
 
   if (existing) {
-    // Inherit cover image if the event doesn't have one yet
     await inheritEventCover(existing.id, setId, env)
     return existing.id
   }
 
-  // 3. No match — create a new event record
   const id = generateId()
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
-  // Extract series name: strip trailing year/edition (e.g. "Boiler Room Berlin 2024" -> "Boiler Room Berlin")
   const seriesMatch = name.match(/^(.+?)\s*(?:\d{4}|\d{1,2}(?:st|nd|rd|th)\s+edition)$/i)
   const series = seriesMatch ? seriesMatch[1].trim() : null
 
@@ -369,16 +426,12 @@ async function ensureEvent(
     `INSERT INTO events (id, name, slug, series, created_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`
   ).bind(id, name, slug, series).run()
 
-  // Inherit cover from the set
   await inheritEventCover(id, setId, env)
 
   console.log(`[detect] Auto-created event: ${name} (${id})${series ? ` [series: ${series}]` : ''}`)
   return id
 }
 
-/**
- * If the event has no cover image, copy the set's cover image to it.
- */
 async function inheritEventCover(
   eventId: string,
   setId: string,

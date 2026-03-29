@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { DjSet, Detection } from '../lib/types'
+import type { DjSet, Detection, Song } from '../lib/types'
 import { fetchStreamUrl, incrementPlayCount, updateListenPosition } from '../lib/api'
 
 interface PlayerState {
@@ -12,6 +12,7 @@ interface PlayerState {
   isMuted: boolean
   isFullScreen: boolean
   isLoadingStream: boolean
+  fullScreenMode: 'tracklist' | 'coverflow'
 
   // Queue
   queue: DjSet[]
@@ -20,6 +21,7 @@ interface PlayerState {
   // Timeline
   detections: Detection[]
   currentDetection: Detection | null
+  currentSong: Song | null
 
   // Audio element ref
   audioElement: HTMLAudioElement | null
@@ -43,6 +45,7 @@ interface PlayerState {
   updateCurrentDetection: () => void
   savePosition: () => void
   toggleFullScreen: () => void
+  setFullScreenMode: (mode: 'tracklist' | 'coverflow') => void
 }
 
 // Debounce position saving
@@ -57,10 +60,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   isMuted: false,
   isFullScreen: false,
   isLoadingStream: false,
+  fullScreenMode: 'tracklist',
   queue: [],
   queueIndex: -1,
   detections: [],
   currentDetection: null,
+  currentSong: null,
   audioElement: null,
 
   setAudioElement: (el) => set({ audioElement: el }),
@@ -225,13 +230,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   updateCurrentDetection: () => {
     const { currentTime, detections } = get()
-    // Find which detection we're currently in
     const current = detections.find(
       (d) =>
         currentTime >= d.start_time_seconds &&
         (d.end_time_seconds == null || currentTime < d.end_time_seconds)
     )
-    set({ currentDetection: current || null })
+    set({ currentDetection: current || null, currentSong: current?.song || null })
   },
 
   savePosition: () => {
@@ -242,4 +246,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   toggleFullScreen: () => set((state) => ({ isFullScreen: !state.isFullScreen })),
+
+  setFullScreenMode: (mode) => set({ fullScreenMode: mode }),
 }))
