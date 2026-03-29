@@ -3,6 +3,27 @@ import { Link } from 'react-router'
 import { fetchEvents, getEventCoverUrl } from '../lib/api'
 import { Skeleton } from '../components/ui/Skeleton'
 
+/** Format total duration like "12h 30m" */
+function formatTotalDuration(seconds: number): string {
+  if (!seconds || seconds <= 0) return ''
+  const h = Math.floor(seconds / 3600)
+  const m = Math.round((seconds % 3600) / 60)
+  if (h === 0) return `${m}m`
+  if (m === 0) return `${h}h`
+  return `${h}h ${m}m`
+}
+
+/** Format ISO date to readable short form */
+function formatDate(iso: string | null): string {
+  if (!iso) return ''
+  try {
+    const d = new Date(iso + 'T00:00:00')
+    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  } catch {
+    return iso
+  }
+}
+
 export function EventsPage() {
   const [events, setEvents] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -45,7 +66,9 @@ export function EventsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {events.map((event) => (
+          {events.map((event) => {
+            const year = event.start_date?.match(/^(\d{4})/)?.[1] || event.name.match(/\b(20\d{2})\b/)?.[1]
+            return (
             <Link
               key={event.id}
               to={`/app/events/${event.slug || event.id}`}
@@ -62,6 +85,12 @@ export function EventsPage() {
                   </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                {/* Year badge */}
+                {year && (
+                  <span className="absolute top-2.5 right-2.5 text-[10px] font-mono font-[var(--font-weight-bold)] px-2 py-0.5 rounded-md text-white/90" style={{ background: 'hsl(var(--h3) / 0.7)', backdropFilter: 'blur(4px)' }}>
+                    {year}
+                  </span>
+                )}
                 <div className="absolute bottom-3 left-4 right-4">
                   <h3 className="text-base font-[var(--font-weight-bold)] text-white truncate">{event.name}</h3>
                   {event.location && <p className="text-xs text-white/70 truncate">{event.location}</p>}
@@ -71,16 +100,19 @@ export function EventsPage() {
               <div className="px-4 py-3" style={{ background: 'hsl(var(--b5))' }}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>
-                    {event.start_date && <span>{event.start_date}</span>}
+                    {event.start_date && <span>{formatDate(event.start_date)}</span>}
                     {event.series && <span style={{ color: 'hsl(var(--h3))' }}>{event.series}</span>}
                   </div>
-                  {event.set_count > 0 && (
-                    <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>{event.set_count} sets</span>
-                  )}
+                  <div className="flex items-center gap-2 text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>
+                    {event.total_duration > 0 && <span>{formatTotalDuration(event.total_duration)}</span>}
+                    {event.set_count > 0 && (
+                      <span className="font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c2))' }}>{event.set_count} {event.set_count === 1 ? 'set' : 'sets'}</span>
+                    )}
+                  </div>
                 </div>
               </div>
             </Link>
-          ))}
+          )})}
         </div>
       )}
     </div>

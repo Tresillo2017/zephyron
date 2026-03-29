@@ -1,9 +1,8 @@
-import { useEffect, useCallback, useRef } from 'react'
+import { useEffect, useCallback, useRef, useState } from 'react'
 import { usePlayerStore } from '../../stores/playerStore'
-import { useWaveform } from '../../hooks/useWaveform'
-import { Waveform } from './Waveform'
+import { StoryboardScrubber } from './StoryboardScrubber'
 import { formatTime } from '../../lib/formatTime'
-import { getCoverUrl } from '../../lib/api'
+import { getCoverUrl, fetchStoryboard, type StoryboardData } from '../../lib/api'
 
 export function FullScreenPlayer() {
   const {
@@ -13,7 +12,22 @@ export function FullScreenPlayer() {
   } = usePlayerStore()
 
   const activeTrackRef = useRef<HTMLButtonElement>(null)
-  const { peaks: waveformPeaks } = useWaveform(isFullScreen ? currentSet?.id : undefined)
+  const [storyboard, setStoryboard] = useState<StoryboardData | null>(null)
+
+  // Fetch storyboard data when opening fullscreen
+  useEffect(() => {
+    if (!isFullScreen || !currentSet) {
+      setStoryboard(null)
+      return
+    }
+
+    // Only fetch for Invidious sets
+    if (currentSet.stream_type === 'invidious' || currentSet.youtube_video_id) {
+      fetchStoryboard(currentSet.id)
+        .then(setStoryboard)
+        .catch(() => setStoryboard(null))
+    }
+  }, [isFullScreen, currentSet?.id])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -110,12 +124,7 @@ export function FullScreenPlayer() {
               {currentSet.genre && <p className="text-xs font-mono mt-1.5" style={{ color: 'hsl(var(--h3))' }}>{currentSet.genre}</p>}
             </div>
 
-            {/* Waveform */}
-            <div className="w-full mb-4 card !p-3">
-              <Waveform peaks={waveformPeaks} duration={duration} detections={detections} height={44} />
-            </div>
-
-            {/* Progress */}
+            {/* Progress bar with storyboard scrubber */}
             <div className="w-full mb-5">
               <div className="relative h-[6px] rounded-full cursor-pointer group" style={{ background: 'hsl(var(--b3))' }} onClick={handleSeek}>
                 <div className="absolute top-0 left-0 h-full rounded-full" style={{ width: `${progress}%`, background: 'hsl(var(--h3))', transition: 'width 0.1s linear' }} />
@@ -123,6 +132,8 @@ export function FullScreenPlayer() {
                   className="absolute top-1/2 w-4 h-4 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
                   style={{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }}
                 />
+                {/* Storyboard hover overlay */}
+                <StoryboardScrubber storyboard={storyboard} duration={duration} />
               </div>
               <div className="flex justify-between mt-2">
                 <span className="text-[11px] font-mono tabular-nums" style={{ color: 'hsl(var(--c3))' }}>{formatTime(currentTime)}</span>

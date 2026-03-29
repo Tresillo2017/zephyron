@@ -1,7 +1,7 @@
-// LLM-based metadata extraction from YouTube video data
+// LLM-based metadata extraction from Invidious video data
 // Uses Llama 3.2 3B to parse structured DJ set info from titles + descriptions
 
-import type { YouTubeVideoData } from './youtube'
+import type { InvidiousVideoData, InvidiousMusicTrack } from './invidious'
 
 export interface ExtractedMetadata {
   dj_name: string
@@ -21,25 +21,36 @@ export interface ExtractedMetadata {
 // Concise system prompt — shorter = more reliable output from small models
 const SYSTEM_PROMPT = `You extract metadata from DJ set YouTube videos. Respond with ONLY a JSON object. No markdown. No explanation.`
 
-function buildUserPrompt(video: YouTubeVideoData): string {
+function buildUserPrompt(video: InvidiousVideoData): string {
   // Truncate description to 2000 chars for the 3B model's context
   const desc = video.description
     ? video.description.slice(0, 2000)
     : '(no description available)'
 
-  const durationMin = video.durationSeconds > 0
-    ? `${Math.round(video.durationSeconds / 60)} minutes`
+  const durationMin = video.lengthSeconds > 0
+    ? `${Math.round(video.lengthSeconds / 60)} minutes`
     : 'unknown'
+
+  // Format publish date from Unix epoch
+  const publishedDate = video.published
+    ? new Date(video.published * 1000).toISOString().split('T')[0]
+    : 'unknown'
+
+  // Include musicTracks if available (free structured data from YouTube)
+  const musicTracksInfo = video.musicTracks.length > 0
+    ? `\n- Music Tracks (auto-detected): ${video.musicTracks.slice(0, 5).map((t: InvidiousMusicTrack) => `${t.artist} - ${t.song}`).join('; ')}`
+    : ''
 
   // Separate instructions from data clearly, and keep the JSON template simple
   return `Analyze this DJ set video and return a JSON object.
 
 VIDEO DATA:
 - Title: ${video.title}
-- Channel: ${video.channelTitle}
-- Tags: ${video.tags.length > 0 ? video.tags.slice(0, 15).join(', ') : 'none'}
-- Published: ${video.publishedAt || 'unknown'}
+- Channel: ${video.author}
+- Tags: ${video.keywords.length > 0 ? video.keywords.slice(0, 15).join(', ') : 'none'}
+- Published: ${publishedDate}
 - Duration: ${durationMin}
+- Genre (from YouTube): ${video.genre || 'unknown'}${musicTracksInfo}
 - Description: ${desc}
 
 REQUIRED JSON FORMAT (fill every field, use "" for unknown):
@@ -59,7 +70,7 @@ Rules:
 - dj_name: the actual DJ, not the channel name (unless the channel IS the DJ)
 - title: remove "FULL SET", "HD", "4K", "Official" etc from the title
 - genre: pick ONE from the list above based on the music style
-- recorded_date: use publish date "${video.publishedAt?.split('T')[0] || ''}" if no specific date found
+- recorded_date: use publish date "${publishedDate}" if no specific date found
 - has_tracklist: true if description contains timestamps like "00:00" or "0:00"
 - description: write a short editorial description for a streaming platform
 
@@ -67,20 +78,24 @@ Return ONLY the JSON:`
 }
 
 /**
- * Extract structured metadata from YouTube video data using Llama 3.2 3B.
+ * Extract structured metadata from Invidious video data using Llama 3.2 3B.
  */
 export async function extractSetMetadata(
-  video: YouTubeVideoData,
+  video: InvidiousVideoData,
   env: Env
 ): Promise<ExtractedMetadata> {
+  const publishedDate = video.published
+    ? new Date(video.published * 1000).toISOString().split('T')[0]
+    : ''
+
   const fallback: ExtractedMetadata = {
-    dj_name: video.channelTitle,
+    dj_name: video.author,
     title: video.title,
     venue: '',
     event: '',
-    genre: inferGenreFromTags(video.tags),
+    genre: inferGenreFromKeywords(video.keywords),
     subgenre: '',
-    recorded_date: video.publishedAt ? video.publishedAt.split('T')[0] : '',
+    recorded_date: publishedDate,
     description: '',
     has_tracklist: video.description ? /\d{1,2}:\d{2}/.test(video.description) : false,
     llm_extracted: false,
@@ -157,10 +172,10 @@ export async function extractSetMetadata(
 }
 
 /**
- * Simple genre inference from YouTube tags as a fallback.
+ * Simple genre inference from YouTube keywords as a fallback.
  */
-function inferGenreFromTags(tags: string[]): string {
-  const tagStr = tags.join(' ').toLowerCase()
+function inferGenreFromKeywords(keywords: string[]): string {
+  const tagStr = keywords.join(' ').toLowerCase()
   const genreMap: [string, string][] = [
     ['techno', 'Techno'],
     ['house', 'House'],

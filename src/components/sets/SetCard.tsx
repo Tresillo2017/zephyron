@@ -74,6 +74,9 @@ export function SetCard({ set }: SetCardProps) {
       <div className="min-w-0">
         <p className="text-sm font-medium text-text-primary truncate leading-snug">{set.title}</p>
         <p className="text-xs text-text-secondary truncate mt-1">{set.artist}</p>
+        {set.event && (
+          <p className="text-[11px] truncate mt-0.5" style={{ color: 'hsl(var(--h3) / 0.7)' }}>{set.event}</p>
+        )}
         <div className="flex items-center gap-2 mt-2">
           {set.genre && <Badge variant="muted">{set.genre}</Badge>}
           <span className="text-xs text-text-muted">{formatDuration(set.duration_seconds)}</span>

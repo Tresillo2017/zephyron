@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
-import { getStreamUrl } from '../lib/api'
+import { getLegacyStreamUrl } from '../lib/api'
 
 const TARGET_PEAKS = 800
 
 /**
  * Hook that computes real waveform peaks using the Web Audio API.
- * Fetches the audio stream URL, decodes it, and extracts amplitude peaks.
- * Falls back to a generated waveform if decoding fails.
+ * Only works for legacy R2 sets that have audio stored in the bucket.
+ * For Invidious sets, returns a generated placeholder waveform.
+ *
+ * @param setId - The set ID
+ * @param streamType - 'r2' | 'invidious' | null — determines if we can fetch audio bytes
  */
-export function useWaveform(setId: string | undefined): {
+export function useWaveform(setId: string | undefined, streamType?: string | null): {
   peaks: number[]
   isLoading: boolean
 } {
@@ -27,43 +30,40 @@ export function useWaveform(setId: string | undefined): {
     const controller = new AbortController()
     abortRef.current = controller
 
-    setIsLoading(true)
     // Start with a generated waveform immediately
     setPeaks(generatePlaceholderPeaks(setId))
 
-    computeWaveform(setId, controller.signal)
-      .then((realPeaks) => {
-        if (!controller.signal.aborted && realPeaks.length > 0) {
-          setPeaks(realPeaks)
-        }
-      })
-      .catch(() => {
-        // Keep placeholder on failure
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setIsLoading(false)
-      })
+    // Only attempt real waveform for legacy R2 sets
+    if (streamType === 'r2') {
+      setIsLoading(true)
+      computeWaveform(setId, controller.signal)
+        .then((realPeaks) => {
+          if (!controller.signal.aborted && realPeaks.length > 0) {
+            setPeaks(realPeaks)
+          }
+        })
+        .catch(() => {
+          // Keep placeholder on failure
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setIsLoading(false)
+        })
+    }
 
     return () => controller.abort()
-  }, [setId])
+  }, [setId, streamType])
 
   return { peaks, isLoading }
 }
 
 /**
- * Fetch the first ~2MB of audio and decode it with Web Audio API
- * to extract amplitude peaks. We only need the start of the file
- * to get a representative waveform shape — most DJ sets have
- * consistent energy levels throughout.
- *
- * For a full waveform, we fetch the whole file but use a range request
- * to avoid downloading 100MB+ just for visualization.
+ * Fetch the first ~3MB of audio and decode it with Web Audio API
+ * to extract amplitude peaks. Only works for R2-stored audio.
  */
 async function computeWaveform(setId: string, signal: AbortSignal): Promise<number[]> {
-  const url = getStreamUrl(setId)
+  const url = getLegacyStreamUrl(setId)
 
   // Fetch first ~3MB for a quick waveform preview
-  // This covers ~30 seconds of 128kbps audio, enough for the shape
   const response = await fetch(url, {
     headers: { Range: 'bytes=0-3145727' },
     signal,

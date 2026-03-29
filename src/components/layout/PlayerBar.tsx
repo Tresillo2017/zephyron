@@ -1,17 +1,20 @@
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect, useCallback, useState } from 'react'
 import { usePlayerStore } from '../../stores/playerStore'
 import { formatTime } from '../../lib/formatTime'
-import { getCoverUrl } from '../../lib/api'
+import { getCoverUrl, fetchStoryboard, type StoryboardData } from '../../lib/api'
 import { ProgressBar } from '../player/ProgressBar'
+import { StoryboardScrubber } from '../player/StoryboardScrubber'
 import { FullScreenPlayer } from '../player/FullScreenPlayer'
 
 export function PlayerBar() {
   const audioRef = useRef<HTMLAudioElement>(null)
   const {
-    currentSet, isPlaying, currentTime, duration, volume, isMuted,
+    currentSet, isPlaying, isLoadingStream, currentTime, duration, volume, isMuted,
     currentDetection, detections, setAudioElement, togglePlay,
     setCurrentTime, setDuration, setVolume, toggleMute, playNext, playPrevious,
   } = usePlayerStore()
+
+  const [storyboard, setStoryboard] = useState<StoryboardData | null>(null)
 
   useEffect(() => {
     if (audioRef.current) {
@@ -19,6 +22,21 @@ export function PlayerBar() {
       audioRef.current.volume = volume
     }
   }, [setAudioElement, volume])
+
+  // Fetch storyboard for the current set
+  useEffect(() => {
+    if (!currentSet) {
+      setStoryboard(null)
+      return
+    }
+    if (currentSet.stream_type === 'invidious' || currentSet.youtube_video_id) {
+      fetchStoryboard(currentSet.id)
+        .then(setStoryboard)
+        .catch(() => setStoryboard(null))
+    } else {
+      setStoryboard(null)
+    }
+  }, [currentSet?.id])
 
   const handleTimeUpdate = useCallback(() => { if (audioRef.current) setCurrentTime(audioRef.current.currentTime) }, [setCurrentTime])
   const handleLoadedMetadata = useCallback(() => { if (audioRef.current) setDuration(audioRef.current.duration) }, [setDuration])
@@ -73,7 +91,11 @@ export function PlayerBar() {
               <div className="min-w-0">
                 <p className="text-sm text-text-primary truncate">{currentSet.title}</p>
                 <p className="text-xs text-text-muted truncate font-mono">
-                  {currentDetection ? `${currentDetection.track_title}${currentDetection.track_artist ? ` — ${currentDetection.track_artist}` : ''}` : currentSet.artist}
+                  {isLoadingStream
+                    ? 'Loading stream...'
+                    : currentDetection
+                    ? `${currentDetection.track_title}${currentDetection.track_artist ? ` — ${currentDetection.track_artist}` : ''}`
+                    : currentSet.artist}
                 </p>
               </div>
             </div>
@@ -88,8 +110,14 @@ export function PlayerBar() {
                   onClick={togglePlay}
                   className="w-9 h-9 bg-accent rounded-full flex items-center justify-center hover:bg-accent-hover transition-all"
                   style={{ boxShadow: '0 2px 8px hsl(var(--h4) / 0.3)' }}
+                  disabled={isLoadingStream}
                 >
-                  {isPlaying
+                  {isLoadingStream ? (
+                    <svg className="w-4 h-4 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  ) : isPlaying
                     ? <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
                     : <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>}
                 </button>
@@ -97,9 +125,17 @@ export function PlayerBar() {
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg>
                 </button>
               </div>
-              <div className="hidden sm:flex w-full items-center gap-2">
+              <div className="hidden sm:flex w-full items-center gap-2 relative">
                 <span className="text-[11px] font-mono text-text-muted w-12 text-right tabular-nums">{formatTime(currentTime)}</span>
-                <ProgressBar currentTime={currentTime} duration={duration} detections={detections} />
+                <div className="relative flex-1">
+                  <ProgressBar currentTime={currentTime} duration={duration} detections={detections} />
+                  {/* Storyboard overlay on progress bar */}
+                  {storyboard && (
+                    <div className="absolute inset-0">
+                      <StoryboardScrubber storyboard={storyboard} duration={duration} />
+                    </div>
+                  )}
+                </div>
                 <span className="text-[11px] font-mono text-text-muted w-12 tabular-nums">{formatTime(duration)}</span>
               </div>
             </div>

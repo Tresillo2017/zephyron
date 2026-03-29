@@ -1,6 +1,6 @@
 import { Router, corsHeaders, errorResponse, json } from './lib/router'
 import { createAuth, requireAdmin, requireAuth } from './lib/auth'
-import { listSets, getSet, streamSet, debugStream, incrementPlayCount, listGenres, getSetCover, getSetVideo } from './routes/sets'
+import { listSets, getSet, streamSet, getStreamUrl, getStoryboard, debugStream, incrementPlayCount, listGenres, getSetCover, getSetVideo } from './routes/sets'
 import { search } from './routes/search'
 import { getHistory, updateHistory } from './routes/history'
 import { getDetections, voteDetection, createAnnotation, getAnnotations } from './routes/detections'
@@ -14,8 +14,8 @@ import {
 } from './routes/admin'
 import {
   generateInviteCode, listInviteCodes, revokeInviteCode,
-  createSetFromYoutube, getUploadUrl, uploadSetAudio, createSet,
-  deleteSet, updateSet, uploadSetVideo,
+  createSetFromYoutube, createSet,
+  deleteSet, updateSet,
   listPendingAnnotations, moderateAnnotation,
 } from './routes/admin-beta'
 import { listArtists, getArtist, syncArtist, updateArtist, deleteArtist, getArtistBackground } from './routes/artists'
@@ -27,8 +27,8 @@ import {
 } from './routes/semantic-search'
 import { getSetWaveform, regenerateWaveform } from './routes/waveform'
 import {
-  listEvents, getEvent, getEventCover,
-  createEvent, updateEvent, deleteEvent, uploadEventCover, linkSetToEvent, unlinkSetFromEvent,
+  listEvents, getEvent, getEventCover, getEventLogo,
+  createEvent, updateEvent, deleteEvent, uploadEventCover, uploadEventLogo, linkSetToEvent, unlinkSetFromEvent,
 } from './routes/events'
 import { submitSetRequest } from './routes/petitions'
 import { handleDetectionQueue, handleFeedbackQueue } from './queues/index'
@@ -70,14 +70,16 @@ function withAuth(handler: RouteHandler): RouteHandler {
 const router = new Router()
 
 // Health check
-router.get('/api/health', () => json({ status: 'ok', version: '0.2.1' }))
+router.get('/api/health', () => json({ status: 'ok', version: '0.2.3' }))
 
 // Sets (public)
 router.get('/api/sets', listSets)
 router.get('/api/sets/genres', listGenres)
 router.get('/api/sets/:id', getSet)
 router.get('/api/sets/:id/stream', streamSet)
+router.get('/api/sets/:id/stream-url', getStreamUrl)
 router.get('/api/sets/:id/stream/debug', debugStream)
+router.get('/api/sets/:id/storyboard', getStoryboard)
 router.post('/api/sets/:id/play', incrementPlayCount)
 router.get('/api/sets/:id/waveform', getSetWaveform)
 router.get('/api/sets/:id/cover', getSetCover)
@@ -110,6 +112,7 @@ router.get('/api/artists/:id', getArtist)
 // Events (public read)
 router.get('/api/events', listEvents)
 router.get('/api/events/:id/cover', getEventCover)
+router.get('/api/events/:id/logo', getEventLogo)
 router.get('/api/events/:id', getEvent)
 
 // Playlists (authenticated)
@@ -142,6 +145,7 @@ router.post('/api/admin/events', withAdmin(createEvent))
 router.put('/api/admin/events/:id', withAdmin(updateEvent))
 router.delete('/api/admin/events/:id', withAdmin(deleteEvent))
 router.put('/api/admin/events/:id/cover', withAdmin(uploadEventCover))
+router.put('/api/admin/events/:id/logo', withAdmin(uploadEventLogo))
 router.post('/api/admin/events/:id/link-set', withAdmin(linkSetToEvent))
 router.post('/api/admin/events/:id/unlink-set', withAdmin(unlinkSetFromEvent))
 
@@ -158,8 +162,6 @@ router.post('/api/admin/invite-codes', withAdmin(generateInviteCode))
 router.get('/api/admin/invite-codes', withAdmin(listInviteCodes))
 router.delete('/api/admin/invite-codes/:id', withAdmin(revokeInviteCode))
 router.post('/api/admin/sets/from-youtube', withAdmin(createSetFromYoutube))
-router.post('/api/admin/sets/upload-url', withAdmin(getUploadUrl))
-router.put('/api/admin/sets/:id/upload', withAdmin(uploadSetAudio))
 router.post('/api/admin/sets', withAdmin(createSet))
 router.delete('/api/admin/sets/:id', withAdmin(deleteSet))
 router.put('/api/admin/sets/:id', withAdmin(updateSet))
@@ -167,7 +169,6 @@ router.get('/api/admin/annotations/pending', withAdmin(listPendingAnnotations))
 router.post('/api/admin/annotations/:id/moderate', withAdmin(moderateAnnotation))
 router.post('/api/admin/sets/:id/index', withAdmin(indexSetRoute))
 router.post('/api/admin/sets/:id/waveform', withAdmin(regenerateWaveform))
-router.put('/api/admin/sets/:id/video', withAdmin(uploadSetVideo))
 
 // ═══════════════════════════════════════════
 // Worker export

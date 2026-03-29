@@ -6,8 +6,13 @@
 # Generate a secret: openssl rand -base64 32
 BETTER_AUTH_SECRET=your-secret-here-min-32-chars
 
-# YouTube Data API v3 — Required for tracklist detection from YouTube
-YOUTUBE_API_KEY=
+# Invidious Instance — Required for video metadata and audio streaming
+# See https://docs.invidious.io/instances/ for public instances
+INVIDIOUS_BASE_URL=https://invidious.tomasps.com
+
+# YouTube Data API v3 — DEPRECATED (replaced by Invidious)
+# Kept as optional fallback. Remove in a future version.
+# YOUTUBE_API_KEY=
 
 # Last.fm API — Required for artist/track enrichment
 LASTFM_API_KEY=

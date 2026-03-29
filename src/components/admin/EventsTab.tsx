@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { fetchEvents, fetchSets, createEventAdmin, updateEventAdmin, deleteEventAdmin, linkSetToEvent } from '../../lib/api'
+import { fetchEvents, fetchSets, createEventAdmin, updateEventAdmin, deleteEventAdmin, linkSetToEvent, uploadEventCoverAdmin, uploadEventLogoAdmin, getEventCoverUrl, getEventLogoUrl } from '../../lib/api'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Modal } from '../ui/Modal'
@@ -8,7 +8,18 @@ import { Skeleton } from '../ui/Skeleton'
 
 interface Event {
   id: string; name: string; slug: string; series: string | null; location: string | null;
-  start_date: string | null; end_date: string | null; set_count: number; description: string | null; website: string | null;
+  start_date: string | null; end_date: string | null; set_count: number; description: string | null;
+  website: string | null; cover_image_r2_key: string | null; logo_r2_key: string | null;
+}
+
+/** Extract year from start_date or event name */
+function getEventYear(event: Event): string | null {
+  if (event.start_date) {
+    const match = event.start_date.match(/^(\d{4})/)
+    if (match) return match[1]
+  }
+  const nameMatch = event.name.match(/\b(20\d{2})\b/)
+  return nameMatch ? nameMatch[1] : null
 }
 
 export function EventsTab() {
@@ -19,6 +30,7 @@ export function EventsTab() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [linkingEvent, setLinkingEvent] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const loadEvents = () => {
     setIsLoading(true)
@@ -69,32 +81,49 @@ export function EventsTab() {
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map((event) => (
-            <div key={event.id} className="card !p-4 flex items-center gap-4">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-[var(--font-weight-medium)] truncate" style={{ color: 'hsl(var(--c1))' }}>{event.name}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  {event.location && <span className="text-xs" style={{ color: 'hsl(var(--c3))' }}>{event.location}</span>}
-                  {event.start_date && <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>{event.start_date}</span>}
-                  {event.series && <Badge variant="muted">{event.series}</Badge>}
+          {filtered.map((event) => {
+            const year = getEventYear(event)
+            return (
+              <div key={event.id} className="card !p-4 flex items-center gap-4">
+                {/* Thumbnail */}
+                <div
+                  className="w-12 h-12 rounded-lg overflow-hidden shrink-0 flex items-center justify-center"
+                  style={{ background: 'hsl(var(--b4))', boxShadow: 'var(--card-border)' }}
+                >
+                  {event.cover_image_r2_key ? (
+                    <img src={`${getEventCoverUrl(event.id)}?v=${refreshKey}`} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <span className="text-base font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c3) / 0.4)' }}>
+                      {event.name.charAt(0)}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-[var(--font-weight-medium)] truncate" style={{ color: 'hsl(var(--c1))' }}>{event.name}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {event.location && <span className="text-xs" style={{ color: 'hsl(var(--c3))' }}>{event.location}</span>}
+                    {year && <span className="text-[10px] font-mono px-1.5 py-0 rounded" style={{ color: 'hsl(var(--h3))', background: 'hsl(var(--h3) / 0.1)' }}>{year}</span>}
+                    {event.series && <Badge variant="muted">{event.series}</Badge>}
+                  </div>
+                </div>
+                <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>{event.set_count} sets</span>
+                <div className="flex gap-1.5 shrink-0">
+                  <Button variant="ghost" size="sm" onClick={() => setLinkingEvent(event.id)}>Link Set</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setEditingEvent(event)}>Edit</Button>
+                  <Button variant="danger" size="sm" onClick={() => setConfirmDelete(event.id)}>Delete</Button>
                 </div>
               </div>
-              <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>{event.set_count} sets</span>
-              <div className="flex gap-1.5 shrink-0">
-                <Button variant="ghost" size="sm" onClick={() => setLinkingEvent(event.id)}>Link Set</Button>
-                <Button variant="ghost" size="sm" onClick={() => setEditingEvent(event)}>Edit</Button>
-                <Button variant="danger" size="sm" onClick={() => setConfirmDelete(event.id)}>Delete</Button>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
       {/* Create modal */}
-      {showCreate && <EventFormModal onClose={() => setShowCreate(false)} onSaved={() => { setShowCreate(false); loadEvents() }} />}
+      {showCreate && <EventFormModal onClose={() => setShowCreate(false)} onSaved={() => { setShowCreate(false); setRefreshKey((k) => k + 1); loadEvents() }} />}
 
       {/* Edit modal */}
-      {editingEvent && <EventFormModal event={editingEvent} onClose={() => setEditingEvent(null)} onSaved={() => { setEditingEvent(null); loadEvents() }} />}
+      {editingEvent && <EventFormModal event={editingEvent} onClose={() => setEditingEvent(null)} onSaved={() => { setEditingEvent(null); setRefreshKey((k) => k + 1); loadEvents() }} />}
 
       {/* Delete confirm */}
       <Modal isOpen={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Delete Event">
@@ -119,21 +148,146 @@ function EventFormModal({ event, onClose, onSaved }: { event?: Event; onClose: (
   const [endDate, setEndDate] = useState(event?.end_date || '')
   const [description, setDescription] = useState(event?.description || '')
   const [website, setWebsite] = useState(event?.website || '')
+
+  // Logo (square)
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(
+    event?.logo_r2_key ? getEventLogoUrl(event.id) : null
+  )
+
+  // Cover (wide background)
+  const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [coverPreview, setCoverPreview] = useState<string | null>(
+    event?.cover_image_r2_key ? getEventCoverUrl(event.id) : null
+  )
+
   const [saving, setSaving] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null)
+
+  const handleFileSelect = (setter: (f: File) => void, previewSetter: (url: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setter(file)
+    const reader = new FileReader()
+    reader.onloadend = () => previewSetter(reader.result as string)
+    reader.readAsDataURL(file)
+  }
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      const data = { name: name.trim(), series: series.trim() || undefined, location: location.trim() || undefined, start_date: startDate || undefined, end_date: endDate || undefined, description: description.trim() || undefined, website: website.trim() || undefined }
-      if (event) { await updateEventAdmin(event.id, data) }
-      else { await createEventAdmin(data) }
+      const data = {
+        name: name.trim(),
+        series: series.trim() || undefined,
+        location: location.trim() || undefined,
+        start_date: startDate || undefined,
+        end_date: endDate || undefined,
+        description: description.trim() || undefined,
+        website: website.trim() || undefined,
+      }
+
+      let eventId = event?.id
+      if (event) {
+        await updateEventAdmin(event.id, data)
+      } else {
+        const res = await createEventAdmin(data)
+        eventId = res.data.id
+      }
+
+      // Upload images
+      if (eventId) {
+        if (logoFile) {
+          setUploadProgress('Uploading logo...')
+          try { await uploadEventLogoAdmin(eventId, logoFile) } catch (err) { console.error('Logo upload failed:', err) }
+        }
+        if (coverFile) {
+          setUploadProgress('Uploading cover...')
+          try { await uploadEventCoverAdmin(eventId, coverFile) } catch (err) { console.error('Cover upload failed:', err) }
+        }
+        setUploadProgress(null)
+      }
+
       onSaved()
-    } catch {} finally { setSaving(false) }
+    } catch {} finally {
+      setSaving(false)
+      setUploadProgress(null)
+    }
   }
 
   return (
     <Modal isOpen onClose={onClose} title={event ? `Edit: ${event.name}` : 'Create Event'}>
       <div className="space-y-3">
+        {/* Images: Logo + Cover side by side */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Logo upload (square) */}
+          <div>
+            <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>
+              Logo <span className="text-[10px] font-normal" style={{ color: 'hsl(var(--c3))' }}>(square)</span>
+            </label>
+            <div
+              className="w-full aspect-square rounded-xl overflow-hidden mb-2 flex items-center justify-center cursor-pointer relative group"
+              style={{ background: 'hsl(var(--b4))', boxShadow: 'var(--card-border)' }}
+              onClick={() => document.getElementById('logo-input')?.click()}
+            >
+              {logoPreview ? (
+                <img src={logoPreview} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="flex flex-col items-center gap-1">
+                  <svg className="w-6 h-6" style={{ color: 'hsl(var(--c3) / 0.3)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                  </svg>
+                  <span className="text-[10px]" style={{ color: 'hsl(var(--c3) / 0.4)' }}>Upload logo</span>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <span className="text-xs text-white/80">Change</span>
+              </div>
+            </div>
+            <input
+              id="logo-input"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+              onChange={handleFileSelect(setLogoFile, setLogoPreview)}
+              className="hidden"
+            />
+            {logoFile && <p className="text-[10px]" style={{ color: 'hsl(var(--c3))' }}>{logoFile.name}</p>}
+          </div>
+
+          {/* Cover upload (wide) */}
+          <div>
+            <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>
+              Cover <span className="text-[10px] font-normal" style={{ color: 'hsl(var(--c3))' }}>(background)</span>
+            </label>
+            <div
+              className="w-full aspect-square rounded-xl overflow-hidden mb-2 flex items-center justify-center cursor-pointer relative group"
+              style={{ background: 'hsl(var(--b4))', boxShadow: 'var(--card-border)' }}
+              onClick={() => document.getElementById('cover-input')?.click()}
+            >
+              {coverPreview ? (
+                <img src={coverPreview} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="flex flex-col items-center gap-1">
+                  <svg className="w-6 h-6" style={{ color: 'hsl(var(--c3) / 0.3)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+                  </svg>
+                  <span className="text-[10px]" style={{ color: 'hsl(var(--c3) / 0.4)' }}>Upload cover</span>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <span className="text-xs text-white/80">Change</span>
+              </div>
+            </div>
+            <input
+              id="cover-input"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+              onChange={handleFileSelect(setCoverFile, setCoverPreview)}
+              className="hidden"
+            />
+            {coverFile && <p className="text-[10px]" style={{ color: 'hsl(var(--c3))' }}>{coverFile.name}</p>}
+          </div>
+        </div>
+
         <Input label="Event Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Tomorrowland 2025" />
         <Input label="Series" value={series} onChange={(e) => setSeries(e.target.value)} placeholder="Tomorrowland" />
         <div className="grid grid-cols-2 gap-3">
@@ -146,8 +300,13 @@ function EventFormModal({ event, onClose, onSaved }: { event?: Event; onClose: (
         </div>
         <div>
           <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>Description</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full px-3 py-2 rounded-lg text-sm resize-none" style={{ background: 'hsl(var(--b4) / 0.4)', color: 'hsl(var(--c1))' }} />
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full px-3 py-2 rounded-lg text-sm resize-none focus:outline-none" style={{ background: 'hsl(var(--b4) / 0.4)', color: 'hsl(var(--c1))' }} />
         </div>
+
+        {uploadProgress && (
+          <p className="text-xs animate-pulse" style={{ color: 'hsl(var(--h3))' }}>{uploadProgress}</p>
+        )}
+
         <div className="flex gap-3 pt-2">
           <Button variant="secondary" onClick={onClose} className="flex-1">Cancel</Button>
           <Button variant="primary" onClick={handleSave} disabled={saving || !name.trim()} className="flex-1">{saving ? 'Saving...' : event ? 'Save' : 'Create'}</Button>

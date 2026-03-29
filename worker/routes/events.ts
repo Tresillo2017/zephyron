@@ -13,7 +13,7 @@ export async function listEvents(
   const q = url.searchParams.get('q')?.trim()
   const series = url.searchParams.get('series')
 
-  let query = `SELECT e.*, (SELECT COUNT(*) FROM sets s WHERE s.event_id = e.id) as set_count FROM events e`
+  let query = `SELECT e.*, (SELECT COUNT(*) FROM sets s WHERE s.event_id = e.id) as set_count, (SELECT COALESCE(SUM(duration_seconds), 0) FROM sets s WHERE s.event_id = e.id) as total_duration FROM events e`
   const conditions: string[] = []
   const params: unknown[] = []
 
@@ -27,7 +27,7 @@ export async function listEvents(
   return json({ data: result.results, ok: true })
 }
 
-// GET /api/events/:id — Get event detail + its sets
+// GET /api/events/:id — Get event detail + its sets + aggregates
 export async function getEvent(
   _request: Request, env: Env, _ctx: ExecutionContext, params: Record<string, string>
 ): Promise<Response> {
@@ -36,11 +36,55 @@ export async function getEvent(
   if (!event) return errorResponse('Event not found', 404)
 
   const eventId = (event as any).id
-  const sets = await env.DB.prepare(
-    'SELECT * FROM sets WHERE event_id = ? ORDER BY created_at DESC'
-  ).bind(eventId).all()
 
-  return json({ data: { ...event, tags: tryParse((event as any).tags), sets: sets.results }, ok: true })
+  // Batch: sets, aggregates, genre breakdown, artist lineup
+  const [setsResult, aggregateResult, genresResult, artistsResult] = await env.DB.batch([
+    env.DB.prepare(
+      'SELECT * FROM sets WHERE event_id = ? ORDER BY created_at DESC'
+    ).bind(eventId),
+    env.DB.prepare(
+      `SELECT
+        COUNT(*) as set_count,
+        COALESCE(SUM(play_count), 0) as total_plays,
+        COALESCE(SUM(duration_seconds), 0) as total_duration,
+        COUNT(DISTINCT artist) as artist_count
+       FROM sets WHERE event_id = ?`
+    ).bind(eventId),
+    env.DB.prepare(
+      `SELECT genre, COUNT(*) as count
+       FROM sets WHERE event_id = ? AND genre IS NOT NULL AND genre != ''
+       GROUP BY genre ORDER BY count DESC`
+    ).bind(eventId),
+    env.DB.prepare(
+      `SELECT DISTINCT a.id, a.name, a.slug, a.image_url
+       FROM artists a
+       JOIN sets s ON s.artist_id = a.id
+       WHERE s.event_id = ?
+       ORDER BY a.name ASC`
+    ).bind(eventId),
+  ])
+
+  const agg = aggregateResult.results[0] as Record<string, unknown> | undefined
+
+  return json({
+    data: {
+      ...event,
+      tags: tryParse((event as any).tags),
+      sets: setsResult.results,
+      // Aggregates
+      stats: {
+        set_count: Number(agg?.set_count) || 0,
+        total_plays: Number(agg?.total_plays) || 0,
+        total_duration: Number(agg?.total_duration) || 0,
+        artist_count: Number(agg?.artist_count) || 0,
+      },
+      // Genre breakdown
+      genres: genresResult.results as { genre: string; count: number }[],
+      // Artist lineup
+      artists: artistsResult.results as { id: string; name: string; slug: string | null; image_url: string | null }[],
+    },
+    ok: true,
+  })
 }
 
 // GET /api/events/:id/cover — Serve event cover image
@@ -125,7 +169,7 @@ export async function deleteEvent(
   return json({ ok: true })
 }
 
-// PUT /api/admin/events/:id/cover — Upload cover image
+// PUT /api/admin/events/:id/cover — Upload cover image (wide, used as background)
 export async function uploadEventCover(
   request: Request, env: Env, _ctx: ExecutionContext, params: Record<string, string>
 ): Promise<Response> {
@@ -139,6 +183,40 @@ export async function uploadEventCover(
 
   await env.DB.prepare('UPDATE events SET cover_image_r2_key = ? WHERE id = ?').bind(r2Key, id).run()
   return json({ data: { r2_key: r2Key }, ok: true })
+}
+
+// PUT /api/admin/events/:id/logo — Upload logo image (square, displayed in banner)
+export async function uploadEventLogo(
+  request: Request, env: Env, _ctx: ExecutionContext, params: Record<string, string>
+): Promise<Response> {
+  const { id } = params
+  if (!request.body) return errorResponse('Body required', 400)
+
+  const contentType = request.headers.get('Content-Type') || 'image/png'
+  const r2Key = `events/${id}/logo.png`
+  const bodyBuffer = await request.arrayBuffer()
+  await env.AUDIO_BUCKET.put(r2Key, bodyBuffer, { httpMetadata: { contentType } })
+
+  await env.DB.prepare('UPDATE events SET logo_r2_key = ? WHERE id = ?').bind(r2Key, id).run()
+  return json({ data: { r2_key: r2Key }, ok: true })
+}
+
+// GET /api/events/:id/logo — Serve event logo image
+export async function getEventLogo(
+  _request: Request, env: Env, _ctx: ExecutionContext, params: Record<string, string>
+): Promise<Response> {
+  const { id } = params
+  const event = await env.DB.prepare('SELECT logo_r2_key FROM events WHERE id = ? OR slug = ?').bind(id, id).first<{ logo_r2_key: string | null }>()
+  if (!event?.logo_r2_key) return new Response(null, { status: 404 })
+
+  const object = await env.AUDIO_BUCKET.get(event.logo_r2_key)
+  if (!object) return new Response(null, { status: 404 })
+
+  const headers = new Headers()
+  headers.set('Content-Type', object.httpMetadata?.contentType || 'image/png')
+  headers.set('Cache-Control', 'public, max-age=86400')
+  headers.set('Access-Control-Allow-Origin', '*')
+  return new Response(object.body, { status: 200, headers })
 }
 
 // POST /api/admin/events/:id/link-set — Link a set to this event
