@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { DjSet, Detection, Song } from '../lib/types'
-import { fetchStreamUrl, incrementPlayCount, updateListenPosition } from '../lib/api'
+import { fetchStreamUrl, fetchVideoStreamUrl, incrementPlayCount, updateListenPosition } from '../lib/api'
 
 interface PlayerState {
   // Current playback
@@ -12,7 +12,12 @@ interface PlayerState {
   isMuted: boolean
   isFullScreen: boolean
   isLoadingStream: boolean
-  fullScreenMode: 'tracklist' | 'coverflow'
+
+  // Video
+  isVideoMode: boolean
+  videoElement: HTMLVideoElement | null
+  videoStreamUrl: string | null
+  isLoadingVideo: boolean
 
   // Queue
   queue: DjSet[]
@@ -28,6 +33,7 @@ interface PlayerState {
 
   // Actions
   setAudioElement: (el: HTMLAudioElement) => void
+  setVideoElement: (el: HTMLVideoElement | null) => void
   play: (set: DjSet, detections?: Detection[]) => void
   resume: () => void
   pause: () => void
@@ -45,7 +51,8 @@ interface PlayerState {
   updateCurrentDetection: () => void
   savePosition: () => void
   toggleFullScreen: () => void
-  setFullScreenMode: (mode: 'tracklist' | 'coverflow') => void
+  setVideoMode: (enabled: boolean) => void
+  loadVideoStream: () => Promise<void>
 }
 
 // Debounce position saving
@@ -60,7 +67,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   isMuted: false,
   isFullScreen: false,
   isLoadingStream: false,
-  fullScreenMode: 'tracklist',
+  isVideoMode: false,
+  videoElement: null,
+  videoStreamUrl: null,
+  isLoadingVideo: false,
   queue: [],
   queueIndex: -1,
   detections: [],
@@ -69,6 +79,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   audioElement: null,
 
   setAudioElement: (el) => set({ audioElement: el }),
+
+  setVideoElement: (el) => set({ videoElement: el }),
 
   play: async (djSet, detections) => {
     const { audioElement, currentSet } = get()
@@ -89,6 +101,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       currentTime: 0,
       detections: detections || [],
       currentDetection: null,
+      isVideoMode: false,
+      videoStreamUrl: null,
     })
 
     try {
@@ -130,19 +144,21 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   resume: () => {
-    const { audioElement } = get()
+    const { audioElement, videoElement, isVideoMode } = get()
     if (audioElement) {
       audioElement.play().catch(() => {})
       set({ isPlaying: true })
     }
+    if (isVideoMode && videoElement) {
+      videoElement.play().catch(() => {})
+    }
   },
 
   pause: () => {
-    const { audioElement } = get()
-    if (audioElement) {
-      audioElement.pause()
-      set({ isPlaying: false })
-    }
+    const { audioElement, videoElement, isVideoMode } = get()
+    if (audioElement) audioElement.pause()
+    if (isVideoMode && videoElement) videoElement.pause()
+    set({ isPlaying: false })
     get().savePosition()
   },
 
@@ -156,11 +172,14 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   seek: (time) => {
-    const { audioElement } = get()
+    const { audioElement, videoElement, isVideoMode } = get()
     if (audioElement) {
       audioElement.currentTime = time
       set({ currentTime: time })
       get().updateCurrentDetection()
+    }
+    if (isVideoMode && videoElement) {
+      videoElement.currentTime = time
     }
   },
 
@@ -247,5 +266,40 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   toggleFullScreen: () => set((state) => ({ isFullScreen: !state.isFullScreen })),
 
-  setFullScreenMode: (mode) => set({ fullScreenMode: mode }),
+  setVideoMode: (enabled) => {
+    const { videoElement, audioElement, isPlaying } = get()
+    if (enabled) {
+      // Switching to video — sync video time to audio and play
+      if (videoElement && audioElement) {
+        videoElement.currentTime = audioElement.currentTime
+        if (isPlaying) videoElement.play().catch(() => {})
+      }
+    } else {
+      // Switching to audio — pause video to save bandwidth
+      if (videoElement) {
+        videoElement.pause()
+      }
+    }
+    set({ isVideoMode: enabled })
+  },
+
+  loadVideoStream: async () => {
+    const { currentSet, videoStreamUrl } = get()
+    if (!currentSet?.youtube_video_id) return
+
+    // Check if we already have a valid URL
+    if (videoStreamUrl) return
+
+    set({ isLoadingVideo: true })
+    try {
+      const res = await fetchVideoStreamUrl(currentSet.id)
+      if (res.data?.url) {
+        set({ videoStreamUrl: res.data.url, isLoadingVideo: false })
+      } else {
+        set({ isLoadingVideo: false })
+      }
+    } catch {
+      set({ isLoadingVideo: false })
+    }
+  },
 }))

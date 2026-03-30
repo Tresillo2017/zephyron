@@ -5,40 +5,55 @@ All notable changes to Zephyron will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.0-alpha] - 2026-03-29
+## [0.3.0-alpha] - 2026-03-30
 
 ### Added
 - 1001Tracklists integration — paste a tracklist page source to import tracks with artwork, cue times, labels, and streaming links
 - Songs are now a first-class entity — each track in a tracklist links to a song record with rich metadata
-- CoverFlow mode in the fullscreen player — 3D album art display with previous/next track perspective, reflection effect, and track info
+- CoverFlow fullscreen player — Apple Music-style 3D album art carousel with keyed sliding transitions between tracks, pixel-based directional movement, and 5-card perspective depth (±2 visible)
+- Audio/Video toggle in fullscreen — pill switch between CoverFlow (audio) and YouTube video streaming. Dual-element sync keeps audio and video within 150ms. Video is muted; audio element remains the source of truth
+- Ambilight effect — real-time TV-backlight glow behind the video, sampling frames at 60fps via a 64×36 offscreen canvas with CSS `blur(60px) saturate(2)`. Colors adapt instantly to the video content
+- Animated background — album colors extracted via node-vibrant drive a 4-point gradient mesh with slow drift animation. In video mode, the ambilight canvas replaces the gradient
+- Fullscreen slide-up animation with state machine (hidden → entering → visible → exiting)
+- Stacked "w/" tracks on CoverFlow — simultaneous tracks appear as offset cards behind the primary. On hover, they slide out from behind the cover's bottom center into a row below, with glass labels (backdrop blur + inset border)
+- Video tracklist panel — slides out from the video player's right edge with a small toggle button that moves with the panel. Video shifts left when the panel opens. Panel matches the video height with scrollable tracks
+- VolumeSlider component — reusable volume control with accent-filled track, hover thumb, and mute button. Two variants: `bar` (PlayerBar theme colors) and `fullscreen` (white-on-dark)
 - Songs admin tab — browse, search, edit, and manage all songs with cover art, 8 streaming service URLs, and Last.fm data
-- Autocomplete for Artist and Event fields when creating or editing a set — searches existing records as you type
-- Cover art queue — Cloudflare Queue processes cover art downloads and Last.fm enrichment in the background with rate limiting
-- Video stream URL storage — YouTube video URLs are resolved from Invidious for future video features
-- Streaming service icons throughout the UI using react-icons (Spotify, Apple Music, SoundCloud, Beatport, YouTube, Deezer, Bandcamp, Traxsource)
+- Autocomplete for Artist and Event fields when creating or editing a set
+- Cover art queue — Cloudflare Queue processes cover art downloads and Last.fm enrichment in background
+- Video stream URL storage — YouTube video URLs resolved from Invidious with 6-hour cache TTL
+- Streaming service icons using react-icons (Spotify, Apple Music, SoundCloud, Beatport, YouTube, Deezer, Bandcamp, Traxsource)
 
 ### Changed
-- Tracklist design — tracks now show album art thumbnails and clickable streaming service icons
-- Simultaneous tracks ("w/" / played together) are visually grouped with the parent track, showing nested sub-rows with smaller artwork
-- Set editing consolidated into a single tabbed panel (Metadata, Tracklist, Danger Zone) replacing separate buttons
-- Set list in admin simplified to one "Edit" button per row instead of five
-- Detection pipeline uses 1001Tracklists as the primary source (0.98 confidence) with YouTube/Invidious as fallback
-- Tracklist HTML parsing runs entirely client-side — no large payloads sent to the server
-- Detection imports use batched D1 writes instead of individual INSERT statements
-- Cover art caching moved from blocking inline calls to an async Cloudflare Queue
-- Artist search endpoint now supports `?q=` query parameter
+- Fullscreen player is now CoverFlow-only (removed dual tracklist/coverflow mode toggle)
+- CoverFlow transitions use pixel-based `translateX` (320px spacing) for true left-to-right sliding like Apple CoverFlow, replacing percentage-based transforms
+- Service link pills in fullscreen use neutral glass default state with brand-colored hover (accent glow shadow)
+- Play button in fullscreen matches PlayerBar design (accent color with glow shadow)
+- Progress bar fill uses accent color `hsl(var(--h3))` instead of white
+- Tracklist design — tracks show album art thumbnails and clickable streaming service icons
+- Simultaneous tracks ("w/") visually grouped with nested sub-rows
+- Set editing consolidated into tabbed panel (Metadata, Tracklist, Danger Zone)
+- Detection pipeline uses 1001Tracklists as primary source (0.98 confidence)
+- Tracklist HTML parsing runs entirely client-side
+- Detection imports use batched D1 writes
+- Cover art caching moved to async Cloudflare Queue
+- PlayerBar volume control replaced with styled VolumeSlider component
 
 ### Fixed
-- Tracklist timestamps now correctly inherit from parent tracks for sub-position/mashup entries
-- Equalizer animation only shows when the set is actively playing, not just loaded
-- Cover art caching no longer fails on streams without known content length (reads into ArrayBuffer first)
-- Cover art fetches have a 10-second timeout and 2MB size limit to prevent hanging
-- Labels are correctly extracted from HTML-encoded publisher metadata
+- Tracklist timestamps correctly inherit from parent tracks for sub-position/mashup entries
+- Equalizer animation only shows when actively playing, not just loaded
+- Cover art caching reads into ArrayBuffer first (fixes stream length error)
+- Cover art fetches have 10-second timeout and 2MB size limit
+- Labels correctly extracted from HTML-encoded publisher metadata
+- Video pauses when audio pauses (from PlayerBar, keyboard, or fullscreen controls)
+- Video time sync uses 200ms interval with 150ms drift tolerance for tighter alignment
 
 ### Removed
-- Browser Rendering / Puppeteer dependency — replaced with pure fetch challenge solver and client-side HTML parsing
-- Legacy audio upload UI from the set creation form
-- Hover vote/edit overlay on tracklist rows (will return in a future release)
+- Browser Rendering / Puppeteer dependency
+- Legacy audio upload UI
+- Hover vote/edit overlay on tracklist rows
+- `fullScreenMode` / `setFullScreenMode` from player store (CoverFlow is the only fullscreen mode now)
+- `useVideoColors` hook (replaced by ambilight canvas)
 
 ## [0.2.3] - 2026-03-29
 

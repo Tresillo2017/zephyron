@@ -1,38 +1,143 @@
-import { useEffect, useCallback, useRef, useState } from 'react'
+import { useEffect, useCallback, useState, useRef } from 'react'
 import { usePlayerStore } from '../../stores/playerStore'
-import { StoryboardScrubber } from './StoryboardScrubber'
-import { CoverFlowView } from './CoverFlowView'
+import { CoverFlowView, useCurrentTrackCover } from './CoverFlowView'
+import { useAlbumColors } from '../../hooks/useAlbumColors'
+import { useAmbilight } from '../../hooks/useAmbilight'
+import { VolumeSlider } from '../ui/VolumeSlider'
 import { formatTime } from '../../lib/formatTime'
-import { getCoverUrl, fetchStoryboard, type StoryboardData } from '../../lib/api'
+import { getSongCoverUrl } from '../../lib/api'
+import { getAvailableServices, ServiceIconLink } from '../../lib/services'
+
+type AnimState = 'hidden' | 'entering' | 'visible' | 'exiting'
 
 export function FullScreenPlayer() {
   const {
     currentSet, isPlaying, currentTime, duration, volume, isMuted,
-    currentDetection, detections, isFullScreen, fullScreenMode,
-    togglePlay, seek, setVolume, toggleMute, playNext, playPrevious, toggleFullScreen, setFullScreenMode,
+    currentDetection, detections, isFullScreen,
+    isVideoMode, videoStreamUrl, isLoadingVideo,
+    togglePlay, seek, setVolume, toggleMute,
+    playNext, playPrevious, toggleFullScreen,
+    setVideoMode, loadVideoStream, setVideoElement,
   } = usePlayerStore()
 
+  const [animState, setAnimState] = useState<AnimState>('hidden')
+  const [showTracklist, setShowTracklist] = useState(false)
+  const tracklistRef = useRef<HTMLDivElement>(null)
   const activeTrackRef = useRef<HTMLButtonElement>(null)
-  const [storyboard, setStoryboard] = useState<StoryboardData | null>(null)
+  const coverUrl = useCurrentTrackCover()
+  const { colors: albumColors } = useAlbumColors(coverUrl)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const ambilightRef = useRef<HTMLCanvasElement>(null)
+  const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Fetch storyboard data when opening fullscreen
+  // Ambilight — draws video frames to the canvas at 60fps
+  useAmbilight(videoRef.current, ambilightRef.current, isVideoMode && isPlaying)
+
+  // Auto-scroll tracklist to active track
   useEffect(() => {
-    if (!isFullScreen || !currentSet) {
-      setStoryboard(null)
-      return
+    if (showTracklist && activeTrackRef.current) {
+      activeTrackRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }
+  }, [currentDetection?.id, showTracklist])
 
-    // Only fetch for Invidious sets
-    if (currentSet.stream_type === 'invidious' || currentSet.youtube_video_id) {
-      fetchStoryboard(currentSet.id)
-        .then(setStoryboard)
-        .catch(() => setStoryboard(null))
+  // Check if video is available for this set
+  const hasVideo = !!currentSet?.youtube_video_id
+
+  // Animation state machine
+  useEffect(() => {
+    if (isFullScreen) {
+      setAnimState('entering')
+      const timer = setTimeout(() => setAnimState('visible'), 50)
+      return () => clearTimeout(timer)
+    } else {
+      if (animState === 'visible' || animState === 'entering') {
+        setAnimState('exiting')
+        const timer = setTimeout(() => setAnimState('hidden'), 350)
+        return () => clearTimeout(timer)
+      }
     }
-  }, [isFullScreen, currentSet?.id])
+  }, [isFullScreen])
+
+  // Register video element with store
+  useEffect(() => {
+    if (videoRef.current) {
+      setVideoElement(videoRef.current)
+    }
+    return () => setVideoElement(null)
+  }, [setVideoElement])
+
+  // Load video stream when entering video mode
+  useEffect(() => {
+    if (isVideoMode && !videoStreamUrl && !isLoadingVideo) {
+      loadVideoStream()
+    }
+  }, [isVideoMode, videoStreamUrl, isLoadingVideo, loadVideoStream])
+
+  // Set video src when stream URL is resolved — wait for loadeddata before syncing time
+  useEffect(() => {
+    if (isVideoMode && videoStreamUrl && videoRef.current) {
+      const video = videoRef.current
+
+      const onReady = () => {
+        const audio = usePlayerStore.getState().audioElement
+        if (audio) {
+          video.currentTime = audio.currentTime
+        }
+        if (usePlayerStore.getState().isPlaying) {
+          video.play().catch(() => {})
+        }
+        video.removeEventListener('loadeddata', onReady)
+      }
+
+      video.addEventListener('loadeddata', onReady)
+      video.src = videoStreamUrl
+      video.load()
+
+      return () => video.removeEventListener('loadeddata', onReady)
+    }
+  }, [videoStreamUrl, isVideoMode])
+
+  // Sync video play/pause state + periodic drift correction
+  useEffect(() => {
+    if (isVideoMode) {
+      const video = videoRef.current
+      if (video) {
+        if (isPlaying) {
+          // Sync time before playing
+          const audio = usePlayerStore.getState().audioElement
+          if (audio && Math.abs(video.currentTime - audio.currentTime) > 0.15) {
+            video.currentTime = audio.currentTime
+          }
+          video.play().catch(() => {})
+        } else {
+          video.pause()
+        }
+      }
+
+      // Periodic drift correction — 200ms interval, 150ms tolerance
+      if (isPlaying) {
+        syncIntervalRef.current = setInterval(() => {
+          const audio = usePlayerStore.getState().audioElement
+          const vid = videoRef.current
+          if (audio && vid && Math.abs(vid.currentTime - audio.currentTime) > 0.15) {
+            vid.currentTime = audio.currentTime
+          }
+        }, 200)
+      }
+    } else {
+      // Not in video mode — ensure video is paused
+      if (videoRef.current && !videoRef.current.paused) {
+        videoRef.current.pause()
+      }
+    }
+    return () => {
+      if (syncIntervalRef.current) clearInterval(syncIntervalRef.current)
+    }
+  }, [isVideoMode, isPlaying])
 
   // Keyboard shortcuts
   useEffect(() => {
-    if (!isFullScreen) return
+    if (animState === 'hidden') return
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') toggleFullScreen()
       if (e.key === ' ') { e.preventDefault(); togglePlay() }
@@ -45,14 +150,7 @@ export function FullScreenPlayer() {
       document.removeEventListener('keydown', handler)
       document.body.style.overflow = ''
     }
-  }, [isFullScreen, toggleFullScreen, togglePlay, seek, currentTime, duration])
-
-  // Auto-scroll to active track
-  useEffect(() => {
-    if (activeTrackRef.current) {
-      activeTrackRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-    }
-  }, [currentDetection?.id])
+  }, [animState, toggleFullScreen, togglePlay, seek, currentTime, duration])
 
   const handleSeek = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (duration <= 0) return
@@ -60,279 +158,443 @@ export function FullScreenPlayer() {
     seek(((e.clientX - rect.left) / rect.width) * duration)
   }, [duration, seek])
 
-  if (!isFullScreen || !currentSet) return null
+  const handleToggleVideoMode = useCallback((enabled: boolean) => {
+    setVideoMode(enabled)
+    if (enabled && !videoStreamUrl) {
+      loadVideoStream()
+    }
+    if (!enabled) {
+      setShowTracklist(false)
+    }
+  }, [setVideoMode, videoStreamUrl, loadVideoStream])
+
+  if (animState === 'hidden' || !currentSet) return null
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+  const isVisible = animState === 'visible'
+  const isEntering = animState === 'entering' || animState === 'visible'
+
+  // Current track info for the bottom bar
+  const song = currentDetection?.song
+  const songCover = song?.cover_art_r2_key ? getSongCoverUrl(song.id) : song?.cover_art_url || song?.lastfm_album_art || null
+  const serviceLinks = song ? getAvailableServices(song as unknown as Record<string, unknown>) : []
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: 'hsl(var(--b6))' }}>
-      {/* Ambient background */}
-      {currentSet.cover_image_r2_key ? (
-        <div className="absolute inset-0 pointer-events-none">
-          <img src={getCoverUrl(currentSet.id)} alt="" className="w-full h-full object-cover scale-125 blur-[80px] opacity-[0.12]" />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, hsl(var(--b6) / 0.4), hsl(var(--b6) / 0.7), hsl(var(--b6)))' }} />
-        </div>
-      ) : (
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/4 left-1/3 w-[600px] h-[600px] rounded-full blur-[150px]" style={{ background: 'hsl(var(--h3) / 0.06)' }} />
-        </div>
-      )}
+    <div
+      className="fixed inset-0 z-50 flex flex-col"
+      style={{
+        background: '#050507',
+        transform: isEntering ? 'translateY(0)' : 'translateY(100%)',
+        transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        willChange: 'transform',
+      }}
+    >
+      {/* Layer 1: Blurred album art (audio mode only) */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {coverUrl && (
+          <img
+            key={coverUrl}
+            src={coverUrl}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ transform: 'scale(1.5)', filter: 'blur(80px) saturate(1.6)', opacity: isVideoMode ? 0 : 0.25, transition: 'opacity 0.6s ease' }}
+          />
+        )}
+      </div>
 
-      <div className="relative z-10 flex flex-col h-full">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 h-14 shrink-0">
-          <span className="text-[10px] font-mono tracking-wider" style={{ color: 'hsl(var(--c3))' }}>NOW PLAYING</span>
-          <div className="flex items-center gap-2">
-            {/* Mode toggle: Tracklist / CoverFlow */}
-            <div className="flex items-center rounded-lg overflow-hidden" style={{ background: 'hsl(var(--b3) / 0.5)' }}>
-              <button
-                onClick={() => setFullScreenMode('tracklist')}
-                className="px-3 py-1.5 text-[10px] font-mono tracking-wide transition-all"
-                style={{
-                  background: fullScreenMode === 'tracklist' ? 'hsl(var(--h3) / 0.2)' : 'transparent',
-                  color: fullScreenMode === 'tracklist' ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
-                }}
+      {/* Layer 2: Gradient mesh from album colors (audio mode only) */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `
+            radial-gradient(ellipse at 15% 15%, ${albumColors.vibrant}40 0%, transparent 55%),
+            radial-gradient(ellipse at 85% 20%, ${albumColors.darkVibrant}35 0%, transparent 55%),
+            radial-gradient(ellipse at 50% 85%, ${albumColors.muted}30 0%, transparent 55%),
+            radial-gradient(ellipse at 85% 85%, ${albumColors.darkMuted}45 0%, transparent 55%)
+          `,
+          animation: 'gradientDrift 20s ease-in-out infinite alternate',
+          transition: 'opacity 0.6s ease',
+          opacity: isVideoMode ? 0 : 1,
+        }}
+      />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse at 50% 40%, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%)' }}
+      />
+
+      {/* ═══ CONTENT ═══ */}
+      <div
+        className="relative z-10 flex flex-col h-full"
+        style={{ opacity: isVisible ? 1 : 0, transition: 'opacity 0.3s ease 0.1s' }}
+      >
+        {/* Top bar — toggle + close */}
+        <div className="flex items-center justify-between px-6 h-12 shrink-0">
+          <span className="text-[10px] font-mono tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>NOW PLAYING</span>
+          <div className="flex items-center gap-3">
+            {/* Audio / Video pill toggle */}
+            {hasVideo && (
+              <div
+                className="flex items-center rounded-[var(--button-radius)] overflow-hidden"
+                style={{ background: 'rgba(255,255,255,0.06)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08)' }}
               >
-                TRACKLIST
-              </button>
-              <button
-                onClick={() => setFullScreenMode('coverflow')}
-                className="px-3 py-1.5 text-[10px] font-mono tracking-wide transition-all"
-                style={{
-                  background: fullScreenMode === 'coverflow' ? 'hsl(var(--h3) / 0.2)' : 'transparent',
-                  color: fullScreenMode === 'coverflow' ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
-                }}
-              >
-                COVERFLOW
-              </button>
-            </div>
+                <button
+                  onClick={() => handleToggleVideoMode(false)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono tracking-wide transition-all"
+                  style={{
+                    background: !isVideoMode ? 'hsl(var(--h3) / 0.2)' : 'transparent',
+                    color: !isVideoMode ? 'hsl(var(--h3))' : 'rgba(255,255,255,0.4)',
+                  }}
+                >
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" /></svg>
+                  AUDIO
+                </button>
+                <button
+                  onClick={() => handleToggleVideoMode(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono tracking-wide transition-all"
+                  style={{
+                    background: isVideoMode ? 'hsl(var(--h3) / 0.2)' : 'transparent',
+                    color: isVideoMode ? 'hsl(var(--h3))' : 'rgba(255,255,255,0.4)',
+                  }}
+                >
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" /></svg>
+                  VIDEO
+                </button>
+              </div>
+            )}
+
+            {/* Close */}
             <button
-            onClick={toggleFullScreen}
-            className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-            style={{ color: 'hsl(var(--c3))' }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'hsl(var(--b3) / 0.5)'; e.currentTarget.style.color = 'hsl(var(--c1))' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'hsl(var(--c3))' }}
-            title="Close (Esc)"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+              onClick={toggleFullScreen}
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+              style={{ color: 'rgba(255,255,255,0.4)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.9)'; e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; e.currentTarget.style.background = '' }}
+              title="Close (Esc)"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
 
-        {/* Main content */}
-        {fullScreenMode === 'coverflow' ? (
-          /* ═══ COVERFLOW MODE ═══ */
-          <div className="flex-1 flex flex-col min-h-0 px-6 pb-6">
-            <div className="flex-1 min-h-0">
-              <CoverFlowView />
+        {/* Main area — CoverFlow or Video with crossfade */}
+        <div className="flex-1 min-h-0 relative">
+          {/* CoverFlow (audio mode) */}
+          <div
+            className="absolute inset-0"
+            style={{
+              opacity: isVideoMode ? 0 : 1,
+              transition: 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              pointerEvents: isVideoMode ? 'none' : 'auto',
+            }}
+          >
+            <CoverFlowView />
+          </div>
+
+          {/* Video (video mode) */}
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{
+              opacity: isVideoMode ? 1 : 0,
+              transition: 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.1s',
+              pointerEvents: isVideoMode ? 'auto' : 'none',
+            }}
+          >
+            {/* Ambilight canvas */}
+            <canvas
+              ref={ambilightRef}
+              width={64}
+              height={36}
+              className="absolute pointer-events-none"
+              style={{
+                width: '100%',
+                height: '100%',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%) scale(1.15)',
+                filter: 'blur(60px) saturate(2)',
+                opacity: isVideoMode && isPlaying ? 0.55 : 0,
+                transition: 'opacity 0.6s ease',
+              }}
+            />
+
+            {/* Video + Tracklist */}
+            <div
+              className="relative flex items-center w-full h-full justify-center px-8"
+              style={{ zIndex: 1 }}
+            >
+              {/* Centering wrapper — shifts left when tracklist opens */}
+              <div
+                style={{
+                  maxWidth: '960px',
+                  width: '100%',
+                  position: 'relative',
+                  transform: showTracklist ? 'translateX(-150px)' : 'translateX(0)',
+                  transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+              >
+                {/* Video */}
+                <div
+                  className="relative w-full overflow-hidden"
+                  style={{
+                    aspectRatio: '16 / 9',
+                    borderRadius: showTracklist
+                      ? 'var(--card-radius) 0 0 var(--card-radius)'
+                      : 'var(--card-radius)',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+                    background: '#000',
+                    transition: 'border-radius 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
+                >
+                  <video
+                    ref={videoRef}
+                    className="w-full h-full object-contain"
+                    playsInline
+                    muted
+                  />
+                  {isLoadingVideo && (
+                    <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
+                      <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'rgba(255,255,255,0.2)', borderTopColor: 'hsl(var(--h3))' }} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Toggle + Tracklist — anchored to video right edge, grows outward */}
+                <div
+                  className="absolute top-0 bottom-0 flex"
+                  style={{ left: '100%' }}
+                >
+                  {/* Tracklist panel — expands first (button moves with it) */}
+                  <div
+                    ref={tracklistRef}
+                    className="overflow-hidden"
+                    style={{
+                      width: showTracklist ? 300 : 0,
+                      opacity: showTracklist ? 1 : 0,
+                      background: 'rgba(0, 0, 0, 0.5)',
+                      backdropFilter: 'blur(24px)',
+                      WebkitBackdropFilter: 'blur(24px)',
+                      boxShadow: showTracklist ? 'inset 0 0 0 1px rgba(255,255,255,0.06)' : 'none',
+                      transition: 'width 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                    }}
+                  >
+                    <div className="flex flex-col h-full" style={{ width: 300 }}>
+                      <div className="px-4 pt-3 pb-2 shrink-0">
+                        <p className="text-[11px] font-mono tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>TRACKLIST</p>
+                        <p className="text-[10px] font-mono" style={{ color: 'rgba(255,255,255,0.2)' }}>{detections.length} tracks</p>
+                      </div>
+                      <div className="flex-1 overflow-y-auto px-2 pb-2 min-h-0">
+                        {detections.map((detection) => {
+                          const isActive = currentDetection?.id === detection.id
+                          const song = detection.song
+                          const cover = song?.cover_art_r2_key
+                            ? getSongCoverUrl(song.id)
+                            : song?.cover_art_url || song?.lastfm_album_art || null
+                          return (
+                            <button
+                              key={detection.id}
+                              ref={isActive ? activeTrackRef : undefined}
+                              onClick={() => seek(detection.start_time_seconds)}
+                              className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-colors"
+                              style={{ background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent' }}
+                              onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
+                              onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = isActive ? 'rgba(255,255,255,0.08)' : 'transparent' }}
+                            >
+                              <span className="text-[10px] font-mono tabular-nums w-9 text-center shrink-0" style={{ color: isActive ? 'hsl(var(--h3))' : 'rgba(255,255,255,0.3)' }}>
+                                {isActive && isPlaying ? (
+                                  <span className="flex items-center justify-center">
+                                    <span className="flex gap-[2px] items-end h-2.5">
+                                      <span className="w-[2px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-1 0.8s ease-in-out infinite' }} />
+                                      <span className="w-[2px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-2 0.6s ease-in-out infinite' }} />
+                                      <span className="w-[2px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-3 0.7s ease-in-out infinite' }} />
+                                    </span>
+                                  </span>
+                                ) : formatTime(detection.start_time_seconds)}
+                              </span>
+                              {cover ? (
+                                <img src={cover} alt="" className="w-8 h-8 rounded object-cover shrink-0" />
+                              ) : (
+                                <div className="w-8 h-8 rounded shrink-0" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[11px] truncate leading-tight" style={{ color: isActive ? 'hsl(var(--h3))' : 'rgba(255,255,255,0.75)' }}>
+                                  {detection.track_title}
+                                </p>
+                                {detection.track_artist && (
+                                  <p className="text-[9px] truncate" style={{ color: 'rgba(255,255,255,0.3)' }}>{detection.track_artist}</p>
+                                )}
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Toggle button — after the panel, so it's pushed right as panel grows */}
+                  <button
+                    onClick={() => setShowTracklist((v) => !v)}
+                    className="flex items-center justify-center shrink-0 self-center"
+                    style={{
+                      width: 20,
+                      height: 40,
+                      borderRadius: '0 6px 6px 0',
+                      background: 'rgba(255,255,255,0.06)',
+                      backdropFilter: 'blur(12px)',
+                      WebkitBackdropFilter: 'blur(12px)',
+                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08)',
+                      color: showTracklist ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.3)',
+                      transition: 'color 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.9)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = showTracklist ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.3)'}
+                    title={showTracklist ? 'Hide tracklist' : 'Show tracklist'}
+                  >
+                    <svg
+                      className="w-3 h-3"
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                      style={{
+                        transform: showTracklist ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                      }}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom controls */}
+        <div
+          className="shrink-0 px-6 pb-5 pt-3"
+          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 100%)' }}
+        >
+          <div className="max-w-2xl mx-auto">
+
+            {/* Track info row (always visible in video mode, hidden in audio since CoverFlow shows it) */}
+            <div
+              className="flex items-center gap-3 mb-3"
+              style={{
+                opacity: isVideoMode ? 1 : 0,
+                maxHeight: isVideoMode ? 60 : 0,
+                overflow: 'hidden',
+                transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              }}
+            >
+              {/* Mini cover */}
+              {songCover ? (
+                <img src={songCover} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)' }} />
+              ) : (
+                <div className="w-10 h-10 rounded-lg shrink-0" style={{ background: 'rgba(255,255,255,0.06)' }} />
+              )}
+
+              {/* Title + artist */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm truncate" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                  {currentDetection?.track_title || currentSet.title}
+                </p>
+                <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  {currentDetection?.track_artist || currentSet.artist}
+                </p>
+              </div>
+
+              {/* Service links */}
+              {serviceLinks.length > 0 && (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {serviceLinks.slice(0, 4).map(({ url, service }) => (
+                    <ServiceIconLink key={service.key} url={url} service={service} size={14} />
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Progress bar + controls (compact, centered) */}
-            <div className="max-w-xl mx-auto w-full mt-4">
-              <div className="relative h-[6px] rounded-full cursor-pointer group" style={{ background: 'hsl(var(--b3))' }} onClick={handleSeek}>
-                <div className="absolute top-0 left-0 h-full rounded-full" style={{ width: `${progress}%`, background: 'hsl(var(--h3))', transition: 'width 0.1s linear' }} />
-                <div
-                  className="absolute top-1/2 w-4 h-4 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }}
-                />
-                <StoryboardScrubber storyboard={storyboard} duration={duration} />
-              </div>
-              <div className="flex justify-between mt-2">
-                <span className="text-[11px] font-mono tabular-nums" style={{ color: 'hsl(var(--c3))' }}>{formatTime(currentTime)}</span>
-                <span className="text-[11px] font-mono tabular-nums" style={{ color: 'hsl(var(--c3))' }}>{formatTime(duration)}</span>
-              </div>
+            {/* Progress bar */}
+            <div className="relative h-[5px] rounded-full cursor-pointer group" style={{ background: 'rgba(255,255,255,0.15)' }} onClick={handleSeek}>
+              <div
+                className="absolute top-0 left-0 h-full rounded-full"
+                style={{ width: `${progress}%`, background: 'hsl(var(--h3))', transition: 'width 0.1s linear' }}
+              />
+              <div
+                className="absolute top-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }}
+              />
+            </div>
 
-              {/* Controls */}
-              <div className="flex items-center justify-center gap-5 mt-3">
-                <button onClick={playPrevious} className="transition-colors" style={{ color: 'hsl(var(--c3))' }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = 'hsl(var(--c1))'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = 'hsl(var(--c3))'}>
+            {/* Time */}
+            <div className="flex justify-between mt-1.5">
+              <span className="text-[10px] font-mono tabular-nums" style={{ color: 'rgba(255,255,255,0.4)' }}>{formatTime(currentTime)}</span>
+              <span className="text-[10px] font-mono tabular-nums" style={{ color: 'rgba(255,255,255,0.4)' }}>{formatTime(duration)}</span>
+            </div>
+
+            {/* Transport + Volume */}
+            <div className="flex items-center justify-between mt-2">
+              {/* Left spacer */}
+              <div className="w-28" />
+
+              {/* Center: transport controls */}
+              <div className="flex items-center gap-6">
+                <button
+                  onClick={playPrevious}
+                  className="transition-all"
+                  style={{ color: 'rgba(255,255,255,0.5)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.9)'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
+                >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" /></svg>
                 </button>
+
                 <button
                   onClick={togglePlay}
-                  className="w-14 h-14 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
+                  className="w-12 h-12 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
                   style={{ background: 'hsl(var(--h3))', boxShadow: '0 4px 20px hsl(var(--h4) / 0.35)' }}
                 >
                   {isPlaying
-                    ? <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
-                    : <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>}
+                    ? <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+                    : <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>}
                 </button>
-                <button onClick={playNext} className="transition-colors" style={{ color: 'hsl(var(--c3))' }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = 'hsl(var(--c1))'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = 'hsl(var(--c3))'}>
+
+                <button
+                  onClick={playNext}
+                  className="transition-all"
+                  style={{ color: 'rgba(255,255,255,0.5)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.9)'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
+                >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg>
                 </button>
               </div>
-            </div>
-          </div>
-        ) : (
-          /* ═══ TRACKLIST MODE (original layout) ═══ */
-          <div className="flex-1 flex flex-col lg:flex-row min-h-0 px-6 pb-6 gap-6">
 
-          {/* LEFT: cover + info + controls */}
-          <div className="lg:w-[440px] xl:w-[500px] flex flex-col items-center lg:items-start shrink-0 overflow-y-auto">
-
-            {/* Cover art */}
-            <div
-              className="w-52 h-52 sm:w-64 sm:h-64 lg:w-72 lg:h-72 xl:w-80 xl:h-80 overflow-hidden mb-6 shrink-0"
-              style={{ borderRadius: 'var(--card-radius)', boxShadow: '0 20px 60px hsl(var(--b7) / 0.5)' }}
-            >
-              {currentSet.cover_image_r2_key ? (
-                <img src={getCoverUrl(currentSet.id)} alt={currentSet.title} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(var(--h3) / 0.2), hsl(var(--b4)))' }}>
-                  <svg className="w-16 h-16" style={{ color: 'hsl(var(--c3) / 0.3)' }} fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
-                  </svg>
-                </div>
-              )}
-            </div>
-
-            {/* Title + artist */}
-            <div className="text-center lg:text-left w-full mb-5">
-              <h1 className="text-xl sm:text-2xl font-[var(--font-weight-bold)] truncate" style={{ color: 'hsl(var(--c1))' }}>{currentSet.title}</h1>
-              <p className="text-base mt-1" style={{ color: 'hsl(var(--c2))' }}>{currentSet.artist}</p>
-              {currentSet.genre && <p className="text-xs font-mono mt-1.5" style={{ color: 'hsl(var(--h3))' }}>{currentSet.genre}</p>}
-            </div>
-
-            {/* Progress bar with storyboard scrubber */}
-            <div className="w-full mb-5">
-              <div className="relative h-[6px] rounded-full cursor-pointer group" style={{ background: 'hsl(var(--b3))' }} onClick={handleSeek}>
-                <div className="absolute top-0 left-0 h-full rounded-full" style={{ width: `${progress}%`, background: 'hsl(var(--h3))', transition: 'width 0.1s linear' }} />
-                <div
-                  className="absolute top-1/2 w-4 h-4 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }}
-                />
-                {/* Storyboard hover overlay */}
-                <StoryboardScrubber storyboard={storyboard} duration={duration} />
-              </div>
-              <div className="flex justify-between mt-2">
-                <span className="text-[11px] font-mono tabular-nums" style={{ color: 'hsl(var(--c3))' }}>{formatTime(currentTime)}</span>
-                <span className="text-[11px] font-mono tabular-nums" style={{ color: 'hsl(var(--c3))' }}>{formatTime(duration)}</span>
-              </div>
-            </div>
-
-            {/* Controls */}
-            <div className="flex items-center justify-center lg:justify-start gap-5 w-full mb-5">
-              <button onClick={playPrevious} className="transition-colors" style={{ color: 'hsl(var(--c3))' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = 'hsl(var(--c1))'}
-                onMouseLeave={(e) => e.currentTarget.style.color = 'hsl(var(--c3))'}>
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" /></svg>
-              </button>
-              <button
-                onClick={togglePlay}
-                className="w-14 h-14 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
-                style={{ background: 'hsl(var(--h3))', boxShadow: '0 4px 20px hsl(var(--h4) / 0.35)' }}
-              >
-                {isPlaying
-                  ? <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
-                  : <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>}
-              </button>
-              <button onClick={playNext} className="transition-colors" style={{ color: 'hsl(var(--c3))' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = 'hsl(var(--c1))'}
-                onMouseLeave={(e) => e.currentTarget.style.color = 'hsl(var(--c3))'}>
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg>
-              </button>
-            </div>
-
-            {/* Volume */}
-            <div className="flex items-center gap-3 justify-center lg:justify-start w-full">
-              <button onClick={toggleMute} className="transition-colors" style={{ color: 'hsl(var(--c3))' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = 'hsl(var(--c1))'}
-                onMouseLeave={(e) => e.currentTarget.style.color = 'hsl(var(--c3))'}>
-                {isMuted || volume === 0
-                  ? <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" /></svg>
-                  : <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" /></svg>}
-              </button>
-              <input
-                type="range" min={0} max={1} step={0.01}
-                value={isMuted ? 0 : volume}
-                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="w-28 h-[6px] rounded-full appearance-none cursor-pointer"
-                style={{ background: `linear-gradient(to right, hsl(var(--h3)) 0%, hsl(var(--h3)) ${(isMuted ? 0 : volume) * 100}%, hsl(var(--b3)) ${(isMuted ? 0 : volume) * 100}%, hsl(var(--b3)) 100%)` }}
+              {/* Right: volume */}
+              <VolumeSlider
+                volume={volume}
+                isMuted={isMuted}
+                onVolumeChange={setVolume}
+                onToggleMute={toggleMute}
+                variant="fullscreen"
               />
             </div>
           </div>
-
-          {/* RIGHT: tracklist */}
-          <div className="flex-1 min-w-0 flex flex-col min-h-0">
-            <div className="flex items-center justify-between mb-3 shrink-0">
-              <div>
-                <h2 className="text-sm font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c1))' }}>Tracklist</h2>
-                <p className="text-[10px] font-mono" style={{ color: 'hsl(var(--c3))' }}>{detections.length} tracks</p>
-              </div>
-              {currentDetection && (
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-[2px] items-end h-3">
-                    <div className="w-[3px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-1 0.8s ease-in-out infinite' }} />
-                    <div className="w-[3px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-2 0.6s ease-in-out infinite' }} />
-                    <div className="w-[3px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-3 0.7s ease-in-out infinite' }} />
-                  </div>
-                  <span className="text-xs font-medium truncate max-w-[200px]" style={{ color: 'hsl(var(--h3))' }}>{currentDetection.track_title}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="flex-1 overflow-y-auto min-h-0 card !p-0 overflow-hidden">
-              {detections.map((detection, i) => {
-                const endTime = detection.end_time_seconds
-                  ?? (i + 1 < detections.length ? detections[i + 1].start_time_seconds : duration)
-                const isActive = currentTime >= detection.start_time_seconds && currentTime < endTime
-
-                return (
-                  <button
-                    key={detection.id}
-                    ref={isActive ? activeTrackRef : undefined}
-                    onClick={() => seek(detection.start_time_seconds)}
-                    className="w-full flex items-center gap-3 px-5 py-3 text-left transition-all"
-                    style={{
-                      background: isActive ? 'hsl(var(--h3) / 0.08)' : undefined,
-                      borderLeft: isActive ? '2px solid hsl(var(--h3))' : '2px solid transparent',
-                      transitionDuration: 'var(--trans)',
-                      transitionTimingFunction: 'var(--ease-out-custom)',
-                    }}
-                    onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'hsl(var(--b3) / 0.4)' }}
-                    onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = '' }}
-                  >
-                    <span className="text-xs font-mono w-12 tabular-nums shrink-0" style={{ color: isActive ? 'hsl(var(--h3))' : 'hsl(var(--c3))' }}>
-                      {formatTime(detection.start_time_seconds)}
-                    </span>
-                    {isActive && (
-                      <div className="flex gap-[2px] items-end h-3 shrink-0">
-                        <div className="w-[3px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-1 0.8s ease-in-out infinite' }} />
-                        <div className="w-[3px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-2 0.6s ease-in-out infinite' }} />
-                        <div className="w-[3px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-3 0.7s ease-in-out infinite' }} />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate" style={{ color: isActive ? 'hsl(var(--h3))' : 'hsl(var(--c1))', fontWeight: isActive ? 'var(--font-weight-medium)' : 'var(--font-weight)' }}>
-                        {detection.track_title}
-                      </p>
-                      {detection.track_artist && (
-                        <p className="text-xs truncate" style={{ color: 'hsl(var(--c3))' }}>{detection.track_artist}</p>
-                      )}
-                    </div>
-                    <span className="text-[10px] font-mono shrink-0" style={{
-                      color: detection.confidence >= 0.8 ? 'hsl(145, 60%, 55%)' : detection.confidence >= 0.5 ? 'hsl(40, 80%, 55%)' : 'hsl(var(--c3))'
-                    }}>
-                      {Math.round(detection.confidence * 100)}%
-                    </span>
-                  </button>
-                )
-              })}
-              {detections.length === 0 && (
-                <div className="flex items-center justify-center h-full py-16" style={{ color: 'hsl(var(--c3))' }}>
-                  <p className="text-sm">No tracks detected yet</p>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
-        )}
       </div>
+
+      {/* Keyframes */}
+      <style>{`
+        @keyframes gradientDrift {
+          0% { background-position: 0% 0%, 100% 0%, 50% 100%, 100% 100%; }
+          25% { background-position: 30% 10%, 70% 30%, 20% 80%, 80% 60%; }
+          50% { background-position: 50% 20%, 50% 50%, 80% 50%, 20% 80%; }
+          75% { background-position: 20% 30%, 80% 10%, 40% 70%, 60% 90%; }
+          100% { background-position: 0% 0%, 100% 0%, 50% 100%, 100% 100%; }
+        }
+        @keyframes stackReveal {
+          from { opacity: 0; transform: translateY(-15px) scale(0.9); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
     </div>
   )
 }
