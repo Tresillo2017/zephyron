@@ -5,6 +5,22 @@ All notable changes to Zephyron will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0-alpha] - 2026-03-30
+
+### Added
+- New fullscreen player with a smooth cover art carousel
+- Quick switch between audio and video with matching backgrounds
+- Slide-out playlist in video view and easy song importing
+
+### Changed
+- Fullscreen now always uses the CoverFlow style with consistent controls
+
+### Fixed
+- Audio and video stay in sync, timestamps line up, and cover art loads more reliably
+
+### Removed
+- Older fullscreen modes, the legacy upload UI, and hover overlays
+
 ## [0.2.3] - 2026-03-29
 
 ### Added

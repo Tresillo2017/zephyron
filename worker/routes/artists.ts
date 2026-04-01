@@ -2,19 +2,29 @@
 import { json, errorResponse } from '../lib/router'
 import { lookupArtist } from '../services/lastfm'
 
-// GET /api/artists — List all artists with set counts
+// GET /api/artists — List all artists with set counts (supports ?q= search)
 export async function listArtists(
-  _request: Request,
+  request: Request,
   env: Env,
   _ctx: ExecutionContext,
   _params: Record<string, string>
 ): Promise<Response> {
-  const result = await env.DB.prepare(
-    `SELECT a.*,
+  const url = new URL(request.url)
+  const q = url.searchParams.get('q')?.trim()
+
+  let query = `SELECT a.*,
        (SELECT COUNT(*) FROM sets s WHERE s.artist_id = a.id) as set_count
-     FROM artists a
-     ORDER BY a.listeners DESC`
-  ).all()
+     FROM artists a`
+  const params: unknown[] = []
+
+  if (q) {
+    query += ` WHERE a.name LIKE ?`
+    params.push(`%${q}%`)
+  }
+
+  query += ` ORDER BY a.listeners DESC LIMIT 50`
+
+  const result = await env.DB.prepare(query).bind(...params).all()
 
   return json({ data: result.results, ok: true })
 }

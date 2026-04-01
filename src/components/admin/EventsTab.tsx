@@ -36,6 +36,7 @@ export function EventsTab() {
     setIsLoading(true)
     fetchEvents().then((r) => setEvents(r.data)).catch(() => {}).finally(() => setIsLoading(false))
   }
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadEvents() }, [])
 
   const filtered = useMemo(() => {
@@ -208,7 +209,7 @@ function EventFormModal({ event, onClose, onSaved }: { event?: Event; onClose: (
       }
 
       onSaved()
-    } catch {} finally {
+    } catch { /* ignore */ } finally {
       setSaving(false)
       setUploadProgress(null)
     }
@@ -317,6 +318,7 @@ function EventFormModal({ event, onClose, onSaved }: { event?: Event; onClose: (
 }
 
 function LinkSetModal({ eventId, onClose, onLinked }: { eventId: string; onClose: () => void; onLinked: () => void }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [sets, setSets] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [linking, setLinking] = useState<string | null>(null)
@@ -327,7 +329,7 @@ function LinkSetModal({ eventId, onClose, onLinked }: { eventId: string; onClose
 
   const handleLink = async (setId: string) => {
     setLinking(setId)
-    try { await linkSetToEvent(eventId, setId); onLinked() } catch {} finally { setLinking(null) }
+    try { await linkSetToEvent(eventId, setId); onLinked() } catch { /* ignore */ } finally { setLinking(null) }
   }
 
   return (

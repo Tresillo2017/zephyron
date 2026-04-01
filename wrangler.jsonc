@@ -52,6 +52,10 @@
       {
         "queue": "feedback-queue",
         "binding": "FEEDBACK_QUEUE"
+      },
+      {
+        "queue": "cover-art-queue",
+        "binding": "COVER_ART_QUEUE"
       }
     ],
     "consumers": [
@@ -67,6 +71,12 @@
         "max_batch_size": 10,
         "max_batch_timeout": 30,
         "max_retries": 5
+      },
+      {
+        "queue": "cover-art-queue",
+        "max_batch_size": 5,
+        "max_batch_timeout": 10,
+        "max_retries": 3
       }
     ]
   },

@@ -1,7 +1,7 @@
 {
   "name": "zephyron",
   "private": true,
-  "version": "0.2.3",
+  "version": "0.3.0-alpha",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -20,10 +20,13 @@
     "checkout": "actions/checkout",
     "kysely-d1": "^0.4.0",
     "nanoid": "^5.1.7",
+    "node-vibrant": "^4.0.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-icons": "^5.6.0",
     "react-qr-code": "^2.0.18",
     "react-router": "^7.13.2",
+    "undici": "^7.24.6",
     "zustand": "^5.0.12"
   },
   "devDependencies": {

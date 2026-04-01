@@ -8,7 +8,7 @@ import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Skeleton } from '../components/ui/Skeleton'
 import { Waveform } from '../components/player/Waveform'
-import { DetectionRow } from '../components/annotations/DetectionRow'
+import { DetectionGroup } from '../components/annotations/DetectionRow'
 import { AnnotationEditor } from '../components/annotations/AnnotationEditor'
 import { AddToPlaylist } from '../components/playlists/AddToPlaylist'
 import { formatDuration, formatPlayCount } from '../lib/formatTime'
@@ -177,12 +177,12 @@ export function SetPage() {
 
             {/* Tracklist */}
             <div className="card overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+              <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: '1px solid hsl(var(--b4) / 0.15)' }}>
                 <div>
-                  <h3 className="text-sm font-semibold text-text-primary">Tracklist</h3>
-                  <p className="text-[10px] text-text-muted mt-0.5">
+                  <h3 className="text-sm" style={{ fontWeight: 'var(--font-weight-medium)', color: 'hsl(var(--c1))' }}>Tracklist</h3>
+                  <p className="text-[10px] mt-0.5" style={{ color: 'hsl(var(--c3))' }}>
                     {set.detections.length > 0
-                      ? `${set.detections.length} tracks detected`
+                      ? `${set.detections.length} tracks`
                       : DETECTION_STATUS_LABELS[set.detection_status] || set.detection_status}
                   </p>
                 </div>
@@ -200,24 +200,45 @@ export function SetPage() {
                   <Button variant="secondary" size="sm" onClick={() => setShowAddTrack(true)}>Add a track manually</Button>
                 </div>
               ) : (
-                set.detections.map((detection, index) => {
-                  const endTime = detection.end_time_seconds
-                    ?? (index + 1 < set.detections.length
-                      ? set.detections[index + 1].start_time_seconds
-                      : set.duration_seconds)
-                  const isActive = isThisSetLoaded && currentTime >= detection.start_time_seconds && currentTime < endTime
-                  return (
-                    <DetectionRow
-                      key={detection.id}
-                      detection={detection}
-                      index={index}
-                      setId={set.id}
-                      duration={set.duration_seconds}
-                      onClick={() => handleDetectionClick(detection)}
-                      isActive={isActive}
-                    />
-                  )
-                })
+                (() => {
+                  // Group consecutive detections with the same start_time into w/ groups
+                  const groups: Array<{ primary: typeof set.detections[0]; withTracks: typeof set.detections }> = []
+                  for (const detection of set.detections) {
+                    const lastGroup = groups[groups.length - 1]
+                    // A track is a "w/" if it shares the same start time as the previous group's primary
+                    // AND it's not the very first track, AND they're close together (within 2 seconds)
+                    if (lastGroup && Math.abs(detection.start_time_seconds - lastGroup.primary.start_time_seconds) <= 2
+                        && groups.length > 0) {
+                      lastGroup.withTracks.push(detection)
+                    } else {
+                      groups.push({ primary: detection, withTracks: [] })
+                    }
+                  }
+
+                  return groups.map((group, groupIdx) => {
+                    const endTime = group.primary.end_time_seconds
+                      ?? (groupIdx + 1 < groups.length
+                        ? groups[groupIdx + 1].primary.start_time_seconds
+                        : set.duration_seconds)
+                    const isActive = isCurrentlyPlaying
+                      && currentTime >= group.primary.start_time_seconds
+                      && currentTime < endTime
+
+                    return (
+                      <DetectionGroup
+                        key={group.primary.id}
+                        primary={group.primary}
+                        withTracks={group.withTracks}
+                        index={groupIdx}
+                        setId={set.id}
+                        duration={set.duration_seconds}
+                        onClickTrack={handleDetectionClick}
+                        isActive={isActive}
+                        isPlaying={isCurrentlyPlaying}
+                      />
+                    )
+                  })
+                })()
               )}
             </div>
           </div>

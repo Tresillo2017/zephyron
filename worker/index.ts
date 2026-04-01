@@ -17,6 +17,7 @@ import {
   createSetFromYoutube, createSet,
   deleteSet, updateSet,
   listPendingAnnotations, moderateAnnotation,
+  fetch1001Tracklists, parse1001TracklistsHtml, import1001Tracklists, getVideoStreamUrl,
 } from './routes/admin-beta'
 import { listArtists, getArtist, syncArtist, updateArtist, deleteArtist, getArtistBackground } from './routes/artists'
 import {
@@ -31,7 +32,8 @@ import {
   createEvent, updateEvent, deleteEvent, uploadEventCover, uploadEventLogo, linkSetToEvent, unlinkSetFromEvent,
 } from './routes/events'
 import { submitSetRequest } from './routes/petitions'
-import { handleDetectionQueue, handleFeedbackQueue } from './queues/index'
+import { getSong, getSongCover, listSongsAdmin, updateSongAdmin, deleteSongAdmin, cacheSongCoverAdmin, enrichSongAdmin } from './routes/songs'
+import { handleDetectionQueue, handleFeedbackQueue, handleCoverArtQueue } from './queues/index'
 
 // Re-export Durable Object class for Cloudflare runtime
 export { AudioSessionDO } from './durable-objects/audio-session'
@@ -70,7 +72,7 @@ function withAuth(handler: RouteHandler): RouteHandler {
 const router = new Router()
 
 // Health check
-router.get('/api/health', () => json({ status: 'ok', version: '0.2.3' }))
+router.get('/api/health', () => json({ status: 'ok', version: '0.3.0-alpha' }))
 
 // Sets (public)
 router.get('/api/sets', listSets)
@@ -84,6 +86,17 @@ router.post('/api/sets/:id/play', incrementPlayCount)
 router.get('/api/sets/:id/waveform', getSetWaveform)
 router.get('/api/sets/:id/cover', getSetCover)
 router.get('/api/sets/:id/video', getSetVideo)
+
+// Songs (public read)
+router.get('/api/songs/:id/cover', getSongCover)
+router.get('/api/songs/:id', getSong)
+
+// Admin: Songs
+router.get('/api/admin/songs', withAdmin(listSongsAdmin))
+router.put('/api/admin/songs/:id', withAdmin(updateSongAdmin))
+router.delete('/api/admin/songs/:id', withAdmin(deleteSongAdmin))
+router.post('/api/admin/songs/:id/cache-cover', withAdmin(cacheSongCoverAdmin))
+router.post('/api/admin/songs/:id/enrich', withAdmin(enrichSongAdmin))
 
 // Listeners (Durable Objects)
 router.get('/api/sets/:id/listeners', getListenerCount)
@@ -169,6 +182,10 @@ router.get('/api/admin/annotations/pending', withAdmin(listPendingAnnotations))
 router.post('/api/admin/annotations/:id/moderate', withAdmin(moderateAnnotation))
 router.post('/api/admin/sets/:id/index', withAdmin(indexSetRoute))
 router.post('/api/admin/sets/:id/waveform', withAdmin(regenerateWaveform))
+router.post('/api/admin/sets/:id/fetch-1001tracklists', withAdmin(fetch1001Tracklists))
+router.post('/api/admin/sets/:id/parse-1001tracklists-html', withAdmin(parse1001TracklistsHtml))
+router.post('/api/admin/sets/:id/import-1001tracklists', withAdmin(import1001Tracklists))
+router.get('/api/sets/:id/video-stream-url', getVideoStreamUrl)
 
 // ═══════════════════════════════════════════
 // Worker export
@@ -215,6 +232,9 @@ export default {
         break
       case 'feedback-queue':
         await handleFeedbackQueue(batch as MessageBatch<any>, env)
+        break
+      case 'cover-art-queue':
+        await handleCoverArtQueue(batch as MessageBatch<any>, env)
         break
       default:
         console.error(`Unknown queue: ${batch.queue}`)

@@ -1,4 +1,4 @@
-import type { DjSet, DjSetWithDetections, Detection, SearchResults, Genre, Playlist, PlaylistWithItems, ListenHistoryItem, Annotation } from './types'
+import type { DjSet, DjSetWithDetections, Detection, Song, SearchResults, Genre, Playlist, PlaylistWithItems, ListenHistoryItem, Annotation } from './types'
 
 const API_BASE = '/api'
 
@@ -317,6 +317,11 @@ export async function adminCreateSet(data: {
   storyboard_data?: string
   keywords?: string[]
   youtube_music_tracks?: string
+  // 1001Tracklists
+  tracklist_1001_url?: string
+  // Pre-linked artist/event IDs (from autocomplete)
+  artist_id?: string
+  event_id?: string
 }): Promise<{ data: { id: string } }> {
   return fetchApi('/admin/sets', { method: 'POST', body: JSON.stringify(data) })
 }
@@ -386,8 +391,10 @@ export async function fetchWaveform(setId: string): Promise<{ data: { peaks: num
 }
 
 // Artists
-export async function fetchArtists(): Promise<{ data: any[] }> {
-  return fetchApi('/artists')
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function fetchArtists(q?: string): Promise<{ data: any[] }> {
+  const params = q ? `?q=${encodeURIComponent(q)}` : ''
+  return fetchApi(`/artists${params}`)
 }
 
 export async function fetchArtist(id: string): Promise<{ data: any }> {
@@ -494,4 +501,125 @@ export async function submitSetRequest(data: {
   turnstile_token: string
 }): Promise<{ data: { issue_url: string; issue_number: number }; ok: boolean }> {
   return fetchApi('/petitions', { method: 'POST', body: JSON.stringify(data) })
+}
+
+// ═══════════════════════════════════════════
+// SONGS
+// ═══════════════════════════════════════════
+
+export async function fetchSong(id: string): Promise<{ data: Song }> {
+  return fetchApi(`/songs/${id}`)
+}
+
+export function getSongCoverUrl(songId: string): string {
+  return `${API_BASE}/songs/${songId}/cover`
+}
+
+// Admin: Songs
+export async function fetchSongsAdmin(q?: string, page = 1): Promise<{ data: Song[]; total: number; page: number; pageSize: number }> {
+  const params = new URLSearchParams()
+  if (q) params.set('q', q)
+  if (page > 1) params.set('page', String(page))
+  const qs = params.toString()
+  return fetchApi(`/admin/songs${qs ? `?${qs}` : ''}`)
+}
+
+export async function updateSongAdmin(id: string, data: Record<string, unknown>): Promise<void> {
+  await fetchApi(`/admin/songs/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+}
+
+export async function deleteSongAdmin(id: string): Promise<void> {
+  await fetchApi(`/admin/songs/${id}`, { method: 'DELETE' })
+}
+
+export async function cacheSongCoverAdmin(id: string): Promise<void> {
+  await fetchApi(`/admin/songs/${id}/cache-cover`, { method: 'POST' })
+}
+
+export async function enrichSongAdmin(id: string): Promise<void> {
+  await fetchApi(`/admin/songs/${id}/enrich`, { method: 'POST' })
+}
+
+// ═══════════════════════════════════════════
+// 1001TRACKLISTS
+// ═══════════════════════════════════════════
+
+export interface Track1001Preview {
+  position: number
+  title: string
+  artist: string
+  label?: string
+  artwork_url?: string
+  cue_time?: string
+  start_seconds?: number
+  duration_seconds?: number
+  genre?: string
+  track_url?: string
+  track_content_id?: string
+  is_continuation?: boolean
+  is_identified?: boolean
+  spotify_url?: string
+  apple_music_url?: string
+  soundcloud_url?: string
+  beatport_url?: string
+  youtube_url?: string
+  deezer_url?: string
+  bandcamp_url?: string
+  traxsource_url?: string
+}
+
+export async function fetch1001Tracklists(setId: string): Promise<{
+  data: {
+    tracks: Track1001Preview[]
+    tracklist_id: string
+    source: string
+    count: number
+    fallback_required: boolean
+  }
+  error: string | null
+  ok: boolean
+}> {
+  return fetchApi(`/admin/sets/${setId}/fetch-1001tracklists`, { method: 'POST' })
+}
+
+export async function parse1001TracklistsHtml(setId: string, html: string): Promise<{
+  data: {
+    tracks: Track1001Preview[]
+    tracklist_id: string
+    source: string
+    count: number
+  }
+  ok: boolean
+}> {
+  return fetchApi(`/admin/sets/${setId}/parse-1001tracklists-html`, {
+    method: 'POST',
+    body: JSON.stringify({ html }),
+  })
+}
+
+export async function import1001Tracklists(setId: string, tracks: Track1001Preview[]): Promise<{
+  data: { imported: number; set_id: string }
+  ok: boolean
+}> {
+  return fetchApi(`/admin/sets/${setId}/import-1001tracklists`, {
+    method: 'POST',
+    body: JSON.stringify({ tracks }),
+  })
+}
+
+// ═══════════════════════════════════════════
+// VIDEO STREAMING
+// ═══════════════════════════════════════════
+
+export async function fetchVideoStreamUrl(setId: string): Promise<{
+  data: {
+    url: string
+    quality?: string
+    resolution?: string
+    expires_at: number
+    source: string
+  } | null
+  ok: boolean
+}> {
+  return fetchApi(`/sets/${setId}/video-stream-url`)
 }
