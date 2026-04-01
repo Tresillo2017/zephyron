@@ -391,6 +391,7 @@ export async function fetchWaveform(setId: string): Promise<{ data: { peaks: num
 }
 
 // Artists
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function fetchArtists(q?: string): Promise<{ data: any[] }> {
   const params = q ? `?q=${encodeURIComponent(q)}` : ''
   return fetchApi(`/artists${params}`)

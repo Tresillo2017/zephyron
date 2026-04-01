@@ -157,6 +157,7 @@ function SetsListTab() {
       .finally(() => setIsLoading(false))
   }
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadSets() }, [])
 
   const filtered = useMemo(() => {
@@ -277,12 +278,12 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
 
   const fetchArtistOptions = useCallback(async (q: string): Promise<AutocompleteOption[]> => {
     const res = await fetchArtists(q)
-    return (res.data || []).map((a: any) => ({ id: a.id, label: a.name, sublabel: a.set_count ? `${a.set_count} sets` : undefined }))
+    return (res.data || []).map((a: Record<string, unknown>) => ({ id: a.id as string, label: a.name as string, sublabel: a.set_count ? `${a.set_count} sets` : undefined }))
   }, [])
 
   const fetchEventOptions = useCallback(async (q: string): Promise<AutocompleteOption[]> => {
     const res = await fetchEvents(q)
-    return (res.data || []).map((e: any) => ({ id: e.id, label: e.name, sublabel: e.series || undefined }))
+    return (res.data || []).map((e: Record<string, unknown>) => ({ id: e.id as string, label: e.name as string, sublabel: (e.series as string) || undefined }))
   }, [])
 
   // 1001Tracklists import
@@ -386,7 +387,7 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
     setDetectMsg(null)
     try {
       const res = await triggerDetection(set.id)
-      const data = (res as any).data || {}
+      const data = ((res as Record<string, unknown>).data as Record<string, unknown>) || {}
       setDetectMsg(data.error ? `Failed: ${data.error}` : `Detected ${data.detections || 0} tracks`)
     } catch (err) {
       setDetectMsg(err instanceof Error ? err.message : 'Detection failed')

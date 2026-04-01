@@ -1,8 +1,8 @@
 import { useEffect, useCallback, useState, useRef } from 'react'
 import { usePlayerStore } from '../../stores/playerStore'
-import { CoverFlowView, useCurrentTrackCover } from './CoverFlowView'
+import { CoverFlowView } from './CoverFlowView'
+import { useCurrentTrackCover } from '../../hooks/useCurrentTrackCover'
 import { useAlbumColors } from '../../hooks/useAlbumColors'
-import { useAmbilight } from '../../hooks/useAmbilight'
 import { VolumeSlider } from '../ui/VolumeSlider'
 import { formatTime } from '../../lib/formatTime'
 import { getSongCoverUrl } from '../../lib/api'
@@ -31,7 +31,24 @@ export function FullScreenPlayer() {
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Ambilight — draws video frames to the canvas at 60fps
-  useAmbilight(videoRef.current, ambilightRef.current, isVideoMode && isPlaying)
+  useEffect(() => {
+    const video = videoRef.current
+    const canvas = ambilightRef.current
+    if (!video || !canvas || !isVideoMode || !isPlaying) return
+
+    const ctx = canvas.getContext('2d', { willReadFrequently: false })
+    if (!ctx) return
+
+    let raf = 0
+    const draw = () => {
+      if (video.readyState >= 2 && !video.paused) {
+        try { ctx.drawImage(video, 0, 0, canvas.width, canvas.height) } catch { /* skip */ }
+      }
+      raf = requestAnimationFrame(draw)
+    }
+    raf = requestAnimationFrame(draw)
+    return () => cancelAnimationFrame(raf)
+  }, [isVideoMode, isPlaying])
 
   // Auto-scroll tracklist to active track
   useEffect(() => {
@@ -46,16 +63,17 @@ export function FullScreenPlayer() {
   // Animation state machine
   useEffect(() => {
     if (isFullScreen) {
-      setAnimState('entering')
-      const timer = setTimeout(() => setAnimState('visible'), 50)
-      return () => clearTimeout(timer)
+      const t1 = setTimeout(() => setAnimState('entering'), 0)
+      const t2 = setTimeout(() => setAnimState('visible'), 50)
+      return () => { clearTimeout(t1); clearTimeout(t2) }
     } else {
       if (animState === 'visible' || animState === 'entering') {
-        setAnimState('exiting')
-        const timer = setTimeout(() => setAnimState('hidden'), 350)
-        return () => clearTimeout(timer)
+        const t1 = setTimeout(() => setAnimState('exiting'), 0)
+        const t2 = setTimeout(() => setAnimState('hidden'), 350)
+        return () => { clearTimeout(t1); clearTimeout(t2) }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFullScreen])
 
   // Register video element with store

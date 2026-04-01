@@ -1,5 +1,6 @@
 // Streaming service definitions with react-icons brand icons.
 // Single source of truth for all service metadata across the app.
+/* eslint-disable react-refresh/only-export-components */
 
 import type { Song } from './types'
 import type { IconType } from 'react-icons'

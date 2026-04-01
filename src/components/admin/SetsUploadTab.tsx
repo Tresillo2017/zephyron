@@ -61,19 +61,19 @@ export function SetsUploadTab({ onSetCreated }: { onSetCreated?: () => void } = 
   // Autocomplete fetch functions
   const fetchArtistOptions = useCallback(async (q: string): Promise<AutocompleteOption[]> => {
     const res = await fetchArtists(q)
-    return (res.data || []).map((a: any) => ({
-      id: a.id,
-      label: a.name,
+    return (res.data || []).map((a: Record<string, unknown>) => ({
+      id: a.id as string,
+      label: a.name as string,
       sublabel: a.set_count ? `${a.set_count} sets` : undefined,
     }))
   }, [])
 
   const fetchEventOptions = useCallback(async (q: string): Promise<AutocompleteOption[]> => {
     const res = await fetchEvents(q)
-    return (res.data || []).map((e: any) => ({
-      id: e.id,
-      label: e.name,
-      sublabel: e.series || undefined,
+    return (res.data || []).map((e: Record<string, unknown>) => ({
+      id: e.id as string,
+      label: e.name as string,
+      sublabel: (e.series as string) || undefined,
     }))
   }, [])
 

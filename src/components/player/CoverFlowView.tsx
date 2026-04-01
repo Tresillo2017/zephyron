@@ -52,7 +52,7 @@ export function CoverFlowView() {
       g.primary.id === currentDetection.id ||
       g.withTracks.some((w) => w.id === currentDetection.id)
     )
-  }, [currentDetection?.id, groups])
+  }, [currentDetection, groups])
 
   if (!currentSet) return null
 
@@ -93,11 +93,6 @@ export function CoverFlowView() {
   )
 }
 
-export function useCurrentTrackCover(): string | null {
-  const { currentSet, currentDetection } = usePlayerStore()
-  return resolveCover(currentDetection, currentSet?.cover_image_r2_key ? getCoverUrl(currentSet.id) : null)
-}
-
 // ═══════════════════════════════════════════
 // CoverFlow Slide — a single group in the strip
 // Each slide is a persistent keyed DOM node.
@@ -117,16 +112,19 @@ function CoverFlowSlide({ group, offset, fallbackCover, isPlaying, onSeek }: {
   const wasCenterRef = useRef(isCenter)
   useEffect(() => {
     if (isCenter && !wasCenterRef.current) {
-      setPulse(true)
-      const t = setTimeout(() => setPulse(false), 450)
+      const t1 = setTimeout(() => setPulse(true), 0)
+      const t2 = setTimeout(() => setPulse(false), 450)
       wasCenterRef.current = true
-      return () => clearTimeout(t)
+      return () => { clearTimeout(t1); clearTimeout(t2) }
     }
     if (!isCenter) wasCenterRef.current = false
   }, [isCenter])
 
   useEffect(() => {
-    if (!isCenter) setIsExpanded(false)
+    if (!isCenter) {
+      const t = setTimeout(() => setIsExpanded(false), 0)
+      return () => clearTimeout(t)
+    }
   }, [isCenter])
 
   const style = getSlideStyle(offset, pulse, isPlaying, isExpanded)
