@@ -18,7 +18,7 @@
     "@opentelemetry/api": "^1.9.1",
     "better-auth": "^1.5.6",
     "checkout": "actions/checkout",
-    "file-type": "^22.0.0",
+    "file-type": "^21.3.2",
     "kysely-d1": "^0.4.0",
     "nanoid": "^5.1.7",
     "node-vibrant": "^4.0.4",
