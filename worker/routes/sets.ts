@@ -91,7 +91,7 @@ export async function getSet(
       'SELECT a.id, a.name, a.slug, a.image_url, a.bio_summary, a.tags, a.lastfm_url, a.listeners FROM artists a JOIN sets s ON s.artist_id = a.id WHERE s.id = ?'
     ).bind(id),
     env.DB.prepare(
-      'SELECT e.id, e.name, e.slug, e.series, e.description, e.website, e.location, e.start_date, e.end_date, e.cover_image_r2_key, e.logo_r2_key, e.tags, e.created_at FROM events e JOIN sets s ON s.event_id = e.id WHERE s.id = ?'
+      'SELECT e.id, e.name, e.slug, e.series, e.description, e.website, e.location, e.start_date, e.end_date, e.cover_image_r2_key, e.logo_r2_key, e.tags, e.year, e.source_1001_id, e.facebook_url, e.instagram_url, e.youtube_url, e.x_url, e.aftermovie_url, e.created_at FROM events e JOIN sets s ON s.event_id = e.id WHERE s.id = ?'
     ).bind(id),
   ])
 
@@ -154,6 +154,13 @@ export async function getSet(
         cover_image_r2_key: eventRow.cover_image_r2_key,
         logo_r2_key: eventRow.logo_r2_key,
         tags: eventTags,
+        year: eventRow.year ?? null,
+        source_1001_id: eventRow.source_1001_id ?? null,
+        facebook_url: eventRow.facebook_url ?? null,
+        instagram_url: eventRow.instagram_url ?? null,
+        youtube_url: eventRow.youtube_url ?? null,
+        x_url: eventRow.x_url ?? null,
+        aftermovie_url: eventRow.aftermovie_url ?? null,
         created_at: eventRow.created_at,
       } : null,
     },

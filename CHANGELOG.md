@@ -5,6 +5,25 @@ All notable changes to Zephyron will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1-alpha] - 2026-04-02
+
+### Added
+- Events now support a dedicated aftermovie YouTube link — when set, the aftermovie plays automatically as the event banner background instead of the cover image
+- Events and artists can now be linked to their 1001Tracklists source page, storing a `source_1001_id` that lays the groundwork for periodic auto-updates
+- Artist pages now show streaming service links (Spotify, SoundCloud, Beatport, etc.) and social links (Instagram, Facebook, X) in the sidebar
+- Event pages now show social links and a Connect section in the sidebar
+- Global search now returns events alongside sets and tracks — searching "Ultra 2025" will surface the event directly
+- Events now have an explicit year field that is auto-populated from the event date or name, enabling clean edition switching (e.g. Tomorrowland 2024 / 2025)
+- Event detail pages show a year selector pill bar to switch between editions of the same festival series
+- Artist and event pages now follow the same banner + overlapping cover art layout as set pages
+- Admin: importing an artist or event from a 1001Tracklists page now auto-fills social links, service links, cover images, and source IDs
+- Admin: Edit modals for artists and events now include a collapsible 1001TL enrichment section for updating existing records
+- Admin: Event edit modal now supports linking and unlinking sets directly from a single Manage Sets dialog
+
+### Changed
+- Event and artist page headers aligned to the same design system as the set page (full-bleed 280px banner, -100px overlap, cover art with shadow)
+- Events are now ordered by year descending in lists and admin views
+
 ## [0.3.0-alpha] - 2026-03-30
 
 ### Added

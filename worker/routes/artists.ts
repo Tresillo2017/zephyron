@@ -1,6 +1,105 @@
 // Artist routes
 import { json, errorResponse } from '../lib/router'
 import { lookupArtist } from '../services/lastfm'
+import { generateId } from '../lib/id'
+
+const SOCIAL_FIELDS = [
+  'spotify_url', 'soundcloud_url', 'beatport_url', 'traxsource_url',
+  'youtube_url', 'facebook_url', 'instagram_url', 'x_url',
+] as const
+
+// POST /api/admin/artists — Create a new artist (with optional Last.fm auto-sync)
+export async function createArtist(
+  request: Request,
+  env: Env,
+  ctx: ExecutionContext,
+  _params: Record<string, string>
+): Promise<Response> {
+  let body: Record<string, unknown>
+  try { body = await request.json() } catch { return errorResponse('Invalid JSON', 400) }
+
+  const name = typeof body.name === 'string' ? body.name.trim() : ''
+  if (!name) return errorResponse('name is required', 400)
+
+  // Check for duplicate by name
+  const existing = await env.DB.prepare('SELECT id, slug FROM artists WHERE name = ?').bind(name).first<{ id: string; slug: string }>()
+  if (existing) return errorResponse(`Artist "${name}" already exists (id: ${existing.id})`, 409)
+
+  const id = generateId()
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
+  // Collect social URLs from body
+  const socials: Record<string, string | null> = {}
+  for (const field of SOCIAL_FIELDS) {
+    socials[field] = typeof body[field] === 'string' ? (body[field] as string).trim() || null : null
+  }
+
+  const imageUrl = typeof body.image_url === 'string' ? body.image_url.trim() || null : null
+  const country = typeof body.country === 'string' ? body.country.trim() || null : null
+  const sourceDjId = typeof body.source_1001_id === 'string' ? body.source_1001_id.trim() || null : null
+
+  await env.DB.prepare(
+    `INSERT INTO artists (id, name, slug, image_url, source_1001_id, spotify_url, soundcloud_url, beatport_url, traxsource_url, youtube_url, facebook_url, instagram_url, x_url)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(
+    id, name, slug, imageUrl, sourceDjId,
+    socials.spotify_url, socials.soundcloud_url, socials.beatport_url, socials.traxsource_url,
+    socials.youtube_url, socials.facebook_url, socials.instagram_url, socials.x_url
+  ).run()
+
+  // Auto-cache cover image to R2 if image_url is provided
+  if (imageUrl) {
+    ctx.waitUntil((async () => {
+      try {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 10000)
+        const imgRes = await fetch(imageUrl, { signal: controller.signal })
+        clearTimeout(timeout)
+        if (imgRes.ok) {
+          const buf = await imgRes.arrayBuffer()
+          if (buf.byteLength > 0 && buf.byteLength < 5 * 1024 * 1024) {
+            const ct = imgRes.headers.get('content-type') || 'image/jpeg'
+            const r2Key = `artists/${id}/image.jpg`
+            await env.AUDIO_BUCKET.put(r2Key, buf, { httpMetadata: { contentType: ct } })
+          }
+        }
+      } catch { /* non-critical */ }
+    })())
+  }
+
+  // Auto-sync from Last.fm if API key is available
+  if (env.LASTFM_API_KEY) {
+    ctx.waitUntil((async () => {
+      try {
+        const lfm = await lookupArtist(name, env.LASTFM_API_KEY)
+        if (lfm) {
+          const finalImage = lfm.imageUrl || imageUrl
+          await env.DB.prepare(
+            `UPDATE artists SET lastfm_url = ?, lastfm_mbid = ?, image_url = ?,
+             bio_summary = ?, bio_full = ?, tags = ?, similar_artists = ?,
+             listeners = ?, playcount = ?, last_synced_at = CURRENT_TIMESTAMP
+             WHERE id = ?`
+          ).bind(
+            lfm.url, lfm.mbid, finalImage,
+            lfm.bioSummary, lfm.bioFull,
+            JSON.stringify(lfm.tags), JSON.stringify(lfm.similarArtists),
+            lfm.listeners, lfm.playcount, id
+          ).run()
+        }
+      } catch { /* non-critical */ }
+    })())
+  }
+
+  // Store country as a tag if provided (artists table has no country column)
+  if (country) {
+    ctx.waitUntil(
+      env.DB.prepare(`UPDATE artists SET tags = json_array(?) WHERE id = ? AND (tags IS NULL OR tags = '[]')`)
+        .bind(`Country: ${country}`, id).run()
+    )
+  }
+
+  return json({ data: { id, slug }, ok: true }, 201)
+}
 
 // GET /api/artists — List all artists with set counts (supports ?q= search)
 export async function listArtists(
@@ -142,6 +241,15 @@ export async function updateArtist(
     bio_summary: 'bio_summary',
     bio_full: 'bio_full',
     tags: 'tags',
+    source_1001_id: 'source_1001_id',
+    spotify_url: 'spotify_url',
+    soundcloud_url: 'soundcloud_url',
+    beatport_url: 'beatport_url',
+    traxsource_url: 'traxsource_url',
+    youtube_url: 'youtube_url',
+    facebook_url: 'facebook_url',
+    instagram_url: 'instagram_url',
+    x_url: 'x_url',
   }
 
   const updates: string[] = []

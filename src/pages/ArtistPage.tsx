@@ -5,6 +5,7 @@ import { Skeleton } from '../components/ui/Skeleton'
 import { Badge } from '../components/ui/Badge'
 import { TabBar } from '../components/ui/TabBar'
 import { SetGrid } from '../components/sets/SetGrid'
+import { SocialLinks, countSocialLinks } from '../components/ui/SocialLinks'
 import { formatPlayCount } from '../lib/formatTime'
 
 const TABS = [
@@ -75,7 +76,7 @@ export function ArtistPage() {
       {/* ═══ HEADER — overlapping banner ═══ */}
       <div className="relative -mt-[100px] z-10">
         <div className="px-6 lg:px-10">
-          <div className="flex items-end gap-5 mb-5">
+          <div className="flex items-end gap-5 mb-6">
             <div className="w-[130px] h-[130px] sm:w-[160px] sm:h-[160px] rounded-[var(--card-radius)] overflow-hidden flex-shrink-0 bg-surface-overlay"
               style={{ boxShadow: 'var(--subtle-shadow)' }}>
               {artist.image_url ? (
@@ -88,7 +89,12 @@ export function ArtistPage() {
             </div>
             <div className="pb-2">
               <p className="text-sm text-text-secondary banner-text mb-1">Artist</p>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-text-primary leading-tight banner-text">{artist.name}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-text-primary leading-tight banner-text mb-1">{artist.name}</h1>
+              {tags.length > 0 && (
+                <div className="flex gap-1.5 flex-wrap">
+                  {tags.slice(0, 4).map((tag: string) => <Badge key={tag} variant="tag">{tag}</Badge>)}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -212,15 +218,17 @@ export function ArtistPage() {
               </div>
             </div>
 
-            {/* External links */}
-            {artist.lastfm_url && (
+            {/* Music service links */}
+            {countSocialLinks(artist, ['music']) > 0 && (
               <div className="card p-5">
-                <h3 className="text-xs text-text-muted mb-3">Find on</h3>
-                <div className="flex flex-wrap gap-2">
-                  <a href={artist.lastfm_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors no-underline shadow-[inset_0_0_0_1px_rgba(239,68,68,0.2)]">
-                    Last.fm
-                  </a>
-                </div>
+                <SocialLinks data={artist} categories={['music']} heading="FIND ON" />
+              </div>
+            )}
+
+            {/* Social links */}
+            {countSocialLinks(artist, ['social']) > 0 && (
+              <div className="card p-5">
+                <SocialLinks data={artist} categories={['social']} heading="SOCIAL" />
               </div>
             )}
 

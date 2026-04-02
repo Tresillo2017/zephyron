@@ -188,7 +188,17 @@ export interface EventInfo {
   cover_image_r2_key: string | null
   logo_r2_key: string | null
   tags: string | null
+  year: number | null
   created_at: string
+  // 1001Tracklists integration
+  source_1001_id: string | null
+  // Social links
+  facebook_url: string | null
+  instagram_url: string | null
+  youtube_url: string | null
+  x_url: string | null
+  // Aftermovie
+  aftermovie_url: string | null
 }
 
 export interface EventArtist {
