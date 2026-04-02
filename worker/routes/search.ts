@@ -14,7 +14,7 @@ export async function search(
   const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit') || '20')))
 
   if (!q && !genre) {
-    return json({ data: { sets: [], tracks: [] }, ok: true })
+    return json({ data: { sets: [], tracks: [], events: [] }, ok: true })
   }
 
   const conditions: string[] = []
@@ -57,10 +57,47 @@ export async function search(
     trackResults = trackData.results
   }
 
+  // Search events by name, series, location, or series+year combo
+  let eventResults: unknown[] = []
+  if (q) {
+    const eventPattern = `%${q}%`
+
+    // Try to detect "series year" pattern like "tomorrowland 2025"
+    const yearMatch = q.match(/^(.+?)\s+(20\d{2})$/)
+
+    let eventQuery: string
+    let eventParams: unknown[]
+
+    if (yearMatch) {
+      // User typed something like "tomorrowland 2025" — search series+year
+      const seriesPattern = `%${yearMatch[1].trim()}%`
+      const yearNum = parseInt(yearMatch[2])
+      eventQuery = `SELECT e.*,
+        (SELECT COUNT(*) FROM sets s WHERE s.event_id = e.id) as set_count
+        FROM events e
+        WHERE (e.series LIKE ? AND e.year = ?) OR e.name LIKE ?
+        ORDER BY e.year DESC NULLS LAST
+        LIMIT ?`
+      eventParams = [seriesPattern, yearNum, eventPattern, limit]
+    } else {
+      eventQuery = `SELECT e.*,
+        (SELECT COUNT(*) FROM sets s WHERE s.event_id = e.id) as set_count
+        FROM events e
+        WHERE e.name LIKE ? OR e.series LIKE ? OR e.location LIKE ?
+        ORDER BY e.year DESC NULLS LAST
+        LIMIT ?`
+      eventParams = [eventPattern, eventPattern, eventPattern, limit]
+    }
+
+    const eventData = await env.DB.prepare(eventQuery).bind(...eventParams).all()
+    eventResults = eventData.results
+  }
+
   return json({
     data: {
       sets: setsResult.results as unknown as DjSet[],
       tracks: trackResults,
+      events: eventResults,
     },
     ok: true,
   })

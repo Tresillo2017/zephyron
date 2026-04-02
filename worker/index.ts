@@ -19,7 +19,7 @@ import {
   listPendingAnnotations, moderateAnnotation,
   fetch1001Tracklists, parse1001TracklistsHtml, import1001Tracklists, getVideoStreamUrl,
 } from './routes/admin-beta'
-import { listArtists, getArtist, syncArtist, updateArtist, deleteArtist, getArtistBackground } from './routes/artists'
+import { listArtists, getArtist, createArtist, syncArtist, updateArtist, deleteArtist, getArtistBackground } from './routes/artists'
 import {
   getListenerCount, joinListeners, heartbeatListener, leaveListeners,
 } from './routes/listeners'
@@ -149,6 +149,7 @@ router.post('/api/petitions', withAuth(submitSetRequest))
 // ═══════════════════════════════════════════
 
 // Admin / Artists
+router.post('/api/admin/artists', withAdmin(createArtist))
 router.post('/api/admin/artists/:id/sync', withAdmin(syncArtist))
 router.put('/api/admin/artists/:id', withAdmin(updateArtist))
 router.delete('/api/admin/artists/:id', withAdmin(deleteArtist))

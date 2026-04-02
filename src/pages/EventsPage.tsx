@@ -67,7 +67,7 @@ export function EventsPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {events.map((event) => {
-            const year = event.start_date?.match(/^(\d{4})/)?.[1] || event.name.match(/\b(20\d{2})\b/)?.[1]
+            const year = event.year || event.start_date?.match(/^(\d{4})/)?.[1] || event.name.match(/\b(20\d{2})\b/)?.[1]
             return (
             <Link
               key={event.id}

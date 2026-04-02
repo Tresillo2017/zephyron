@@ -422,9 +422,13 @@ async function ensureEvent(
   const seriesMatch = name.match(/^(.+?)\s*(?:\d{4}|\d{1,2}(?:st|nd|rd|th)\s+edition)$/i)
   const series = seriesMatch ? seriesMatch[1].trim() : null
 
+  // Extract year from event name
+  const yearMatch = name.match(/\b(20\d{2})\b/)
+  const year = yearMatch ? parseInt(yearMatch[1]) : null
+
   await env.DB.prepare(
-    `INSERT INTO events (id, name, slug, series, created_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`
-  ).bind(id, name, slug, series).run()
+    `INSERT INTO events (id, name, slug, series, year, created_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+  ).bind(id, name, slug, series, year).run()
 
   await inheritEventCover(id, setId, env)
 

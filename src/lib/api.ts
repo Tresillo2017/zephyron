@@ -413,6 +413,10 @@ export async function deleteArtistAdmin(id: string): Promise<void> {
   await fetchApi(`/admin/artists/${id}`, { method: 'DELETE' })
 }
 
+export async function createArtistAdmin(data: Record<string, unknown>): Promise<{ data: { id: string; slug: string } }> {
+  return fetchApi('/admin/artists', { method: 'POST', body: JSON.stringify(data) })
+}
+
 // Events
 export async function fetchEvents(q?: string): Promise<{ data: any[] }> {
   const params = q ? `?q=${encodeURIComponent(q)}` : ''
