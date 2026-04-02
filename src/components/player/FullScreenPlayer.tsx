@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState, useRef } from 'react'
+import { useEffect, useCallback, useState, useRef, useMemo } from 'react'
 import { usePlayerStore } from '../../stores/playerStore'
 import { CoverFlowView } from './CoverFlowView'
 import { useCurrentTrackCover } from '../../hooks/useCurrentTrackCover'
@@ -7,13 +7,14 @@ import { VolumeSlider } from '../ui/VolumeSlider'
 import { formatTime } from '../../lib/formatTime'
 import { getSongCoverUrl } from '../../lib/api'
 import { getAvailableServices, ServiceIconLink } from '../../lib/services'
+import type { Detection } from '../../lib/types'
 
 type AnimState = 'hidden' | 'entering' | 'visible' | 'exiting'
 
 export function FullScreenPlayer() {
   const {
     currentSet, isPlaying, currentTime, duration, volume, isMuted,
-    currentDetection, detections, isFullScreen,
+    currentDetection, currentDetections, detections, isFullScreen,
     isVideoMode, videoStreamUrl, isLoadingVideo,
     togglePlay, seek, setVolume, toggleMute,
     playNext, playPrevious, toggleFullScreen,
@@ -170,6 +171,26 @@ export function FullScreenPlayer() {
     }
   }, [animState, toggleFullScreen, togglePlay, seek, currentTime, duration])
 
+  // Pre-compute static concurrent groups by start_time_seconds proximity (≤2s = same group)
+  // This mirrors the CoverFlow grouping so secondary tracks always appear indented,
+  // not just at runtime when currentDetections has multiple entries.
+  const detectionGroups = useMemo(() => {
+    interface Group {
+      primary: Detection
+      secondaries: Detection[]
+    }
+    const groups: Group[] = []
+    for (const d of detections) {
+      const last = groups[groups.length - 1]
+      if (last && Math.abs(d.start_time_seconds - last.primary.start_time_seconds) <= 2) {
+        last.secondaries.push(d)
+      } else {
+        groups.push({ primary: d, secondaries: [] })
+      }
+    }
+    return groups
+  }, [detections])
+
   const handleSeek = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (duration <= 0) return
     const rect = e.currentTarget.getBoundingClientRect()
@@ -303,7 +324,9 @@ export function FullScreenPlayer() {
             className="absolute inset-0"
             style={{
               opacity: isVideoMode ? 0 : 1,
-              transition: 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              transform: isVideoMode ? 'scale(0.97)' : 'scale(1)',
+              filter: isVideoMode ? 'blur(4px)' : 'blur(0)',
+              transition: 'opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
               pointerEvents: isVideoMode ? 'none' : 'auto',
             }}
           >
@@ -315,7 +338,9 @@ export function FullScreenPlayer() {
             className="absolute inset-0 flex items-center justify-center"
             style={{
               opacity: isVideoMode ? 1 : 0,
-              transition: 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.1s',
+              transform: isVideoMode ? 'scale(1)' : 'scale(0.97)',
+              filter: isVideoMode ? 'blur(0)' : 'blur(4px)',
+              transition: 'opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s, filter 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s',
               pointerEvents: isVideoMode ? 'auto' : 'none',
             }}
           >
@@ -393,57 +418,222 @@ export function FullScreenPlayer() {
                       background: 'rgba(0, 0, 0, 0.5)',
                       backdropFilter: 'blur(24px)',
                       WebkitBackdropFilter: 'blur(24px)',
+                      borderRadius: '0 12px 12px 0',
                       boxShadow: showTracklist ? 'inset 0 0 0 1px rgba(255,255,255,0.06)' : 'none',
                       transition: 'width 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
                     }}
                   >
                     <div className="flex flex-col h-full" style={{ width: 300 }}>
                       <div className="px-4 pt-3 pb-2 shrink-0">
-                        <p className="text-[11px] font-mono tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>TRACKLIST</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-[11px] font-mono tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>TRACKLIST</p>
+                          {currentDetections.length > 1 && (
+                            <span
+                              className="text-[9px] font-mono tracking-wider px-1.5 py-0.5 rounded"
+                              style={{
+                                background: 'hsl(var(--h3) / 0.15)',
+                                color: 'hsl(var(--h3))',
+                                border: '1px solid hsl(var(--h3) / 0.25)',
+                              }}
+                            >
+                              {currentDetections.length} PLAYING
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[10px] font-mono" style={{ color: 'rgba(255,255,255,0.2)' }}>{detections.length} tracks</p>
                       </div>
                       <div className="flex-1 overflow-y-auto px-2 pb-2 min-h-0">
-                        {detections.map((detection) => {
-                          const isActive = currentDetection?.id === detection.id
-                          const song = detection.song
-                          const cover = song?.cover_art_r2_key
-                            ? getSongCoverUrl(song.id)
-                            : song?.cover_art_url || song?.lastfm_album_art || null
+                        {detectionGroups.map((group) => {
+                          const primaryDetection = group.primary
+                          const isPrimaryActive = currentDetections.some((d) => d.id === primaryDetection.id) || currentDetection?.id === primaryDetection.id
+                          const isPrimaryPlaying = currentDetection?.id === primaryDetection.id
+                          const hasSecondaries = group.secondaries.length > 0
+                          const primarySong = primaryDetection.song
+                          const primaryCover = primarySong?.cover_art_r2_key
+                            ? getSongCoverUrl(primarySong.id)
+                            : primarySong?.cover_art_url || primarySong?.lastfm_album_art || null
+
                           return (
-                            <button
-                              key={detection.id}
-                              ref={isActive ? activeTrackRef : undefined}
-                              onClick={() => seek(detection.start_time_seconds)}
-                              className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left transition-colors"
-                              style={{ background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent' }}
-                              onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
-                              onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = isActive ? 'rgba(255,255,255,0.08)' : 'transparent' }}
-                            >
-                              <span className="text-[10px] font-mono tabular-nums w-9 text-center shrink-0" style={{ color: isActive ? 'hsl(var(--h3))' : 'rgba(255,255,255,0.3)' }}>
-                                {isActive && isPlaying ? (
-                                  <span className="flex items-center justify-center">
-                                    <span className="flex gap-[2px] items-end h-2.5">
-                                      <span className="w-[2px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-1 0.8s ease-in-out infinite' }} />
-                                      <span className="w-[2px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-2 0.6s ease-in-out infinite' }} />
-                                      <span className="w-[2px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-3 0.7s ease-in-out infinite' }} />
-                                    </span>
-                                  </span>
-                                ) : formatTime(detection.start_time_seconds)}
-                              </span>
-                              {cover ? (
-                                <img src={cover} alt="" className="w-8 h-8 rounded object-cover shrink-0" />
-                              ) : (
-                                <div className="w-8 h-8 rounded shrink-0" style={{ background: 'rgba(255,255,255,0.04)' }} />
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[11px] truncate leading-tight" style={{ color: isActive ? 'hsl(var(--h3))' : 'rgba(255,255,255,0.75)' }}>
-                                  {detection.track_title}
-                                </p>
-                                {detection.track_artist && (
-                                  <p className="text-[9px] truncate" style={{ color: 'rgba(255,255,255,0.3)' }}>{detection.track_artist}</p>
+                            <div key={primaryDetection.id}>
+                              {/* Primary track row */}
+                              <button
+                                ref={isPrimaryPlaying ? activeTrackRef : undefined}
+                                onClick={() => seek(primaryDetection.start_time_seconds)}
+                                className="w-full flex items-center text-left relative"
+                                style={{
+                                  paddingLeft: 8,
+                                  paddingRight: 8,
+                                  paddingTop: 6,
+                                  paddingBottom: 6,
+                                  gap: 10,
+                                  borderRadius: '8px',
+                                  background: isPrimaryPlaying
+                                    ? 'hsl(var(--h3) / 0.12)'
+                                    : isPrimaryActive
+                                    ? 'hsl(var(--h3) / 0.07)'
+                                    : 'transparent',
+                                  boxShadow: isPrimaryPlaying
+                                    ? 'inset 1px 1px 0 hsl(var(--h3) / 0.25), inset -1px 0 0 hsl(var(--h3) / 0.25), inset 0 -1px 0 hsl(var(--h3) / 0.1)'
+                                    : isPrimaryActive
+                                    ? 'inset 0 0 0 1px hsl(var(--h3) / 0.15)'
+                                    : 'none',
+                                  transition: 'background 0.2s ease',
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!isPrimaryActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!isPrimaryActive) e.currentTarget.style.background = 'transparent'
+                                }}
+                              >
+                                {/* Left accent bar */}
+                                {isPrimaryPlaying && (
+                                  <span
+                                    className="absolute left-0 top-1 bottom-1 rounded-full"
+                                    style={{ width: 2, background: 'hsl(var(--h3))' }}
+                                  />
                                 )}
-                              </div>
-                            </button>
+
+                                {/* Timestamp / EQ indicator */}
+                                <span
+                                  className="text-[10px] font-mono tabular-nums w-9 text-center shrink-0 pl-1"
+                                  style={{ color: isPrimaryActive ? 'hsl(var(--h3))' : 'rgba(255,255,255,0.3)' }}
+                                >
+                                  {isPrimaryPlaying && isPlaying ? (
+                                    <span className="flex items-center justify-center">
+                                      <span className="flex gap-[2px] items-end h-2.5">
+                                        <span className="w-[2px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-1 0.8s ease-in-out infinite' }} />
+                                        <span className="w-[2px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-2 0.6s ease-in-out infinite' }} />
+                                        <span className="w-[2px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-3 0.7s ease-in-out infinite' }} />
+                                      </span>
+                                    </span>
+                                  ) : (
+                                    formatTime(primaryDetection.start_time_seconds)
+                                  )}
+                                </span>
+
+                                {/* Cover art */}
+                                {primaryCover ? (
+                                  <img
+                                    src={primaryCover}
+                                    alt=""
+                                    className="w-8 h-8 rounded object-cover shrink-0"
+                                    style={{
+                                      boxShadow: isPrimaryPlaying ? '0 0 0 1.5px hsl(var(--h3) / 0.6)' : 'none',
+                                      opacity: isPrimaryActive ? 1 : 0.7,
+                                      transition: 'box-shadow 0.2s ease, opacity 0.2s ease',
+                                    }}
+                                  />
+                                ) : (
+                                  <div
+                                    className="w-8 h-8 rounded shrink-0"
+                                    style={{
+                                      background: isPrimaryActive ? 'hsl(var(--h3) / 0.1)' : 'rgba(255,255,255,0.04)',
+                                      boxShadow: isPrimaryPlaying ? 'inset 0 0 0 1px hsl(var(--h3) / 0.4)' : 'none',
+                                    }}
+                                  />
+                                )}
+
+                                {/* Track info */}
+                                <div className="flex-1 min-w-0">
+                                  <p
+                                    className="text-[11px] truncate leading-tight"
+                                    style={{ color: isPrimaryActive ? 'hsl(var(--h3))' : 'rgba(255,255,255,0.75)' }}
+                                  >
+                                    {primaryDetection.track_title}
+                                  </p>
+                                  {primaryDetection.track_artist && (
+                                    <p
+                                      className="text-[9px] truncate"
+                                      style={{ color: isPrimaryActive ? 'hsl(var(--h3) / 0.6)' : 'rgba(255,255,255,0.3)' }}
+                                    >
+                                      {primaryDetection.track_artist}
+                                    </p>
+                                  )}
+                                </div>
+                              </button>
+
+                              {/* Secondary (w/) tracks — SetPage-style indented layout */}
+                              {hasSecondaries && (
+                                <div style={{ marginLeft: 48, marginRight: 8, marginBottom: 2 }}>
+                                  {group.secondaries.map((secondary) => {
+                                    const isSecActive = currentDetections.some((d) => d.id === secondary.id)
+                                    const secondarySong = secondary.song
+                                    const secondaryCover = secondarySong?.cover_art_r2_key
+                                      ? getSongCoverUrl(secondarySong.id)
+                                      : secondarySong?.cover_art_url || secondarySong?.lastfm_album_art || null
+
+                                    return (
+                                      <button
+                                        key={secondary.id}
+                                        onClick={() => seek(secondary.start_time_seconds)}
+                                        className="w-full flex items-center text-left rounded-lg transition-colors"
+                                        style={{
+                                          padding: '4px 6px',
+                                          gap: 8,
+                                          background: isSecActive ? 'hsl(var(--h3) / 0.06)' : 'transparent',
+                                        }}
+                                        onMouseEnter={(e) => {
+                                          if (!isSecActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
+                                        }}
+                                        onMouseLeave={(e) => {
+                                          e.currentTarget.style.background = isSecActive ? 'hsl(var(--h3) / 0.06)' : 'transparent'
+                                        }}
+                                      >
+                                        {/* w/ label — matches SetPage DetectionRow */}
+                                        <span
+                                          className="text-[8px] font-mono shrink-0 w-5 text-center"
+                                          style={{ color: isSecActive ? 'hsl(var(--h3) / 0.5)' : 'rgba(255,255,255,0.2)' }}
+                                        >
+                                          w/
+                                        </span>
+
+                                        {/* Small cover art */}
+                                        {secondaryCover ? (
+                                          <img
+                                            src={secondaryCover}
+                                            alt=""
+                                            className="rounded object-cover shrink-0"
+                                            style={{
+                                              width: 24, height: 24,
+                                              opacity: isSecActive ? 0.9 : 0.55,
+                                              transition: 'opacity 0.2s ease',
+                                            }}
+                                          />
+                                        ) : (
+                                          <div
+                                            className="rounded shrink-0 flex items-center justify-center"
+                                            style={{
+                                              width: 24, height: 24,
+                                              background: isSecActive ? 'hsl(var(--h3) / 0.08)' : 'rgba(255,255,255,0.03)',
+                                            }}
+                                          >
+                                            <svg className="w-2.5 h-2.5" style={{ color: 'rgba(255,255,255,0.15)' }} fill="currentColor" viewBox="0 0 24 24">
+                                              <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                                            </svg>
+                                          </div>
+                                        )}
+
+                                        {/* Track info */}
+                                        <div className="flex-1 min-w-0">
+                                          <p
+                                            className="text-[10px] truncate leading-tight"
+                                            style={{ color: isSecActive ? 'hsl(var(--h3) / 0.8)' : 'rgba(255,255,255,0.45)' }}
+                                          >
+                                            {secondary.track_title}
+                                          </p>
+                                          {secondary.track_artist && (
+                                            <p className="text-[8px] truncate" style={{ color: isSecActive ? 'hsl(var(--h3) / 0.45)' : 'rgba(255,255,255,0.2)' }}>
+                                              {secondary.track_artist}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                            </div>
                           )
                         })}
                       </div>
@@ -493,25 +683,38 @@ export function FullScreenPlayer() {
         >
           <div className="max-w-2xl mx-auto">
 
-            {/* Track info row (always visible in video mode, hidden in audio since CoverFlow shows it) */}
+            {/* Track info row — slides in during video mode, crossfades cover + title on track change */}
             <div
               className="flex items-center gap-3 mb-3"
               style={{
                 opacity: isVideoMode ? 1 : 0,
                 maxHeight: isVideoMode ? 60 : 0,
                 overflow: 'hidden',
-                transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                transform: isVideoMode ? 'translateY(0)' : 'translateY(8px)',
+                transition: 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
               }}
             >
-              {/* Mini cover */}
-              {songCover ? (
-                <img src={songCover} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)' }} />
-              ) : (
-                <div className="w-10 h-10 rounded-lg shrink-0" style={{ background: 'rgba(255,255,255,0.06)' }} />
-              )}
+              {/* Mini cover — crossfade on track change */}
+              <div className="relative w-10 h-10 shrink-0 rounded-lg overflow-hidden" style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)' }}>
+                {songCover ? (
+                  <img
+                    key={songCover}
+                    src={songCover}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{ animation: 'coverFadeIn 0.35s ease-out' }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                    <svg className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.2)' }} fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                    </svg>
+                  </div>
+                )}
+              </div>
 
-              {/* Title + artist */}
-              <div className="flex-1 min-w-0">
+              {/* Title + artist — crossfade on track change */}
+              <div key={currentDetection?.id || 'set'} className="flex-1 min-w-0" style={{ animation: 'titleSlideIn 0.3s ease-out' }}>
                 <p className="text-sm truncate" style={{ color: 'rgba(255,255,255,0.9)' }}>
                   {currentDetection?.track_title || currentSet.title}
                 </p>
@@ -522,7 +725,7 @@ export function FullScreenPlayer() {
 
               {/* Service links */}
               {serviceLinks.length > 0 && (
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0" style={{ animation: 'fade-in 0.3s ease-out' }}>
                   {serviceLinks.slice(0, 4).map(({ url, service }) => (
                     <ServiceIconLink key={service.key} url={url} service={service} size={14} />
                   ))}
@@ -611,6 +814,14 @@ export function FullScreenPlayer() {
         @keyframes stackReveal {
           from { opacity: 0; transform: translateY(-15px) scale(0.9); }
           to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes coverFadeIn {
+          from { opacity: 0; transform: scale(0.92); filter: blur(4px); }
+          to { opacity: 1; transform: scale(1); filter: blur(0); }
+        }
+        @keyframes titleSlideIn {
+          from { opacity: 0; transform: translateX(-6px); }
+          to { opacity: 1; transform: translateX(0); }
         }
       `}</style>
     </div>

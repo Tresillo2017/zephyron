@@ -1,0 +1,60 @@
+import { json, errorResponse } from '../lib/router'
+import { requireAuth, createAuth } from '../lib/auth'
+
+/**
+ * PATCH /api/user/username
+ * Updates the authenticated user's display name (username), enforcing uniqueness.
+ */
+export async function updateUsername(
+  request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  _params: Record<string, string>
+): Promise<Response> {
+  const authResult = await requireAuth(request, env)
+  if (authResult instanceof Response) return authResult
+
+  const { user } = authResult
+
+  let body: { username?: string }
+  try {
+    body = await request.json()
+  } catch {
+    return errorResponse('Invalid JSON body', 400)
+  }
+
+  const username = body.username?.trim()
+
+  if (!username) {
+    return errorResponse('Username is required', 400)
+  }
+
+  if (username.length < 2 || username.length > 32) {
+    return errorResponse('Username must be between 2 and 32 characters', 400)
+  }
+
+  // Allow letters, numbers, underscores, hyphens, dots — no spaces
+  if (!/^[a-zA-Z0-9_\-. ]+$/.test(username)) {
+    return errorResponse('Username can only contain letters, numbers, spaces, underscores, hyphens, and dots', 400)
+  }
+
+  // Check uniqueness — case-insensitive, exclude current user
+  const existing = await env.DB.prepare(
+    'SELECT id FROM user WHERE LOWER(name) = LOWER(?) AND id != ? LIMIT 1'
+  )
+    .bind(username, user.id)
+    .first<{ id: string }>()
+
+  if (existing) {
+    return errorResponse('Username is already taken', 409)
+  }
+
+  // Update via Better Auth so the session reflects the new name
+  const auth = createAuth(env)
+  await auth.api.updateUser({
+    headers: request.headers,
+    body: { name: username },
+  })
+
+  return json({ ok: true, username })
+}

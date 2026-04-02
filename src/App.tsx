@@ -39,7 +39,7 @@ import { RequestSetPage } from './pages/RequestSetPage'
 function AppLayout() {
   return (
     <div className="h-screen flex flex-col bg-surface text-text-primary">
-      <div className="flex-1 overflow-y-auto relative">
+      <div id="app-scroll-container" className="flex-1 overflow-y-auto relative">
         <TopNav />
         <Outlet />
       </div>

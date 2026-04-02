@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { DjSet, Detection, Song } from '../lib/types'
-import { fetchStreamUrl, fetchVideoStreamUrl, incrementPlayCount, updateListenPosition } from '../lib/api'
+import { fetchStreamUrl, fetchVideoStreamUrl, fetchDetections, incrementPlayCount, updateListenPosition } from '../lib/api'
 
 interface PlayerState {
   // Current playback
@@ -26,6 +26,7 @@ interface PlayerState {
   // Timeline
   detections: Detection[]
   currentDetection: Detection | null
+  currentDetections: Detection[]  // all detections active at currentTime (for overlapping tracks)
   currentSong: Song | null
 
   // Audio element ref
@@ -58,12 +59,24 @@ interface PlayerState {
 // Debounce position saving
 let savePositionTimeout: ReturnType<typeof setTimeout> | null = null
 
+// Read persisted volume from localStorage (fallback 0.8)
+function getPersistedVolume(): number {
+  try {
+    const raw = localStorage.getItem('zephyron_volume')
+    if (raw !== null) {
+      const v = parseFloat(raw)
+      if (!isNaN(v) && v >= 0 && v <= 1) return v
+    }
+  } catch { /* localStorage unavailable */ }
+  return 0.8
+}
+
 export const usePlayerStore = create<PlayerState>((set, get) => ({
   currentSet: null,
   isPlaying: false,
   currentTime: 0,
   duration: 0,
-  volume: 0.8,
+  volume: getPersistedVolume(),
   isMuted: false,
   isFullScreen: false,
   isLoadingStream: false,
@@ -75,10 +88,17 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   queueIndex: -1,
   detections: [],
   currentDetection: null,
+  currentDetections: [],
   currentSong: null,
   audioElement: null,
 
-  setAudioElement: (el) => set({ audioElement: el }),
+  setAudioElement: (el) => {
+    if (el) {
+      // Apply persisted volume immediately when element is registered
+      el.volume = get().volume
+    }
+    set({ audioElement: el })
+  },
 
   setVideoElement: (el) => set({ videoElement: el }),
 
@@ -101,9 +121,23 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       currentTime: 0,
       detections: detections || [],
       currentDetection: null,
+      currentDetections: [],
       isVideoMode: false,
       videoStreamUrl: null,
     })
+
+    // If no detections were passed (e.g. played from a card), fetch them in parallel
+    if (!detections || detections.length === 0) {
+      fetchDetections(djSet.id)
+        .then(({ data }) => {
+          // Only apply if we're still on the same set
+          if (get().currentSet?.id === djSet.id) {
+            set({ detections: data })
+            get().updateCurrentDetection()
+          }
+        })
+        .catch((err) => console.error('[player] Failed to fetch detections:', err))
+    }
 
     try {
       const streamData = await fetchStreamUrl(djSet.id)
@@ -194,6 +228,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       audioElement.volume = clampedVolume
     }
     set({ volume: clampedVolume, isMuted: clampedVolume === 0 })
+    // Persist across sessions
+    try { localStorage.setItem('zephyron_volume', String(clampedVolume)) } catch { /* ignore */ }
   },
 
   toggleMute: () => {
@@ -249,12 +285,14 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   updateCurrentDetection: () => {
     const { currentTime, detections } = get()
-    const current = detections.find(
+    // Find all detections whose time window contains currentTime (for overlapping/simultaneous tracks)
+    const active = detections.filter(
       (d) =>
         currentTime >= d.start_time_seconds &&
         (d.end_time_seconds == null || currentTime < d.end_time_seconds)
     )
-    set({ currentDetection: current || null, currentSong: current?.song || null })
+    const current = active[0] || null
+    set({ currentDetection: current, currentDetections: active, currentSong: current?.song || null })
   },
 
   savePosition: () => {

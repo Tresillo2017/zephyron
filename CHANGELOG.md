@@ -5,6 +5,27 @@ All notable changes to Zephyron will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2-alpha] - 2026-04-03
+
+### Added
+- Volume is now remembered across sessions — your preferred level persists when you close and reopen the app
+- Tracklist now auto-loads when you play a set from the home page, browse, or anywhere outside the set detail page — no need to navigate there first
+- Username uniqueness is now enforced — you'll see an instant error if the name is already taken before saving
+- Admin: user management now supports setting passwords, revoking all sessions, impersonating users, banning with a custom reason and expiry duration, and deleting accounts — all from a new action menu per user
+- Admin: user list now has a search bar to filter by email
+
+### Changed
+- Tracklist in the fullscreen video player now shows simultaneous tracks ("w/" groups) statically at all times, not only while they are actively playing — matching the set detail page style with indentation and a `w/` label
+- Switching between Audio and Video mode in the fullscreen player now has a smooth scale and blur crossfade instead of a plain opacity fade; the track cover and title in the bottom bar also animate individually on track changes
+- Navigation bar now has a proper glass blur effect — fixed an issue where the blur was never applied because the scroll position was being read from the wrong container
+- Select dropdowns now use a theme-aware chevron icon — white arrow on dark themes, dark arrow on the light theme
+- Text selection highlight now adapts to the active theme — uses a deeper accent tint in light mode to stay visible against bright backgrounds
+- Button focus ring opacity increased slightly for better visibility across all themes
+- Scrollbars, text inputs, and select elements are now consistently styled across all themes and accent colors
+
+### Fixed
+- TopNav scroll blur was never triggering because the app scrolls inside an inner container, not the window — the listener is now attached to the correct element
+
 ## [0.3.1-alpha] - 2026-04-02
 
 ### Added

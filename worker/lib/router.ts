@@ -57,6 +57,11 @@ export class Router {
     return this
   }
 
+  patch(path: string, handler: RouteHandler) {
+    this.addRoute('PATCH', path, handler)
+    return this
+  }
+
   async handle(
     request: Request,
     env: Env,
@@ -92,7 +97,7 @@ export function corsHeaders(requestOrigin?: string | null): Headers {
     ? requestOrigin
     : allowed[0]
   headers.set('Access-Control-Allow-Origin', origin)
-  headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
   headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Anonymous-Id, Authorization, Range')
   headers.set('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges')
   headers.set('Access-Control-Allow-Credentials', 'true')

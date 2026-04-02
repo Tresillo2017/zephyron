@@ -627,3 +627,11 @@ export async function fetchVideoStreamUrl(setId: string): Promise<{
 }> {
   return fetchApi(`/sets/${setId}/video-stream-url`)
 }
+
+// User profile
+export async function updateUsername(username: string): Promise<{ ok: boolean; username: string }> {
+  return fetchApi('/user/username', {
+    method: 'PATCH',
+    body: JSON.stringify({ username }),
+  })
+}

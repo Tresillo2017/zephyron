@@ -33,6 +33,7 @@ import {
 } from './routes/events'
 import { submitSetRequest } from './routes/petitions'
 import { getSong, getSongCover, listSongsAdmin, updateSongAdmin, deleteSongAdmin, cacheSongCoverAdmin, enrichSongAdmin } from './routes/songs'
+import { updateUsername } from './routes/user'
 import { handleDetectionQueue, handleFeedbackQueue, handleCoverArtQueue } from './queues/index'
 
 // Re-export Durable Object class for Cloudflare runtime
@@ -143,6 +144,9 @@ router.post('/api/history', updateHistory)
 
 // Set request petitions (authenticated + Turnstile)
 router.post('/api/petitions', withAuth(submitSetRequest))
+
+// User profile
+router.patch('/api/user/username', updateUsername)
 
 // ═══════════════════════════════════════════
 // Admin routes — all protected by withAdmin()

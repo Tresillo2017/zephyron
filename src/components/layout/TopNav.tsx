@@ -8,6 +8,7 @@ export function TopNav() {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu on click outside
@@ -20,6 +21,16 @@ export function TopNav() {
     if (showUserMenu) document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [showUserMenu]);
+
+  // Scroll-driven blur — listen to the actual scroll container, not window
+  useEffect(() => {
+    const container = document.getElementById("app-scroll-container");
+    if (!container) return;
+    const onScroll = () => setScrolled(container.scrollTop > 10);
+    container.addEventListener("scroll", onScroll, { passive: true });
+    setScrolled(container.scrollTop > 10);
+    return () => container.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,15 +48,31 @@ export function TopNav() {
   // Is this a page with a banner? (artist, set pages)
   const hasBanner = location.pathname.match(/\/app\/(sets|artists)\//);
 
+  // Non-banner: glass always visible (blur + bg from page load), deepens on scroll
+  // Banner: transparent until scrolled past threshold (~280px banner)
+  const glassOpacity = hasBanner
+    ? (scrolled ? 0.92 : 0)
+    : (scrolled ? 0.95 : 0.85);
+  const blurAmount = hasBanner
+    ? (scrolled ? 'blur(20px)' : 'blur(0px)')
+    : (scrolled ? 'blur(24px)' : 'blur(20px)');
+
   return (
     <nav
       className="sticky top-0 z-40 flex items-center h-[calc(20px+var(--button-height))] px-5 gap-4"
       style={{ background: "transparent" }}
     >
-      {/* Gradient overlay behind nav — fades in on non-banner pages */}
-      {!hasBanner && (
-        <div className="absolute inset-0 -z-10 bg-[hsl(var(--b6)/0.85)] backdrop-blur-xl" />
-      )}
+      {/* Gradient overlay behind nav — transitions in on scroll */}
+      <div
+        className="absolute inset-0 -z-10"
+        style={{
+          background: `hsl(var(--b6) / ${glassOpacity})`,
+          backdropFilter: `${blurAmount} saturate(200%)`,
+          WebkitBackdropFilter: `${blurAmount} saturate(200%)`,
+          boxShadow: scrolled ? '0 1px 0 hsl(var(--br1) / 0.15)' : 'none',
+          transition: 'background 0.3s ease, backdrop-filter 0.3s ease, box-shadow 0.3s ease',
+        }}
+      />
 
       {/* Logo */}
       <Link

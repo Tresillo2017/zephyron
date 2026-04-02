@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Badge } from '../components/ui/Badge'
 import { useThemeStore, ACCENTS } from '../stores/themeStore'
+import { updateUsername } from '../lib/api'
 import QRCode from 'react-qr-code'
 
 type Tab = 'profile' | 'visual' | 'security' | 'account'
@@ -228,7 +229,7 @@ function ProfileTab() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  const handleUpdateName = async (e: React.FormEvent) => {
+  const handleUpdateUsername = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim() || name === user?.name) return
 
@@ -236,17 +237,16 @@ function ProfileTab() {
     setMessage(null)
 
     try {
-      const { error } = await authClient.updateUser({
-        name: name.trim(),
-      })
-
-      if (error) {
-        setMessage({ type: 'error', text: error.message || 'Failed to update name' })
+      await updateUsername(name.trim())
+      setMessage({ type: 'success', text: 'Username updated successfully' })
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to update username'
+      // 409 = already taken, surface a clear message
+      if (msg.includes('already taken') || err?.status === 409) {
+        setMessage({ type: 'error', text: 'That username is already taken' })
       } else {
-        setMessage({ type: 'success', text: 'Name updated successfully' })
+        setMessage({ type: 'error', text: msg })
       }
-    } catch {
-      setMessage({ type: 'error', text: 'Something went wrong' })
     } finally {
       setSaving(false)
     }
@@ -265,14 +265,15 @@ function ProfileTab() {
         </div>
       </div>
 
-      {/* Edit name */}
-      <form onSubmit={handleUpdateName} className="space-y-4">
+      {/* Edit username */}
+      <form onSubmit={handleUpdateUsername} className="space-y-4">
         <div className="bg-surface-raised border border-border rounded-xl p-5 space-y-4">
-          <h3 className="text-sm font-semibold text-text-primary">Display Name</h3>
+          <h3 className="text-sm font-semibold text-text-primary">Username</h3>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Your display name"
+            placeholder="Your username"
+            maxLength={32}
           />
           {message && (
             <p className={`text-xs ${message.type === 'success' ? 'text-accent' : 'text-danger'}`}>
