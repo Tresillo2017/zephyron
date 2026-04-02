@@ -45,7 +45,7 @@
     "globals": "^17.4.0",
     "shadcn": "^4.1.1",
     "tailwindcss": "^4.2.2",
-    "typescript": "~5.9.3",
+    "typescript": "~6.0.2",
     "typescript-eslint": "^8.57.2",
     "vite": "^8.0.3",
     "wrangler": "^4.78.0"
