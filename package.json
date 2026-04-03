@@ -1,7 +1,7 @@
 {
   "name": "zephyron",
   "private": true,
-  "version": "0.3.1-alpha",
+  "version": "0.3.3-alpha",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -15,6 +15,7 @@
     "changeset:tag": "changeset tag"
   },
   "dependencies": {
+    "@better-auth/api-key": "^1.5.6",
     "@opentelemetry/api": "^1.9.1",
     "better-auth": "^1.5.6",
     "checkout": "actions/checkout",

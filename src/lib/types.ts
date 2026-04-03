@@ -24,7 +24,7 @@ export interface DjSet {
   detection_version: number
   play_count: number
   // Invidious/YouTube fields (v0.2.3+)
-  stream_type: 'invidious' | 'r2' | null
+  stream_type: 'invidious' | 'r2' | 'soundcloud' | 'hearthis' | null
   youtube_video_id: string | null
   youtube_channel_id: string | null
   youtube_channel_name: string | null
@@ -103,6 +103,13 @@ export interface DjSetWithDetections extends DjSet {
     lastfm_url: string | null
     listeners: number
   } | null
+  set_artists?: {
+    id: string
+    name: string
+    slug: string | null
+    image_url: string | null
+    position: number
+  }[]
   event_info?: EventInfo | null
 }
 

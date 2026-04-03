@@ -119,7 +119,7 @@ export async function runDetectionPipeline(
           ? `${videoData.description}\n\n--- YouTube Music Tracks ---\n${musicTracksText}`
           : videoData.description
 
-        parsedTracks = await parseTracklist(combinedDescription, comments, env)
+        parsedTracks = parseTracklist(combinedDescription, comments)
         console.log(`[detect] Parsed ${parsedTracks.length} tracks from Invidious data`)
       }
     }

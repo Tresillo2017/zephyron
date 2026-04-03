@@ -1,9 +1,11 @@
-// Set request petition API — creates GitHub Issues with Turnstile verification
+// Set request API — stores requests in DB instead of GitHub Issues
 import { json, errorResponse } from '../lib/router'
 
-const GITHUB_REPO = 'Tresillo2017/zephyron'
-const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
+function generateId(): string {
+  return crypto.randomUUID()
+}
 
+// POST /api/petitions — submit a set request (authenticated users)
 export async function submitSetRequest(
   request: Request,
   env: Env,
@@ -13,11 +15,11 @@ export async function submitSetRequest(
   let body: {
     name: string
     artist: string
-    youtube_url: string
+    source_type?: 'youtube' | 'soundcloud' | 'hearthis'
+    source_url?: string
     event?: string
     genre?: string
     notes?: string
-    turnstile_token: string
   }
 
   try {
@@ -26,89 +28,153 @@ export async function submitSetRequest(
     return errorResponse('Invalid JSON body', 400)
   }
 
-  // Validate required fields
   if (!body.name?.trim()) return errorResponse('Set name is required', 400)
   if (!body.artist?.trim()) return errorResponse('DJ/Artist name is required', 400)
-  if (!body.youtube_url?.trim()) return errorResponse('YouTube URL is required', 400)
-  if (!body.turnstile_token?.trim()) return errorResponse('Turnstile verification is required', 400)
 
-  // Validate YouTube URL format
-  const ytRegex = /^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|live\/|shorts\/)|youtu\.be\/)/
-  if (!ytRegex.test(body.youtube_url.trim())) {
-    return errorResponse('Please provide a valid YouTube URL', 400)
+  // Validate source_url if source_type is provided
+  if (body.source_type && !body.source_url?.trim()) {
+    return errorResponse('A URL is required when a source type is selected', 400)
   }
 
-  // Verify Turnstile token
-  const turnstileSecret = (env as any).TURNSTILE_SECRET_KEY
-  if (turnstileSecret) {
-    try {
-      const formData = new FormData()
-      formData.append('secret', turnstileSecret)
-      formData.append('response', body.turnstile_token)
-      formData.append('remoteip', request.headers.get('CF-Connecting-IP') || '')
+  // Get the authenticated user's ID from the session
+  const { createAuth } = await import('../lib/auth')
+  const auth = createAuth(env)
+  const session = await auth.api.getSession({ headers: request.headers })
+  const userId = session?.user?.id || null
 
-      const turnstileResp = await fetch(TURNSTILE_VERIFY_URL, {
-        method: 'POST',
-        body: formData,
-      })
+  const id = generateId()
 
-      const turnstileResult = await turnstileResp.json() as { success: boolean }
-      if (!turnstileResult.success) {
-        return errorResponse('Turnstile verification failed. Please try again.', 403)
-      }
-    } catch (err) {
-      console.error('[petition] Turnstile verification error:', err)
-      return errorResponse('Verification service unavailable', 503)
-    }
+  await env.DB.prepare(
+    `INSERT INTO set_requests (
+      id, user_id, title, artist, source_type, source_url,
+      event, genre, notes, status, created_at, updated_at
+    ) VALUES (
+      ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, 'pending',
+      datetime('now'), datetime('now')
+    )`
+  )
+    .bind(
+      id,
+      userId,
+      body.name.trim(),
+      body.artist.trim(),
+      body.source_type || null,
+      body.source_url?.trim() || null,
+      body.event?.trim() || null,
+      body.genre?.trim() || null,
+      body.notes?.trim() || null
+    )
+    .run()
+
+  return json({ data: { id }, ok: true }, 201)
+}
+
+// GET /api/admin/set-requests — list all set requests (admin only)
+export async function listSetRequests(
+  request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  _params: Record<string, string>
+): Promise<Response> {
+  const url = new URL(request.url)
+  const status = url.searchParams.get('status') || 'pending'
+  const page = parseInt(url.searchParams.get('page') || '1')
+  const limit = parseInt(url.searchParams.get('limit') || '50')
+  const offset = (page - 1) * limit
+
+  const result = await env.DB.prepare(
+    `SELECT
+      r.*,
+      u.name AS user_name,
+      u.email AS user_email
+    FROM set_requests r
+    LEFT JOIN user u ON u.id = r.user_id
+    WHERE r.status = ?
+    ORDER BY r.created_at DESC
+    LIMIT ? OFFSET ?`
+  )
+    .bind(status, limit, offset)
+    .all()
+
+  const countResult = await env.DB.prepare(
+    'SELECT COUNT(*) AS total FROM set_requests WHERE status = ?'
+  )
+    .bind(status)
+    .first<{ total: number }>()
+
+  return json({
+    data: result.results,
+    total: countResult?.total ?? 0,
+    page,
+    limit,
+    ok: true,
+  })
+}
+
+// POST /api/admin/set-requests/:id/approve — approve a set request (admin only)
+export async function approveSetRequest(
+  _request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>
+): Promise<Response> {
+  const { id } = params
+
+  const existing = await env.DB.prepare(
+    'SELECT id, status FROM set_requests WHERE id = ?'
+  )
+    .bind(id)
+    .first<{ id: string; status: string }>()
+
+  if (!existing) return errorResponse('Set request not found', 404)
+  if (existing.status !== 'pending') {
+    return errorResponse('Set request is not in pending status', 409)
   }
 
-  // Build the GitHub issue body
-  const issueTitle = `[Set Request] ${body.artist.trim()} — ${body.name.trim()}`
-  const issueBody = `## Set Request
+  await env.DB.prepare(
+    `UPDATE set_requests SET status = 'approved', updated_at = datetime('now') WHERE id = ?`
+  )
+    .bind(id)
+    .run()
 
-| Field | Value |
-|-------|-------|
-| **Set Name** | ${body.name.trim()} |
-| **DJ / Artist** | ${body.artist.trim()} |
-| **YouTube URL** | ${body.youtube_url.trim()} |
-${body.event ? `| **Event / Venue** | ${body.event.trim()} |\n` : ''}${body.genre ? `| **Genre** | ${body.genre.trim()} |\n` : ''}
-${body.notes ? `### Additional Notes\n\n${body.notes.trim()}\n` : ''}
----
-*Submitted via Zephyron set request form*`
+  return json({ data: { id, status: 'approved' }, ok: true })
+}
 
-  // Create GitHub issue
-  const githubToken = (env as any).GITHUB_TOKEN
-  if (!githubToken) {
-    console.error('[petition] GITHUB_TOKEN not configured')
-    return errorResponse('Set request service is not configured. Please try again later.', 503)
-  }
+// POST /api/admin/set-requests/:id/reject — reject a set request (admin only)
+export async function rejectSetRequest(
+  request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>
+): Promise<Response> {
+  const { id } = params
 
+  let body: { admin_notes?: string } = {}
   try {
-    const ghResp = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/issues`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${githubToken}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json',
-        'User-Agent': 'Zephyron-Worker',
-      },
-      body: JSON.stringify({
-        title: issueTitle,
-        body: issueBody,
-        labels: ['set-request'],
-      }),
-    })
-
-    if (!ghResp.ok) {
-      const ghError = await ghResp.text()
-      console.error(`[petition] GitHub API error ${ghResp.status}:`, ghError)
-      return errorResponse('Failed to submit request. Please try again.', 502)
-    }
-
-    const ghData = await ghResp.json() as { html_url: string; number: number }
-    return json({ data: { issue_url: ghData.html_url, issue_number: ghData.number }, ok: true }, 201)
-  } catch (err) {
-    console.error('[petition] GitHub API request failed:', err)
-    return errorResponse('Failed to submit request. Please try again.', 502)
+    body = await request.json()
+  } catch {
+    // notes are optional
   }
+
+  const existing = await env.DB.prepare(
+    'SELECT id, status FROM set_requests WHERE id = ?'
+  )
+    .bind(id)
+    .first<{ id: string; status: string }>()
+
+  if (!existing) return errorResponse('Set request not found', 404)
+  if (existing.status !== 'pending') {
+    return errorResponse('Set request is not in pending status', 409)
+  }
+
+  await env.DB.prepare(
+    `UPDATE set_requests
+     SET status = 'rejected', admin_notes = ?, updated_at = datetime('now')
+     WHERE id = ?`
+  )
+    .bind(body.admin_notes?.trim() || null, id)
+    .run()
+
+  return json({ data: { id, status: 'rejected' }, ok: true })
 }

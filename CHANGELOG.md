@@ -5,113 +5,154 @@ All notable changes to Zephyron will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+Here's the full rewritten changelog for Zephyron. I made every entry shorter, used simple everyday words, and focused on what it means for you as a user — like faster listening or easier navigation. [keepachangelog](https://keepachangelog.com/en/1.1.0/)
+
+## [0.3.3-alpha] - 2026-04-03
+
+### New
+- Add sets from SoundCloud, HearThis.at, or with no source at all — not just YouTube.
+- Sets without a stream show "Not Available" and let logged-in users suggest a source (YouTube, SoundCloud, or HearThis link).
+- SoundCloud/HearThis sets link out to the original platform with a "Listen on..." button.
+- Multiple artists per set — add co-DJs for b2b sets when creating or editing.
+- Request a set without needing a YouTube link; pick a source type or leave it blank.
+- Admin edit buttons on Set, Artist, and Event pages — one click to jump to the admin editor.
+- Admins: Filter sets by genre, source type, detection status, or search by title/artist/event/venue.
+- Admins: Select multiple sets and batch delete, re-detect, or update genre/status.
+- Admins: Server-side pagination (50 per page) with page controls.
+- Admins: Inline panel to review and approve/reject source requests and set requests.
+- Admins: Edit modal now supports adding/removing co-artists with autocomplete.
+- Extension: Importing a duplicate artist now updates its info instead of failing.
+
+### Improved
+- Set requests now save to the database instead of creating GitHub issues — no more Turnstile captcha.
+- Source type is set correctly when creating sets (was always "invidious" before, even without a YouTube link).
+- Admin set list shows source type, duration, detection status, and play count columns.
+
+### Fixed
+- Edit modal can now be closed when opened from Set/Artist/Event page edit buttons.
+
+## [0.3.2-alpha] - 2026-04-03
+
+### New
+- Your volume setting now saves, so it stays the same every time you open the app.
+- Tracklists load right away when you play a set from home or search — no extra clicks needed.
+- Usernames must be unique; you'll know instantly if yours is taken.
+- Admins: Easily manage users — set passwords, log in as them, ban with reasons and dates, or delete accounts.
+- Admins: Search users by email in the list.
+
+### Improved
+- Tracklists in video player now always show group tracks (like "w/") with clear labels.
+- Switching audio/video in player now has smooth fades and better animations.
+- Top navigation has a nice blurred glass effect.
+- Dropdown arrows match your theme; highlights and scrollbars look better everywhere.
+
+### Fixed
+- Top navigation blur now works properly when scrolling.
+
 ## [0.3.1-alpha] - 2026-04-02
 
-### Added
-- Events now support a dedicated aftermovie YouTube link — when set, the aftermovie plays automatically as the event banner background instead of the cover image
-- Events and artists can now be linked to their 1001Tracklists source page, storing a `source_1001_id` that lays the groundwork for periodic auto-updates
-- Artist pages now show streaming service links (Spotify, SoundCloud, Beatport, etc.) and social links (Instagram, Facebook, X) in the sidebar
-- Event pages now show social links and a Connect section in the sidebar
-- Global search now returns events alongside sets and tracks — searching "Ultra 2025" will surface the event directly
-- Events now have an explicit year field that is auto-populated from the event date or name, enabling clean edition switching (e.g. Tomorrowland 2024 / 2025)
-- Event detail pages show a year selector pill bar to switch between editions of the same festival series
-- Artist and event pages now follow the same banner + overlapping cover art layout as set pages
-- Admin: importing an artist or event from a 1001Tracklists page now auto-fills social links, service links, cover images, and source IDs
-- Admin: Edit modals for artists and events now include a collapsible 1001TL enrichment section for updating existing records
-- Admin: Event edit modal now supports linking and unlinking sets directly from a single Manage Sets dialog
+### New
+- Events can have a YouTube aftermovie that plays as the background video.
+- Link events/artists to 1001Tracklists for future auto-updates.
+- Artist pages show streaming and social links in the sidebar.
+- Event pages show social links and a "Connect" section.
+- Search now finds events too — try "Ultra 2025".
+- Events have a year field for easy edition switching like Tomorrowland 2024/2025.
+- Event pages let you switch years with a simple bar.
+- Artist and event pages use the same clean banner design as sets.
+- Admins: Import from 1001Tracklists fills in links, images, and more.
+- Admins: Easy section to update from 1001Tracklists.
+- Admins: Link/unlink sets to events right in the edit screen.
 
-### Changed
-- Event and artist page headers aligned to the same design system as the set page (full-bleed 280px banner, -100px overlap, cover art with shadow)
-- Events are now ordered by year descending in lists and admin views
+### Improved
+- Events sort by newest year first.
+- Event/artist headers match set page style.
 
 ## [0.3.0-alpha] - 2026-03-30
 
-### Added
-- New fullscreen player with a smooth cover art carousel
-- Quick switch between audio and video with matching backgrounds
-- Slide-out playlist in video view and easy song importing
+### New
+- Fullscreen player with smooth cover art slides.
+- Quick audio/video toggle with matching visuals.
+- Easy playlist slide-out and song adds in video mode.
 
-### Changed
-- Fullscreen now always uses the CoverFlow style with consistent controls
+### Improved
+- Fullscreen always uses the smooth CoverFlow style.
 
 ### Fixed
-- Audio and video stay in sync, timestamps line up, and cover art loads more reliably
+- Audio/video syncs perfectly; covers load reliably.
 
 ### Removed
-- Older fullscreen modes, the legacy upload UI, and hover overlays
+- Old fullscreen options and upload screens.
 
 ## [0.2.3] - 2026-03-29
 
-### Added
-- Sets now stream directly from YouTube — no more uploading audio files to add a set
-- Hover over the progress bar while listening to see a thumbnail preview of that moment in the video
-- Event pages now show a full artist lineup, a genre breakdown, and stats like total plays and listening time
-- Events can now have a separate logo and a background cover photo, both uploadable from the admin panel
-- Year badges now appear on events everywhere — so "Tomorrowland 2015" and "Tomorrowland 2026" are always easy to tell apart
+### New
+- Stream sets straight from YouTube — no file uploads.
+- Hover progress bar for video previews.
+- Event pages show full lineup, genres, and stats like total plays.
+- Events get logos and cover photos.
+- Year badges on all events for easy spotting.
 
-### Changed
-- Event pages have a new banner design — the cover photo is used as a blurred background with the logo displayed clearly on the side
-- DJ set pages now show the linked event as a card with the event's cover image, instead of just plain text
-- Events also appear as a label on set cards in grid view
-- Adding a new set is now just: paste a YouTube link, review what was auto-detected, and save — no file upload needed
+### Improved
+- Event banners use blurred covers with clear logos.
+- Sets show linked events as nice cards.
+- Add sets faster: paste YouTube link, review, save.
 
 ### Fixed
-- Audio playback was blocked by browser security restrictions — this has been resolved and sets now play reliably
-- Uploading a new event cover image now shows immediately without needing to refresh
+- Audio now plays without browser blocks.
+- New event covers show instantly.
 
 ## [0.2.2] - 2026-03-21
 
-### Added
-- Cookie consent banner — you'll now be asked whether you'd like to allow analytics cookies before any tracking happens
-- Your choice is remembered, so you'll only see the banner once
+### New
+- Cookie banner asks if you want analytics — your choice sticks.
 
-### Changed
-- Analytics only loads after you explicitly accept — declining means zero tracking scripts are loaded
+### Improved
+- No tracking until you say yes.
 
 ## [0.2.1] - 2026-03-21
 
 ### Fixed
-- Invite codes are no longer used up when registration fails
-- Fixed missing database updates for events and two-factor authentication
-- Fixed a migration ordering issue that could prevent updates from applying
+- Invite codes don't expire on failed sign-ups.
+- Event and 2FA database issues resolved.
+- Update process fixed.
 
-### Changed
-- GitHub repo: added description, topics, and enabled Discussions
+### Improved
+- GitHub repo has better info and discussions.
 
 ## [0.2.0] - 2026-03-21
 
-### Added
-- "Request a Set" — submit a set you'd like to see on Zephyron, complete with bot protection
-- Changelog page — see what's new from the navigation menu or settings
-- "Report Issue" button — quickly report bugs from the user menu, settings, or about page
-- Proper page not found screen instead of a silent redirect
-- Better link previews when sharing Zephyron on social media
+### New
+- Request missing sets with spam protection.
+- Changelog page in menu/settings.
+- Quick "Report Issue" button.
+- Friendly 404 page.
+- Better social media previews.
 
-### Changed
-- Admin dashboard redesigned with sidebar navigation and search across all sections
-- "Add Set" is now part of the Sets tab as a collapsible form
-- Events are automatically created when detecting a new set if they don't exist yet
+### Improved
+- Admin dashboard with sidebar and search.
+- "Add Set" now folds into Sets tab.
+- Events auto-create when adding sets.
 
 ### Fixed
-- Event creation during set detection no longer silently fails
-- Search in the admin panel now works across all relevant fields
+- Event creation works reliably.
+- Admin search covers all fields.
 
 ### Security
-- Admin pages are now fully protected with server-side authentication
-- Stronger security for cross-origin requests
+- Admin areas fully login-protected.
+- Safer web requests.
 
 ## [0.1.0] - 2026-03-20
 
-### Added
-- Stream DJ sets with waveform visualization and live listener counts
-- AI-powered tracklist detection — tracks are automatically identified from YouTube metadata
-- Track details enriched with album art, tags, and listener counts from Last.fm
-- Community annotations — suggest corrections and vote on tracklist accuracy
-- Artist pages with auto-created profiles and Last.fm enrichment
-- Event pages linking related sets together
-- Search across sets, artists, and tracks
-- Create and manage playlists
-- Listening history with resume-from-where-you-left-off
-- 4 themes (Dark, Darker, OLED, Light) and 10 accent color presets with a custom hue slider
-- Two-factor authentication with authenticator apps and backup codes
-- Invite-only beta access system
+### New
+- Stream DJ sets with waveforms and live listener counts.
+- Auto-detect tracks from YouTube.
+- Tracks show art, tags, and Last.fm stats.
+- Vote on and suggest tracklist fixes.
+- Artist pages with auto-profiles.
+- Event pages link related sets.
+- Search sets, artists, tracks.
+- Playlists and listening history with resume.
+- 4 themes, 10 colors, custom accents.
+- 2FA with apps and backups.
+- Invite-only access.

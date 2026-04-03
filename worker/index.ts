@@ -15,24 +15,24 @@ import {
 import {
   generateInviteCode, listInviteCodes, revokeInviteCode,
   createSetFromYoutube, createSet,
-  deleteSet, updateSet,
+  deleteSet, updateSet, batchUpdateSets,
   listPendingAnnotations, moderateAnnotation,
   fetch1001Tracklists, parse1001TracklistsHtml, import1001Tracklists, getVideoStreamUrl,
+  fetchEventSets,
 } from './routes/admin-beta'
 import { listArtists, getArtist, createArtist, syncArtist, updateArtist, deleteArtist, getArtistBackground } from './routes/artists'
 import {
   getListenerCount, joinListeners, heartbeatListener, leaveListeners,
 } from './routes/listeners'
-import {
-  searchSimilarSets, searchByTrack, indexSetRoute,
-} from './routes/semantic-search'
 import { getSetWaveform, regenerateWaveform } from './routes/waveform'
 import {
   listEvents, getEvent, getEventCover, getEventLogo,
   createEvent, updateEvent, deleteEvent, uploadEventCover, uploadEventLogo, linkSetToEvent, unlinkSetFromEvent,
 } from './routes/events'
-import { submitSetRequest } from './routes/petitions'
+import { submitSetRequest, listSetRequests, approveSetRequest, rejectSetRequest } from './routes/petitions'
+import { createSourceRequest, listSourceRequests, approveSourceRequest, rejectSourceRequest } from './routes/source-requests'
 import { getSong, getSongCover, listSongsAdmin, updateSongAdmin, deleteSongAdmin, cacheSongCoverAdmin, enrichSongAdmin } from './routes/songs'
+import { updateUsername } from './routes/user'
 import { handleDetectionQueue, handleFeedbackQueue, handleCoverArtQueue } from './queues/index'
 
 // Re-export Durable Object class for Cloudflare runtime
@@ -106,8 +106,6 @@ router.post('/api/sets/:id/listeners/leave', leaveListeners)
 
 // Search (public)
 router.get('/api/search', search)
-router.get('/api/search/similar/:id', searchSimilarSets)
-router.get('/api/search/by-track', searchByTrack)
 
 // Detections (public read, voting needs anonymous ID)
 router.get('/api/detections/set/:setId', getDetections)
@@ -141,8 +139,13 @@ router.delete('/api/playlists/:id/items/:setId', removePlaylistItem)
 router.get('/api/history', getHistory)
 router.post('/api/history', updateHistory)
 
-// Set request petitions (authenticated + Turnstile)
+// Set request petitions — DB-backed (authenticated)
 router.post('/api/petitions', withAuth(submitSetRequest))
+// Source suggestions for existing sourceless sets (any authenticated user)
+router.post('/api/sets/:id/request-source', withAuth(createSourceRequest))
+
+// User profile
+router.patch('/api/user/username', updateUsername)
 
 // ═══════════════════════════════════════════
 // Admin routes — all protected by withAdmin()
@@ -162,6 +165,7 @@ router.put('/api/admin/events/:id/cover', withAdmin(uploadEventCover))
 router.put('/api/admin/events/:id/logo', withAdmin(uploadEventLogo))
 router.post('/api/admin/events/:id/link-set', withAdmin(linkSetToEvent))
 router.post('/api/admin/events/:id/unlink-set', withAdmin(unlinkSetFromEvent))
+router.post('/api/admin/events/:id/fetch-1001tl-sets', withAdmin(fetchEventSets))
 
 // Admin / ML Pipeline
 router.post('/api/admin/sets/:id/detect', withAdmin(triggerDetection))
@@ -175,18 +179,28 @@ router.get('/api/admin/jobs', withAdmin(listJobs))
 router.post('/api/admin/invite-codes', withAdmin(generateInviteCode))
 router.get('/api/admin/invite-codes', withAdmin(listInviteCodes))
 router.delete('/api/admin/invite-codes/:id', withAdmin(revokeInviteCode))
+router.post('/api/admin/sets/batch', withAdmin(batchUpdateSets))
 router.post('/api/admin/sets/from-youtube', withAdmin(createSetFromYoutube))
 router.post('/api/admin/sets', withAdmin(createSet))
 router.delete('/api/admin/sets/:id', withAdmin(deleteSet))
 router.put('/api/admin/sets/:id', withAdmin(updateSet))
 router.get('/api/admin/annotations/pending', withAdmin(listPendingAnnotations))
 router.post('/api/admin/annotations/:id/moderate', withAdmin(moderateAnnotation))
-router.post('/api/admin/sets/:id/index', withAdmin(indexSetRoute))
 router.post('/api/admin/sets/:id/waveform', withAdmin(regenerateWaveform))
 router.post('/api/admin/sets/:id/fetch-1001tracklists', withAdmin(fetch1001Tracklists))
 router.post('/api/admin/sets/:id/parse-1001tracklists-html', withAdmin(parse1001TracklistsHtml))
 router.post('/api/admin/sets/:id/import-1001tracklists', withAdmin(import1001Tracklists))
 router.get('/api/sets/:id/video-stream-url', getVideoStreamUrl)
+
+// Admin / Set Requests
+router.get('/api/admin/set-requests', withAdmin(listSetRequests))
+router.post('/api/admin/set-requests/:id/approve', withAdmin(approveSetRequest))
+router.post('/api/admin/set-requests/:id/reject', withAdmin(rejectSetRequest))
+
+// Admin / Source Requests
+router.get('/api/admin/source-requests', withAdmin(listSourceRequests))
+router.post('/api/admin/source-requests/:id/approve', withAdmin(approveSourceRequest))
+router.post('/api/admin/source-requests/:id/reject', withAdmin(rejectSourceRequest))
 
 // ═══════════════════════════════════════════
 // Worker export
@@ -211,6 +225,16 @@ export default {
 
     // Better Auth handles /api/auth/* routes
     if (url.pathname.startsWith('/api/auth')) {
+      // Restrict API key management to admin users only
+      if (url.pathname.startsWith('/api/auth/api-key')) {
+        const auth = createAuth(env)
+        const session = await auth.api.getSession({ headers: request.headers })
+        if (!session?.user || session.user.role !== 'admin') {
+          return errorResponse('Admin access required for API key management', 403)
+        }
+        return auth.handler(request)
+      }
+
       const auth = createAuth(env)
       return auth.handler(request)
     }

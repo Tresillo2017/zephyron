@@ -1,80 +1,33 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState } from 'react'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { submitSetRequest } from '../lib/api'
 import { GENRES } from '../lib/constants'
 
-declare const __TURNSTILE_SITE_KEY__: string
-
 export function RequestSetPage() {
   const [name, setName] = useState('')
   const [artist, setArtist] = useState('')
-  const [youtubeUrl, setYoutubeUrl] = useState('')
+  const [sourceType, setSourceType] = useState<'youtube' | 'soundcloud' | 'hearthis' | ''>('')
+  const [sourceUrl, setSourceUrl] = useState('')
   const [event, setEvent] = useState('')
   const [genre, setGenre] = useState('')
   const [notes, setNotes] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<{ issue_url: string; issue_number: number } | null>(null)
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
-  const turnstileRef = useRef<HTMLDivElement>(null)
-  const widgetIdRef = useRef<string | null>(null)
-
-  const renderTurnstile = useCallback(() => {
-    if (!turnstileRef.current) return
-    if (typeof __TURNSTILE_SITE_KEY__ === 'undefined' || !__TURNSTILE_SITE_KEY__) return
-    const turnstile = (window as any).turnstile
-    if (!turnstile) return
-
-    // Clean up existing widget
-    if (widgetIdRef.current) {
-      try { turnstile.remove(widgetIdRef.current) } catch { /* ok */ }
-    }
-
-    widgetIdRef.current = turnstile.render(turnstileRef.current, {
-      sitekey: __TURNSTILE_SITE_KEY__,
-      theme: 'dark',
-      callback: (token: string) => setTurnstileToken(token),
-      'expired-callback': () => setTurnstileToken(null),
-      'error-callback': () => setTurnstileToken(null),
-    })
-  }, [])
-
-  useEffect(() => {
-    // Load Turnstile script if not already present
-    if (typeof __TURNSTILE_SITE_KEY__ === 'undefined' || !__TURNSTILE_SITE_KEY__) return
-
-    const existingScript = document.querySelector('script[src*="turnstile"]')
-    if (existingScript) {
-      renderTurnstile()
-      return
-    }
-
-    const script = document.createElement('script')
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
-    script.async = true
-    script.defer = true
-    script.onload = () => renderTurnstile()
-    document.head.appendChild(script)
-
-    return () => {
-      if (widgetIdRef.current) {
-        try { (window as any).turnstile?.remove(widgetIdRef.current) } catch { /* ok */ }
-      }
-    }
-  }, [renderTurnstile])
+  const [submittedId, setSubmittedId] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
 
-    if (!name.trim() || !artist.trim() || !youtubeUrl.trim()) {
-      setError('Please fill in all required fields')
+    if (!name.trim() || !artist.trim()) {
+      setError('Set name and DJ/Artist are required')
       return
     }
 
-    if (!turnstileToken) {
-      setError('Please complete the verification challenge')
+    // Require URL if source type is selected
+    if (sourceType && !sourceUrl.trim()) {
+      setError('Please provide a URL for the selected source type')
       return
     }
 
@@ -83,20 +36,15 @@ export function RequestSetPage() {
       const res = await submitSetRequest({
         name: name.trim(),
         artist: artist.trim(),
-        youtube_url: youtubeUrl.trim(),
+        source_type: sourceType || undefined,
+        source_url: sourceUrl.trim() || undefined,
         event: event.trim() || undefined,
         genre: genre || undefined,
         notes: notes.trim() || undefined,
-        turnstile_token: turnstileToken,
       })
-      setSuccess(res.data)
-      // Reset form
-      setName(''); setArtist(''); setYoutubeUrl(''); setEvent(''); setGenre(''); setNotes('')
-      setTurnstileToken(null)
-      // Reset turnstile widget
-      if (widgetIdRef.current) {
-        try { (window as any).turnstile?.reset(widgetIdRef.current) } catch { /* ok */ }
-      }
+      setSubmittedId(res.data.id)
+      setName(''); setArtist(''); setSourceType(''); setSourceUrl('')
+      setEvent(''); setGenre(''); setNotes('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit request')
     } finally {
@@ -109,11 +57,11 @@ export function RequestSetPage() {
       <div className="mb-8">
         <h1 className="text-xl font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c1))' }}>Request a Set</h1>
         <p className="text-sm mt-1" style={{ color: 'hsl(var(--c3))' }}>
-          Know a DJ set that should be on Zephyron? Submit a request and we'll review it.
+          Know a DJ set that should be on Zephyron? Submit a request and our team will review it.
         </p>
       </div>
 
-      {success ? (
+      {submittedId ? (
         <div className="card text-center py-10">
           <div
             className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
@@ -124,23 +72,12 @@ export function RequestSetPage() {
             </svg>
           </div>
           <h2 className="text-base font-[var(--font-weight-bold)] mb-2" style={{ color: 'hsl(var(--c1))' }}>Request Submitted</h2>
-          <p className="text-sm mb-4" style={{ color: 'hsl(var(--c3))' }}>
-            Your set request has been submitted as issue #{success.issue_number}.
+          <p className="text-sm mb-6" style={{ color: 'hsl(var(--c3))' }}>
+            Thanks! Our team will review your set request.
           </p>
-          <div className="flex gap-3 justify-center">
-            <a
-              href={success.issue_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex px-4 py-2 rounded-lg text-sm no-underline transition-colors"
-              style={{ background: 'hsl(var(--b4) / 0.4)', color: 'hsl(var(--c2))' }}
-            >
-              View on GitHub
-            </a>
-            <Button variant="primary" size="sm" onClick={() => setSuccess(null)}>
-              Submit Another
-            </Button>
-          </div>
+          <Button variant="primary" size="sm" onClick={() => setSubmittedId(null)}>
+            Submit Another
+          </Button>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="card space-y-4">
@@ -159,12 +96,41 @@ export function RequestSetPage() {
             />
           </div>
 
-          <Input
-            label="YouTube URL *"
-            value={youtubeUrl}
-            onChange={(e) => setYoutubeUrl(e.target.value)}
-            placeholder="https://youtube.com/watch?v=..."
-          />
+          {/* Source type (optional) */}
+          <div>
+            <label className="text-sm font-[var(--font-weight-medium)] block mb-2" style={{ color: 'hsl(var(--c2))' }}>
+              Source <span style={{ color: 'hsl(var(--c3))' }}>(optional)</span>
+            </label>
+            <div className="flex gap-2 flex-wrap mb-2">
+              {(['', 'youtube', 'soundcloud', 'hearthis'] as const).map((type) => (
+                <button
+                  type="button"
+                  key={type || 'none'}
+                  onClick={() => { setSourceType(type); if (!type) setSourceUrl('') }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  style={{
+                    background: sourceType === type ? 'hsl(var(--h3))' : 'hsl(var(--b4) / 0.4)',
+                    color: sourceType === type ? 'white' : 'hsl(var(--c3))',
+                  }}
+                >
+                  {type === '' ? 'Unknown' : type === 'youtube' ? 'YouTube' : type === 'soundcloud' ? 'SoundCloud' : 'HearThis.at'}
+                </button>
+              ))}
+            </div>
+            {sourceType && (
+              <Input
+                value={sourceUrl}
+                onChange={(e) => setSourceUrl(e.target.value)}
+                placeholder={
+                  sourceType === 'youtube'
+                    ? 'https://youtube.com/watch?v=...'
+                    : sourceType === 'soundcloud'
+                      ? 'https://soundcloud.com/...'
+                      : 'https://hearthis.at/...'
+                }
+              />
+            )}
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <Input
@@ -199,9 +165,6 @@ export function RequestSetPage() {
             />
           </div>
 
-          {/* Turnstile widget */}
-          <div ref={turnstileRef} className="flex justify-center" />
-
           {error && (
             <p className="text-xs px-3 py-2 rounded-lg" style={{ background: 'hsl(0 60% 50% / 0.1)', color: 'hsl(0 60% 55%)' }}>
               {error}
@@ -211,21 +174,13 @@ export function RequestSetPage() {
           <Button
             variant="primary"
             className="w-full"
-            disabled={isSubmitting || !name.trim() || !artist.trim() || !youtubeUrl.trim()}
+            disabled={isSubmitting || !name.trim() || !artist.trim()}
           >
             {isSubmitting ? 'Submitting...' : 'Submit Request'}
           </Button>
 
           <p className="text-xs text-center" style={{ color: 'hsl(var(--c3))' }}>
-            Requests are reviewed by the team. You can track the status on{' '}
-            <a
-              href="https://github.com/Tresillo2017/zephyron/issues?q=label%3Aset-request"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent hover:underline no-underline"
-            >
-              GitHub
-            </a>.
+            Requests are reviewed by the Zephyron team.
           </p>
         </form>
       )}

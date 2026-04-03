@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Link } from 'react-router'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Link, useSearchParams } from 'react-router'
 import { useSession } from '../lib/auth-client'
 import {
   fetchSets,
+  fetchSet,
   fetchMLStats,
   fetchDetectionJobs,
   triggerDetection,
@@ -10,6 +11,7 @@ import {
   redetectLowConfidence,
   deleteSetAdmin,
   updateSetAdmin,
+  batchSetsAdmin,
   fetchArtists,
   fetchEvents,
   import1001Tracklists,
@@ -73,7 +75,16 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 
 export function AdminPage() {
   const { data: session } = useSession()
-  const [activeTab, setActiveTab] = useState<Tab>('sets')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tabParam = searchParams.get('tab') as Tab | null
+  const editId = searchParams.get('edit') || undefined
+  const [activeTab, setActiveTab] = useState<Tab>(tabParam && TABS.some((t) => t.id === tabParam) ? tabParam : 'sets')
+
+  // Sync tab changes to URL
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab)
+    setSearchParams({ tab }, { replace: true })
+  }
 
   // Check admin role
   if (session?.user?.role !== 'admin') {
@@ -100,7 +111,7 @@ export function AdminPage() {
         {TABS.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => handleTabChange(tab.id)}
             className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm whitespace-nowrap cursor-pointer transition-colors text-left w-full"
             style={{
               background: activeTab === tab.id ? 'hsl(var(--h3) / 0.1)' : undefined,
@@ -125,10 +136,10 @@ export function AdminPage() {
 
       {/* Content */}
       <main className="flex-1 min-w-0 py-6 pr-6 lg:pr-10 pl-4">
-        {activeTab === 'sets' && <SetsListTab />}
+        {activeTab === 'sets' && <SetsListTab editId={editId} />}
         {activeTab === 'songs' && <SongsTab />}
-        {activeTab === 'artists' && <ArtistsTab />}
-        {activeTab === 'events' && <EventsTab />}
+        {activeTab === 'artists' && <ArtistsTab editId={editId} />}
+        {activeTab === 'events' && <EventsTab editId={editId} />}
         {activeTab === 'users' && <UsersTab />}
         {activeTab === 'invites' && <InviteCodesTab />}
         {activeTab === 'moderation' && <ModerationTab />}
@@ -142,115 +153,547 @@ export function AdminPage() {
 // SETS LIST TAB
 // ═══════════════════════════════════════════
 
-function SetsListTab() {
+const STREAM_TYPE_OPTIONS = [
+  { value: '', label: 'All Sources' },
+  { value: 'invidious', label: 'YouTube' },
+  { value: 'soundcloud', label: 'SoundCloud' },
+  { value: 'hearthis', label: 'HearThis' },
+  { value: 'r2', label: 'R2 Upload' },
+  { value: 'none', label: 'No Source' },
+] as const
+
+const DETECTION_OPTIONS = [
+  { value: '', label: 'All Status' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'processing', label: 'Processing' },
+  { value: 'complete', label: 'Complete' },
+  { value: 'failed', label: 'Failed' },
+] as const
+
+const SORT_OPTIONS_ADMIN = [
+  { value: 'newest', label: 'Newest' },
+  { value: 'oldest', label: 'Oldest' },
+  { value: 'popular', label: 'Most Played' },
+  { value: 'title', label: 'Title A-Z' },
+  { value: 'artist', label: 'Artist A-Z' },
+  { value: 'duration', label: 'Longest' },
+] as const
+
+const PAGE_SIZE = 50
+
+function SetsListTab({ editId }: { editId?: string }) {
+  const [, setSearchParams] = useSearchParams()
+  // Data
   const [sets, setSets] = useState<DjSet[]>([])
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [editingSet, setEditingSet] = useState<DjSet | null>(null)
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [search, setSearch] = useState('')
+  const [showAddModal, setShowAddModal] = useState(false)
+  // Track dismissed editId to prevent re-opening
+  const dismissedEditIdRef = useRef<string | null>(null)
 
-  const loadSets = () => {
+  // Filters
+  const [search, setSearch] = useState('')
+  const [genre, setGenre] = useState('')
+  const [streamType, setStreamType] = useState('')
+  const [detectionStatus, setDetectionStatus] = useState('')
+  const [sort, setSort] = useState('newest')
+  const [page, setPage] = useState(1)
+  const [hasSource, setHasSource] = useState('')
+
+  // Batch selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [batchAction, setBatchAction] = useState<'delete' | 'detect' | 'redetect' | 'update' | ''>('')
+  const [batchGenre, setBatchGenre] = useState('')
+  const [batchDetectionStatus, setBatchDetectionStatus] = useState('')
+  const [isBatching, setIsBatching] = useState(false)
+  const [batchMsg, setBatchMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  // Debounced search
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
+    searchTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(search)
+      setPage(1) // Reset to first page on search
+    }, 350)
+    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current) }
+  }, [search])
+
+  // Filters bar active count for collapsed summary
+  const activeFilterCount = [genre, streamType, detectionStatus, hasSource].filter(Boolean).length
+
+  const loadSets = useCallback(() => {
     setIsLoading(true)
-    fetchSets({ pageSize: 50 })
-      .then((res) => setSets(res.data))
+    fetchSets({
+      page,
+      pageSize: PAGE_SIZE,
+      sort,
+      ...(debouncedSearch && { search: debouncedSearch }),
+      ...(genre && { genre }),
+      ...(streamType && { stream_type: streamType }),
+      ...(detectionStatus && { detection_status: detectionStatus }),
+      ...(hasSource && { has_source: hasSource }),
+    })
+      .then((res) => {
+        setSets(res.data)
+        setTotal(res.total)
+        setTotalPages(res.totalPages)
+      })
       .catch(() => {})
       .finally(() => setIsLoading(false))
-  }
+  }, [page, sort, debouncedSearch, genre, streamType, detectionStatus, hasSource])
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { loadSets() }, [])
+  useEffect(() => { loadSets() }, [loadSets])
 
-  const filtered = useMemo(() => {
-    if (!search.trim()) return sets
-    const q = search.toLowerCase()
-    return sets.filter((s) =>
-      s.title.toLowerCase().includes(q) ||
-      s.artist.toLowerCase().includes(q) ||
-      (s.genre || '').toLowerCase().includes(q) ||
-      (s.event || '').toLowerCase().includes(q)
-    )
-  }, [sets, search])
+  // Auto-open edit modal when editId is provided via URL
+  useEffect(() => {
+    if (editId && sets.length > 0 && !editingSet && dismissedEditIdRef.current !== editId) {
+      const match = sets.find((s) => s.id === editId)
+      if (match) setEditingSet(match)
+    }
+  }, [editId, sets, editingSet])
+
+  // Close edit modal — clear both state and URL param so it doesn't re-open
+  const closeEditModal = useCallback(() => {
+    if (editId) dismissedEditIdRef.current = editId
+    setEditingSet(null)
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.delete('edit')
+      return next
+    }, { replace: true })
+  }, [editId, setSearchParams])
+
+  // Clear batch selection on data change
+  useEffect(() => { setSelectedIds(new Set()) }, [sets])
 
   const handleSetCreated = () => {
-    setShowAddForm(false)
+    setShowAddModal(false)
     loadSets()
   }
 
-  if (isLoading) return <Skeleton className="h-64 w-full rounded-xl" />
+  // Reset to page 1 when any filter changes
+  const handleFilterChange = (setter: (v: string) => void) => (value: string) => {
+    setter(value)
+    setPage(1)
+  }
+
+  // Batch operations
+  const allSelected = sets.length > 0 && sets.every((s) => selectedIds.has(s.id))
+  const someSelected = selectedIds.size > 0
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(sets.map((s) => s.id)))
+    }
+  }
+
+  const toggleOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleBatch = async () => {
+    if (!batchAction || selectedIds.size === 0) return
+    const ids = Array.from(selectedIds)
+
+    if (batchAction === 'delete') {
+      if (!confirm(`Delete ${ids.length} set${ids.length > 1 ? 's' : ''}? This cannot be undone.`)) return
+    }
+
+    setIsBatching(true)
+    setBatchMsg(null)
+    try {
+      const updates: Record<string, unknown> = {}
+      if (batchAction === 'update') {
+        if (batchGenre) updates.genre = batchGenre
+        if (batchDetectionStatus) updates.detection_status = batchDetectionStatus
+        if (Object.keys(updates).length === 0) {
+          setBatchMsg({ type: 'error', text: 'Select at least one field to update.' })
+          setIsBatching(false)
+          return
+        }
+      }
+
+      const res = await batchSetsAdmin({
+        ids,
+        action: batchAction,
+        ...(batchAction === 'update' && { updates }),
+      })
+
+      const d = res.data
+      const msg = batchAction === 'delete'
+        ? `Deleted ${d.deleted || 0} sets`
+        : batchAction === 'update'
+        ? `Updated ${d.updated || 0} sets`
+        : `Queued ${d.queued || 0} sets for detection`
+
+      setBatchMsg({ type: 'success', text: msg })
+      setSelectedIds(new Set())
+      setBatchAction('')
+      loadSets()
+    } catch (err) {
+      setBatchMsg({ type: 'error', text: err instanceof Error ? err.message : 'Batch operation failed' })
+    } finally {
+      setIsBatching(false)
+    }
+  }
+
+  const selectCls = 'px-2.5 py-1.5 rounded-lg text-xs focus:outline-none appearance-none cursor-pointer'
+  const selectStyle = { background: 'hsl(var(--b4) / 0.4)', color: 'hsl(var(--c2))' }
 
   return (
     <>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5 gap-4">
-        <p className="text-sm shrink-0" style={{ color: 'hsl(var(--c3))' }}>{filtered.length} set{filtered.length !== 1 ? 's' : ''}</p>
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search sets..."
-          className="flex-1 max-w-xs px-3 py-1.5 rounded-lg text-sm placeholder:text-text-muted focus:outline-none transition-all duration-200"
-          style={{
-            background: 'hsl(var(--b4) / 0.4)',
-            color: 'hsl(var(--c1))',
-          }}
-          onFocus={(e) => { e.currentTarget.style.boxShadow = 'inset 0 0 0 1px hsl(var(--h3) / 0.5)' }}
-          onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
-        />
-        <Button variant="primary" size="sm" onClick={() => setShowAddForm(!showAddForm)}>
-          {showAddForm ? 'Close' : 'Add Set'}
+      {/* Header row */}
+      <div className="flex items-center justify-between mb-4 gap-4">
+        <div className="flex items-center gap-3">
+          <p className="text-sm font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c1))' }}>
+            {total} set{total !== 1 ? 's' : ''}
+          </p>
+          {activeFilterCount > 0 && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-md" style={{ background: 'hsl(var(--h3) / 0.12)', color: 'hsl(var(--h3))' }}>
+              {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+        <Button variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
+          Add Set
         </Button>
       </div>
 
-      {/* Collapsible Add Set form */}
-      {showAddForm && (
-        <div className="card mb-5" style={{ borderLeft: '3px solid hsl(var(--h3) / 0.4)' }}>
-          <SetsUploadTab onSetCreated={handleSetCreated} />
+      {/* Search + Filters bar */}
+      <div className="rounded-xl p-3 mb-4" style={{ background: 'hsl(var(--b5) / 0.4)', boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.2)' }}>
+        {/* Search row */}
+        <div className="flex gap-3 mb-3">
+          <div className="relative flex-1">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ color: 'hsl(var(--c3))' }}>
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by title, artist, event, venue..."
+              className="w-full pl-9 pr-3 py-1.5 rounded-lg text-sm placeholder:text-text-muted focus:outline-none transition-all duration-200"
+              style={{ background: 'hsl(var(--b4) / 0.5)', color: 'hsl(var(--c1))' }}
+              onFocus={(e) => { e.currentTarget.style.boxShadow = 'inset 0 0 0 1px hsl(var(--h3) / 0.4)' }}
+              onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
+            />
+          </div>
+          <select value={sort} onChange={(e) => { setSort(e.target.value); setPage(1) }} className={selectCls} style={selectStyle}>
+            {SORT_OPTIONS_ADMIN.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </div>
+
+        {/* Filter pills row */}
+        <div className="flex flex-wrap gap-2">
+          <select value={genre} onChange={(e) => handleFilterChange(setGenre)(e.target.value)} className={selectCls} style={selectStyle}>
+            <option value="">All Genres</option>
+            {GENRES.map((g) => <option key={g} value={g}>{g}</option>)}
+          </select>
+          <select value={streamType} onChange={(e) => handleFilterChange(setStreamType)(e.target.value)} className={selectCls} style={selectStyle}>
+            {STREAM_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <select value={detectionStatus} onChange={(e) => handleFilterChange(setDetectionStatus)(e.target.value)} className={selectCls} style={selectStyle}>
+            {DETECTION_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <select value={hasSource} onChange={(e) => handleFilterChange(setHasSource)(e.target.value)} className={selectCls} style={selectStyle}>
+            <option value="">Any Source</option>
+            <option value="true">Has Source</option>
+            <option value="false">No Source</option>
+          </select>
+          {activeFilterCount > 0 && (
+            <button
+              onClick={() => { setGenre(''); setStreamType(''); setDetectionStatus(''); setHasSource(''); setPage(1) }}
+              className="px-2.5 py-1.5 rounded-lg text-xs cursor-pointer transition-colors"
+              style={{ color: 'hsl(var(--c3))' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'hsl(var(--c1))' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'hsl(var(--c3))' }}
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Batch operations bar — only when items selected */}
+      {someSelected && (
+        <div
+          className="rounded-xl p-3 mb-4 flex flex-wrap items-center gap-3"
+          style={{ background: 'hsl(var(--h3) / 0.06)', boxShadow: 'inset 0 0 0 1px hsl(var(--h3) / 0.15)' }}
+        >
+          <span className="text-xs font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--h3))' }}>
+            {selectedIds.size} selected
+          </span>
+          <div className="h-4 w-px" style={{ background: 'hsl(var(--h3) / 0.2)' }} />
+
+          <select
+            value={batchAction}
+            onChange={(e) => setBatchAction(e.target.value as typeof batchAction)}
+            className={selectCls}
+            style={{ background: 'hsl(var(--h3) / 0.1)', color: 'hsl(var(--h3))' }}
+          >
+            <option value="">Choose action...</option>
+            <option value="detect">Run Detection</option>
+            <option value="redetect">Re-detect</option>
+            <option value="update">Batch Update</option>
+            <option value="delete">Delete</option>
+          </select>
+
+          {batchAction === 'update' && (
+            <>
+              <select value={batchGenre} onChange={(e) => setBatchGenre(e.target.value)} className={selectCls} style={selectStyle}>
+                <option value="">Genre...</option>
+                {GENRES.map((g) => <option key={g} value={g}>{g}</option>)}
+              </select>
+              <select value={batchDetectionStatus} onChange={(e) => setBatchDetectionStatus(e.target.value)} className={selectCls} style={selectStyle}>
+                <option value="">Detection status...</option>
+                {DETECTION_OPTIONS.filter((o) => o.value).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </>
+          )}
+
+          <Button
+            variant={batchAction === 'delete' ? 'danger' : 'primary'}
+            size="sm"
+            onClick={handleBatch}
+            disabled={!batchAction || isBatching}
+          >
+            {isBatching ? 'Working...' : 'Apply'}
+          </Button>
+
+          <button
+            onClick={() => { setSelectedIds(new Set()); setBatchAction(''); setBatchMsg(null) }}
+            className="text-xs cursor-pointer ml-auto"
+            style={{ color: 'hsl(var(--c3))' }}
+          >
+            Cancel
+          </button>
+
+          {batchMsg && (
+            <p className="w-full text-xs mt-1" style={{ color: batchMsg.type === 'error' ? 'hsl(0, 60%, 55%)' : 'hsl(var(--h3))' }}>
+              {batchMsg.text}
+            </p>
+          )}
         </div>
       )}
 
-      {/* List */}
-      {filtered.length === 0 ? (
+      {/* Add Set modal */}
+      <Modal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        title="Add DJ Set"
+        className="!max-w-4xl"
+      >
+        <SetsUploadTab onClose={() => setShowAddModal(false)} onSetCreated={() => { setShowAddModal(false); handleSetCreated() }} />
+      </Modal>
+
+      {/* Loading state */}
+      {isLoading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-xl" />
+          ))}
+        </div>
+      ) : sets.length === 0 ? (
         <div className="card text-center py-12">
           <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
-            {search ? 'No sets match your search.' : 'No sets in the catalog yet. Click "Add Set" to upload your first DJ set.'}
+            {debouncedSearch || activeFilterCount > 0 ? 'No sets match your filters.' : 'No sets in the catalog yet. Click "Add Set" to upload your first DJ set.'}
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {filtered.map((set) => (
-            <div key={set.id} className="card !p-4">
-              <div className="flex items-center gap-4">
-                <Link to={`/app/sets/${set.id}`} className="flex-1 min-w-0 no-underline">
-                  <p className="text-sm font-[var(--font-weight-medium)] truncate hover:underline" style={{ color: 'hsl(var(--c1))' }}>{set.title}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs" style={{ color: 'hsl(var(--c3))' }}>{set.artist}</span>
-                    {set.genre && <Badge variant="muted">{set.genre}</Badge>}
-                    <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>{formatDuration(set.duration_seconds)}</span>
-                    {set.play_count > 0 && <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>{set.play_count} plays</span>}
-                  </div>
-                </Link>
-                <Badge
-                  variant={
-                    set.detection_status === 'complete' ? 'accent'
-                      : set.detection_status === 'processing' ? 'default'
-                      : 'muted'
-                  }
+        <>
+          {/* Table header */}
+          <div
+            className="flex items-center gap-3 px-4 py-2 mb-1 text-[10px] uppercase tracking-wider"
+            style={{ color: 'hsl(var(--c3))' }}
+          >
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={toggleAll}
+              className="w-3.5 h-3.5 rounded shrink-0 cursor-pointer accent-[hsl(var(--h3))]"
+            />
+            <span className="flex-1 min-w-0">Title / Artist</span>
+            <span className="w-20 text-center hidden sm:block">Genre</span>
+            <span className="w-20 text-center hidden md:block">Source</span>
+            <span className="w-16 text-center hidden md:block">Duration</span>
+            <span className="w-16 text-center">Status</span>
+            <span className="w-14 text-right hidden sm:block">Plays</span>
+            <span className="w-12" />
+          </div>
+
+          {/* Set rows */}
+          <div className="space-y-1.5">
+            {sets.map((set) => {
+              const isSelected = selectedIds.has(set.id)
+              const sourceLabel = set.stream_type === 'invidious' ? 'YouTube'
+                : set.stream_type === 'soundcloud' ? 'SoundCloud'
+                : set.stream_type === 'hearthis' ? 'HearThis'
+                : set.stream_type === 'r2' ? 'R2'
+                : 'None'
+              return (
+                <div
+                  key={set.id}
+                  className="card !p-0 transition-all duration-150"
+                  style={{
+                    boxShadow: isSelected
+                      ? 'inset 0 0 0 1px hsl(var(--h3) / 0.3), 0 0 0 1px hsl(var(--h3) / 0.1)'
+                      : undefined,
+                  }}
                 >
-                  {set.detection_status}
-                </Badge>
-                <Button variant="ghost" size="sm" onClick={() => setEditingSet(set)}>Edit</Button>
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleOne(set.id)}
+                      className="w-3.5 h-3.5 rounded shrink-0 cursor-pointer accent-[hsl(var(--h3))]"
+                    />
+                    <Link to={`/app/sets/${set.id}`} className="flex-1 min-w-0 no-underline group">
+                      <p className="text-sm font-[var(--font-weight-medium)] truncate group-hover:underline" style={{ color: 'hsl(var(--c1))' }}>
+                        {set.title}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs truncate" style={{ color: 'hsl(var(--c3))' }}>{set.artist}</span>
+                        {set.event && (
+                          <span className="text-[10px] truncate max-w-28 hidden lg:inline" style={{ color: 'hsl(var(--c3) / 0.7)' }}>
+                            {set.event}
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                    <span className="w-20 text-center hidden sm:block">
+                      {set.genre ? <Badge variant="muted">{set.genre}</Badge> : <span className="text-xs" style={{ color: 'hsl(var(--c3) / 0.4)' }}>—</span>}
+                    </span>
+                    <span className="w-20 text-center hidden md:block">
+                      <span
+                        className="text-[10px] px-1.5 py-0.5 rounded-md inline-block"
+                        style={{
+                          background: sourceLabel === 'None' ? 'hsl(0 40% 30% / 0.15)' : 'hsl(var(--b4) / 0.4)',
+                          color: sourceLabel === 'None' ? 'hsl(0, 50%, 60%)' : 'hsl(var(--c3))',
+                        }}
+                      >
+                        {sourceLabel}
+                      </span>
+                    </span>
+                    <span className="w-16 text-center text-xs font-mono hidden md:block" style={{ color: 'hsl(var(--c3))' }}>
+                      {formatDuration(set.duration_seconds)}
+                    </span>
+                    <span className="w-16 text-center">
+                      <Badge
+                        variant={
+                          set.detection_status === 'complete' ? 'accent'
+                            : set.detection_status === 'processing' ? 'default'
+                            : set.detection_status === 'failed' ? 'default'
+                            : 'muted'
+                        }
+                      >
+                        {set.detection_status}
+                      </Badge>
+                    </span>
+                    <span className="w-14 text-right text-xs font-mono hidden sm:block" style={{ color: 'hsl(var(--c3))' }}>
+                      {set.play_count > 0 ? set.play_count : '—'}
+                    </span>
+                    <Button variant="ghost" size="sm" onClick={() => setEditingSet(set)} className="w-12 shrink-0">
+                      Edit
+                    </Button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-5">
+              <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
+                Page {page} of {totalPages} ({total} total)
+              </p>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setPage(1)}
+                  disabled={page === 1}
+                  className="px-2 py-1 rounded-md text-xs transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-default"
+                  style={{ color: 'hsl(var(--c2))', background: 'hsl(var(--b4) / 0.3)' }}
+                >
+                  First
+                </button>
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="px-2 py-1 rounded-md text-xs transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-default"
+                  style={{ color: 'hsl(var(--c2))', background: 'hsl(var(--b4) / 0.3)' }}
+                >
+                  Prev
+                </button>
+
+                {/* Page number pills — show up to 5 pages around current */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let p: number
+                  if (totalPages <= 5) {
+                    p = i + 1
+                  } else if (page <= 3) {
+                    p = i + 1
+                  } else if (page >= totalPages - 2) {
+                    p = totalPages - 4 + i
+                  } else {
+                    p = page - 2 + i
+                  }
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className="w-7 h-7 rounded-md text-xs transition-colors cursor-pointer"
+                      style={{
+                        background: p === page ? 'hsl(var(--h3) / 0.15)' : 'transparent',
+                        color: p === page ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
+                        fontWeight: p === page ? 'var(--font-weight-medium)' : undefined,
+                      }}
+                    >
+                      {p}
+                    </button>
+                  )
+                })}
+
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="px-2 py-1 rounded-md text-xs transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-default"
+                  style={{ color: 'hsl(var(--c2))', background: 'hsl(var(--b4) / 0.3)' }}
+                >
+                  Next
+                </button>
+                <button
+                  onClick={() => setPage(totalPages)}
+                  disabled={page === totalPages}
+                  className="px-2 py-1 rounded-md text-xs transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-default"
+                  style={{ color: 'hsl(var(--c2))', background: 'hsl(var(--b4) / 0.3)' }}
+                >
+                  Last
+                </button>
               </div>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       {/* Edit set panel */}
       {editingSet && (
         <EditSetModal
           set={editingSet}
-          onClose={() => setEditingSet(null)}
-          onSaved={() => { setEditingSet(null); loadSets() }}
-          onDeleted={(id) => { setSets((prev) => prev.filter((s) => s.id !== id)); setEditingSet(null) }}
+          onClose={closeEditModal}
+          onSaved={() => { closeEditModal(); loadSets() }}
+          onDeleted={(id) => { setSets((prev) => prev.filter((s) => s.id !== id)); closeEditModal() }}
         />
       )}
     </>
@@ -276,6 +719,32 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
   const [artistId, setArtistId] = useState<string | null>(null)
   const [eventId, setEventId] = useState<string | null>(null)
 
+  // Co-artists
+  const [coArtistValue, setCoArtistValue] = useState('')
+  const [coArtistId, setCoArtistId] = useState<string | null>(null)
+  const [additionalArtists, setAdditionalArtists] = useState<Array<{ id: string; name: string }>>([])
+  const [artistsLoaded, setArtistsLoaded] = useState(false)
+
+  // Load existing set_artists on mount
+  useEffect(() => {
+    if (artistsLoaded) return
+    fetchSet(set.id).then((res) => {
+      const sa = res.data.set_artists
+      if (sa && sa.length > 0) {
+        // First artist = primary, rest = co-artists
+        const primary = sa.find((a) => a.position === 1) || sa[0]
+        if (primary && !artistId) {
+          setArtistId(primary.id)
+        }
+        const coArtists = sa.filter((a) => a.id !== primary.id).map((a) => ({ id: a.id, name: a.name }))
+        if (coArtists.length > 0) {
+          setAdditionalArtists(coArtists)
+        }
+      }
+      setArtistsLoaded(true)
+    }).catch(() => { setArtistsLoaded(true) })
+  }, [set.id, artistsLoaded, artistId])
+
   const fetchArtistOptions = useCallback(async (q: string): Promise<AutocompleteOption[]> => {
     const res = await fetchArtists(q)
     return (res.data || []).map((a: Record<string, unknown>) => ({ id: a.id as string, label: a.name as string, sublabel: a.set_count ? `${a.set_count} sets` : undefined }))
@@ -285,6 +754,20 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
     const res = await fetchEvents(q)
     return (res.data || []).map((e: Record<string, unknown>) => ({ id: e.id as string, label: e.name as string, sublabel: (e.series as string) || undefined }))
   }, [])
+
+  // Co-artist handlers
+  const handleAddCoArtist = () => {
+    if (!coArtistId || !coArtistValue.trim()) return
+    if (additionalArtists.find(a => a.id === coArtistId)) return
+    if (coArtistId === artistId) return // Don't add primary artist as co-artist
+    setAdditionalArtists(prev => [...prev, { id: coArtistId, name: coArtistValue }])
+    setCoArtistValue('')
+    setCoArtistId(null)
+  }
+
+  const handleRemoveCoArtist = (id: string) => {
+    setAdditionalArtists(prev => prev.filter(a => a.id !== id))
+  }
 
   // 1001Tracklists import
   const [tracklistHtml, setTracklistHtml] = useState('')
@@ -312,14 +795,26 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
     setError(null)
     setSuccess(null)
     try {
+      // Build artist_ids list
+      const artistIds: string[] = []
+      if (artistId) artistIds.push(artistId)
+      additionalArtists.forEach(a => {
+        if (!artistIds.includes(a.id)) artistIds.push(a.id)
+      })
+
+      // Build artist display string
+      const allArtistNames = [artist.trim(), ...additionalArtists.map(a => a.name)].filter(Boolean)
+      const artistDisplayName = allArtistNames.length > 1 ? allArtistNames.join(' & ') : artist.trim()
+
       await updateSetAdmin(set.id, {
-        title: title.trim(), artist: artist.trim(),
+        title: title.trim(), artist: artistDisplayName,
         description: description.trim() || null, genre: genre || null,
         subgenre: subgenre.trim() || null, venue: venue.trim() || null,
         event: event.trim() || null,
         tracklist_1001_url: tracklistUrl.trim() || null,
         artist_id: artistId || null,
         event_id: eventId || null,
+        artist_ids: artistIds.length > 0 ? artistIds : undefined,
       })
       setSuccess('Saved')
       setTimeout(() => { setSuccess(null); onSaved() }, 1000)
@@ -459,6 +954,35 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
                   fetchOptions={fetchArtistOptions}
                   placeholder="DJ name"
                 />
+                {/* Co-artist chips */}
+                {additionalArtists.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {additionalArtists.map(a => (
+                      <span key={a.id} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs"
+                        style={{ background: 'hsl(var(--h3) / 0.12)', color: 'hsl(var(--h3))' }}>
+                        {a.name}
+                        <button onClick={() => handleRemoveCoArtist(a.id)} className="opacity-60 hover:opacity-100 ml-0.5 leading-none cursor-pointer">×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {/* Co-artist picker */}
+                <div className="flex gap-1.5 mt-1.5">
+                  <div className="flex-1">
+                    <AutocompleteInput
+                      value={coArtistValue}
+                      onChange={setCoArtistValue}
+                      onSelect={(opt) => setCoArtistId(opt.id)}
+                      onClear={() => setCoArtistId(null)}
+                      selectedId={coArtistId}
+                      fetchOptions={fetchArtistOptions}
+                      placeholder="Add co-artist..."
+                    />
+                  </div>
+                  <Button size="sm" variant="secondary" onClick={handleAddCoArtist} disabled={!coArtistId}>
+                    Add
+                  </Button>
+                </div>
               </div>
               <div>
                 <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>Event</label>

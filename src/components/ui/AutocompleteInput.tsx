@@ -16,6 +16,9 @@ interface AutocompleteInputProps {
   selectedId?: string | null
   className?: string
   debounceMs?: number
+  /** Called when user clicks "Create new" in the empty dropdown. Receives the current text value. */
+  onCreateNew?: (value: string) => void
+  createNewLabel?: string
 }
 
 /**
@@ -33,11 +36,14 @@ export function AutocompleteInput({
   selectedId,
   className = '',
   debounceMs = 250,
+  onCreateNew,
+  createNewLabel = 'Create new',
 }: AutocompleteInputProps) {
   const [options, setOptions] = useState<AutocompleteOption[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1)
+  const [searchDone, setSearchDone] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -50,6 +56,7 @@ export function AutocompleteInput({
       if (query.trim().length < 2) {
         setOptions([])
         setIsOpen(false)
+        setSearchDone(false)
         return
       }
 
@@ -58,17 +65,20 @@ export function AutocompleteInput({
         try {
           const results = await fetchOptions(query.trim())
           setOptions(results)
-          setIsOpen(results.length > 0)
+          setSearchDone(true)
+          // Show dropdown if there are results, or if we can create new
+          setIsOpen(results.length > 0 || !!onCreateNew)
           setHighlightedIndex(-1)
         } catch {
           setOptions([])
           setIsOpen(false)
+          setSearchDone(false)
         } finally {
           setIsLoading(false)
         }
       }, debounceMs)
     },
-    [fetchOptions, debounceMs]
+    [fetchOptions, debounceMs, onCreateNew]
   )
 
   // Close on click outside
@@ -96,26 +106,34 @@ export function AutocompleteInput({
     onChange(option.label)
     onSelect(option)
     setIsOpen(false)
+    setOptions([])
+    setSearchDone(false)
     setHighlightedIndex(-1)
     inputRef.current?.blur()
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isOpen || options.length === 0) return
+    if (!isOpen) return
+
+    const totalItems = options.length + (onCreateNew && options.length === 0 ? 1 : 0)
+    if (totalItems === 0) return
 
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
-        setHighlightedIndex((i) => (i < options.length - 1 ? i + 1 : 0))
+        setHighlightedIndex((i) => (i < totalItems - 1 ? i + 1 : 0))
         break
       case 'ArrowUp':
         e.preventDefault()
-        setHighlightedIndex((i) => (i > 0 ? i - 1 : options.length - 1))
+        setHighlightedIndex((i) => (i > 0 ? i - 1 : totalItems - 1))
         break
       case 'Enter':
         e.preventDefault()
         if (highlightedIndex >= 0 && highlightedIndex < options.length) {
           handleSelect(options[highlightedIndex])
+        } else if (onCreateNew && options.length === 0 && highlightedIndex === 0) {
+          setIsOpen(false)
+          onCreateNew(value)
         }
         break
       case 'Escape':
@@ -129,6 +147,8 @@ export function AutocompleteInput({
     onClear?.()
     inputRef.current?.focus()
   }
+
+  const showDropdown = isOpen && (options.length > 0 || (searchDone && onCreateNew && value.trim().length >= 2))
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
@@ -171,7 +191,7 @@ export function AutocompleteInput({
       </div>
 
       {/* Dropdown */}
-      {isOpen && options.length > 0 && (
+      {showDropdown && (
         <div
           className="absolute z-50 w-full mt-1 max-h-52 overflow-y-auto rounded-xl py-1"
           style={{
@@ -200,6 +220,33 @@ export function AutocompleteInput({
               )}
             </button>
           ))}
+
+          {/* "Create new" option when no results and onCreateNew is provided */}
+          {options.length === 0 && onCreateNew && (
+            <>
+              <div className="px-3 py-1.5 text-[11px]" style={{ color: 'hsl(var(--c3))' }}>
+                No matches found
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false)
+                  onCreateNew(value)
+                }}
+                className="w-full text-left px-3 py-2 text-sm transition-colors flex items-center gap-2"
+                style={{
+                  background: highlightedIndex === 0 ? 'hsl(var(--h3) / 0.1)' : 'transparent',
+                  color: 'hsl(var(--h3))',
+                }}
+                onMouseEnter={() => setHighlightedIndex(0)}
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                <span>{createNewLabel} &ldquo;{value.trim()}&rdquo;</span>
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>

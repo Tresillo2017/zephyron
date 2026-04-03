@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router'
+import { useParams, Link } from 'react-router'
 import { fetchArtist } from '../lib/api'
+import { useSession } from '../lib/auth-client'
 import { Skeleton } from '../components/ui/Skeleton'
 import { Badge } from '../components/ui/Badge'
+import { Button } from '../components/ui/Button'
 import { TabBar } from '../components/ui/TabBar'
 import { SetGrid } from '../components/sets/SetGrid'
 import { SocialLinks, countSocialLinks } from '../components/ui/SocialLinks'
@@ -17,6 +19,8 @@ const TABS = [
 
 export function ArtistPage() {
   const { id } = useParams<{ id: string }>()
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === 'admin'
   const [artist, setArtist] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -87,7 +91,7 @@ export function ArtistPage() {
                 </div>
               )}
             </div>
-            <div className="pb-2">
+            <div className="pb-2 flex-1 min-w-0">
               <p className="text-sm text-text-secondary banner-text mb-1">Artist</p>
               <h1 className="text-2xl sm:text-3xl font-bold text-text-primary leading-tight banner-text mb-1">{artist.name}</h1>
               {tags.length > 0 && (
@@ -96,6 +100,20 @@ export function ArtistPage() {
                 </div>
               )}
             </div>
+
+            {/* Admin edit button */}
+            {isAdmin && (
+              <div className="pb-2 flex items-end">
+                <Link to={`/app/admin?tab=artists&edit=${artist.id}`} className="no-underline">
+                  <Button variant="secondary" size="sm">
+                    <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
 

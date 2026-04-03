@@ -57,6 +57,11 @@ export class Router {
     return this
   }
 
+  patch(path: string, handler: RouteHandler) {
+    this.addRoute('PATCH', path, handler)
+    return this
+  }
+
   async handle(
     request: Request,
     env: Env,
@@ -88,12 +93,12 @@ export function corsHeaders(requestOrigin?: string | null): Headers {
   const headers = new Headers()
   // Allow the production URL, plus localhost for dev
   const allowed = ['http://localhost:5173', 'http://localhost:4173']
-  const origin = requestOrigin && (allowed.includes(requestOrigin) || requestOrigin.endsWith('.zephyron.app') || requestOrigin.endsWith('.workers.dev'))
+  const origin = requestOrigin && (allowed.includes(requestOrigin) || requestOrigin.endsWith('.zephyron.app') || requestOrigin.endsWith('.workers.dev') || requestOrigin.startsWith('moz-extension://') || requestOrigin.startsWith('chrome-extension://'))
     ? requestOrigin
     : allowed[0]
   headers.set('Access-Control-Allow-Origin', origin)
-  headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-  headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Anonymous-Id, Authorization, Range')
+  headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
+  headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Anonymous-Id, Authorization, Range, x-api-key')
   headers.set('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges')
   headers.set('Access-Control-Allow-Credentials', 'true')
   headers.set('Access-Control-Max-Age', '86400')
