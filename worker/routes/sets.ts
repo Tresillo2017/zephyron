@@ -13,14 +13,25 @@ export async function listSets(
 ): Promise<Response> {
   const url = new URL(request.url)
   const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'))
-  const pageSize = Math.min(50, Math.max(1, parseInt(url.searchParams.get('pageSize') || '20')))
+  const pageSize = Math.min(100, Math.max(1, parseInt(url.searchParams.get('pageSize') || '20')))
   const genre = url.searchParams.get('genre')
   const artist = url.searchParams.get('artist')
   const sort = url.searchParams.get('sort') || 'newest'
+  const search = url.searchParams.get('search')
+  const eventId = url.searchParams.get('event_id')
+  const eventName = url.searchParams.get('event')
+  const streamType = url.searchParams.get('stream_type')
+  const detectionStatus = url.searchParams.get('detection_status')
+  const hasSource = url.searchParams.get('has_source') // 'true' or 'false'
 
   const conditions: string[] = []
   const params: unknown[] = []
 
+  if (search) {
+    conditions.push('(title LIKE ? OR artist LIKE ? OR event LIKE ? OR venue LIKE ?)')
+    const q = `%${search}%`
+    params.push(q, q, q, q)
+  }
   if (genre) {
     conditions.push('genre = ?')
     params.push(genre)
@@ -28,6 +39,31 @@ export async function listSets(
   if (artist) {
     conditions.push('artist LIKE ?')
     params.push(`%${artist}%`)
+  }
+  if (eventId) {
+    conditions.push('event_id = ?')
+    params.push(eventId)
+  }
+  if (eventName) {
+    conditions.push('event LIKE ?')
+    params.push(`%${eventName}%`)
+  }
+  if (streamType) {
+    if (streamType === 'none') {
+      conditions.push('stream_type IS NULL')
+    } else {
+      conditions.push('stream_type = ?')
+      params.push(streamType)
+    }
+  }
+  if (detectionStatus) {
+    conditions.push('detection_status = ?')
+    params.push(detectionStatus)
+  }
+  if (hasSource === 'true') {
+    conditions.push('(youtube_video_id IS NOT NULL OR source_url IS NOT NULL)')
+  } else if (hasSource === 'false') {
+    conditions.push('youtube_video_id IS NULL AND source_url IS NULL')
   }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
@@ -42,6 +78,12 @@ export async function listSets(
       break
     case 'title':
       orderClause = 'ORDER BY title ASC'
+      break
+    case 'artist':
+      orderClause = 'ORDER BY artist ASC'
+      break
+    case 'duration':
+      orderClause = 'ORDER BY duration_seconds DESC'
       break
     default:
       orderClause = 'ORDER BY created_at DESC'
@@ -68,7 +110,7 @@ export async function getSet(
 ): Promise<Response> {
   const { id } = params
 
-  const [setResult, detectionsResult, artistResult, eventResult] = await env.DB.batch([
+  const [setResult, detectionsResult, artistResult, eventResult, setArtistsResult] = await env.DB.batch([
     env.DB.prepare('SELECT * FROM sets WHERE id = ?').bind(id),
     env.DB.prepare(
       `SELECT d.*,
@@ -92,6 +134,13 @@ export async function getSet(
     ).bind(id),
     env.DB.prepare(
       'SELECT e.id, e.name, e.slug, e.series, e.description, e.website, e.location, e.start_date, e.end_date, e.cover_image_r2_key, e.logo_r2_key, e.tags, e.year, e.source_1001_id, e.facebook_url, e.instagram_url, e.youtube_url, e.x_url, e.aftermovie_url, e.created_at FROM events e JOIN sets s ON s.event_id = e.id WHERE s.id = ?'
+    ).bind(id),
+    env.DB.prepare(
+      `SELECT a.id, a.name, a.slug, a.image_url, sa.position
+       FROM set_artists sa
+       JOIN artists a ON a.id = sa.artist_id
+       WHERE sa.set_id = ?
+       ORDER BY sa.position ASC`
     ).bind(id),
   ])
 
@@ -120,6 +169,9 @@ export async function getSet(
 
   const artist = artistResult.results[0] as Record<string, unknown> | undefined
   const eventRow = eventResult.results[0] as Record<string, unknown> | undefined
+  const setArtists = (setArtistsResult.results as Array<{
+    id: string; name: string; slug: string | null; image_url: string | null; position: number
+  }>) || []
 
   // Parse event tags from JSON string
   let eventTags: string[] = []
@@ -141,6 +193,7 @@ export async function getSet(
         lastfm_url: artist.lastfm_url,
         listeners: artist.listeners,
       } : null,
+      set_artists: setArtists,
       event_info: eventRow ? {
         id: eventRow.id,
         name: eventRow.name,

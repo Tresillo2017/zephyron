@@ -32,7 +32,7 @@ interface Artist {
   x_url?: string | null
 }
 
-export function ArtistsTab() {
+export function ArtistsTab({ editId }: { editId?: string } = {}) {
   const [artists, setArtists] = useState<Artist[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [syncing, setSyncing] = useState<string | null>(null)
@@ -50,6 +50,14 @@ export function ArtistsTab() {
   }
 
   useEffect(() => { loadArtists() }, [])
+
+  // Auto-open edit modal when editId is provided via URL
+  useEffect(() => {
+    if (editId && artists.length > 0 && !editingArtist) {
+      const match = artists.find((a) => a.id === editId)
+      if (match) setEditingArtist(match)
+    }
+  }, [editId, artists, editingArtist])
 
   const filtered = useMemo(() => {
     if (!search.trim()) return artists
@@ -202,7 +210,7 @@ export function ArtistsTab() {
   )
 }
 
-function ImportArtistModal({ onClose, onImported }: { onClose: () => void; onImported: () => void }) {
+export function ImportArtistModal({ onClose, onImported, onCreated }: { onClose: () => void; onImported?: () => void; onCreated?: (id: string, name: string) => void }) {
   const [html, setHtml] = useState('')
   const [parsed, setParsed] = useState<Artist1001Parsed | null>(null)
   const [parseError, setParseError] = useState<string | null>(null)
@@ -230,7 +238,7 @@ function ImportArtistModal({ onClose, onImported }: { onClose: () => void; onImp
     setIsImporting(true)
     setImportError(null)
     try {
-      await createArtistAdmin({
+      const res = await createArtistAdmin({
         name: parsed.name,
         image_url: parsed.image_url || null,
         country: parsed.country || null,
@@ -245,7 +253,8 @@ function ImportArtistModal({ onClose, onImported }: { onClose: () => void; onImp
         x_url: parsed.x_url || null,
         source_1001_id: parsed.dj_id || null,
       })
-      onImported()
+      onCreated?.(res.data.id, parsed.name)
+      onImported?.()
     } catch (err) {
       setImportError(err instanceof Error ? err.message : 'Import failed')
     } finally {

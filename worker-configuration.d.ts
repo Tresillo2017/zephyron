@@ -9,11 +9,9 @@ declare namespace Cloudflare {
 	interface Env {
 		AUDIO_BUCKET: R2Bucket;
 		DB: D1Database;
-		VECTORIZE: VectorizeIndex;
 		ML_QUEUE: Queue;
 		FEEDBACK_QUEUE: Queue;
 		COVER_ART_QUEUE: Queue;
-		AI: Ai;
 		BETTER_AUTH_URL: "http://localhost:5173";
 		BETTER_AUTH_SECRET: "zephyron-dev-secret-change-in-production-32chars!!";
 		INVIDIOUS_BASE_URL: string;

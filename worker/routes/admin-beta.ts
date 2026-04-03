@@ -1,12 +1,10 @@
-// Admin routes for beta management: invite codes, set creation (Invidious-based),
-// 1001tracklists integration, annotation moderation
 import { json, errorResponse } from '../lib/router'
 import { generateId } from '../lib/id'
 import { nanoid } from 'nanoid'
 import { extractVideoId } from '../services/youtube'
 import { fetchVideoData, getBestThumbnail, getStoryboardData, getBestVideoStream } from '../services/invidious'
-import { extractSetMetadata } from '../services/metadata-extractor'
-import { fetch1001Tracklist, parse1001TracklistHtml, extract1001TracklistId, is1001TracklistUrl, type Track1001 } from '../services/tracklists-1001'
+import { inferGenreFromKeywords } from '../services/metadata-extractor'
+import { fetch1001Tracklist, fetch1001Page, parse1001TracklistHtml, extract1001TracklistId, is1001TracklistUrl, type Track1001 } from '../services/tracklists-1001'
 import { findOrCreateSong } from '../services/songs'
 
 // ═══════════════════════════════════════════
@@ -73,7 +71,7 @@ export async function revokeInviteCode(
 // DJ SET CREATION (Invidious-based)
 // ═══════════════════════════════════════════
 
-// POST /api/admin/sets/from-youtube — Fetch metadata from YouTube URL via Invidious + LLM extraction
+// POST /api/admin/sets/from-youtube — Fetch metadata from YouTube URL via Invidious
 export async function createSetFromYoutube(
   request: Request,
   env: Env,
@@ -101,37 +99,37 @@ export async function createSetFromYoutube(
     // 2. Fetch video data via Invidious API
     const videoData = await fetchVideoData(videoId, env)
 
-    // 3. Run LLM extraction on the video data
-    const extracted = await extractSetMetadata(videoData, env)
-
-    // 4. Get best thumbnail
+    // 3. Get best thumbnail
     const thumbnailUrl = getBestThumbnail(videoData.videoThumbnails)
 
-    // 5. Get storyboard data
+    // 4. Get storyboard data
     const storyboard = getStoryboardData(videoData.storyboards)
 
-    // 6. Format publish date from Unix epoch
+    // 5. Format publish date from Unix epoch
     const publishedDate = videoData.published
       ? new Date(videoData.published * 1000).toISOString()
       : ''
 
-    // 7. Merge: LLM fields take priority over raw Invidious data for structured fields
+    // 6. Infer genre from keywords (no AI — pure regex)
+    const genre = inferGenreFromKeywords(videoData.keywords)
+
+    // 7. Detect tracklist presence from description
+    const hasTracklist = videoData.description ? /\d{1,2}:\d{2}/.test(videoData.description) : false
+
     return json({
       data: {
-        // Core fields
-        title: extracted.title || videoData.title,
-        artist: extracted.dj_name || videoData.author,
-        description: extracted.description || '',
-        genre: extracted.genre || '',
-        subgenre: extracted.subgenre || '',
-        venue: extracted.venue || '',
-        event: extracted.event || '',
-        recorded_date: extracted.recorded_date || '',
+        title: videoData.title,
+        artist: videoData.author,
+        description: '',
+        genre,
+        subgenre: '',
+        venue: '',
+        event: '',
+        recorded_date: publishedDate.split('T')[0] || '',
         duration_seconds: videoData.lengthSeconds || 0,
         thumbnail_url: thumbnailUrl || '',
         source_url: body.url,
-        has_tracklist: extracted.has_tracklist,
-        // YouTube/Invidious metadata
+        has_tracklist: hasTracklist,
         youtube_video_id: videoId,
         youtube_channel_id: videoData.authorId,
         youtube_channel_name: videoData.author,
@@ -141,16 +139,10 @@ export async function createSetFromYoutube(
         keywords: videoData.keywords,
         storyboard_data: storyboard ? JSON.stringify(storyboard) : null,
         music_tracks: videoData.musicTracks,
-        // Meta: how the data was obtained
-        llm_extracted: extracted.llm_extracted,
         data_source: 'invidious',
-        // Raw data for admin reference
         raw_title: videoData.title,
         raw_channel: videoData.author,
         raw_keywords: videoData.keywords,
-        raw_genre: videoData.genre,
-        // Debug: LLM raw response (remove in production)
-        _debug_llm: extracted._debug_response,
       },
       ok: true,
     })
@@ -180,6 +172,8 @@ export async function createSet(
     duration_seconds: number
     source_url?: string
     thumbnail_url?: string
+    // Stream source type: 'youtube' | 'soundcloud' | 'hearthis' | undefined (no source)
+    stream_type?: 'youtube' | 'soundcloud' | 'hearthis'
     // Invidious-specific fields
     youtube_video_id?: string
     youtube_channel_id?: string
@@ -195,6 +189,8 @@ export async function createSet(
     // Pre-linked artist/event IDs (from autocomplete)
     artist_id?: string
     event_id?: string
+    // Multiple artists (optional, in addition to artist_id)
+    artist_ids?: string[]
   }
   try {
     body = await request.json()
@@ -213,6 +209,19 @@ export async function createSet(
     ? extract1001TracklistId(body.tracklist_1001_url)
     : null
 
+  // Derive the actual stream_type:
+  // - explicit 'youtube' or a youtube_video_id present → 'invidious' (existing infra)
+  // - explicit 'soundcloud' or 'hearthis' → store as-is
+  // - otherwise → NULL (no source, set is not streamable)
+  let resolvedStreamType: string | null = null
+  if (body.stream_type === 'youtube' || body.youtube_video_id) {
+    resolvedStreamType = 'invidious'
+  } else if (body.stream_type === 'soundcloud') {
+    resolvedStreamType = 'soundcloud'
+  } else if (body.stream_type === 'hearthis') {
+    resolvedStreamType = 'hearthis'
+  }
+
   // For Invidious sets: no r2_key needed (stream from YouTube)
   await env.DB.prepare(
     `INSERT OR REPLACE INTO sets (
@@ -227,7 +236,7 @@ export async function createSet(
     ) VALUES (
       ?, ?, ?, ?, ?, ?, ?, ?,
       ?, ?, '', 'opus', ?,
-      'invidious', ?, ?, ?,
+      ?, ?, ?, ?,
       ?, ?, ?,
       ?, ?, ?,
       ?, ?,
@@ -249,6 +258,7 @@ export async function createSet(
       body.recorded_date || null,
       body.duration_seconds,
       body.source_url || null,
+      resolvedStreamType,
       body.youtube_video_id || null,
       body.youtube_channel_id || null,
       body.youtube_channel_name || null,
@@ -265,6 +275,31 @@ export async function createSet(
       id
     )
     .run()
+
+  // Insert into set_artists junction table if artist_ids provided
+  if (body.artist_ids && body.artist_ids.length > 0) {
+    const artistInserts = body.artist_ids.map((artistId, idx) =>
+      env.DB.prepare(
+        'INSERT OR REPLACE INTO set_artists (set_id, artist_id, position) VALUES (?, ?, ?)'
+      ).bind(id, artistId, idx)
+    )
+    // Also include primary artist_id at position 0 if not already in the list
+    if (body.artist_id && !body.artist_ids.includes(body.artist_id)) {
+      artistInserts.unshift(
+        env.DB.prepare(
+          'INSERT OR REPLACE INTO set_artists (set_id, artist_id, position) VALUES (?, ?, ?)'
+        ).bind(id, body.artist_id, -1)
+      )
+    }
+    await env.DB.batch(artistInserts)
+  } else if (body.artist_id) {
+    // Single artist shorthand
+    await env.DB.prepare(
+      'INSERT OR REPLACE INTO set_artists (set_id, artist_id, position) VALUES (?, ?, 0)'
+    )
+      .bind(id, body.artist_id)
+      .run()
+  }
 
   // If a thumbnail URL was provided, fetch it and store in R2
   // Prefer YouTube's CDN directly (more reliable than Invidious proxy)
@@ -391,6 +426,12 @@ export async function updateSet(
     event: 'event',
     recorded_date: 'recorded_date',
     duration_seconds: 'duration_seconds',
+    tracklist_1001_url: 'tracklist_1001_url',
+    artist_id: 'artist_id',
+    event_id: 'event_id',
+    stream_type: 'stream_type',
+    source_url: 'source_url',
+    youtube_video_id: 'youtube_video_id',
   }
 
   const updates: string[] = []
@@ -403,20 +444,171 @@ export async function updateSet(
     }
   }
 
-  if (updates.length === 0) {
+  // Handle artist_ids separately — it goes to the junction table, not the sets table
+  const artistIds = Array.isArray(body.artist_ids) ? body.artist_ids as string[] : null
+
+  if (updates.length === 0 && !artistIds) {
     return errorResponse('No valid fields to update', 400)
   }
 
-  updates.push('updated_at = CURRENT_TIMESTAMP')
-  values.push(id)
+  const stmts: D1PreparedStatement[] = []
 
-  await env.DB.prepare(
-    `UPDATE sets SET ${updates.join(', ')} WHERE id = ?`
-  )
-    .bind(...values)
-    .run()
+  if (updates.length > 0) {
+    updates.push('updated_at = CURRENT_TIMESTAMP')
+    values.push(id)
+    stmts.push(
+      env.DB.prepare(
+        `UPDATE sets SET ${updates.join(', ')} WHERE id = ?`
+      ).bind(...values)
+    )
+  }
+
+  // Sync set_artists junction table if artist_ids provided
+  if (artistIds) {
+    stmts.push(
+      env.DB.prepare('DELETE FROM set_artists WHERE set_id = ?').bind(id)
+    )
+    for (let i = 0; i < artistIds.length; i++) {
+      stmts.push(
+        env.DB.prepare(
+          'INSERT INTO set_artists (set_id, artist_id, position) VALUES (?, ?, ?)'
+        ).bind(id, artistIds[i], i + 1)
+      )
+    }
+  }
+
+  await env.DB.batch(stmts)
 
   return json({ ok: true })
+}
+
+// POST /api/admin/sets/batch — Perform batch operations on multiple sets
+export async function batchUpdateSets(
+  request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  _params: Record<string, string>
+): Promise<Response> {
+  let body: {
+    ids: string[]
+    action: 'delete' | 'update' | 'detect' | 'redetect'
+    updates?: Record<string, unknown>
+  }
+  try {
+    body = await request.json()
+  } catch {
+    return errorResponse('Invalid JSON body', 400)
+  }
+
+  if (!body.ids || !Array.isArray(body.ids) || body.ids.length === 0) {
+    return errorResponse('ids array is required', 400)
+  }
+  if (!body.action) {
+    return errorResponse('action is required', 400)
+  }
+  if (body.ids.length > 50) {
+    return errorResponse('Maximum 50 sets per batch operation', 400)
+  }
+
+  const { ids, action } = body
+
+  switch (action) {
+    case 'delete': {
+      // Get R2 keys before deleting
+      const placeholders = ids.map(() => '?').join(',')
+      const setsResult = await env.DB.prepare(
+        `SELECT id, r2_key, r2_waveform_key, cover_image_r2_key, stream_type FROM sets WHERE id IN (${placeholders})`
+      ).bind(...ids).all<{ id: string; r2_key: string; r2_waveform_key: string | null; cover_image_r2_key: string | null; stream_type: string | null }>()
+
+      const stmts: D1PreparedStatement[] = []
+      for (const id of ids) {
+        stmts.push(
+          env.DB.prepare('DELETE FROM detections WHERE set_id = ?').bind(id),
+          env.DB.prepare('DELETE FROM annotations WHERE set_id = ?').bind(id),
+          env.DB.prepare('DELETE FROM playlist_items WHERE set_id = ?').bind(id),
+          env.DB.prepare('DELETE FROM listen_history WHERE set_id = ?').bind(id),
+          env.DB.prepare('DELETE FROM detection_jobs WHERE set_id = ?').bind(id),
+          env.DB.prepare('DELETE FROM ml_feedback WHERE set_id = ?').bind(id),
+          env.DB.prepare('DELETE FROM set_artists WHERE set_id = ?').bind(id),
+          env.DB.prepare('DELETE FROM sets WHERE id = ?').bind(id),
+        )
+      }
+      // D1 batch limit is 500
+      for (let i = 0; i < stmts.length; i += 100) {
+        await env.DB.batch(stmts.slice(i, i + 100))
+      }
+
+      // Delete R2 files (best-effort)
+      const r2Deletes: string[] = []
+      for (const s of (setsResult.results || [])) {
+        if (s.stream_type === 'r2' && s.r2_key) r2Deletes.push(s.r2_key)
+        if (s.r2_waveform_key) r2Deletes.push(s.r2_waveform_key)
+        if (s.cover_image_r2_key) r2Deletes.push(s.cover_image_r2_key)
+      }
+      if (r2Deletes.length > 0) {
+        try { await env.AUDIO_BUCKET.delete(r2Deletes) } catch { /* non-blocking */ }
+      }
+
+      return json({ ok: true, data: { deleted: ids.length } })
+    }
+
+    case 'update': {
+      if (!body.updates || Object.keys(body.updates).length === 0) {
+        return errorResponse('updates object is required for update action', 400)
+      }
+
+      const allowedFields: Record<string, string> = {
+        genre: 'genre',
+        subgenre: 'subgenre',
+        event: 'event',
+        event_id: 'event_id',
+        venue: 'venue',
+        detection_status: 'detection_status',
+        stream_type: 'stream_type',
+      }
+
+      const setClauses: string[] = []
+      const updateValues: unknown[] = []
+      for (const [key, dbCol] of Object.entries(allowedFields)) {
+        if (key in body.updates) {
+          setClauses.push(`${dbCol} = ?`)
+          updateValues.push(body.updates[key] || null)
+        }
+      }
+      if (setClauses.length === 0) {
+        return errorResponse('No valid fields to update', 400)
+      }
+      setClauses.push('updated_at = CURRENT_TIMESTAMP')
+
+      const stmts: D1PreparedStatement[] = ids.map((id) =>
+        env.DB.prepare(`UPDATE sets SET ${setClauses.join(', ')} WHERE id = ?`)
+          .bind(...updateValues, id)
+      )
+      for (let i = 0; i < stmts.length; i += 100) {
+        await env.DB.batch(stmts.slice(i, i + 100))
+      }
+
+      return json({ ok: true, data: { updated: ids.length } })
+    }
+
+    case 'detect':
+    case 'redetect': {
+      // Queue detection jobs for each set
+      let queued = 0
+      for (const id of ids) {
+        try {
+          await env.ML_QUEUE.send({ setId: id, redetect: action === 'redetect' })
+          queued++
+        } catch {
+          console.error(`Failed to queue detection for set ${id}`)
+        }
+      }
+      return json({ ok: true, data: { queued } })
+    }
+
+    default:
+      return errorResponse(`Unknown action: ${action}`, 400)
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -846,4 +1038,38 @@ export async function getVideoStreamUrl(
       500
     )
   }
+}
+
+// POST /api/admin/events/:id/fetch-1001tl-sets — Fetch event source page from 1001TL via challenge solver
+export async function fetchEventSets(
+  _request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>
+): Promise<Response> {
+  const { id } = params
+
+  const event = await env.DB.prepare(
+    'SELECT id, source_1001_id FROM events WHERE id = ?'
+  ).bind(id).first<{ id: string; source_1001_id: string | null }>()
+
+  if (!event) {
+    return errorResponse('Event not found', 404)
+  }
+
+  if (!event.source_1001_id) {
+    return errorResponse('No 1001Tracklists source ID configured for this event', 400)
+  }
+
+  const url = `https://www.1001tracklists.com/source/${event.source_1001_id}/index.html`
+  const result = await fetch1001Page(url)
+
+  return json({
+    data: {
+      html: result.html,
+      fallback_required: result.fallback_required,
+    },
+    error: result.error || null,
+    ok: !result.fallback_required,
+  })
 }

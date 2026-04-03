@@ -303,10 +303,14 @@ function ProfileTab() {
 /* ─────────────────────────── Security Tab ─────────────────────────── */
 
 function SecurityTab() {
+  const { data: session } = useSession()
+  const isAdmin = (session?.user as any)?.role === 'admin'
+
   return (
     <div className="space-y-8">
       <ChangePasswordSection />
       <TwoFactorSection />
+      {isAdmin && <ApiKeysSection />}
     </div>
   )
 }
@@ -628,6 +632,181 @@ function TwoFactorSection() {
           </div>
         </form>
       )}
+    </div>
+  )
+}
+
+/* ─────────────────────────── API Keys ─────────────────────────── */
+
+function ApiKeysSection() {
+  const [keys, setKeys] = useState<Array<{
+    id: string; name: string | null; start: string | null
+    createdAt: string; expiresAt: string | null; enabled: boolean
+  }>>([])
+  const [loading, setLoading] = useState(true)
+  const [creating, setCreating] = useState(false)
+  const [newKeyName, setNewKeyName] = useState('Browser Extension')
+  const [showCreate, setShowCreate] = useState(false)
+  const [newKey, setNewKey] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [error, setError] = useState('')
+
+  // Load existing keys
+  const loadKeys = async () => {
+    try {
+      const { data, error: err } = await (authClient.apiKey as any).list()
+      if (err) {
+        setError(err.message || 'Failed to load API keys')
+        return
+      }
+      setKeys(data || [])
+    } catch {
+      setError('Failed to load API keys')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useState(() => { loadKeys() })
+
+  const handleCreate = async () => {
+    setCreating(true)
+    setError('')
+    try {
+      const { data, error: err } = await (authClient.apiKey as any).create({
+        name: newKeyName.trim() || 'API Key',
+      })
+      if (err) {
+        setError(err.message || 'Failed to create API key')
+        setCreating(false)
+        return
+      }
+      setNewKey(data.key)
+      loadKeys()
+    } catch {
+      setError('Failed to create API key')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      await (authClient.apiKey as any).delete({ keyId: id })
+      setKeys((prev) => prev.filter((k) => k.id !== id))
+    } catch {
+      setError('Failed to delete API key')
+    }
+  }
+
+  const handleCopy = () => {
+    if (newKey) {
+      navigator.clipboard.writeText(newKey)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  return (
+    <div className="bg-surface-raised border border-border rounded-xl p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-text-primary">API Keys</h3>
+          <p className="text-xs text-text-muted mt-0.5">
+            Create API keys for the browser extension and external tools
+          </p>
+        </div>
+        {!showCreate && !newKey && (
+          <Button variant="primary" size="sm" onClick={() => setShowCreate(true)}>
+            Create Key
+          </Button>
+        )}
+      </div>
+
+      {/* Newly created key — show once */}
+      {newKey && (
+        <div className="space-y-3">
+          <div style={{
+            background: 'hsl(var(--h3) / 0.08)',
+            border: '1px solid hsl(var(--h3) / 0.25)',
+            borderRadius: 8,
+            padding: 12,
+          }}>
+            <p className="text-xs font-medium text-accent mb-2">
+              Copy your API key now — it won't be shown again
+            </p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 text-xs font-mono bg-[hsl(var(--b4)/0.4)] rounded px-2.5 py-1.5 text-text-primary select-all break-all">
+                {newKey}
+              </code>
+              <Button variant="secondary" size="sm" onClick={handleCopy}>
+                {copied ? 'Copied!' : 'Copy'}
+              </Button>
+            </div>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => { setNewKey(null); setShowCreate(false) }}>
+            Done
+          </Button>
+        </div>
+      )}
+
+      {/* Create form */}
+      {showCreate && !newKey && (
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <Input
+              label="Key name"
+              value={newKeyName}
+              onChange={(e) => setNewKeyName(e.target.value)}
+              placeholder="e.g. Browser Extension"
+            />
+          </div>
+          <Button variant="primary" size="sm" onClick={handleCreate} disabled={creating}>
+            {creating ? 'Creating...' : 'Create'}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setShowCreate(false)}>
+            Cancel
+          </Button>
+        </div>
+      )}
+
+      {error && <p className="text-xs text-danger">{error}</p>}
+
+      {/* Existing keys list */}
+      {loading ? (
+        <p className="text-xs text-text-muted">Loading keys...</p>
+      ) : keys.length > 0 ? (
+        <div className="space-y-2">
+          {keys.map((key) => (
+            <div key={key.id} className="flex items-center justify-between py-2 px-3 rounded-lg" style={{
+              background: 'hsl(var(--b4) / 0.2)',
+              boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)',
+            }}>
+              <div className="min-w-0">
+                <p className="text-sm text-text-primary truncate">
+                  {key.name || 'Unnamed key'}
+                </p>
+                <p className="text-[10px] text-text-muted font-mono">
+                  {key.start ? `${key.start}${'•'.repeat(8)}` : '••••••••'}
+                  {' · '}
+                  Created {new Date(key.createdAt).toLocaleDateString()}
+                  {key.expiresAt && ` · Expires ${new Date(key.expiresAt).toLocaleDateString()}`}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDelete(key.id)}
+                className="text-danger hover:text-danger shrink-0"
+              >
+                Revoke
+              </Button>
+            </div>
+          ))}
+        </div>
+      ) : !showCreate && !newKey ? (
+        <p className="text-xs text-text-muted">No API keys created yet.</p>
+      ) : null}
     </div>
   )
 }

@@ -71,7 +71,7 @@ const BROWSER_HEADERS: Record<string, string> = {
   'accept-language': 'en-US,en;q=0.9',
   'cache-control': 'no-cache',
   'pragma': 'no-cache',
-  'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not-A.Brand";v="24"',
+  'sec-ch-ua': '"Google Chrome";v="135", "Chromium";v="135", "Not_A Brand";v="99"',
   'sec-ch-ua-mobile': '?0',
   'sec-ch-ua-platform': '"Windows"',
   'sec-fetch-dest': 'document',
@@ -79,7 +79,7 @@ const BROWSER_HEADERS: Record<string, string> = {
   'sec-fetch-site': 'same-origin',
   'sec-fetch-user': '?1',
   'upgrade-insecure-requests': '1',
-  'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+  'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36',
 }
 
 function javaStringHashCode(str: string): number {
@@ -153,7 +153,81 @@ async function submitSolution(url: string, solution: ChallengeSolution): Promise
 }
 
 // ═══════════════════════════════════════════
-// Main fetch function
+// Generic page fetch (challenge solver only, no parsing)
+// ═══════════════════════════════════════════
+
+export interface Page1001Result {
+  html: string
+  fallback_required: boolean
+  error?: string
+}
+
+/**
+ * Fetch any 1001Tracklists page using the challenge solver.
+ * Returns raw HTML — the caller is responsible for parsing.
+ * Works for event source pages, DJ pages, tracklist pages, etc.
+ */
+export async function fetch1001Page(url: string): Promise<Page1001Result> {
+  try {
+    console.log(`[1001tl] Fetching page: ${url}`)
+    const challengeRes = await requestChallenge(url)
+    const solution = await solveChallenge(challengeRes)
+
+    let html: string
+
+    if (solution.ts === 0) {
+      console.log('[1001tl] No challenge detected, page loaded directly')
+      html = solution.challengeHtml
+    } else {
+      console.log(`[1001tl] Submitting challenge solution (ts=${solution.ts}, bChk=${solution.bChk})`)
+      const realPageRes = await submitSolution(url, solution)
+
+      if (!realPageRes.ok) {
+        console.warn(`[1001tl] Challenge POST returned HTTP ${realPageRes.status}`)
+        return {
+          html: '',
+          fallback_required: true,
+          error: `Challenge POST rejected (HTTP ${realPageRes.status}). Use manual HTML paste instead.`,
+        }
+      }
+
+      html = await realPageRes.text()
+    }
+
+    const hasTurnstile = html.includes('turnstile-container') || html.includes('challenges.cloudflare.com')
+    // Check if we got real content (not just a challenge page)
+    const hasContent = html.includes('id="pageTitle"') || html.includes('class="tlpItem') || html.includes('class="bItm')
+
+    if (hasTurnstile && !hasContent) {
+      console.warn('[1001tl] POST returned challenge page again — Turnstile token is required')
+      return {
+        html: '',
+        fallback_required: true,
+        error: 'The site requires Cloudflare Turnstile validation. Use manual HTML paste instead.',
+      }
+    }
+
+    if (!hasContent) {
+      return {
+        html: '',
+        fallback_required: true,
+        error: 'Response has no recognizable content. The challenge format may have changed.',
+      }
+    }
+
+    return { html, fallback_required: false }
+  } catch (err) {
+    console.error('[1001tl] Page fetch failed:', err)
+    return {
+      html: '',
+      fallback_required: true,
+      error: `Fetch failed: ${err instanceof Error ? err.message : String(err)}`,
+    }
+  }
+}
+
+// ═══════════════════════════════════════════
+// Tracklist fetch (challenge solver + microdata parse)
 // ═══════════════════════════════════════════
 
 export async function fetch1001Tracklist(url: string): Promise<TracklistResult1001> {

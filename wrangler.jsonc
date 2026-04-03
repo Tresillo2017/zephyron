@@ -31,17 +31,6 @@
       "remote": true
     }
   ],
-  // Workers AI
-  "ai": {
-    "binding": "AI"
-  },
-  // Vectorize (semantic search)
-  "vectorize": [
-    {
-      "binding": "VECTORIZE",
-      "index_name": "zephyron-sets"
-    }
-  ],
   // Queues
   "queues": {
     "producers": [

@@ -38,6 +38,194 @@ export interface Artist1001Parsed {
   tracklist_count?: number
 }
 
+// ═══════════════════════════════════════════
+// Event set entry (from event overview pages)
+// ═══════════════════════════════════════════
+
+export interface EventSetEntry {
+  tracklist_id: string
+  title: string           // full title from link text
+  artist: string          // extracted before "@" or "—"
+  stage?: string          // extracted after "@"
+  date?: string           // YYYY-MM-DD from fa-calendar
+  genre?: string          // from fa-music
+  duration_minutes?: number
+  tracks_identified?: number
+  tracks_total?: number
+  has_video?: boolean
+  has_audio?: boolean
+  tracklist_url: string   // relative or absolute link to tracklist page
+}
+
+/**
+ * Parse the set listing entries from a 1001Tracklists event overview page.
+ * These pages list all tracklists associated with an event source.
+ * Each entry is a <div class="bItm oItm" data-id="TLID">.
+ *
+ * Important: The full JS-rendered page may also contain `bItm tlpItem` entries
+ * (track rows inside expanded tracklist previews) — those must be excluded.
+ * We specifically target `oItm` class which is unique to the event listing entries.
+ */
+export function parse1001EventSetsHtml(html: string): EventSetEntry[] {
+  const entries: EventSetEntry[] = []
+
+  // Strategy: find all positions where an oItm block starts, then extract content between them.
+  // oItm blocks are set listing entries on event source pages.
+  // They look like: <div class="bItm action oItm" data-id="TLID">
+  // We avoid matching `bItm tlpItem` (track rows) or plain `bItm` without oItm.
+
+  // Find all oItm block start positions and their data-ids
+  const blockStarts: Array<{ index: number; dataId: string }> = []
+  const startPattern = /<div[^>]*class="[^"]*oItm[^"]*"[^>]*data-id="([^"]+)"[^>]*>/gi
+  let startMatch
+  while ((startMatch = startPattern.exec(html)) !== null) {
+    blockStarts.push({ index: startMatch.index, dataId: startMatch[1] })
+  }
+
+  // Also try the reverse order: data-id before class (some pages may vary)
+  const altPattern = /<div[^>]*data-id="([^"]+)"[^>]*class="[^"]*oItm[^"]*"[^>]*>/gi
+  let altMatch
+  while ((altMatch = altPattern.exec(html)) !== null) {
+    // Avoid duplicates
+    if (!blockStarts.some((b) => b.dataId === altMatch![1])) {
+      blockStarts.push({ index: altMatch.index, dataId: altMatch[1] })
+    }
+  }
+
+  // Sort by position in document
+  blockStarts.sort((a, b) => a.index - b.index)
+
+  if (blockStarts.length === 0) {
+    // Fallback: try without oItm requirement — look for bItm blocks that contain /tracklist/ links
+    // This handles edge cases where the oItm class isn't used
+    const fallbackPattern = /<div[^>]*class="[^"]*bItm(?![^"]*tlpItem)[^"]*"[^>]*data-id="([^"]+)"[^>]*>/gi
+    let fbMatch
+    while ((fbMatch = fallbackPattern.exec(html)) !== null) {
+      blockStarts.push({ index: fbMatch.index, dataId: fbMatch[1] })
+    }
+    blockStarts.sort((a, b) => a.index - b.index)
+  }
+
+  // Extract blocks: each block goes from its start position to the next block's start (or end of document)
+  for (let i = 0; i < blockStarts.length; i++) {
+    const start = blockStarts[i]
+    const end = i + 1 < blockStarts.length ? blockStarts[i + 1].index : html.length
+    const block = html.substring(start.index, end)
+    const dataId = start.dataId
+
+    // Extract tracklist link — <a href="/tracklist/TLID/slug.html">TITLE</a>
+    const linkMatch = block.match(/<a\s+href="(\/tracklist\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/)
+    if (!linkMatch) continue
+
+    const tracklist_url = linkMatch[1]
+    const rawTitle = linkMatch[2].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&#039;/g, "'").replace(/&quot;/g, '"').trim()
+
+    // Extract tracklist_id from URL or data-id
+    const idMatch = tracklist_url.match(/\/tracklist\/([a-z0-9]+)/i)
+    const tracklist_id = idMatch?.[1] || dataId
+
+    // Parse artist and stage from title
+    // Typical format: "Artist @ Stage, City, Country" or "Artist — Title"
+    let artist = rawTitle
+    let stage: string | undefined
+
+    const atMatch = rawTitle.match(/^(.+?)\s*@\s*(.+)$/)
+    if (atMatch) {
+      artist = atMatch[1].trim()
+      stage = atMatch[2].trim()
+    } else {
+      const dashMatch = rawTitle.match(/^(.+?)\s*[—–]\s*(.+)$/)
+      if (dashMatch) {
+        artist = dashMatch[1].trim()
+      }
+    }
+
+    // Date — <i class="fa fa-calendar..."></i> followed by date text
+    let date: string | undefined
+    const dateMatch = block.match(/fa-calendar[^>]*><\/i>\s*([^<]+)/)
+    if (dateMatch) {
+      const dateStr = dateMatch[1].trim()
+      // Try to parse various date formats: "2025-03-30", "30 Mar 2025", etc.
+      const isoMatch = dateStr.match(/(\d{4})[.-](\d{1,2})[.-](\d{1,2})/)
+      if (isoMatch) {
+        date = `${isoMatch[1]}-${isoMatch[2].padStart(2, '0')}-${isoMatch[3].padStart(2, '0')}`
+      } else {
+        // Try "DD Mon YYYY" or "Mon DD, YYYY" parsing
+        const parsed = new Date(dateStr)
+        if (!isNaN(parsed.getTime()) && parsed.getFullYear() > 2000) {
+          date = parsed.toISOString().split('T')[0]
+        }
+      }
+    }
+
+    // Genre — <i class="fa fa-music..."></i> followed by genre text
+    let genre: string | undefined
+    const genreMatch = block.match(/fa-music[^>]*><\/i>\s*([^<]+)/)
+    if (genreMatch) {
+      genre = genreMatch[1].trim()
+    }
+
+    // Duration — <i class="fa fa-clock-o..."></i> followed by "Xh Ym" or "Xm"
+    let duration_minutes: number | undefined
+    const durationMatch = block.match(/fa-clock[^>]*><\/i>\s*([^<]+)/)
+    if (durationMatch) {
+      const durStr = durationMatch[1].trim()
+      const hourMin = durStr.match(/(\d+)h\s*(\d+)?m?/)
+      const minOnly = durStr.match(/^(\d+)m$/)
+      if (hourMin) {
+        duration_minutes = parseInt(hourMin[1]) * 60 + (parseInt(hourMin[2] || '0'))
+      } else if (minOnly) {
+        duration_minutes = parseInt(minOnly[1])
+      }
+    }
+
+    // Track count — <i class="fa fa-check..."></i> followed by "X/Y" or "X"
+    let tracks_identified: number | undefined
+    let tracks_total: number | undefined
+    const trackMatch = block.match(/fa-check[^>]*><\/i>\s*([^<]+)/)
+    if (trackMatch) {
+      const trackStr = trackMatch[1].trim()
+      const slashMatch = trackStr.match(/(\d+)\s*\/\s*(\d+)/)
+      if (slashMatch) {
+        tracks_identified = parseInt(slashMatch[1])
+        tracks_total = parseInt(slashMatch[2])
+      } else {
+        const numMatch = trackStr.match(/(\d+)/)
+        if (numMatch) {
+          tracks_total = parseInt(numMatch[1])
+        }
+      }
+    }
+
+    // Has video — fa-video-camera or fa-video icon
+    const has_video = /fa-video/.test(block)
+
+    // Has premium audio — fa-star icon
+    const has_audio = /fa-star/.test(block)
+
+    entries.push({
+      tracklist_id,
+      title: rawTitle,
+      artist,
+      stage,
+      date,
+      genre,
+      duration_minutes,
+      tracks_identified,
+      tracks_total,
+      has_video,
+      has_audio,
+      tracklist_url,
+    })
+  }
+
+  return entries
+}
+
+// ═══════════════════════════════════════════
+// Shared helpers
+// ═══════════════════════════════════════════
+
 /** Extract text content from first match of a regex (strips HTML tags) */
 function extractText(html: string, pattern: RegExp): string | undefined {
   const m = html.match(pattern)

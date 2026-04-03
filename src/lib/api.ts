@@ -50,6 +50,12 @@ export async function fetchSets(params?: {
   genre?: string
   artist?: string
   sort?: string
+  search?: string
+  event_id?: string
+  event?: string
+  stream_type?: string
+  detection_status?: string
+  has_source?: string
 }): Promise<{ data: DjSet[]; total: number; page: number; pageSize: number; totalPages: number }> {
   const searchParams = new URLSearchParams()
   if (params?.page) searchParams.set('page', params.page.toString())
@@ -57,6 +63,12 @@ export async function fetchSets(params?: {
   if (params?.genre) searchParams.set('genre', params.genre)
   if (params?.artist) searchParams.set('artist', params.artist)
   if (params?.sort) searchParams.set('sort', params.sort)
+  if (params?.search) searchParams.set('search', params.search)
+  if (params?.event_id) searchParams.set('event_id', params.event_id)
+  if (params?.event) searchParams.set('event', params.event)
+  if (params?.stream_type) searchParams.set('stream_type', params.stream_type)
+  if (params?.detection_status) searchParams.set('detection_status', params.detection_status)
+  if (params?.has_source) searchParams.set('has_source', params.has_source)
   const qs = searchParams.toString()
   return fetchApi(`/sets${qs ? `?${qs}` : ''}`)
 }
@@ -307,6 +319,8 @@ export async function adminCreateSet(data: {
   duration_seconds: number
   thumbnail_url?: string
   source_url?: string
+  // Stream source type
+  stream_type?: 'youtube' | 'soundcloud' | 'hearthis'
   // Invidious-specific fields
   youtube_video_id?: string
   youtube_channel_id?: string
@@ -322,6 +336,8 @@ export async function adminCreateSet(data: {
   // Pre-linked artist/event IDs (from autocomplete)
   artist_id?: string
   event_id?: string
+  // Multiple artists
+  artist_ids?: string[]
 }): Promise<{ data: { id: string } }> {
   return fetchApi('/admin/sets', { method: 'POST', body: JSON.stringify(data) })
 }
@@ -344,6 +360,17 @@ export async function moderateAnnotation(id: string, action: 'approve' | 'reject
 
 export async function deleteSetAdmin(id: string): Promise<void> {
   await fetchApi(`/admin/sets/${id}`, { method: 'DELETE' })
+}
+
+export async function batchSetsAdmin(params: {
+  ids: string[]
+  action: 'delete' | 'update' | 'detect' | 'redetect'
+  updates?: Record<string, unknown>
+}): Promise<{ data: { deleted?: number; updated?: number; queued?: number } }> {
+  return fetchApi('/admin/sets/batch', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  })
 }
 
 export async function updateSetAdmin(id: string, data: Record<string, unknown>): Promise<void> {
@@ -491,6 +518,14 @@ export async function unlinkSetFromEvent(eventId: string, setId: string): Promis
   await fetchApi(`/admin/events/${eventId}/unlink-set`, { method: 'POST', body: JSON.stringify({ set_id: setId }) })
 }
 
+export async function fetchEvent1001Sets(eventId: string): Promise<{
+  data: { html: string; fallback_required: boolean }
+  error: string | null
+  ok: boolean
+}> {
+  return fetchApi(`/admin/events/${eventId}/fetch-1001tl-sets`, { method: 'POST' })
+}
+
 // ═══════════════════════════════════════════
 // SET REQUEST PETITIONS
 // ═══════════════════════════════════════════
@@ -498,13 +533,28 @@ export async function unlinkSetFromEvent(eventId: string, setId: string): Promis
 export async function submitSetRequest(data: {
   name: string
   artist: string
-  youtube_url: string
+  source_type?: 'youtube' | 'soundcloud' | 'hearthis'
+  source_url?: string
   event?: string
   genre?: string
   notes?: string
-  turnstile_token: string
-}): Promise<{ data: { issue_url: string; issue_number: number }; ok: boolean }> {
+}): Promise<{ data: { id: string }; ok: boolean }> {
   return fetchApi('/petitions', { method: 'POST', body: JSON.stringify(data) })
+}
+
+// ═══════════════════════════════════════════
+// SOURCE REQUESTS
+// ═══════════════════════════════════════════
+
+export async function submitSourceRequest(
+  setId: string,
+  data: {
+    source_type: 'youtube' | 'soundcloud' | 'hearthis'
+    source_url: string
+    notes?: string
+  }
+): Promise<{ data: { id: string }; ok: boolean }> {
+  return fetchApi(`/sets/${setId}/request-source`, { method: 'POST', body: JSON.stringify(data) })
 }
 
 // ═══════════════════════════════════════════
@@ -562,6 +612,7 @@ export interface Track1001Preview {
   track_content_id?: string
   is_continuation?: boolean
   is_identified?: boolean
+  is_mashup?: boolean
   spotify_url?: string
   apple_music_url?: string
   soundcloud_url?: string
@@ -634,4 +685,69 @@ export async function updateUsername(username: string): Promise<{ ok: boolean; u
     method: 'PATCH',
     body: JSON.stringify({ username }),
   })
+}
+
+// ═══════════════════════════════════════════
+// ADMIN: SOURCE REQUESTS
+// ═══════════════════════════════════════════
+
+export interface SourceRequest {
+  id: string
+  set_id: string
+  user_id: string | null
+  source_type: 'youtube' | 'soundcloud' | 'hearthis'
+  source_url: string
+  notes: string | null
+  status: 'pending' | 'approved' | 'rejected'
+  created_at: string
+  set_title: string
+  set_artist: string
+  set_stream_type: string | null
+  user_name: string | null
+  user_email: string | null
+}
+
+export async function fetchAdminSourceRequests(status = 'pending'): Promise<{ data: SourceRequest[]; total: number; ok: boolean }> {
+  return fetchApi(`/admin/source-requests?status=${status}`)
+}
+
+export async function approveAdminSourceRequest(id: string): Promise<{ data: { id: string; set_id: string; stream_type: string; source_url: string }; ok: boolean }> {
+  return fetchApi(`/admin/source-requests/${id}/approve`, { method: 'POST' })
+}
+
+export async function rejectAdminSourceRequest(id: string): Promise<{ data: { id: string; status: string }; ok: boolean }> {
+  return fetchApi(`/admin/source-requests/${id}/reject`, { method: 'POST' })
+}
+
+// ═══════════════════════════════════════════
+// ADMIN: SET REQUESTS
+// ═══════════════════════════════════════════
+
+export interface SetRequest {
+  id: string
+  user_id: string | null
+  title: string
+  artist: string
+  source_type: 'youtube' | 'soundcloud' | 'hearthis' | null
+  source_url: string | null
+  event: string | null
+  genre: string | null
+  notes: string | null
+  status: 'pending' | 'approved' | 'rejected' | 'duplicate'
+  admin_notes: string | null
+  created_at: string
+  user_name: string | null
+  user_email: string | null
+}
+
+export async function fetchAdminSetRequests(status = 'pending'): Promise<{ data: SetRequest[]; total: number; ok: boolean }> {
+  return fetchApi(`/admin/set-requests?status=${status}`)
+}
+
+export async function approveAdminSetRequest(id: string): Promise<{ data: { id: string; status: string }; ok: boolean }> {
+  return fetchApi(`/admin/set-requests/${id}/approve`, { method: 'POST' })
+}
+
+export async function rejectAdminSetRequest(id: string): Promise<{ data: { id: string; status: string }; ok: boolean }> {
+  return fetchApi(`/admin/set-requests/${id}/reject`, { method: 'POST' })
 }

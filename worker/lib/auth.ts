@@ -3,6 +3,7 @@
 
 import { betterAuth } from 'better-auth'
 import { admin, twoFactor } from 'better-auth/plugins'
+import { apiKey } from '@better-auth/api-key'
 import { D1Dialect } from 'kysely-d1'
 import { Kysely } from 'kysely'
 
@@ -82,6 +83,16 @@ export function createAuth(env: Env) {
         backupCodeOptions: {
           amount: 10,
           length: 10,
+        },
+      }),
+      apiKey({
+        defaultPrefix: 'zeph_',
+        enableSessionForAPIKeys: true,
+        // Defer counter updates to ctx.waitUntil on CF Workers
+        deferUpdates: true,
+        // Disable rate limiting — admin API keys are trusted
+        rateLimit: {
+          enabled: false,
         },
       }),
     ],
