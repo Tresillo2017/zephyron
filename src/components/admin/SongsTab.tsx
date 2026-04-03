@@ -421,7 +421,7 @@ function EditSongModal({
   const [artist, setArtist] = useState(song.artist);
   const [label, setLabel] = useState(song.label || "");
   const [album, setAlbum] = useState(song.album || "");
-  const [coverArt, Url, setCoverArtUrl] = useState(song.cover_art_url || "");
+  const [coverArtUrl, setCoverArtUrl] = useState(song.cover_art_url || "");
   const [links, setLinks] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
     for (const svc of SERVICES) {
