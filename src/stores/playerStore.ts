@@ -54,6 +54,10 @@ interface PlayerState {
   toggleFullScreen: () => void
   setVideoMode: (enabled: boolean) => void
   loadVideoStream: () => Promise<void>
+
+  // Theater mode
+  isTheaterMode: boolean
+  setTheaterMode: (enabled: boolean) => void
 }
 
 // Debounce position saving
@@ -80,6 +84,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   isMuted: false,
   isFullScreen: false,
   isLoadingStream: false,
+  isTheaterMode: false,
   isVideoMode: false,
   videoElement: null,
   videoStreamUrl: null,
@@ -303,6 +308,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   toggleFullScreen: () => set((state) => ({ isFullScreen: !state.isFullScreen })),
+
+  setTheaterMode: (enabled) => set({ isTheaterMode: enabled }),
 
   setVideoMode: (enabled) => {
     const { videoElement, audioElement, isPlaying } = get()

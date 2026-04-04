@@ -1,7 +1,7 @@
 {
   "name": "zephyron",
   "private": true,
-  "version": "0.3.3-alpha",
+  "version": "0.3.4-alpha",
   "type": "module",
   "scripts": {
     "dev": "vite",
