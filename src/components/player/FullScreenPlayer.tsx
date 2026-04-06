@@ -4,6 +4,7 @@ import { CoverFlowView } from './CoverFlowView'
 import { useCurrentTrackCover } from '../../hooks/useCurrentTrackCover'
 import { useAlbumColors } from '../../hooks/useAlbumColors'
 import { VolumeSlider } from '../ui/VolumeSlider'
+import { LikeButton } from '../ui/LikeButton'
 import { formatTime } from '../../lib/formatTime'
 import { getSongCoverUrl, fetchStoryboard, type StoryboardData } from '../../lib/api'
 import { getAvailableServices, ServiceIconLink } from '../../lib/services'
@@ -269,6 +270,10 @@ export function FullScreenPlayer() {
       if (isTheaterMode) {
         setTheaterMode(false)
         setShowControls(true)
+        // Exit browser fullscreen when switching to audio with theater mode
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {})
+        }
       }
     }
   }, [setVideoMode, videoStreamUrl, loadVideoStream, isTheaterMode, setTheaterMode])
@@ -762,6 +767,13 @@ export function FullScreenPlayer() {
                                     </p>
                                   )}
                                 </div>
+
+                                {/* Like button */}
+                                {primarySong && (
+                                  <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                                    <LikeButton songId={primarySong.id} size={12} />
+                                  </div>
+                                )}
                               </button>
 
                               {/* Secondary (w/) tracks — SetPage-style indented layout */}
@@ -839,6 +851,13 @@ export function FullScreenPlayer() {
                                             </p>
                                           )}
                                         </div>
+
+                                        {/* Like button */}
+                                        {secondarySong && (
+                                          <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                                            <LikeButton songId={secondarySong.id} size={10} />
+                                          </div>
+                                        )}
                                       </button>
                                     )
                                   })}
@@ -969,10 +988,22 @@ export function FullScreenPlayer() {
                             <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.track_artist}</p>
                           )}
                         </div>
+                        {/* Like button for concurrent track */}
+                        {dSong && (
+                          <div style={{ flexShrink: 0 }}>
+                            <LikeButton songId={dSong.id} size={10} />
+                          </div>
+                        )}
                       </div>
                     )
                   })}
                 </div>
+                {/* Like button for main track */}
+                {song && (
+                  <div style={{ flexShrink: 0, paddingTop: 8 }}>
+                    <LikeButton songId={song.id} size={14} />
+                  </div>
+                )}
               </div>
 
               {/* Up Next — slides down inside the same card */}

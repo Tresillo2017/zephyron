@@ -73,3 +73,6 @@ Accent scale: `--h2` (light) through `--h4` (dark)
 
 ### Tech Stack
 React 19, Vite 7, Tailwind CSS 4 (`@theme` + CSS custom properties), Zustand 5, Cloudflare Workers + D1 + R2, Better Auth, custom UI primitives (no external component library).
+
+### Package manager
+Remember to always use bun for package management to ensure consistency across the team. Run `bun install` to install dependencies and `bun run <script>` for running scripts defined in package.json. Avoid using npm or yarn to prevent potential issues with lockfiles and node_modules structure.

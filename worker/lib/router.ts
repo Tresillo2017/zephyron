@@ -91,11 +91,25 @@ export class Router {
 // CORS headers helper — validates origin against allowed list
 export function corsHeaders(requestOrigin?: string | null): Headers {
   const headers = new Headers()
-  // Allow the production URL, plus localhost for dev
-  const allowed = ['http://localhost:5173', 'http://localhost:4173']
-  const origin = requestOrigin && (allowed.includes(requestOrigin) || requestOrigin.endsWith('.zephyron.app') || requestOrigin.endsWith('.workers.dev') || requestOrigin.startsWith('moz-extension://') || requestOrigin.startsWith('chrome-extension://'))
-    ? requestOrigin
-    : allowed[0]
+
+  // Allowed origins for CORS
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:4173',
+  ]
+
+  // Check if origin matches allowed patterns
+  const isAllowed = requestOrigin && (
+    allowedOrigins.includes(requestOrigin) ||
+    // Allow production domain and subdomains
+    requestOrigin.endsWith('.zephyron.app') ||
+    requestOrigin === 'https://zephyron.app' ||
+    // Allow Cloudflare Workers preview URLs (only for development)
+    (requestOrigin.endsWith('.workers.dev') && requestOrigin.includes('zephyron'))
+  )
+
+  const origin = isAllowed ? requestOrigin : allowedOrigins[0]
+
   headers.set('Access-Control-Allow-Origin', origin)
   headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
   headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Anonymous-Id, Authorization, Range, x-api-key')

@@ -2,6 +2,7 @@ import { formatTime } from '../../lib/formatTime'
 import { getSongCoverUrl } from '../../lib/api'
 import { getAvailableServices, ServiceIconLink } from '../../lib/services'
 import type { Detection } from '../../lib/types'
+import { LikeButton } from '../ui/LikeButton'
 
 // ═══════════════════════════════════════════
 // Types
@@ -117,14 +118,20 @@ export function DetectionGroup({
             </div>
           </div>
 
-          {/* Service links */}
-          {serviceLinks.length > 0 && (
-            <div className="flex items-center gap-1.5 shrink-0">
-              {serviceLinks.slice(0, 5).map(({ url, service }) => (
-                <ServiceIconLink key={service.key} url={url} service={service} size={14} />
-              ))}
-            </div>
-          )}
+          {/* Actions: Like button + Service links */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Like button */}
+            {song && <LikeButton songId={song.id} size={14} />}
+
+            {/* Service links */}
+            {serviceLinks.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                {serviceLinks.slice(0, 5).map(({ url, service }) => (
+                  <ServiceIconLink key={service.key} url={url} service={service} size={14} />
+                ))}
+              </div>
+            )}
+          </div>
         </button>
 
         {/* ═══ "W/" TRACKS — nested underneath ═══ */}
@@ -170,14 +177,20 @@ export function DetectionGroup({
                     </div>
                   </div>
 
-                  {/* Service links (smaller) */}
-                  {wtLinks.length > 0 && (
-                    <div className="flex items-center gap-1 shrink-0">
-                      {wtLinks.slice(0, 3).map(({ url, service }) => (
-                        <ServiceIconLink key={service.key} url={url} service={service} size={12} />
-                      ))}
-                    </div>
-                  )}
+                  {/* Actions: Like button + Service links (smaller) */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {/* Like button */}
+                    {wtSong && <LikeButton songId={wtSong.id} size={12} />}
+
+                    {/* Service links */}
+                    {wtLinks.length > 0 && (
+                      <div className="flex items-center gap-1">
+                        {wtLinks.slice(0, 3).map(({ url, service }) => (
+                          <ServiceIconLink key={service.key} url={url} service={service} size={12} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </button>
               )
             })}

@@ -3,6 +3,7 @@ import { usePlayerStore } from '../../stores/playerStore'
 import { getSongCoverUrl, getCoverUrl } from '../../lib/api'
 import { getAvailableServices, ServiceIcon } from '../../lib/services'
 import type { Detection, Song } from '../../lib/types'
+import { LikeButton } from '../ui/LikeButton'
 
 // ═══════════════════════════════════════════
 // Types + constants
@@ -389,7 +390,14 @@ function TrackInfo({ group, set, groupIndex, totalGroups }: {
         </>
       )}
 
-      {group?.primary.song && <SongLinks song={group.primary.song} />}
+      {group?.primary.song && (
+        <>
+          <div className="flex items-center justify-center gap-2 mt-3">
+            <LikeButton songId={group.primary.song.id} size={16} showCount />
+          </div>
+          <SongLinks song={group.primary.song} />
+        </>
+      )}
 
       {totalGroups > 0 && groupIndex >= 0 && (
         <p className="text-[10px] font-mono mt-4" style={{ color: 'rgba(255,255,255,0.2)' }}>

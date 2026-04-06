@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Here's the full rewritten changelog for Zephyron. I made every entry shorter, used simple everyday words, and focused on what it means for you as a user — like faster listening or easier navigation. [keepachangelog](https://keepachangelog.com/en/1.1.0/)
 
-## [Unreleased]
+## [0.3.4-alpha] - 2026-04-03
 
 ### New
 - Theater mode: storyboard thumbnail preview on progress bar hover, with detection chapter markers.
