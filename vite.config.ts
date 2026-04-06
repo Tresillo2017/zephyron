@@ -32,4 +32,10 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(pkg.version),
     __TURNSTILE_SITE_KEY__: JSON.stringify(process.env.TURNSTILE_SITE_KEY || ''),
   },
+  resolve: {
+    alias: {
+      // Use browser version of node-vibrant for client-side builds
+      'node-vibrant': 'node-vibrant/lib/browser.js',
+    },
+  },
 })

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Here's the full rewritten changelog for Zephyron. I made every entry shorter, used simple everyday words, and focused on what it means for you as a user — like faster listening or easier navigation. [keepachangelog](https://keepachangelog.com/en/1.1.0/)
 
+## [0.3.4-alpha] - 2026-04-03
+
+### New
+- Theater mode: storyboard thumbnail preview on progress bar hover, with detection chapter markers.
+- Theater mode: Now Playing overlay shows concurrent tracks (w/) with cover art, title, and artist.
+- Theater mode: Up Next notification shows a stacked cover art and `+x` badge when the next slot has simultaneous tracks, plus a `w/ Track A, Track B` line.
+- Fullscreen player: storyboard thumbnail preview and detection markers on both progress bars (theater and standard).
+
+### Improved
+- Player bar: volume slider is always visible (no longer hover-only); play/pause button is properly centered.
+- Player bar: progress bar is taller and higher contrast, easier to see at low playback progress.
+- Player bar hides completely in theater mode — theater controls overlay takes over.
+- Theater mode progress bar matches the standard fullscreen design (5 px, same track color).
+- Theater mode controls overlay uses a drop shadow gradient instead of a backdrop blur.
+- Now Playing overlay no longer shifts right when the tracklist panel is open.
+- Theater mode animations rewritten with spring easing curves and motion blur — smoother entry, flash, and exit throughout.
+
+### Fixed
+- Play/pause button in player bar is now correctly centered relative to the other controls.
+- Now Playing overlay no longer disappears for a moment after the track-change flash animation ends.
+
 ## [0.3.3-alpha] - 2026-04-03
 
 ### New

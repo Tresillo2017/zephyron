@@ -75,7 +75,7 @@
   // Do NOT define them here — vars override secrets on every deploy.
   "vars": {
     "BETTER_AUTH_URL": "https://zephyron.app",
-    "INVIDIOUS_BASE_URL": "https://invidious.tomasps.com"
+    "INVIDIOUS_BASE_URL": "https://invidious.zephyron.app"
   },
   // Durable Objects
   "durable_objects": {

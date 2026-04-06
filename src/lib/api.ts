@@ -569,6 +569,32 @@ export function getSongCoverUrl(songId: string): string {
   return `${API_BASE}/songs/${songId}/cover`
 }
 
+// Song likes (authenticated)
+export async function likeSong(songId: string): Promise<{ ok: boolean; liked: boolean }> {
+  return fetchApi(`/songs/${songId}/like`, { method: 'POST' })
+}
+
+export async function unlikeSong(songId: string): Promise<{ ok: boolean; liked: boolean }> {
+  return fetchApi(`/songs/${songId}/like`, { method: 'DELETE' })
+}
+
+export async function fetchLikedSongs(page = 1): Promise<{
+  data: (Song & { liked_at: string; like_count: number; set_id: string | null })[]
+  total: number
+  page: number
+  pageSize: number
+  ok: boolean
+}> {
+  const params = new URLSearchParams()
+  if (page > 1) params.set('page', String(page))
+  const qs = params.toString()
+  return fetchApi(`/users/me/liked-songs${qs ? `?${qs}` : ''}`)
+}
+
+export async function getSongLikeStatus(songId: string): Promise<{ ok: boolean; liked: boolean }> {
+  return fetchApi(`/songs/${songId}/like-status`)
+}
+
 // Admin: Songs
 export async function fetchSongsAdmin(q?: string, page = 1): Promise<{ data: Song[]; total: number; page: number; pageSize: number }> {
   const params = new URLSearchParams()

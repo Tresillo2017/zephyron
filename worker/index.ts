@@ -31,7 +31,7 @@ import {
 } from './routes/events'
 import { submitSetRequest, listSetRequests, approveSetRequest, rejectSetRequest } from './routes/petitions'
 import { createSourceRequest, listSourceRequests, approveSourceRequest, rejectSourceRequest } from './routes/source-requests'
-import { getSong, getSongCover, listSongsAdmin, updateSongAdmin, deleteSongAdmin, cacheSongCoverAdmin, enrichSongAdmin } from './routes/songs'
+import { getSong, getSongCover, likeSong, unlikeSong, getLikedSongs, getSongLikeStatus, listSongsAdmin, updateSongAdmin, deleteSongAdmin, cacheSongCoverAdmin, enrichSongAdmin } from './routes/songs'
 import { updateUsername } from './routes/user'
 import { handleDetectionQueue, handleFeedbackQueue, handleCoverArtQueue } from './queues/index'
 
@@ -49,6 +49,14 @@ type RouteHandler = (
   params: Record<string, string>
 ) => Promise<Response> | Response
 
+type AuthRouteHandler = (
+  request: Request,
+  env: Env,
+  ctx: ExecutionContext,
+  params: Record<string, string>,
+  user: { id: string; role: string; name: string; email: string }
+) => Promise<Response> | Response
+
 function withAdmin(handler: RouteHandler): RouteHandler {
   return async (request, env, ctx, params) => {
     const result = await requireAdmin(request, env)
@@ -57,11 +65,11 @@ function withAdmin(handler: RouteHandler): RouteHandler {
   }
 }
 
-function withAuth(handler: RouteHandler): RouteHandler {
+function withAuth(handler: AuthRouteHandler): RouteHandler {
   return async (request, env, ctx, params) => {
     const result = await requireAuth(request, env)
     if (result instanceof Response) return result
-    return handler(request, env, ctx, params)
+    return handler(request, env, ctx, params, result.user)
   }
 }
 
@@ -90,6 +98,12 @@ router.get('/api/sets/:id/video', getSetVideo)
 // Songs (public read)
 router.get('/api/songs/:id/cover', getSongCover)
 router.get('/api/songs/:id', getSong)
+
+// Songs: User likes (authenticated)
+router.post('/api/songs/:id/like', withAuth(likeSong))
+router.delete('/api/songs/:id/like', withAuth(unlikeSong))
+router.get('/api/songs/:id/like-status', withAuth(getSongLikeStatus))
+router.get('/api/users/me/liked-songs', withAuth(getLikedSongs))
 
 // Admin: Songs
 router.get('/api/admin/songs', withAdmin(listSongsAdmin))

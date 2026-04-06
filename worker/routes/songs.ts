@@ -1,4 +1,4 @@
-// Song API routes — public read + admin CRUD
+// Song API routes — public read + admin CRUD + user likes
 import { json, errorResponse } from '../lib/router'
 import type { SongRecord } from '../services/songs'
 
@@ -70,6 +70,117 @@ export async function getSongCover(
 }
 
 // ═══════════════════════════════════════════
+// User song likes (authenticated)
+// ═══════════════════════════════════════════
+
+// POST /api/songs/:id/like — Like a song
+export async function likeSong(
+  _request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>,
+  user: { id: string }
+): Promise<Response> {
+  const { id: songId } = params
+
+  // Verify song exists
+  const song = await env.DB.prepare('SELECT id FROM songs WHERE id = ?')
+    .bind(songId)
+    .first()
+
+  if (!song) {
+    return errorResponse('Song not found', 404)
+  }
+
+  // Insert like (ignore if already exists)
+  try {
+    await env.DB.prepare(
+      'INSERT OR IGNORE INTO user_song_likes (user_id, song_id) VALUES (?, ?)'
+    ).bind(user.id, songId).run()
+  } catch (err) {
+    console.error('[likeSong] Error:', err)
+    return errorResponse('Failed to like song', 500)
+  }
+
+  return json({ ok: true, liked: true })
+}
+
+// DELETE /api/songs/:id/like — Unlike a song
+export async function unlikeSong(
+  _request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>,
+  user: { id: string }
+): Promise<Response> {
+  const { id: songId } = params
+
+  await env.DB.prepare(
+    'DELETE FROM user_song_likes WHERE user_id = ? AND song_id = ?'
+  ).bind(user.id, songId).run()
+
+  return json({ ok: true, liked: false })
+}
+
+// GET /api/users/me/liked-songs — Get user's liked songs
+export async function getLikedSongs(
+  request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  _params: Record<string, string>,
+  user: { id: string }
+): Promise<Response> {
+  const url = new URL(request.url)
+  const page = parseInt(url.searchParams.get('page') || '1')
+  const pageSize = 50
+  const offset = (page - 1) * pageSize
+
+  const [countResult, songsResult] = await Promise.all([
+    env.DB.prepare(
+      'SELECT COUNT(*) as total FROM user_song_likes WHERE user_id = ?'
+    ).bind(user.id).first<{ total: number }>(),
+
+    env.DB.prepare(`
+      SELECT
+        s.*,
+        usl.liked_at,
+        (SELECT COUNT(*) FROM user_song_likes WHERE song_id = s.id) as like_count,
+        (SELECT d.set_id FROM detections d WHERE d.song_id = s.id ORDER BY d.created_at DESC LIMIT 1) as set_id
+      FROM user_song_likes usl
+      JOIN songs s ON s.id = usl.song_id
+      WHERE usl.user_id = ?
+      ORDER BY usl.liked_at DESC
+      LIMIT ? OFFSET ?
+    `).bind(user.id, pageSize, offset).all()
+  ])
+
+  return json({
+    data: songsResult.results,
+    total: countResult?.total || 0,
+    page,
+    pageSize,
+    ok: true,
+  })
+}
+
+// GET /api/songs/:id/like-status — Check if current user has liked a song
+export async function getSongLikeStatus(
+  _request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>,
+  user: { id: string }
+): Promise<Response> {
+  const { id: songId } = params
+
+  const like = await env.DB.prepare(
+    'SELECT 1 FROM user_song_likes WHERE user_id = ? AND song_id = ?'
+  ).bind(user.id, songId).first()
+
+  return json({ ok: true, liked: !!like })
+}
+
+// ═══════════════════════════════════════════
 // Admin endpoints
 // ═══════════════════════════════════════════
 
@@ -86,7 +197,8 @@ export async function listSongsAdmin(
 
   let countQuery = 'SELECT COUNT(*) as total FROM songs'
   let dataQuery = `SELECT s.*,
-    (SELECT COUNT(*) FROM detections d WHERE d.song_id = s.id) as detection_count
+    (SELECT COUNT(*) FROM detections d WHERE d.song_id = s.id) as detection_count,
+    (SELECT COUNT(*) FROM user_song_likes usl WHERE usl.song_id = s.id) as like_count
     FROM songs s`
   const params: unknown[] = []
 

@@ -25,6 +25,7 @@ import { SearchPage } from './pages/SearchPage'
 import { PlaylistsPage } from './pages/PlaylistsPage'
 import { PlaylistPage } from './pages/PlaylistPage'
 import { HistoryPage } from './pages/HistoryPage'
+import { LikedSongsPage } from './pages/LikedSongsPage'
 import { AdminPage } from './pages/AdminPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SettingsPage } from './pages/SettingsPage'
@@ -111,6 +112,7 @@ function App() {
           <Route path="playlists" element={<PlaylistsPage />} />
           <Route path="playlists/:id" element={<PlaylistPage />} />
           <Route path="history" element={<HistoryPage />} />
+          <Route path="liked-songs" element={<LikedSongsPage />} />
           <Route path="artists" element={<ArtistsPage />} />
           <Route path="artists/:id" element={<ArtistPage />} />
           <Route path="events" element={<EventsPage />} />

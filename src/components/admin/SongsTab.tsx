@@ -221,6 +221,23 @@ export function SongsTab() {
                     ))}
                 </div>
 
+                {/* Like count */}
+                {(song.like_count ?? 0) > 0 && (
+                  <span
+                    className="text-[10px] font-mono px-1.5 py-0.5 rounded flex items-center gap-1"
+                    style={{
+                      background: "hsl(var(--h3) / 0.1)",
+                      color: "hsl(var(--h3))",
+                    }}
+                    title={`${song.like_count} like${song.like_count !== 1 ? 's' : ''}`}
+                  >
+                    <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
+                    </svg>
+                    {song.like_count}
+                  </span>
+                )}
+
                 {/* Detection count */}
                 {(song.detection_count ?? 0) > 0 && (
                   <span

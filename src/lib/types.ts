@@ -87,6 +87,7 @@ export interface Song {
   source?: string | null
   external_id?: string | null
   detection_count?: number
+  like_count?: number
   created_at?: string
   updated_at?: string
 }
