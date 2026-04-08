@@ -3,6 +3,7 @@ import { FiHeart } from 'react-icons/fi'
 import { FaHeart } from 'react-icons/fa'
 import { likeSong, unlikeSong, getSongLikeStatus } from '../../lib/api'
 import { useSession } from '../../lib/auth-client'
+import { sileo } from 'sileo'
 
 interface LikeButtonProps {
   songId: string
@@ -61,8 +62,10 @@ export function LikeButton({ songId, size = 16, className = '', showCount = fals
     try {
       if (wasLiked) {
         await unlikeSong(songId)
+        sileo.success({ title: 'Removed from liked songs', duration: 3000 })
       } else {
         await likeSong(songId)
+        sileo.success({ title: 'Liked!', duration: 3000 })
       }
     } catch (err) {
       console.error('Failed to toggle like:', err)
@@ -70,6 +73,7 @@ export function LikeButton({ songId, size = 16, className = '', showCount = fals
       setLiked(wasLiked)
       setCount(prevCount)
       setError('Failed to update like')
+      sileo.error({ title: 'Failed to update like status', duration: 7000 })
       setTimeout(() => setError(null), 2000)
     }
   }
