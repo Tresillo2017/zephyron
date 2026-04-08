@@ -29,15 +29,6 @@ export function ProfilePage() {
   }
 
   const user = session.user as any
-  const reputation = user.reputation || 0
-  const annotations = user.totalAnnotations || user.total_annotations || 0
-  const votes = user.totalVotes || user.total_votes || 0
-
-  const tier =
-    reputation >= 500 ? { name: 'Expert', hue: 'var(--h3)' }
-      : reputation >= 100 ? { name: 'Contributor', hue: '40, 80%, 55%' }
-      : reputation >= 10 ? { name: 'Active', hue: 'var(--c1)' }
-      : { name: 'Newcomer', hue: 'var(--c3)' }
 
   const handleSignOut = async () => {
     await signOut()
@@ -68,21 +59,17 @@ export function ProfilePage() {
                 <p className="text-sm mt-0.5" style={{ color: 'hsl(var(--c3))' }}>{user.email}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <Badge variant="accent">{user.role || 'user'}</Badge>
-                  <span className="text-xs font-[var(--font-weight-medium)]" style={{ color: `hsl(${tier.hue})` }}>{tier.name}</span>
-                  <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>·</span>
-                  <span className="text-xs font-mono" style={{ color: 'hsl(var(--h3))' }}>{reputation} pts</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Stats row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {[
-              { value: reputation, label: 'Reputation', accent: true },
-              { value: annotations, label: 'Annotations', accent: false },
-              { value: votes, label: 'Votes', accent: false },
-              { value: recentCount, label: 'Listened', accent: false },
+              { value: playlistCount, label: 'Playlists', accent: false },
+              { value: 0, label: 'Liked Songs', accent: false },
+              { value: recentCount, label: 'Sets Listened', accent: false },
             ].map((stat) => (
               <div key={stat.label} className="card !p-4">
                 <p className="text-2xl font-[var(--font-weight-bold)]" style={{ color: stat.accent ? 'hsl(var(--h3))' : 'hsl(var(--c1))' }}>
@@ -91,48 +78,6 @@ export function ProfilePage() {
                 <p className="text-[11px] mt-1" style={{ color: 'hsl(var(--c3))' }}>{stat.label}</p>
               </div>
             ))}
-          </div>
-
-          {/* Reputation guide */}
-          <div className="card">
-            <h3 className="text-sm font-[var(--font-weight-bold)] mb-4" style={{ color: 'hsl(var(--h3))' }}>Reputation</h3>
-            <p className="text-xs mb-4" style={{ color: 'hsl(var(--c3))' }}>
-              Earn reputation by contributing to the community. Higher reputation unlocks more trust.
-            </p>
-            <div className="space-y-3">
-              {[
-                { action: 'Annotation approved', points: '+10', positive: true },
-                { action: 'Correction confirmed by community', points: '+25', positive: true },
-                { action: 'Vote on a track detection', points: '+1', positive: true },
-                { action: 'Annotation rejected', points: '-5', positive: false },
-              ].map((item) => (
-                <div key={item.action} className="flex items-center justify-between">
-                  <span className="text-sm" style={{ color: 'hsl(var(--c2))' }}>{item.action}</span>
-                  <span className="text-sm font-mono font-[var(--font-weight-medium)]" style={{ color: item.positive ? 'hsl(var(--h3))' : 'hsl(0, 60%, 55%)' }}>
-                    {item.points}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Tier progress */}
-            <div className="mt-5 pt-4" style={{ borderTop: '1px solid hsl(var(--b4) / 0.2)' }}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-[var(--font-weight-medium)]" style={{ color: `hsl(${tier.hue})` }}>{tier.name}</span>
-                <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>
-                  {reputation >= 500 ? 'Max tier' : reputation >= 100 ? `${500 - reputation} pts to Expert` : reputation >= 10 ? `${100 - reputation} pts to Contributor` : `${10 - reputation} pts to Active`}
-                </span>
-              </div>
-              <div className="h-1.5 rounded-full" style={{ background: 'hsl(var(--b3))' }}>
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    background: 'hsl(var(--h3))',
-                    width: `${Math.min(100, reputation >= 500 ? 100 : reputation >= 100 ? ((reputation - 100) / 400) * 100 : reputation >= 10 ? ((reputation - 10) / 90) * 100 : (reputation / 10) * 100)}%`,
-                  }}
-                />
-              </div>
-            </div>
           </div>
         </div>
 
