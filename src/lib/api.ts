@@ -784,7 +784,7 @@ export async function rejectAdminSetRequest(id: string): Promise<{ data: { id: s
 
 export async function uploadAvatar(file: File): Promise<{ success: true; avatar_url: string }> {
   const formData = new FormData()
-  formData.append('avatar', file)
+  formData.append('file', file)
 
   const anonId = localStorage.getItem('zephyron_anonymous_id')
   const headers: Record<string, string> = {}
