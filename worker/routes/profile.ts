@@ -1,4 +1,4 @@
-import { json, errorResponse } from '../lib/router'
+import { json } from '../lib/router'
 import { requireAuth } from '../lib/auth'
 import type { UploadAvatarResponse, UploadAvatarError } from '../types'
 
