@@ -33,6 +33,7 @@ import { submitSetRequest, listSetRequests, approveSetRequest, rejectSetRequest 
 import { createSourceRequest, listSourceRequests, approveSourceRequest, rejectSourceRequest } from './routes/source-requests'
 import { getSong, getSongCover, likeSong, unlikeSong, getLikedSongs, getSongLikeStatus, listSongsAdmin, updateSongAdmin, deleteSongAdmin, cacheSongCoverAdmin, enrichSongAdmin } from './routes/songs'
 import { updateUsername } from './routes/user'
+import { uploadAvatar } from './routes/profile'
 import { handleDetectionQueue, handleFeedbackQueue, handleCoverArtQueue } from './queues/index'
 
 // Re-export Durable Object class for Cloudflare runtime
@@ -160,6 +161,9 @@ router.post('/api/sets/:id/request-source', withAuth(createSourceRequest))
 
 // User profile
 router.patch('/api/user/username', updateUsername)
+
+// Profile routes
+router.post('/api/profile/avatar/upload', uploadAvatar)
 
 // ═══════════════════════════════════════════
 // Admin routes — all protected by withAdmin()
