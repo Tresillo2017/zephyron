@@ -5,6 +5,7 @@ import { PlayerBar } from './components/layout/PlayerBar'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { WhatsNew } from './components/WhatsNew'
 import { CookieConsent } from './components/CookieConsent'
+import { Toaster } from 'sileo'
 
 // Public pages
 import { LandingPage } from './pages/LandingPage'
@@ -127,6 +128,7 @@ function App() {
         {/* 404 */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      <Toaster position="top-center" />
     </ErrorBoundary>
   )
 }
