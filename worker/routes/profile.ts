@@ -6,7 +6,10 @@ import type {
   UpdateProfileSettingsRequest,
   UpdateProfileSettingsResponse,
   UpdateProfileSettingsError,
-  User
+  User,
+  PublicUser,
+  GetPublicProfileResponse,
+  GetPublicProfileError
 } from '../types'
 
 /**
@@ -213,5 +216,70 @@ export async function updateProfileSettings(
   } catch (error) {
     console.error('Profile settings update error:', error)
     return errorResponse('Failed to update settings', 500)
+  }
+}
+
+/**
+ * GET /api/profile/:userId
+ * Returns public profile data for users who have set their profile to public.
+ * Phase 1 stub - full stats/activity features come in Phase 3.
+ */
+export async function getPublicProfile(
+  _request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>
+): Promise<Response> {
+  const userId = params.userId
+
+  if (!userId) {
+    return errorResponse('User ID is required', 400)
+  }
+
+  try {
+    // Query database for user
+    const user = await env.DB.prepare(
+      'SELECT id, name, avatar_url, bio, role, is_profile_public, created_at FROM user WHERE id = ?'
+    ).bind(userId).first() as {
+      id: string
+      name: string
+      avatar_url: string | null
+      bio: string | null
+      role: string
+      is_profile_public: number
+      created_at: string
+    } | null
+
+    // Check if user exists
+    if (!user) {
+      return json<GetPublicProfileError>({
+        error: 'USER_NOT_FOUND'
+      }, 404)
+    }
+
+    // Check if profile is public
+    if (!user.is_profile_public) {
+      return json<GetPublicProfileError>({
+        error: 'PROFILE_PRIVATE'
+      }, 403)
+    }
+
+    // Return public user data (exclude email and is_profile_public)
+    const publicUser: PublicUser = {
+      id: user.id,
+      name: user.name,
+      avatar_url: user.avatar_url,
+      bio: user.bio,
+      role: user.role,
+      created_at: user.created_at
+    }
+
+    return json<GetPublicProfileResponse>({
+      user: publicUser
+    })
+
+  } catch (error) {
+    console.error('Public profile fetch error:', error)
+    return errorResponse('Failed to fetch profile', 500)
   }
 }
