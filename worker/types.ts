@@ -116,13 +116,27 @@ export interface Vote {
 export interface User {
   id: string
   email: string | null
-  display_name: string | null
+  name: string  // Display name (editable by user)
   avatar_url: string | null
+  bio: string | null
+  is_profile_public: boolean
   role: 'listener' | 'annotator' | 'curator' | 'admin'
-  reputation: number
-  total_annotations: number
-  total_votes: number
   created_at: string
+
+  // Deprecated (keep for backward compatibility, remove in Phase 3):
+  reputation?: number
+  total_annotations?: number
+  total_votes?: number
+}
+
+export interface PublicUser {
+  id: string
+  name: string
+  avatar_url: string | null
+  bio: string | null
+  role: string
+  created_at: string
+  // Email excluded for privacy
 }
 
 export interface Playlist {
@@ -211,4 +225,40 @@ export interface EventArtist {
 export interface EventGenreBreakdown {
   genre: string
   count: number
+}
+
+// Profile API types
+
+export interface UploadAvatarResponse {
+  success: true
+  avatar_url: string
+}
+
+export interface UploadAvatarError {
+  error: 'NO_FILE' | 'INVALID_FORMAT' | 'FILE_TOO_LARGE' | 'CORRUPT_IMAGE' | 'UPLOAD_FAILED'
+  message?: string
+}
+
+export interface UpdateProfileSettingsRequest {
+  name?: string
+  bio?: string
+  is_profile_public?: boolean
+}
+
+export interface UpdateProfileSettingsResponse {
+  success: true
+  user: User
+}
+
+export interface UpdateProfileSettingsError {
+  error: 'DISPLAY_NAME_TOO_SHORT' | 'DISPLAY_NAME_TOO_LONG' | 'DISPLAY_NAME_INVALID' | 'DISPLAY_NAME_TAKEN' | 'BIO_TOO_LONG'
+  message?: string
+}
+
+export interface GetPublicProfileResponse {
+  user: PublicUser
+}
+
+export interface GetPublicProfileError {
+  error: 'PROFILE_PRIVATE' | 'USER_NOT_FOUND'
 }
