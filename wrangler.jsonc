@@ -29,6 +29,11 @@
       "binding": "AUDIO_BUCKET",
       "bucket_name": "zephyron-audio",
       "remote": true
+    },
+    {
+      "binding": "AVATARS",
+      "bucket_name": "zephyron-avatars",
+      "remote": true
     }
   ],
   // Queues
