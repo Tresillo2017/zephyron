@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { toast } from 'sileo'
+import { sileo } from 'sileo'
 import { uploadAvatar } from '../../lib/api'
 import { Button } from '../ui/Button'
 
@@ -20,7 +20,7 @@ export function ProfilePictureUpload({
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
-  const progressIntervalRef = useRef<number | null>(null)
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Escape key handling
   useEffect(() => {
@@ -133,13 +133,13 @@ export function ProfilePictureUpload({
     try {
       const result = await uploadAvatar(selectedFile)
       setProgress(100)
-      toast.success('Profile picture updated successfully')
+      sileo.success({ description: 'Profile picture updated successfully' })
       onUploadSuccess(result.avatar_url)
       onClose()
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to upload avatar'
       setError(errorMessage)
-      toast.error(errorMessage)
+      sileo.error({ description: errorMessage })
     } finally {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current)

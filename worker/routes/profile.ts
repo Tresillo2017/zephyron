@@ -5,7 +5,6 @@ import type {
   UploadAvatarError,
   UpdateProfileSettingsRequest,
   UpdateProfileSettingsResponse,
-  UpdateProfileSettingsError,
   User,
   PublicUser,
   GetPublicProfileResponse,
