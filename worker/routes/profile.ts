@@ -1,5 +1,5 @@
-import { json } from '../lib/router'
-import { requireAuth } from '../lib/auth'
+import { json, errorResponse } from '../lib/router'
+import { requireAuth, createAuth } from '../lib/auth'
 import type {
   UploadAvatarResponse,
   UploadAvatarError,
@@ -121,83 +121,88 @@ export async function updateProfileSettings(
   try {
     // 2. Parse request body
     const body = await request.json() as UpdateProfileSettingsRequest
-    const { name, bio, is_profile_public } = body
+    let { name, bio, is_profile_public } = body
 
     // 3. Validate and sanitize inputs
-    const updates: Record<string, any> = {}
+    const sqlUpdates: Record<string, any> = {}
+    let shouldUpdateName = false
 
     if (name !== undefined) {
+      // Trim whitespace
+      const trimmedName = name.trim()
+
       // Validate length
-      if (name.length < 3) {
-        return json({
-          error: 'DISPLAY_NAME_TOO_SHORT',
-          message: 'Display name must be at least 3 characters'
-        } as UpdateProfileSettingsError, 400)
+      if (trimmedName.length < 3) {
+        return errorResponse('Display name must be at least 3 characters', 400)
       }
-      if (name.length > 50) {
-        return json({
-          error: 'DISPLAY_NAME_TOO_LONG',
-          message: 'Display name must be less than 50 characters'
-        } as UpdateProfileSettingsError, 400)
+      if (trimmedName.length > 50) {
+        return errorResponse('Display name must be less than 50 characters', 400)
       }
 
       // Validate pattern (alphanumeric + spaces + basic punctuation)
-      if (!/^[\w\s\-'.]+$/.test(name)) {
-        return json({
-          error: 'DISPLAY_NAME_INVALID',
-          message: 'Display name contains invalid characters'
-        } as UpdateProfileSettingsError, 400)
+      if (!/^[\w\s\-'.]+$/.test(trimmedName)) {
+        return errorResponse('Display name contains invalid characters', 400)
       }
 
       // Check uniqueness (case-insensitive)
       const existing = await env.DB.prepare(
         'SELECT id FROM user WHERE LOWER(name) = LOWER(?) AND id != ?'
-      ).bind(name, userId).first()
+      ).bind(trimmedName, userId).first()
 
       if (existing) {
-        return json({
-          error: 'DISPLAY_NAME_TAKEN',
-          message: 'That display name is already taken'
-        } as UpdateProfileSettingsError, 400)
+        return errorResponse('That display name is already taken', 409)
       }
 
-      updates.name = name
+      name = trimmedName
+      shouldUpdateName = true
     }
 
     if (bio !== undefined) {
       // Validate length
       if (bio.length > 160) {
-        return json({
-          error: 'BIO_TOO_LONG',
-          message: 'Bio must be less than 160 characters'
-        } as UpdateProfileSettingsError, 400)
+        return errorResponse('Bio must be less than 160 characters', 400)
       }
 
       // Strip HTML tags for security
       const sanitizedBio = bio.replace(/<[^>]*>/g, '')
-      updates.bio = sanitizedBio
+      sqlUpdates.bio = sanitizedBio
     }
 
     if (is_profile_public !== undefined) {
-      updates.is_profile_public = is_profile_public ? 1 : 0
+      sqlUpdates.is_profile_public = is_profile_public ? 1 : 0
     }
 
-    // 4. Build and execute UPDATE query
-    if (Object.keys(updates).length === 0) {
-      return json({ error: 'No fields to update' }, 400)
+    // 4. Execute updates
+    if (!shouldUpdateName && Object.keys(sqlUpdates).length === 0) {
+      return errorResponse('No fields to update', 400)
     }
 
-    const setClause = Object.keys(updates).map(key => `${key} = ?`).join(', ')
-    const values = Object.values(updates)
+    // Update name via Better Auth API (so session reflects the change)
+    if (shouldUpdateName) {
+      const auth = createAuth(env)
+      await auth.api.updateUser({
+        headers: request.headers,
+        body: { name },
+      })
+    }
 
-    await env.DB.prepare(
-      `UPDATE user SET ${setClause} WHERE id = ?`
-    ).bind(...values, userId).run()
+    // Update bio and privacy via raw SQL (Better Auth doesn't have these fields)
+    if (Object.keys(sqlUpdates).length > 0) {
+      const setClause = Object.keys(sqlUpdates).map(key => `${key} = ?`).join(', ')
+      const values = Object.values(sqlUpdates)
+
+      await env.DB.prepare(
+        `UPDATE user SET ${setClause} WHERE id = ?`
+      ).bind(...values, userId).run()
+    }
 
     // 5. Fetch updated user
     const updatedUser = await env.DB.prepare(
       'SELECT * FROM user WHERE id = ?'
     ).bind(userId).first() as User
+
+    // Convert INTEGER to boolean for is_profile_public
+    updatedUser.is_profile_public = Boolean(updatedUser.is_profile_public)
 
     // 6. Return updated user
     return json({
@@ -207,6 +212,6 @@ export async function updateProfileSettings(
 
   } catch (error) {
     console.error('Profile settings update error:', error)
-    return json({ error: 'Failed to update settings' }, 500)
+    return errorResponse('Failed to update settings', 500)
   }
 }
