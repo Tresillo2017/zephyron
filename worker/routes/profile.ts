@@ -75,7 +75,7 @@ export async function uploadAvatar(
       })
 
       // 8. Save avatar_url to database
-      const avatarUrl = `https://avatars.zephyron.dev/${filename}`
+      const avatarUrl = `https://avatars.zephyron.app/${filename}`
 
       await env.DB.prepare(
         'UPDATE user SET avatar_url = ? WHERE id = ?'
