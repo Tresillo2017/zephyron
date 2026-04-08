@@ -1,4 +1,4 @@
-import type { DjSet, DjSetWithDetections, Detection, Song, SearchResults, Genre, Playlist, PlaylistWithItems, ListenHistoryItem, Annotation } from './types'
+import type { DjSet, DjSetWithDetections, Detection, Song, SearchResults, Genre, Playlist, PlaylistWithItems, ListenHistoryItem, Annotation, User, PublicUser } from './types'
 
 const API_BASE = '/api'
 
@@ -776,4 +776,67 @@ export async function approveAdminSetRequest(id: string): Promise<{ data: { id: 
 
 export async function rejectAdminSetRequest(id: string): Promise<{ data: { id: string; status: string }; ok: boolean }> {
   return fetchApi(`/admin/set-requests/${id}/reject`, { method: 'POST' })
+}
+
+// ═══════════════════════════════════════════
+// PROFILE MANAGEMENT
+// ═══════════════════════════════════════════
+
+export async function uploadAvatar(file: File): Promise<{ success: true; avatar_url: string }> {
+  const formData = new FormData()
+  formData.append('avatar', file)
+
+  const anonId = localStorage.getItem('zephyron_anonymous_id')
+  const headers: Record<string, string> = {}
+  if (anonId) {
+    headers['X-Anonymous-Id'] = anonId
+  }
+
+  const res = await fetch(`${API_BASE}/profile/avatar/upload`, {
+    method: 'POST',
+    headers,
+    body: formData,
+    credentials: 'include',
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: 'Upload failed' }))
+    throw new Error(error.message || 'Failed to upload avatar')
+  }
+
+  return res.json()
+}
+
+export async function updateProfileSettings(settings: {
+  name?: string
+  bio?: string
+  is_profile_public?: boolean
+}): Promise<{ success: true; user: User }> {
+  const res = await fetch(`${API_BASE}/profile/settings`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(settings),
+    credentials: 'include',
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: 'Update failed' }))
+    throw new Error(error.message || 'Failed to update profile settings')
+  }
+
+  return res.json()
+}
+
+export async function getPublicProfile(userId: string): Promise<{ user: PublicUser }> {
+  const res = await fetch(`${API_BASE}/profile/${userId}`, {
+    method: 'GET',
+    headers: getHeaders(),
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Failed to fetch profile' }))
+    throw new Error(error.error || 'Failed to fetch public profile')
+  }
+
+  return res.json()
 }

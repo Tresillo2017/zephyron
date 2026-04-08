@@ -232,3 +232,28 @@ export interface Genre {
   genre: string
   count: number
 }
+
+// User profiles
+export interface User {
+  id: string
+  email: string | null
+  name: string  // Display name (editable by user)
+  avatar_url: string | null
+  bio: string | null
+  is_profile_public: boolean
+  role: 'listener' | 'annotator' | 'curator' | 'admin'
+  created_at: string
+
+  // Deprecated (keep for backward compatibility, remove in Phase 3):
+  reputation?: number
+  total_annotations?: number
+  total_votes?: number
+}
+
+export interface PublicUser {
+  id: string
+  name: string
+  avatar_url: string | null
+  bio: string | null
+  created_at: string
+}
