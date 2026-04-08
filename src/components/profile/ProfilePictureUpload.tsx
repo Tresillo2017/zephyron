@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sileo'
 import { uploadAvatar } from '../../lib/api'
 import { Button } from '../ui/Button'
@@ -20,6 +20,34 @@ export function ProfilePictureUpload({
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const progressIntervalRef = useRef<number | null>(null)
+
+  // Escape key handling
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !uploading) onClose()
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [onClose, uploading])
+
+  // Body scroll lock
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [])
+
+  // Cleanup progress interval on unmount
+  useEffect(() => {
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current)
+        progressIntervalRef.current = null
+      }
+    }
+  }, [])
 
   const validateFile = (file: File): string | null => {
     if (!file.type.startsWith('image/')) {
@@ -81,7 +109,11 @@ export function ProfilePictureUpload({
     setIsDragging(true)
   }
 
-  const handleDragLeave = () => {
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    // Only clear drag state if leaving the drop zone entirely
+    if (e.currentTarget.contains(e.relatedTarget as Node)) {
+      return
+    }
     setIsDragging(false)
   }
 
@@ -93,9 +125,10 @@ export function ProfilePictureUpload({
     setError(null)
 
     // Simulate progress (since FormData upload doesn't support progress)
-    const progressInterval = setInterval(() => {
+    const intervalId = setInterval(() => {
       setProgress((prev) => Math.min(prev + 10, 90))
     }, 100)
+    progressIntervalRef.current = intervalId
 
     try {
       const result = await uploadAvatar(selectedFile)
@@ -108,7 +141,10 @@ export function ProfilePictureUpload({
       setError(errorMessage)
       toast.error(errorMessage)
     } finally {
-      clearInterval(progressInterval)
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current)
+        progressIntervalRef.current = null
+      }
       setUploading(false)
     }
   }
@@ -126,8 +162,12 @@ export function ProfilePictureUpload({
       <div
         className="card max-w-md w-full mx-4"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="upload-dialog-title"
       >
         <h2
+          id="upload-dialog-title"
           className="text-lg font-[var(--font-weight-bold)] text-[hsl(var(--c1))] mb-4"
         >
           Upload Profile Picture
@@ -156,6 +196,15 @@ export function ProfilePictureUpload({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onClick={handleDropZoneClick}
+          tabIndex={0}
+          role="button"
+          aria-label="Upload profile picture by clicking or dragging"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              document.getElementById('avatar-input')?.click()
+            }
+          }}
         >
           <input
             id="avatar-input"
