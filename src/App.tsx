@@ -1,5 +1,6 @@
 import { Routes, Route, Outlet, Navigate } from 'react-router'
 import { useSession } from './lib/auth-client'
+import { useThemeStore } from './stores/themeStore'
 import { TopNav } from './components/layout/TopNav'
 import { PlayerBar } from './components/layout/PlayerBar'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -90,6 +91,8 @@ function RedirectIfAuth({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  const theme = useThemeStore((state) => state.theme)
+
   return (
     <ErrorBoundary>
       <CookieConsent />
@@ -128,7 +131,10 @@ function App() {
         {/* 404 */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-      <Toaster position="top-center" />
+      <Toaster
+        position="top-center"
+        theme={theme === 'light' ? 'light' : 'dark'}
+      />
     </ErrorBoundary>
   )
 }
