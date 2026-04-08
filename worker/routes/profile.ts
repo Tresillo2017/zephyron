@@ -236,8 +236,13 @@ export async function getPublicProfile(
     return errorResponse('User ID is required', 400)
   }
 
+  // Validate nanoid format (12-character alphanumeric with _ or -)
+  if (!/^[a-zA-Z0-9_-]{12}$/.test(userId)) {
+    return errorResponse('Invalid user ID format', 400)
+  }
+
   try {
-    // Query database for user
+    // Query uses idx_user_public_profiles for efficient public profile lookups
     const user = await env.DB.prepare(
       'SELECT id, name, avatar_url, bio, role, is_profile_public, created_at FROM user WHERE id = ?'
     ).bind(userId).first() as {
@@ -258,7 +263,7 @@ export async function getPublicProfile(
     }
 
     // Check if profile is public
-    if (!user.is_profile_public) {
+    if (user.is_profile_public !== 1) {
       return json<GetPublicProfileError>({
         error: 'PROFILE_PRIVATE'
       }, 403)
