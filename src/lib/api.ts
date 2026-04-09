@@ -76,6 +76,19 @@ export async function fetchSetWithDetections(id: string): Promise<DjSetWithDetec
   return data.data
 }
 
+// Stream URLs
+export async function fetchStreamUrl(setId: string): Promise<{ url: string }> {
+  return { url: `${API_BASE}/sets/${setId}/stream` }
+}
+
+export async function fetchVideoStreamUrl(setId: string): Promise<{ data: { url: string } }> {
+  return { data: { url: `${API_BASE}/sets/${setId}/video` } }
+}
+
+export async function incrementPlayCount(setId: string): Promise<void> {
+  await fetchApi(`/sets/${setId}/play`, { method: 'POST' })
+}
+
 // Detections
 export async function fetchDetections(setId: string): Promise<Detection[]> {
   const data = await fetchApi<{ data: Detection[] }>(`/sets/${setId}/detections`)
