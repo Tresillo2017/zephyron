@@ -34,6 +34,7 @@ import { createSourceRequest, listSourceRequests, approveSourceRequest, rejectSo
 import { getSong, getSongCover, likeSong, unlikeSong, getLikedSongs, getSongLikeStatus, listSongsAdmin, updateSongAdmin, deleteSongAdmin, cacheSongCoverAdmin, enrichSongAdmin } from './routes/songs'
 import { updateUsername } from './routes/user'
 import { uploadAvatar, updateProfileSettings, getPublicProfile } from './routes/profile'
+import * as sessions from './routes/sessions'
 import { handleDetectionQueue, handleFeedbackQueue, handleCoverArtQueue } from './queues/index'
 
 // Re-export Durable Object class for Cloudflare runtime
@@ -153,6 +154,9 @@ router.delete('/api/playlists/:id/items/:setId', removePlaylistItem)
 // History (authenticated)
 router.get('/api/history', getHistory)
 router.post('/api/history', updateHistory)
+
+// Sessions (authenticated)
+router.post('/api/sessions/start', sessions.startSession)
 
 // Set request petitions — DB-backed (authenticated)
 router.post('/api/petitions', withAuth(submitSetRequest))
