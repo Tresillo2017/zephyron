@@ -1,10 +1,35 @@
 /**
+ * Helper function to convert formatToParts to a record
+ */
+function formatPartsToMap(formatter: Intl.DateTimeFormat, date: Date): Record<string, string> {
+  const parts = formatter.formatToParts(date);
+  const partMap: Record<string, string> = {};
+
+  for (const part of parts) {
+    partMap[part.type] = part.value;
+  }
+
+  return partMap;
+}
+
+/**
  * Convert UTC timestamp to Pacific time (PST/PDT)
  * @param utcTimestamp - ISO 8601 UTC timestamp (e.g., '2026-01-15T08:00:00Z')
  * @returns ISO 8601 timestamp in Pacific timezone with offset (e.g., '2026-01-15T00:00:00-08:00')
+ * @throws Error if the timestamp is invalid
  */
 export function utcToPacific(utcTimestamp: string): string {
+  // Validate input
+  if (!utcTimestamp || typeof utcTimestamp !== 'string') {
+    throw new Error('Invalid input: timestamp must be a non-empty string');
+  }
+
   const date = new Date(utcTimestamp);
+
+  // Check if date is valid
+  if (isNaN(date.getTime())) {
+    throw new Error(`Invalid timestamp: "${utcTimestamp}" is not a valid ISO 8601 date`);
+  }
 
   // Format using Pacific timezone
   const formatter = new Intl.DateTimeFormat('en-US', {
@@ -18,12 +43,7 @@ export function utcToPacific(utcTimestamp: string): string {
     hour12: false,
   });
 
-  const parts = formatter.formatToParts(date);
-  const partMap: Record<string, string> = {};
-
-  for (const part of parts) {
-    partMap[part.type] = part.value;
-  }
+  const partMap = formatPartsToMap(formatter, date);
 
   const year = partMap.year;
   const month = partMap.month;
@@ -45,11 +65,7 @@ export function utcToPacific(utcTimestamp: string): string {
     hour12: false,
   });
 
-  const utcParts = utcFormatter.formatToParts(date);
-  const utcPartMap: Record<string, string> = {};
-  for (const part of utcParts) {
-    utcPartMap[part.type] = part.value;
-  }
+  const utcPartMap = formatPartsToMap(utcFormatter, date);
 
   // Calculate offset: Pacific time - UTC time (in hours)
   const pacificHour = parseInt(hour);
@@ -73,9 +89,20 @@ export function utcToPacific(utcTimestamp: string): string {
  * Extract session date in Pacific timezone
  * @param utcTimestamp - ISO 8601 UTC timestamp (e.g., '2026-01-15T08:00:00Z')
  * @returns Date in YYYY-MM-DD format (Pacific timezone)
+ * @throws Error if the timestamp is invalid
  */
 export function getSessionDate(utcTimestamp: string): string {
+  // Validate input
+  if (!utcTimestamp || typeof utcTimestamp !== 'string') {
+    throw new Error('Invalid input: timestamp must be a non-empty string');
+  }
+
   const date = new Date(utcTimestamp);
+
+  // Check if date is valid
+  if (isNaN(date.getTime())) {
+    throw new Error(`Invalid timestamp: "${utcTimestamp}" is not a valid ISO 8601 date`);
+  }
 
   // Format using Pacific timezone
   const formatter = new Intl.DateTimeFormat('en-US', {
@@ -85,12 +112,7 @@ export function getSessionDate(utcTimestamp: string): string {
     day: '2-digit',
   });
 
-  const parts = formatter.formatToParts(date);
-  const partMap: Record<string, string> = {};
-
-  for (const part of parts) {
-    partMap[part.type] = part.value;
-  }
+  const partMap = formatPartsToMap(formatter, date);
 
   const year = partMap.year;
   const month = partMap.month;
