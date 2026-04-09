@@ -2,6 +2,7 @@
 
 -- Add profile fields to user table
 ALTER TABLE user ADD COLUMN bio TEXT DEFAULT NULL;
+ALTER TABLE user ADD COLUMN avatar_url TEXT DEFAULT NULL;
 ALTER TABLE user ADD COLUMN is_profile_public INTEGER DEFAULT 0;
 
 -- Index for public profile lookups
