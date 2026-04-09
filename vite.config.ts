@@ -27,6 +27,7 @@ export default defineConfig({
     tailwindcss(),
     cloudflare(),
     stubPlugin('@opentelemetry/api'),
+    stubPlugin('@napi-rs/canvas'),
   ],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
@@ -36,6 +37,32 @@ export default defineConfig({
     alias: {
       // Use browser version of node-vibrant for client-side builds
       'node-vibrant': 'node-vibrant/lib/browser.js',
+      // Stub out canvas library (Worker-only, not used in frontend)
+      '@napi-rs/canvas': '/src/lib/canvas-stub.ts',
     },
+  },
+  optimizeDeps: {
+    exclude: [
+      '@napi-rs/canvas',
+      '@napi-rs/canvas-linux-x64-musl',
+      '@napi-rs/canvas-linux-x64-gnu',
+      '@napi-rs/canvas-darwin-x64',
+      '@napi-rs/canvas-darwin-arm64',
+      '@napi-rs/canvas-win32-x64-msvc',
+    ],
+    rolldownOptions: {
+      external: [
+        '@napi-rs/canvas',
+        '@napi-rs/canvas-linux-x64-musl',
+        '@napi-rs/canvas-linux-x64-gnu',
+        '@napi-rs/canvas-darwin-x64',
+        '@napi-rs/canvas-darwin-arm64',
+        '@napi-rs/canvas-win32-x64-msvc',
+      ],
+    },
+  },
+  ssr: {
+    noExternal: [],
+    external: ['@napi-rs/canvas'],
   },
 })
