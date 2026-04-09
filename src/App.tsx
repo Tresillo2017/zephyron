@@ -39,6 +39,7 @@ import { EventPage } from './pages/EventPage'
 import { ChangelogPage } from './pages/ChangelogPage'
 import { RequestSetPage } from './pages/RequestSetPage'
 import { WrappedPage } from './pages/WrappedPage'
+import { MonthlyWrappedPage } from './pages/MonthlyWrappedPage'
 
 /** Layout for authenticated app pages — top nav over content + player */
 function AppLayout() {
@@ -138,6 +139,7 @@ function App() {
           <Route path="changelog" element={<ChangelogPage />} />
           <Route path="request-set" element={<RequestSetPage />} />
           <Route path="wrapped/:year" element={<WrappedPage />} />
+          <Route path="wrapped/monthly/:yearMonth" element={<MonthlyWrappedPage />} />
         </Route>
 
         {/* 404 */}
