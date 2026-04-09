@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useSession, signOut } from '../lib/auth-client'
-import { fetchHistory, fetchPlaylists } from '../lib/api'
+import { fetchHistory, fetchPlaylists, fetchMonthlyWrapped } from '../lib/api'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { formatRelativeTime } from '../lib/formatTime'
@@ -17,10 +17,19 @@ export function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'playlists' | 'about'>('overview')
   const [showAvatarUpload, setShowAvatarUpload] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [currentMonthStats, setCurrentMonthStats] = useState<{ total_hours: number } | null>(null)
 
   useEffect(() => {
     fetchHistory().then((r) => setRecentCount(r.data?.length || 0)).catch(() => {})
     fetchPlaylists().then((r) => setPlaylistCount(r.data?.length || 0)).catch(() => {})
+
+    // Fetch current month stats
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth() + 1
+    fetchMonthlyWrapped(currentYear, currentMonth)
+      .then((data) => setCurrentMonthStats({ total_hours: data.total_hours }))
+      .catch(() => {})
   }, [])
 
   const tabs = [
@@ -58,6 +67,38 @@ export function ProfilePage() {
   return (
     <div className="px-6 lg:px-10 py-6">
       <div className="max-w-5xl mx-auto space-y-5">
+
+        {/* Quick Stats Section */}
+        {currentMonthStats && (
+          <div className="card">
+            <h3 className="text-sm font-[var(--font-weight-medium)] mb-4" style={{ color: 'hsl(var(--c1))' }}>
+              This Month
+            </h3>
+            <div className="flex items-end gap-2">
+              <p className="text-4xl font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--h3))' }}>
+                {Math.round(currentMonthStats.total_hours * 10) / 10}
+              </p>
+              <p className="text-sm mb-1" style={{ color: 'hsl(var(--c2))' }}>
+                hours listened
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Wrapped CTA Section */}
+        <div className="card">
+          <h3 className="text-sm font-[var(--font-weight-medium)] mb-2" style={{ color: 'hsl(var(--c1))' }}>
+            Your {new Date().getFullYear()} Wrapped
+          </h3>
+          <p className="text-sm mb-4" style={{ color: 'hsl(var(--c2))' }}>
+            See your year in electronic music
+          </p>
+          <Link to={`/app/wrapped/${new Date().getFullYear()}`} className="no-underline">
+            <Button variant="primary" className="w-full justify-center">
+              View Wrapped
+            </Button>
+          </Link>
+        </div>
 
         {/* Profile Header */}
         <ProfileHeader
