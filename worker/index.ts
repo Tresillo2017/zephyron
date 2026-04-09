@@ -157,6 +157,8 @@ router.post('/api/history', updateHistory)
 
 // Sessions (authenticated)
 router.post('/api/sessions/start', sessions.startSession)
+router.patch('/api/sessions/:id/progress', sessions.updateProgress)
+router.post('/api/sessions/:id/end', sessions.endSession)
 
 // Set request petitions — DB-backed (authenticated)
 router.post('/api/petitions', withAuth(submitSetRequest))

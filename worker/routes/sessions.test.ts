@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { startSession } from './sessions'
+import { startSession, updateProgress, endSession } from './sessions'
 
 describe('sessions', () => {
   describe('startSession', () => {
@@ -296,6 +296,341 @@ describe('sessions', () => {
       expect(response.status).toBe(500)
       const data = await response.json()
       expect(data.error).toBe('Failed to create session')
+    })
+  })
+
+  describe('PATCH /api/sessions/:id/progress', () => {
+    it('updates session duration and position', async () => {
+      const request = new Request('http://localhost/api/sessions/session_123/progress', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ position_seconds: 60 }),
+      })
+
+      ;(request as any).session = {
+        session: {
+          userId: 'user_123',
+        },
+      }
+
+      const mockPrepare = vi.fn()
+      const mockBind = vi.fn()
+      const mockFirst = vi.fn()
+      const mockRun = vi.fn()
+
+      mockPrepare.mockReturnThis()
+      mockBind.mockReturnThis()
+
+      // First call: get session
+      mockFirst.mockResolvedValueOnce({
+        id: 'session_123',
+        user_id: 'user_123',
+        duration_seconds: 30,
+      })
+
+      mockRun.mockResolvedValue({ success: true })
+
+      const env = {
+        DB: {
+          prepare: mockPrepare,
+          bind: mockBind,
+          first: mockFirst,
+          run: mockRun,
+        },
+      } as any
+
+      const ctx = {} as ExecutionContext
+
+      const response = await updateProgress(request, env, ctx, { id: 'session_123' })
+
+      expect(response.status).toBe(200)
+      const data = await response.json()
+      expect(data.ok).toBe(true)
+    })
+
+    it('returns 403 when session belongs to different user', async () => {
+      const request = new Request('http://localhost/api/sessions/session_123/progress', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ position_seconds: 60 }),
+      })
+
+      ;(request as any).session = {
+        session: {
+          userId: 'user_123',
+        },
+      }
+
+      const mockPrepare = vi.fn()
+      const mockBind = vi.fn()
+      const mockFirst = vi.fn()
+
+      mockPrepare.mockReturnThis()
+      mockBind.mockReturnThis()
+
+      // Session belongs to different user
+      mockFirst.mockResolvedValueOnce({
+        id: 'session_123',
+        user_id: 'user_999',
+        duration_seconds: 30,
+      })
+
+      const env = {
+        DB: {
+          prepare: mockPrepare,
+          bind: mockBind,
+          first: mockFirst,
+        },
+      } as any
+
+      const ctx = {} as ExecutionContext
+
+      const response = await updateProgress(request, env, ctx, { id: 'session_123' })
+
+      expect(response.status).toBe(403)
+    })
+
+    it('returns 401 when user not authenticated', async () => {
+      const request = new Request('http://localhost/api/sessions/session_123/progress', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ position_seconds: 60 }),
+      })
+
+      // No session context
+
+      const env = {} as any
+      const ctx = {} as ExecutionContext
+
+      const response = await updateProgress(request, env, ctx, { id: 'session_123' })
+
+      expect(response.status).toBe(401)
+    })
+  })
+
+  describe('POST /api/sessions/:id/end', () => {
+    it('finalizes session and calculates qualification', async () => {
+      const request = new Request('http://localhost/api/sessions/session_123/end', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ position_seconds: 900 }),
+      })
+
+      ;(request as any).session = {
+        session: {
+          userId: 'user_123',
+        },
+      }
+
+      const mockPrepare = vi.fn()
+      const mockBind = vi.fn()
+      const mockFirst = vi.fn()
+      const mockRun = vi.fn()
+
+      mockPrepare.mockReturnThis()
+      mockBind.mockReturnThis()
+
+      // First call: get session
+      mockFirst
+        .mockResolvedValueOnce({
+          id: 'session_123',
+          user_id: 'user_123',
+          set_id: 'set_123',
+          duration_seconds: 900,
+        })
+        // Second call: get set duration
+        .mockResolvedValueOnce({
+          duration_seconds: 6000, // 100 minutes
+        })
+
+      mockRun.mockResolvedValue({ success: true })
+
+      const env = {
+        DB: {
+          prepare: mockPrepare,
+          bind: mockBind,
+          first: mockFirst,
+          run: mockRun,
+        },
+      } as any
+
+      const ctx = {} as ExecutionContext
+
+      const response = await endSession(request, env, ctx, { id: 'session_123' })
+
+      expect(response.status).toBe(200)
+      const data = await response.json()
+      expect(data.ok).toBe(true)
+      expect(typeof data.qualifies).toBe('boolean')
+      expect(data.qualifies).toBe(true) // 900/6000 = 15%, should qualify
+    })
+
+    it('returns false for qualifies when below 15% threshold', async () => {
+      const request = new Request('http://localhost/api/sessions/session_123/end', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ position_seconds: 300 }),
+      })
+
+      ;(request as any).session = {
+        session: {
+          userId: 'user_123',
+        },
+      }
+
+      const mockPrepare = vi.fn()
+      const mockBind = vi.fn()
+      const mockFirst = vi.fn()
+      const mockRun = vi.fn()
+
+      mockPrepare.mockReturnThis()
+      mockBind.mockReturnThis()
+
+      // First call: get session
+      mockFirst
+        .mockResolvedValueOnce({
+          id: 'session_123',
+          user_id: 'user_123',
+          set_id: 'set_123',
+          duration_seconds: 300,
+        })
+        // Second call: get set duration
+        .mockResolvedValueOnce({
+          duration_seconds: 3000, // 50 minutes, 300/3000 = 10%
+        })
+
+      mockRun.mockResolvedValue({ success: true })
+
+      const env = {
+        DB: {
+          prepare: mockPrepare,
+          bind: mockBind,
+          first: mockFirst,
+          run: mockRun,
+        },
+      } as any
+
+      const ctx = {} as ExecutionContext
+
+      const response = await endSession(request, env, ctx, { id: 'session_123' })
+
+      expect(response.status).toBe(200)
+      const data = await response.json()
+      expect(data.qualifies).toBe(false)
+    })
+
+    it('returns 401 when user not authenticated', async () => {
+      const request = new Request('http://localhost/api/sessions/session_123/end', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ position_seconds: 900 }),
+      })
+
+      // No session context
+
+      const env = {} as any
+      const ctx = {} as ExecutionContext
+
+      const response = await endSession(request, env, ctx, { id: 'session_123' })
+
+      expect(response.status).toBe(401)
+    })
+
+    it('returns 403 when session belongs to different user', async () => {
+      const request = new Request('http://localhost/api/sessions/session_123/end', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ position_seconds: 900 }),
+      })
+
+      ;(request as any).session = {
+        session: {
+          userId: 'user_123',
+        },
+      }
+
+      const mockPrepare = vi.fn()
+      const mockBind = vi.fn()
+      const mockFirst = vi.fn()
+
+      mockPrepare.mockReturnThis()
+      mockBind.mockReturnThis()
+
+      // Session belongs to different user
+      mockFirst.mockResolvedValueOnce({
+        id: 'session_123',
+        user_id: 'user_999',
+        set_id: 'set_123',
+        duration_seconds: 900,
+      })
+
+      const env = {
+        DB: {
+          prepare: mockPrepare,
+          bind: mockBind,
+          first: mockFirst,
+        },
+      } as any
+
+      const ctx = {} as ExecutionContext
+
+      const response = await endSession(request, env, ctx, { id: 'session_123' })
+
+      expect(response.status).toBe(403)
+    })
+
+    it('returns 404 when session not found', async () => {
+      const request = new Request('http://localhost/api/sessions/session_123/end', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ position_seconds: 900 }),
+      })
+
+      ;(request as any).session = {
+        session: {
+          userId: 'user_123',
+        },
+      }
+
+      const mockPrepare = vi.fn()
+      const mockBind = vi.fn()
+      const mockFirst = vi.fn()
+
+      mockPrepare.mockReturnThis()
+      mockBind.mockReturnThis()
+
+      // Session not found
+      mockFirst.mockResolvedValueOnce(null)
+
+      const env = {
+        DB: {
+          prepare: mockPrepare,
+          bind: mockBind,
+          first: mockFirst,
+        },
+      } as any
+
+      const ctx = {} as ExecutionContext
+
+      const response = await endSession(request, env, ctx, { id: 'session_123' })
+
+      expect(response.status).toBe(404)
     })
   })
 })
