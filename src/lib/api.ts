@@ -1,4 +1,4 @@
-import type { DjSet, DjSetWithDetections, Detection, Song, SearchResults, Genre, Playlist, PlaylistWithItems, ListenHistoryItem, Annotation, User, PublicUser } from './types'
+import type { DjSet, DjSetWithDetections, Detection, SearchResults, Genre, Playlist, PlaylistWithItems, ListenHistoryItem, Annotation } from './types'
 
 const API_BASE = '/api'
 
@@ -48,188 +48,89 @@ export async function fetchSets(params?: {
   page?: number
   pageSize?: number
   genre?: string
-  sort?: 'created_at' | 'duration_seconds' | 'updated_at'
-  order?: 'asc' | 'desc'
   artist?: string
-}): Promise<{
-  sets: DjSet[]
-  pagination: { page: number; pageSize: number; totalPages: number; totalCount: number }
-}> {
-  const query = new URLSearchParams()
-  if (params?.page) query.set('page', params.page.toString())
-  if (params?.pageSize) query.set('pageSize', params.pageSize.toString())
-  if (params?.genre) query.set('genre', params.genre)
-  if (params?.sort) query.set('sort', params.sort)
-  if (params?.order) query.set('order', params.order)
-  if (params?.artist) query.set('artist', params.artist)
-
-  return fetchApi(`/sets?${query}`)
+  sort?: string
+}): Promise<{ data: DjSet[]; total: number; page: number; pageSize: number; totalPages: number }> {
+  const searchParams = new URLSearchParams()
+  if (params?.page) searchParams.set('page', params.page.toString())
+  if (params?.pageSize) searchParams.set('pageSize', params.pageSize.toString())
+  if (params?.genre) searchParams.set('genre', params.genre)
+  if (params?.artist) searchParams.set('artist', params.artist)
+  if (params?.sort) searchParams.set('sort', params.sort)
+  const qs = searchParams.toString()
+  return fetchApi(`/sets${qs ? `?${qs}` : ''}`)
 }
 
-export async function fetchSet(id: string): Promise<DjSet> {
-  const data = await fetchApi<{ data: DjSet }>(`/sets/${id}`)
-  return data.data
+export async function fetchSet(id: string): Promise<{ data: DjSetWithDetections }> {
+  return fetchApi(`/sets/${id}`)
 }
 
-export async function fetchSetWithDetections(id: string): Promise<DjSetWithDetections> {
-  const data = await fetchApi<{ data: DjSetWithDetections }>(`/sets/${id}/detections`)
-  return data.data
+export async function fetchGenres(): Promise<{ data: Genre[] }> {
+  return fetchApi('/sets/genres')
 }
 
-// Stream URLs
-export async function fetchStreamUrl(setId: string): Promise<{ url: string }> {
-  return { url: `${API_BASE}/sets/${setId}/stream` }
-}
-
-export async function fetchVideoStreamUrl(setId: string): Promise<{ data: { url: string } }> {
-  return { data: { url: `${API_BASE}/sets/${setId}/video` } }
+export function getStreamUrl(setId: string): string {
+  return `${API_BASE}/sets/${setId}/stream`
 }
 
 export async function incrementPlayCount(setId: string): Promise<void> {
   await fetchApi(`/sets/${setId}/play`, { method: 'POST' })
 }
 
-// Detections
-export async function fetchDetections(setId: string): Promise<Detection[]> {
-  const data = await fetchApi<{ data: Detection[] }>(`/sets/${setId}/detections`)
-  return data.data
-}
-
 // Search
-export async function search(query: string, filters?: {
-  genre?: string
-  year_min?: number
-  year_max?: number
-}): Promise<SearchResults> {
-  const params = new URLSearchParams({ q: query })
-  if (filters?.genre) params.set('genre', filters.genre)
-  if (filters?.year_min) params.set('year_min', filters.year_min.toString())
-  if (filters?.year_max) params.set('year_max', filters.year_max.toString())
-
-  const data = await fetchApi<{ data: SearchResults }>(`/search?${params}`)
-  return data.data
+export async function searchSets(q: string, genre?: string): Promise<{ data: SearchResults }> {
+  const searchParams = new URLSearchParams()
+  if (q) searchParams.set('q', q)
+  if (genre) searchParams.set('genre', genre)
+  return fetchApi(`/search?${searchParams}`)
 }
 
-// Admin
-export async function uploadSet(formData: FormData): Promise<{ data: DjSet }> {
-  const res = await fetch(`${API_BASE}/admin/sets/upload`, {
+// Detections
+export async function fetchDetections(setId: string): Promise<{ data: Detection[] }> {
+  return fetchApi(`/detections/set/${setId}`)
+}
+
+export async function voteDetection(detectionId: string, vote: 1 | -1): Promise<{ ok: boolean; action: string }> {
+  return fetchApi(`/detections/${detectionId}/vote`, {
     method: 'POST',
-    body: formData,
+    body: JSON.stringify({ vote }),
   })
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Upload failed' }))
-    throw new Error(error.message || 'Failed to upload set')
-  }
-
-  return res.json()
 }
 
-export async function updateSet(id: string, updates: Partial<DjSet>): Promise<DjSet> {
-  const data = await fetchApi<{ data: DjSet }>(`/admin/sets/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(updates),
-  })
-  return data.data
-}
-
-export async function deleteSet(id: string): Promise<void> {
-  await fetchApi(`/admin/sets/${id}`, { method: 'DELETE' })
-}
-
-export async function fetchAdminSets(params?: {
-  page?: number
-  pageSize?: number
-  status?: 'processing' | 'active' | 'archived'
-}): Promise<{
-  sets: DjSet[]
-  pagination: { page: number; pageSize: number; totalPages: number; totalCount: number }
-}> {
-  const query = new URLSearchParams()
-  if (params?.page) query.set('page', params.page.toString())
-  if (params?.pageSize) query.set('pageSize', params.pageSize.toString())
-  if (params?.status) query.set('status', params.status)
-
-  return fetchApi(`/admin/sets?${query}`)
-}
-
-export async function triggerCoverExtraction(setId: string): Promise<{ data: { message: string } }> {
-  return fetchApi(`/admin/sets/${setId}/extract-cover`, {
+// Annotations
+export async function createAnnotation(data: {
+  detection_id?: string
+  set_id: string
+  track_title: string
+  track_artist?: string
+  start_time_seconds: number
+  end_time_seconds?: number
+  annotation_type: 'correction' | 'new_track' | 'delete'
+}): Promise<{ data: { id: string } }> {
+  return fetchApi('/annotations', {
     method: 'POST',
+    body: JSON.stringify(data),
   })
 }
 
-export async function triggerWaveformGeneration(setId: string): Promise<{ data: { message: string } }> {
-  return fetchApi(`/admin/sets/${setId}/generate-waveform`, {
-    method: 'POST',
-  })
-}
-
-export async function deleteDetection(detectionId: string): Promise<void> {
-  await fetchApi(`/admin/detections/${detectionId}`, {
-    method: 'DELETE',
-  })
-}
-
-// Songs
-export async function fetchSong(id: string): Promise<Song> {
-  const data = await fetchApi<{ data: Song }>(`/songs/${id}`)
-  return data.data
-}
-
-export async function likeSong(songId: string): Promise<void> {
-  await fetchApi(`/songs/${songId}/like`, { method: 'POST' })
-}
-
-export async function unlikeSong(songId: string): Promise<void> {
-  await fetchApi(`/songs/${songId}/like`, { method: 'DELETE' })
-}
-
-export async function fetchLikedSongs(): Promise<Song[]> {
-  const data = await fetchApi<{ data: Song[] }>('/songs/liked')
-  return data.data
-}
-
-export async function getSongLikeStatus(songId: string): Promise<{ liked: boolean }> {
-  const data = await fetchApi<{ liked: boolean }>(`/songs/${songId}/like/status`)
-  return data
-}
-
-// Genres
-export async function fetchGenres(): Promise<Genre[]> {
-  const data = await fetchApi<{ data: Genre[] }>('/genres')
-  return data.data
+export async function fetchAnnotations(setId: string): Promise<{ data: Annotation[] }> {
+  return fetchApi(`/annotations/set/${setId}`)
 }
 
 // Playlists
-export async function fetchPlaylists(): Promise<Playlist[]> {
-  const data = await fetchApi<{ data: Playlist[] }>('/playlists')
-  return data.data
+export async function fetchPlaylists(): Promise<{ data: Playlist[] }> {
+  return fetchApi('/playlists')
 }
 
-export async function fetchPlaylist(id: string): Promise<PlaylistWithItems> {
-  const data = await fetchApi<{ data: PlaylistWithItems }>(`/playlists/${id}`)
-  return data.data
-}
-
-export async function createPlaylist(name: string, description?: string): Promise<Playlist> {
-  const data = await fetchApi<{ data: Playlist }>('/playlists', {
+export async function createPlaylist(title: string, description?: string): Promise<{ data: { id: string; title: string } }> {
+  return fetchApi('/playlists', {
     method: 'POST',
-    body: JSON.stringify({ name, description }),
+    body: JSON.stringify({ title, description }),
   })
-  return data.data
 }
 
-export async function updatePlaylist(id: string, updates: { name?: string; description?: string }): Promise<Playlist> {
-  const data = await fetchApi<{ data: Playlist }>(`/playlists/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(updates),
-  })
-  return data.data
-}
-
-export async function deletePlaylist(id: string): Promise<void> {
-  await fetchApi(`/playlists/${id}`, { method: 'DELETE' })
+export async function fetchPlaylist(id: string): Promise<{ data: PlaylistWithItems }> {
+  return fetchApi(`/playlists/${id}`)
 }
 
 export async function addToPlaylist(playlistId: string, setId: string): Promise<void> {
@@ -240,57 +141,156 @@ export async function addToPlaylist(playlistId: string, setId: string): Promise<
 }
 
 export async function removeFromPlaylist(playlistId: string, setId: string): Promise<void> {
-  await fetchApi(`/playlists/${playlistId}/items/${setId}`, { method: 'DELETE' })
-}
-
-export async function reorderPlaylistItem(playlistId: string, setId: string, newPosition: number): Promise<void> {
-  await fetchApi(`/playlists/${playlistId}/items/${setId}/position`, {
-    method: 'PUT',
-    body: JSON.stringify({ position: newPosition }),
+  await fetchApi(`/playlists/${playlistId}/items/${setId}`, {
+    method: 'DELETE',
   })
 }
 
 // History
-export async function fetchHistory(): Promise<ListenHistoryItem[]> {
-  const data = await fetchApi<{ data: ListenHistoryItem[] }>('/history')
-  return data.data
+export async function fetchHistory(): Promise<{ data: ListenHistoryItem[] }> {
+  return fetchApi('/history')
 }
 
-export async function addToHistory(setId: string): Promise<void> {
+export async function updateListenPosition(setId: string, positionSeconds: number): Promise<void> {
   await fetchApi('/history', {
     method: 'POST',
-    body: JSON.stringify({ set_id: setId }),
+    body: JSON.stringify({ set_id: setId, position_seconds: positionSeconds }),
   })
 }
 
-// Annotations
-export async function fetchAnnotations(detectionId: string): Promise<Annotation[]> {
-  const data = await fetchApi<{ data: Annotation[] }>(`/detections/${detectionId}/annotations`)
-  return data.data
+// Admin / ML Pipeline
+export async function triggerDetection(setId: string): Promise<{ data: { job_id: string; status: string } }> {
+  return fetchApi(`/admin/sets/${setId}/detect`, { method: 'POST' })
 }
 
-export async function createAnnotation(
-  detectionId: string,
-  field: string,
-  value: string,
-  reason?: string
-): Promise<Annotation> {
-  const data = await fetchApi<{ data: Annotation }>(`/detections/${detectionId}/annotations`, {
-    method: 'POST',
-    body: JSON.stringify({ field, value, reason }),
-  })
-  return data.data
+export async function getDetectionStatus(setId: string): Promise<{ data: Record<string, unknown> }> {
+  return fetchApi(`/admin/sets/${setId}/detect/status`)
 }
 
-export async function voteAnnotation(annotationId: string, voteType: 'upvote' | 'downvote'): Promise<void> {
-  await fetchApi(`/annotations/${annotationId}/vote`, {
-    method: 'POST',
-    body: JSON.stringify({ vote_type: voteType }),
-  })
+export async function fetchMLStats(): Promise<{
+  data: {
+    totalDetections: number
+    confirmedCorrect: number
+    corrected: number
+    falsePositives: number
+    missedTracks: number
+    accuracyRate: number
+    promptVersion: number
+    feedbackPending: number
+  }
+}> {
+  return fetchApi('/admin/ml/stats')
 }
 
-export async function deleteAnnotation(annotationId: string): Promise<void> {
-  await fetchApi(`/annotations/${annotationId}`, { method: 'DELETE' })
+export async function evolvePrompt(): Promise<{ data: { evolved: boolean; new_version?: number; reason?: string } }> {
+  return fetchApi('/admin/ml/evolve', { method: 'POST' })
+}
+
+export async function fetchDetectionJobs(): Promise<{
+  data: {
+    id: string
+    set_id: string
+    status: string
+    total_segments: number
+    completed_segments: number
+    detections_found: number
+    error_message: string | null
+    set_title: string
+    set_artist: string
+    created_at: string
+    completed_at: string | null
+  }[]
+}> {
+  return fetchApi('/admin/jobs')
+}
+
+export async function redetectLowConfidence(setId: string): Promise<{ data: { requeued: boolean; job_id?: string; reason?: string } }> {
+  return fetchApi(`/admin/sets/${setId}/redetect-low`, { method: 'POST' })
+}
+
+// Admin / Beta management
+export async function generateInviteCode(options?: { max_uses?: number; expires_in_days?: number; note?: string }): Promise<{ data: { id: string; code: string; max_uses: number; expires_at: string | null } }> {
+  return fetchApi('/admin/invite-codes', { method: 'POST', body: JSON.stringify(options || {}) })
+}
+
+export async function fetchInviteCodes(): Promise<{ data: { id: string; code: string; max_uses: number; used_count: number; expires_at: string | null; note: string | null; created_at: string }[] }> {
+  return fetchApi('/admin/invite-codes')
+}
+
+export async function revokeInviteCode(id: string): Promise<void> {
+  await fetchApi(`/admin/invite-codes/${id}`, { method: 'DELETE' })
+}
+
+export async function fetchYoutubeMetadata(url: string): Promise<{
+  data: {
+    title: string
+    artist: string
+    description: string
+    genre: string
+    subgenre: string
+    venue: string
+    event: string
+    recorded_date: string
+    duration_seconds: number
+    thumbnail_url: string
+    source_url: string
+    has_tracklist: boolean
+    llm_extracted: boolean
+    youtube_source: 'youtube_api' | 'oembed'
+    raw_youtube_title: string
+    raw_youtube_channel: string
+    raw_youtube_tags: string[]
+  }
+}> {
+  return fetchApi('/admin/sets/from-youtube', { method: 'POST', body: JSON.stringify({ url }) })
+}
+
+export async function getSetUploadUrl(filename: string, contentType: string): Promise<{ data: { set_id: string; r2_key: string; upload_endpoint: string; audio_format: string } }> {
+  return fetchApi('/admin/sets/upload-url', { method: 'POST', body: JSON.stringify({ filename, content_type: contentType }) })
+}
+
+export async function adminCreateSet(data: {
+  id?: string
+  title: string
+  artist: string
+  description?: string
+  genre?: string
+  subgenre?: string
+  venue?: string
+  event?: string
+  recorded_date?: string
+  duration_seconds: number
+  r2_key: string
+  audio_format?: string
+  bitrate?: number
+  thumbnail_url?: string
+  source_url?: string
+}): Promise<{ data: { id: string } }> {
+  return fetchApi('/admin/sets', { method: 'POST', body: JSON.stringify(data) })
+}
+
+export function getCoverUrl(setId: string): string {
+  return `${API_BASE}/sets/${setId}/cover`
+}
+
+export function getVideoPreviewUrl(setId: string): string {
+  return `${API_BASE}/sets/${setId}/video`
+}
+
+export async function fetchPendingAnnotations(): Promise<{ data: any[] }> {
+  return fetchApi('/admin/annotations/pending')
+}
+
+export async function moderateAnnotation(id: string, action: 'approve' | 'reject'): Promise<void> {
+  await fetchApi(`/admin/annotations/${id}/moderate`, { method: 'POST', body: JSON.stringify({ action }) })
+}
+
+export async function deleteSetAdmin(id: string): Promise<void> {
+  await fetchApi(`/admin/sets/${id}`, { method: 'DELETE' })
+}
+
+export async function updateSetAdmin(id: string, data: Record<string, unknown>): Promise<void> {
+  await fetchApi(`/admin/sets/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 }
 
 // Listeners (live count)
@@ -328,81 +328,83 @@ export async function searchByTrack(query: string): Promise<{ data: { tracks: { 
   return fetchApi(`/search/by-track?q=${encodeURIComponent(query)}`)
 }
 
-// Waveform (legacy — kept for R2 sets)
+// Waveform
 export async function fetchWaveform(setId: string): Promise<{ data: { peaks: number[]; source: string } }> {
   return fetchApi(`/sets/${setId}/waveform`)
 }
 
 // Artists
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function fetchArtists(q?: string): Promise<{ data: any[] }> {
-  const params = q ? `?q=${encodeURIComponent(q)}` : ''
-  return fetchApi(`/artists${params}`)
+export async function fetchArtists(): Promise<{ data: any[] }> {
+  return fetchApi('/artists')
 }
 
 export async function fetchArtist(id: string): Promise<{ data: any }> {
   return fetchApi(`/artists/${id}`)
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function fetchArtistSets(artistId: string): Promise<{ data: any[] }> {
-  return fetchApi(`/artists/${artistId}/sets`)
+export async function syncArtistAdmin(id: string): Promise<void> {
+  await fetchApi(`/admin/artists/${id}/sync`, { method: 'POST' })
 }
 
-export async function uploadAvatar(file: File): Promise<{ success: true; avatar_url: string }> {
-  const formData = new FormData()
-  formData.append('file', file)
-
-  const res = await fetch(`${API_BASE}/profile/avatar/upload`, {
-    method: 'POST',
-    body: formData,
-    credentials: 'include',
-  })
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Upload failed' }))
-    throw new Error(error.message || 'Failed to upload avatar')
-  }
-
-  return res.json()
+export async function updateArtistAdmin(id: string, data: Record<string, unknown>): Promise<void> {
+  await fetchApi(`/admin/artists/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 }
 
-export async function updateProfileSettings(settings: {
-  name?: string
-  bio?: string
-  is_profile_public?: boolean
-}): Promise<{ success: true; user: User }> {
-  const res = await fetch(`${API_BASE}/profile/settings`, {
-    method: 'PATCH',
-    headers: getHeaders(),
-    body: JSON.stringify(settings),
-    credentials: 'include',
-  })
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Update failed' }))
-    throw new Error(error.message || 'Failed to update profile settings')
-  }
-
-  return res.json()
+export async function deleteArtistAdmin(id: string): Promise<void> {
+  await fetchApi(`/admin/artists/${id}`, { method: 'DELETE' })
 }
 
-export async function getPublicProfile(userId: string): Promise<{ user: PublicUser }> {
-  const res = await fetch(`${API_BASE}/profile/${userId}`, {
-    method: 'GET',
-    headers: getHeaders(),
-  })
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: 'Failed to fetch profile' }))
-    throw new Error(error.error || 'Failed to fetch public profile')
-  }
-
-  return res.json()
+// Events
+export async function fetchEvents(q?: string): Promise<{ data: any[] }> {
+  const params = q ? `?q=${encodeURIComponent(q)}` : ''
+  return fetchApi(`/events${params}`)
 }
 
-// Session tracking
+export async function fetchEvent(id: string): Promise<{ data: any }> {
+  return fetchApi(`/events/${id}`)
+}
 
+export function getEventCoverUrl(id: string): string {
+  return `${API_BASE}/events/${id}/cover`
+}
+
+export async function createEventAdmin(data: Record<string, unknown>): Promise<{ data: { id: string; slug: string } }> {
+  return fetchApi('/admin/events', { method: 'POST', body: JSON.stringify(data) })
+}
+
+export async function updateEventAdmin(id: string, data: Record<string, unknown>): Promise<void> {
+  await fetchApi(`/admin/events/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+}
+
+export async function deleteEventAdmin(id: string): Promise<void> {
+  await fetchApi(`/admin/events/${id}`, { method: 'DELETE' })
+}
+
+export async function linkSetToEvent(eventId: string, setId: string): Promise<void> {
+  await fetchApi(`/admin/events/${eventId}/link-set`, { method: 'POST', body: JSON.stringify({ set_id: setId }) })
+}
+
+export async function unlinkSetFromEvent(eventId: string, setId: string): Promise<void> {
+  await fetchApi(`/admin/events/${eventId}/unlink-set`, { method: 'POST', body: JSON.stringify({ set_id: setId }) })
+}
+
+// ═══════════════════════════════════════════
+// SET REQUEST PETITIONS
+// ═══════════════════════════════════════════
+
+export async function submitSetRequest(data: {
+  name: string
+  artist: string
+  youtube_url: string
+  event?: string
+  genre?: string
+  notes?: string
+  turnstile_token: string
+}): Promise<{ data: { issue_url: string; issue_number: number }; ok: boolean }> {
+  return fetchApi('/petitions', { method: 'POST', body: JSON.stringify(data) })
+}
+
+// Session tracking (Phase 2 Analytics)
 export interface SessionResponse {
   session_id: string
   started_at: string
@@ -459,8 +461,7 @@ export async function endSession(
   return res.json()
 }
 
-// Wrapped analytics
-
+// Wrapped analytics (Phase 2 Analytics)
 export interface WrappedData {
   year: number
   total_hours: number
@@ -513,4 +514,97 @@ export async function fetchMonthlyWrapped(year: number, month: number): Promise<
   }
 
   return res.json()
+}
+
+// Helper functions for URLs
+export async function fetchStreamUrl(setId: string): Promise<{ url: string }> {
+  return { url: `${API_BASE}/sets/${setId}/stream` }
+}
+
+export async function fetchVideoStreamUrl(setId: string): Promise<{ data: { url: string } }> {
+  return { data: { url: `${API_BASE}/sets/${setId}/video` } }
+}
+
+export async function getSongLikeStatus(songId: string): Promise<{ liked: boolean }> {
+  const data = await fetchApi<{ liked: boolean }>(`/songs/${songId}/like/status`)
+  return data
+}
+
+export function getLegacyStreamUrl(setId: string): string {
+  return `${API_BASE}/sets/${setId}/stream`
+}
+
+export function getSongCoverUrl(songId: string): string {
+  return `${API_BASE}/songs/${songId}/cover`
+}
+
+// Storyboard data
+export interface StoryboardData {
+  urls: string[]
+  interval: number
+}
+
+export async function fetchStoryboard(setId: string): Promise<StoryboardData> {
+  const res = await fetch(`${API_BASE}/sets/${setId}/storyboard`)
+  if (!res.ok) throw new Error('Failed to fetch storyboard')
+  return res.json()
+}
+
+// 1001Tracklists integration
+export async function fetch1001Tracklists(url: string): Promise<{ tracks: any[] }> {
+  const res = await fetch(`${API_BASE}/admin/1001tracklists`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  })
+  if (!res.ok) throw new Error('Failed to fetch 1001Tracklists data')
+  return res.json()
+}
+
+export async function import1001Tracklists(setId: string, url: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/admin/sets/${setId}/import-1001`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  })
+  if (!res.ok) throw new Error('Failed to import 1001Tracklists data')
+}
+
+export async function fetchEvent1001Sets(eventSlug: string): Promise<{ data: any[] }> {
+  return fetchApi(`/events/${eventSlug}/1001-sets`)
+}
+
+// Admin functions
+export async function createArtistAdmin(data: Record<string, unknown>): Promise<{ data: { id: string; slug: string } }> {
+  return fetchApi('/admin/artists', { method: 'POST', body: JSON.stringify(data) })
+}
+
+export async function uploadEventCoverAdmin(eventId: string, file: File): Promise<{ data: { cover_url: string } }> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const res = await fetch(`${API_BASE}/admin/events/${eventId}/cover`, {
+    method: 'POST',
+    body: formData,
+  })
+  if (!res.ok) throw new Error('Failed to upload cover')
+  return res.json()
+}
+
+export async function uploadEventLogoAdmin(eventId: string, file: File): Promise<{ data: { logo_url: string } }> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const res = await fetch(`${API_BASE}/admin/events/${eventId}/logo`, {
+    method: 'POST',
+    body: formData,
+  })
+  if (!res.ok) throw new Error('Failed to upload logo')
+  return res.json()
+}
+
+export function getEventLogoUrl(id: string): string {
+  return `${API_BASE}/events/${id}/logo`
+}
+
+export async function voteDetectionApi(detectionId: string, vote: 1 | -1): Promise<{ ok: boolean; action: string }> {
+  return voteDetection(detectionId, vote)
 }
