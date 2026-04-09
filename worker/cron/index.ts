@@ -1,5 +1,6 @@
 import { cleanupOrphanedSessions } from './cleanup-sessions'
 import { generateMonthlyStats } from './monthly-stats'
+import { generateAnnualStats } from './annual-stats'
 
 /**
  * Cloudflare Workers Cron Handler
@@ -45,6 +46,23 @@ export async function handleScheduled(
         console.log(`Monthly stats aggregation completed: ${result.processedUsers} users processed`)
       } catch (error) {
         console.error('Monthly stats aggregation failed:', error)
+        controller.noRetry()
+        throw error
+      }
+      break
+
+    case '0 5 2 1 *': // Annual: stats aggregation + Wrapped generation (Jan 2 at 5am PT)
+      try {
+        const now = new Date()
+        // Calculate previous year
+        const year = now.getUTCFullYear() - 1
+
+        const result = await generateAnnualStats(env, year)
+        console.log(
+          `Annual stats aggregation completed: ${result.processedUsers} users processed, ${result.imagesGenerated} Wrapped images generated`
+        )
+      } catch (error) {
+        console.error('Annual stats aggregation failed:', error)
         controller.noRetry()
         throw error
       }

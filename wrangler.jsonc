@@ -34,6 +34,11 @@
       "binding": "AVATARS",
       "bucket_name": "zephyron-avatars",
       "remote": true
+    },
+    {
+      "binding": "WRAPPED_IMAGES",
+      "bucket_name": "zephyron-wrapped-images",
+      "remote": true
     }
   ],
   // Queues
@@ -78,7 +83,8 @@
   "triggers": {
     "crons": [
       "0 * * * *",  // Hourly: session cleanup (top of every hour)
-      "0 5 1 * *"   // Monthly: stats aggregation (1st of month at 5am PT)
+      "0 5 1 * *",  // Monthly: stats aggregation (1st of month at 5am PT)
+      "0 5 2 1 *"   // Annual: Wrapped generation (Jan 2 at 5am PT)
     ]
   },
   // Environment variables
