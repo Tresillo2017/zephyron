@@ -1,6 +1,7 @@
 import { Link, useNavigate, useLocation } from "react-router";
 import { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "../../lib/auth-client";
+import { UserAvatar } from "../ui/UserAvatar";
 
 export function TopNav() {
   const { data: session } = useSession();
@@ -171,9 +172,11 @@ export function TopNav() {
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-2 px-2 py-1 rounded-full hover:bg-surface-hover/50 transition-colors"
             >
-              <div className="w-6 h-6 bg-accent/15 rounded-full flex items-center justify-center text-accent text-[10px] font-bold">
-                {session.user.name?.charAt(0).toUpperCase() || "?"}
-              </div>
+              <UserAvatar
+                avatarUrl={(session.user as any)?.avatar_url}
+                name={session.user.name}
+                size={24}
+              />
               <span className="text-sm text-text-primary hidden sm:inline">
                 {session.user.name}
               </span>
@@ -206,8 +209,12 @@ export function TopNav() {
               >
                 {/* User info */}
                 <div className="flex flex-col items-center py-3 mb-2">
-                  <div className="w-14 h-14 bg-accent/15 rounded-full flex items-center justify-center text-accent text-xl font-bold mb-2">
-                    {session.user.name?.charAt(0).toUpperCase() || "?"}
+                  <div className="mb-2">
+                    <UserAvatar
+                      avatarUrl={(session.user as any)?.avatar_url}
+                      name={session.user.name}
+                      size={56}
+                    />
                   </div>
                   <p className="text-sm font-medium text-text-primary">
                     @{session.user.name}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { useSession, signOut } from '../lib/auth-client'
+import { useSession, signOut, getSession } from '../lib/auth-client'
 import { fetchHistory, fetchPlaylists, fetchMonthlyWrapped } from '../lib/api'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -217,7 +217,11 @@ export function ProfilePage() {
       {showAvatarUpload && (
         <ProfilePictureUpload
           currentAvatarUrl={avatarUrl}
-          onUploadSuccess={(url) => setAvatarUrl(url)}
+          onUploadSuccess={async (url) => {
+            setAvatarUrl(url)
+            // Refresh session to update avatar in TopNav
+            await getSession()
+          }}
           onClose={() => setShowAvatarUpload(false)}
         />
       )}

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { sileo } from 'sileo'
 import { updateProfileSettings } from '../../lib/api'
+import { getSession } from '../../lib/auth-client'
 import { Button } from '../ui/Button'
 
 interface DisplayNameEditorProps {
@@ -58,6 +59,8 @@ export function DisplayNameEditor({ initialName, onUpdate }: DisplayNameEditorPr
       onUpdate(result.user.name || '')
       sileo.success({ description: 'Display name updated successfully' })
       setIsEditing(false)
+      // Refresh session to update name in TopNav
+      await getSession()
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update display name'
       setError(errorMessage)
