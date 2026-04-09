@@ -138,11 +138,13 @@ export async function generateWrappedImage(
     topArtists = []
   }
 
-  if (topArtists.length > 0) {
+  const validArtists = topArtists.filter(Boolean)
+
+  if (validArtists.length > 0) {
     drawCard(padding, 560, cardWidth, 220)
     drawCenteredText('YOUR TOP ARTIST', 540, 600, '500 24px Geist, sans-serif', accentText)
 
-    const topArtist = topArtists[0]
+    const topArtist = validArtists[0]
     const truncated = topArtist.length > 35 ? topArtist.substring(0, 32) + '...' : topArtist
     drawCenteredText(truncated, 540, 700, '700 40px Geist, sans-serif', primaryText)
   }
@@ -150,17 +152,17 @@ export async function generateWrappedImage(
   // ═════════════════════════════════════════════════════════════════
   // 4. TOP 5 ARTISTS CARD (y: 840-1180)
   // ═════════════════════════════════════════════════════════════════
-  if (topArtists.length > 1) {
+  if (validArtists.length > 1) {
     drawCard(padding, 840, cardWidth, 320)
     drawLeftText('TOP 5 ARTISTS', padding + 30, 880, '500 24px Geist, sans-serif', accentText)
 
-    const displayCount = Math.min(topArtists.length, 5)
+    const displayCount = Math.min(validArtists.length, 5)
     const startY = 930
     const lineHeight = 56
 
     for (let i = 0; i < displayCount; i++) {
       const y = startY + i * lineHeight
-      const artist = topArtists[i]
+      const artist = validArtists[i]
       const truncated = artist.length > 40 ? artist.substring(0, 37) + '...' : artist
 
       // Rank number
