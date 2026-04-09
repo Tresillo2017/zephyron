@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { DjSet, Detection, Song } from '../lib/types'
-import { fetchStreamUrl, fetchVideoStreamUrl, fetchDetections, incrementPlayCount, updateListenPosition, startSession, updateSessionProgress, endSession } from '../lib/api'
+import { fetchStreamUrl, fetchVideoStreamUrl, fetchDetections, incrementPlayCount, startSession, updateSessionProgress, endSession } from '../lib/api'
 import { useAuthStore } from './authStore'
 
 interface PlayerState {
@@ -56,7 +56,6 @@ interface PlayerState {
   playPrevious: () => void
   setDetections: (detections: Detection[]) => void
   updateCurrentDetection: () => void
-  savePosition: () => void
   toggleFullScreen: () => void
   setVideoMode: (enabled: boolean) => void
   loadVideoStream: () => Promise<void>
@@ -69,9 +68,6 @@ interface PlayerState {
   isTheaterMode: boolean
   setTheaterMode: (enabled: boolean) => void
 }
-
-// Debounce position saving
-let savePositionTimeout: ReturnType<typeof setTimeout> | null = null
 
 // Read persisted volume from localStorage (fallback 0.8)
 function getPersistedVolume(): number {
@@ -222,7 +218,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     if (audioElement) audioElement.pause()
     if (isVideoMode && videoElement) videoElement.pause()
     set({ isPlaying: false })
-    get().savePosition()
     // End session tracking on pause
     get()._endTrackingSession()
   },
@@ -277,10 +272,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   setCurrentTime: (time) => {
     set({ currentTime: time })
     get().updateCurrentDetection()
-
-    // Debounced position save
-    if (savePositionTimeout) clearTimeout(savePositionTimeout)
-    savePositionTimeout = setTimeout(() => get().savePosition(), 10000)
   },
 
   setDuration: (duration) => set({ duration }),
@@ -326,13 +317,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     )
     const current = active[0] || null
     set({ currentDetection: current, currentDetections: active, currentSong: current?.song || null })
-  },
-
-  savePosition: () => {
-    const { currentSet, currentTime } = get()
-    if (currentSet && currentTime > 0) {
-      updateListenPosition(currentSet.id, currentTime).catch(() => {})
-    }
   },
 
   // Session tracking helper: start a new session
