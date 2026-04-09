@@ -77,7 +77,8 @@
   // Cron Triggers
   "triggers": {
     "crons": [
-      "0 * * * *"  // Hourly: session cleanup
+      "0 * * * *",  // Hourly: session cleanup (top of every hour)
+      "0 5 1 * *"   // Monthly: stats aggregation (1st of month at 5am PT)
     ]
   },
   // Environment variables

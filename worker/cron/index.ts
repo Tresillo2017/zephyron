@@ -1,4 +1,5 @@
 import { cleanupOrphanedSessions } from './cleanup-sessions'
+import { generateMonthlyStats } from './monthly-stats'
 
 /**
  * Cloudflare Workers Cron Handler
@@ -20,6 +21,30 @@ export async function handleScheduled(
         console.log(`Session cleanup completed: ${result.closedCount} sessions closed`)
       } catch (error) {
         console.error('Session cleanup failed:', error)
+        controller.noRetry()
+        throw error
+      }
+      break
+
+    case '0 5 1 * *': // Monthly: stats aggregation (1st of month at 5am PT / 12pm UTC or 1pm UTC PDT)
+      try {
+        const now = new Date()
+        // Get the previous month and year
+        let month = now.getUTCMonth()
+        let year = now.getUTCFullYear()
+
+        // Month is 0-indexed, so December is 11, January is 0
+        if (month === 0) {
+          month = 12
+          year -= 1
+        } else {
+          month = month
+        }
+
+        const result = await generateMonthlyStats(env, year, month)
+        console.log(`Monthly stats aggregation completed: ${result.processedUsers} users processed`)
+      } catch (error) {
+        console.error('Monthly stats aggregation failed:', error)
         controller.noRetry()
         throw error
       }
