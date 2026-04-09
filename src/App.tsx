@@ -96,13 +96,22 @@ function RedirectIfAuth({ children }: { children: React.ReactNode }) {
 function App() {
   const theme = useThemeStore((state) => state.theme)
 
-  // Compute toast background color from CSS variables to match Zephyron's HSL-parametric system
+  // Compute toast styles from CSS variables to match Zephyron's HSL-parametric system
   // Sileo uses SVG <rect> elements with fill attribute that CSS background can't override
-  const toastFillColor = React.useMemo(() => {
+  const toastOptions = React.useMemo(() => {
     if (typeof window === 'undefined') return undefined
     const root = document.documentElement
-    const b5 = getComputedStyle(root).getPropertyValue('--b5').trim()
-    return b5 ? `hsl(${b5})` : undefined
+    const styles = getComputedStyle(root)
+    const b5 = styles.getPropertyValue('--b5').trim()
+    const c1 = styles.getPropertyValue('--c1').trim()
+
+    return {
+      fill: b5 ? `hsl(${b5})` : undefined,
+      styles: {
+        title: c1 ? `color: hsl(${c1})` : 'color: white',
+        description: c1 ? `color: hsl(${c1} / 0.8)` : 'color: rgba(255, 255, 255, 0.8)',
+      },
+    }
   }, [theme])
 
   return (
@@ -148,7 +157,7 @@ function App() {
       <Toaster
         position="top-center"
         theme={theme === 'light' ? 'light' : 'dark'}
-        options={toastFillColor ? { fill: toastFillColor } : undefined}
+        options={toastOptions}
       />
     </ErrorBoundary>
   )
