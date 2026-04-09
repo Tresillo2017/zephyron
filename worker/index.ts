@@ -36,6 +36,7 @@ import { updateUsername } from './routes/user'
 import { uploadAvatar, updateProfileSettings, getPublicProfile } from './routes/profile'
 import * as sessions from './routes/sessions'
 import { handleDetectionQueue, handleFeedbackQueue, handleCoverArtQueue } from './queues/index'
+import { handleScheduled } from './cron'
 
 // Re-export Durable Object class for Cloudflare runtime
 export { AudioSessionDO } from './durable-objects/audio-session'
@@ -291,6 +292,10 @@ export default {
         console.error(`Unknown queue: ${batch.queue}`)
         batch.ackAll()
     }
+  },
+
+  async scheduled(controller, env, ctx) {
+    await handleScheduled(controller, env, ctx)
   },
 } satisfies ExportedHandler<Env>
 

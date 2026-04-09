@@ -74,6 +74,12 @@
       }
     ]
   },
+  // Cron Triggers
+  "triggers": {
+    "crons": [
+      "0 * * * *"  // Hourly: session cleanup
+    ]
+  },
   // Environment variables
   // IMPORTANT: Secrets (BETTER_AUTH_SECRET, LASTFM_API_KEY,
   // GITHUB_TOKEN, TURNSTILE_SECRET_KEY) must be set via `wrangler secret put`.
