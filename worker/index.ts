@@ -35,6 +35,7 @@ import { getSong, getSongCover, likeSong, unlikeSong, getLikedSongs, getSongLike
 import { updateUsername } from './routes/user'
 import { uploadAvatar, updateProfileSettings, getPublicProfile } from './routes/profile'
 import * as sessions from './routes/sessions'
+import { getAnnualWrapped, downloadWrappedImage, getMonthlyWrapped } from './routes/wrapped'
 import { handleDetectionQueue, handleFeedbackQueue, handleCoverArtQueue } from './queues/index'
 import { handleScheduled } from './cron'
 
@@ -160,6 +161,11 @@ router.post('/api/history', updateHistory)
 router.post('/api/sessions/start', sessions.startSession)
 router.patch('/api/sessions/:id/progress', sessions.updateProgress)
 router.post('/api/sessions/:id/end', sessions.endSession)
+
+// Wrapped (authenticated)
+router.get('/api/wrapped/:year', getAnnualWrapped)
+router.get('/api/wrapped/:year/download', downloadWrappedImage)
+router.get('/api/wrapped/monthly/:yearMonth', getMonthlyWrapped)
 
 // Set request petitions — DB-backed (authenticated)
 router.post('/api/petitions', withAuth(submitSetRequest))
