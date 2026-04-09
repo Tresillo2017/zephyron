@@ -35,14 +35,14 @@ export async function startSession(
 
   // Check for existing active session (to avoid duplicates)
   const existingSession = await env.DB.prepare(
-    'SELECT id FROM listening_sessions WHERE user_id = ? AND set_id = ? AND ended_at IS NULL LIMIT 1'
+    'SELECT id, started_at FROM listening_sessions WHERE user_id = ? AND set_id = ? AND ended_at IS NULL LIMIT 1'
   )
     .bind(userId, setId)
-    .first<{ id: string }>()
+    .first<{ id: string; started_at: string }>()
 
   if (existingSession) {
     // Return the existing session
-    return json({ session_id: existingSession.id, started_at: new Date().toISOString() })
+    return json({ session_id: existingSession.id, started_at: existingSession.started_at })
   }
 
   // Generate new session ID
