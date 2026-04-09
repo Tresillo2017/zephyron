@@ -28,7 +28,7 @@ describe('Stats Aggregation Utilities', () => {
       };
 
       const result = await calculateTopArtists(
-        mockEnv,
+        mockEnv as unknown as Env,
         'user-123',
         '2026-04-01',
         '2026-04-30',
@@ -63,7 +63,7 @@ describe('Stats Aggregation Utilities', () => {
       };
 
       const result = await calculateTopArtists(
-        mockEnv,
+        mockEnv as unknown as Env,
         'user-123',
         '2026-04-01',
         '2026-04-30',
@@ -89,7 +89,7 @@ describe('Stats Aggregation Utilities', () => {
       };
 
       const result = await calculateTopArtists(
-        mockEnv,
+        mockEnv as unknown as Env,
         'user-123',
         '2026-04-01',
         '2026-04-30',
@@ -97,6 +97,41 @@ describe('Stats Aggregation Utilities', () => {
       );
 
       expect(result).toEqual([]);
+    });
+
+    it('divides session duration by track count (Cartesian product fix)', async () => {
+      const mockEnv = {
+        DB: {
+          prepare: (query: string) => {
+            // Verify the query contains the track_count join and division
+            expect(query).toContain('/ track_count.count');
+            expect(query).toContain('COUNT(*) as count');
+            return {
+              bind: (...params: unknown[]) => ({
+                all: async () => ({
+                  // If a 1-hour session had 15 tracks and artist A is on 5 tracks:
+                  // Old (buggy) query: 5 * 3600 = 18000 seconds
+                  // New (fixed) query: SUM(3600 / 15) for each of the 5 tracks = 1200 seconds
+                  results: [
+                    { track_artist: 'Artist A', total_duration: 1200 },
+                  ],
+                }),
+                first: async () => ({}),
+              }),
+            };
+          },
+        },
+      };
+
+      const result = await calculateTopArtists(
+        mockEnv as unknown as Env,
+        'user-123',
+        '2026-04-01',
+        '2026-04-30',
+        10
+      );
+
+      expect(result).toEqual(['Artist A']);
     });
   });
 
@@ -121,7 +156,7 @@ describe('Stats Aggregation Utilities', () => {
       };
 
       const result = await calculateTopGenre(
-        mockEnv,
+        mockEnv as unknown as Env,
         'user-123',
         '2026-04-01',
         '2026-04-30'
@@ -145,7 +180,7 @@ describe('Stats Aggregation Utilities', () => {
       };
 
       const result = await calculateTopGenre(
-        mockEnv,
+        mockEnv as unknown as Env,
         'user-123',
         '2026-04-01',
         '2026-04-30'
@@ -173,7 +208,7 @@ describe('Stats Aggregation Utilities', () => {
       };
 
       const result = await calculateDiscoveries(
-        mockEnv,
+        mockEnv as unknown as Env,
         'user-123',
         '2026-04-01',
         '2026-04-30'
@@ -197,7 +232,7 @@ describe('Stats Aggregation Utilities', () => {
       };
 
       const result = await calculateDiscoveries(
-        mockEnv,
+        mockEnv as unknown as Env,
         'user-123',
         '2026-04-01',
         '2026-04-30'
@@ -270,7 +305,7 @@ describe('Stats Aggregation Utilities', () => {
       };
 
       const result = await calculateLongestSet(
-        mockEnv,
+        mockEnv as unknown as Env,
         'user-123',
         '2026-04-01',
         '2026-04-30'
@@ -294,7 +329,7 @@ describe('Stats Aggregation Utilities', () => {
       };
 
       const result = await calculateLongestSet(
-        mockEnv,
+        mockEnv as unknown as Env,
         'user-123',
         '2026-04-01',
         '2026-04-30'

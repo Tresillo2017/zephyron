@@ -13,7 +13,7 @@
  * @returns Array of artist names sorted by total duration (DESC)
  */
 export async function calculateTopArtists(
-  env: any,
+  env: Env,
   userId: string,
   startDate: string,
   endDate: string,
@@ -22,10 +22,15 @@ export async function calculateTopArtists(
   const query = `
     SELECT
       d.track_artist,
-      SUM(ls.duration_seconds) as total_duration
+      SUM(ls.duration_seconds / track_count.count) as total_duration
     FROM listening_sessions ls
     JOIN sets s ON ls.set_id = s.id
     JOIN detections d ON s.id = d.set_id
+    JOIN (
+      SELECT set_id, COUNT(*) as count
+      FROM detections
+      GROUP BY set_id
+    ) track_count ON s.id = track_count.set_id
     WHERE ls.user_id = ?
       AND ls.session_date >= ?
       AND ls.session_date < ?
@@ -53,7 +58,7 @@ export async function calculateTopArtists(
  * @returns Top genre name or null if no data
  */
 export async function calculateTopGenre(
-  env: any,
+  env: Env,
   userId: string,
   startDate: string,
   endDate: string
@@ -92,7 +97,7 @@ export async function calculateTopGenre(
  * @returns Count of new artists discovered
  */
 export async function calculateDiscoveries(
-  env: any,
+  env: Env,
   userId: string,
   startDate: string,
   endDate: string
@@ -176,7 +181,7 @@ export function calculateStreak(dates: string[]): number {
  * @returns Set ID of the longest set or null if no data
  */
 export async function calculateLongestSet(
-  env: any,
+  env: Env,
   userId: string,
   startDate: string,
   endDate: string
