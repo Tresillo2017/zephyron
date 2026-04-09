@@ -65,17 +65,18 @@ export async function uploadAvatar(
     // Note: Phase 1 uploads original file without server-side resizing
     // Client handles preview/crop. Phase 2 can add sharp or Image Resizing.
     const timestamp = Date.now()
-    const filename = `${userId}-${timestamp}.webp`
+    const filename = `${timestamp}.webp`
+    const r2Key = `${userId}/${filename}` // Organize by user ID folder
 
     try {
-      await env.AVATARS.put(filename, arrayBuffer, {
+      await env.AVATARS.put(r2Key, arrayBuffer, {
         httpMetadata: {
           contentType: 'image/webp',
         },
       })
 
       // 8. Save avatar_url to database
-      const avatarUrl = `https://avatars.zephyron.app/${filename}`
+      const avatarUrl = `https://avatars.zephyron.app/${r2Key}`
 
       await env.DB.prepare(
         'UPDATE user SET avatar_url = ? WHERE id = ?'
