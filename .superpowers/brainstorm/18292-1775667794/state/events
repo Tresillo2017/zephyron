@@ -1,0 +1,8 @@
+{"type":"click","text":"A\n    \n      Profile Picture Upload\n      Users can upload custom avatars (stored in R2), with automatic resize/optimization","choice":"profile-picture","id":null,"timestamp":1775667866316}
+{"type":"click","text":"D\n    \n      Listening Statistics\n      Total hours listened, favorite genres, top artists (derived from history)","choice":"listening-stats","id":null,"timestamp":1775667867039}
+{"type":"click","text":"E\n    \n      Achievement Badges\n      Visual badges for milestones (e.g., \"Early Adopter\", \"100 Sets\", \"Curator\") — non-reputation based","choice":"badges","id":null,"timestamp":1775667868780}
+{"type":"click","text":"F\n    \n      Recent Activity Feed\n      Show recent likes, playlist updates, annotations — visible on profile","choice":"activity-feed","id":null,"timestamp":1775667870091}
+{"type":"click","text":"G\n    \n      Privacy Controls\n      Toggle profile visibility (public/private), hide listening history, etc.","choice":"privacy-settings","id":null,"timestamp":1775667871507}
+{"type":"click","text":"H\n    \n      Editable Display Name\n      Let users change their display name (separate from email)","choice":"display-name","id":null,"timestamp":1775667875694}
+{"type":"click","text":"B\n    \n      Bio / About Section\n      Short text field for users to describe themselves or their music taste","choice":"bio","id":null,"timestamp":1775667883774}
+{"type":"click","text":"A\n    \n      Short & Sweet\n      160 characters max (Twitter-style), single line display, perfect for quick intros","choice":"a","id":null,"timestamp":1775668348976}

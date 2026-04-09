@@ -7,23 +7,23 @@ CREATE TABLE listening_sessions (
   id TEXT PRIMARY KEY NOT NULL,
   user_id TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
   set_id TEXT NOT NULL REFERENCES sets(id) ON DELETE CASCADE,
-  started_at TEXT,                    -- ISO 8601 timestamp
+  started_at TEXT NOT NULL,           -- ISO 8601 timestamp (UTC)
   ended_at TEXT,                      -- ISO 8601 timestamp
   duration_seconds INTEGER DEFAULT 0, -- Total session duration
   last_position_seconds REAL DEFAULT 0,
   percentage_completed REAL,
   qualifies INTEGER DEFAULT 0,        -- 1 if >= 15%, 0 otherwise
   session_date TEXT NOT NULL,         -- YYYY-MM-DD in Pacific timezone
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_listening_sessions_user_started
-  ON listening_sessions(user_id, started_at);
-CREATE INDEX idx_listening_sessions_set
+CREATE INDEX idx_sessions_user
+  ON listening_sessions(user_id, started_at DESC);
+CREATE INDEX idx_sessions_set
   ON listening_sessions(set_id);
-CREATE INDEX idx_listening_sessions_session_date_user
+CREATE INDEX idx_sessions_date
   ON listening_sessions(session_date, user_id);
-CREATE INDEX idx_listening_sessions_user_qualifies_date
+CREATE INDEX idx_sessions_qualifies
   ON listening_sessions(user_id, qualifies, session_date);
 
 -- ─── user_monthly_stats table ─────────────────────────────────────────────────
@@ -43,11 +43,6 @@ CREATE TABLE user_monthly_stats (
   PRIMARY KEY (user_id, year, month)
 );
 
-CREATE INDEX idx_user_monthly_stats_user_year
-  ON user_monthly_stats(user_id, year);
-CREATE INDEX idx_user_monthly_stats_date
-  ON user_monthly_stats(year, month);
-
 -- ─── user_annual_stats table ──────────────────────────────────────────────────
 -- Pre-computed annual aggregations for each user
 CREATE TABLE user_annual_stats (
@@ -64,11 +59,6 @@ CREATE TABLE user_annual_stats (
   PRIMARY KEY (user_id, year)
 );
 
-CREATE INDEX idx_user_annual_stats_user_year
-  ON user_annual_stats(user_id, year);
-CREATE INDEX idx_user_annual_stats_year
-  ON user_annual_stats(year);
-
 -- ─── wrapped_images table ─────────────────────────────────────────────────────
 -- R2 storage references for Wrapped PNG images
 CREATE TABLE wrapped_images (
@@ -78,8 +68,3 @@ CREATE TABLE wrapped_images (
   generated_at TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (user_id, year)
 );
-
-CREATE INDEX idx_wrapped_images_user
-  ON wrapped_images(user_id);
-CREATE INDEX idx_wrapped_images_year
-  ON wrapped_images(year);
