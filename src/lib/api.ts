@@ -190,6 +190,11 @@ export async function fetchLikedSongs(): Promise<Song[]> {
   return data.data
 }
 
+export async function getSongLikeStatus(songId: string): Promise<{ liked: boolean }> {
+  const data = await fetchApi<{ liked: boolean }>(`/songs/${songId}/like/status`)
+  return data
+}
+
 // Genres
 export async function fetchGenres(): Promise<Genre[]> {
   const data = await fetchApi<{ data: Genre[] }>('/genres')
