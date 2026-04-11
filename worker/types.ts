@@ -265,17 +265,16 @@ export interface GetPublicProfileError {
 
 // Profile Stats types
 export interface ProfileStats {
-  totalHours: number
-  totalSets: number
-  totalSessions: number
-  topArtists: Array<{
-    artist: string
-    hours: number
-    sets: number
-  }>
-  heatmap: number[][] // 7x24 grid (day x hour)
-  weekdayPattern: number[] // 7 days, total hours per day
-  avgSessionLength: number // in hours
+  total_hours: number
+  total_sessions: number
+  average_session_minutes: number
+  longest_session_minutes: number
+  top_artists: { artist: string; hours: number }[]
+  top_genres: { genre: string; count: number }[]
+  discoveries_count: number
+  longest_streak_days: number
+  listening_heatmap: number[][]
+  weekday_pattern: { day: string; hours: number }[]
 }
 
 export interface GetStatsResponse {
@@ -283,5 +282,6 @@ export interface GetStatsResponse {
 }
 
 export interface GetStatsError {
-  error: 'USER_NOT_FOUND' | 'PROFILE_PRIVATE' | 'STATS_UNAVAILABLE'
+  error: 'INVALID_USER_ID' | 'USER_NOT_FOUND' | 'PROFILE_PRIVATE' | 'STATS_UNAVAILABLE'
+  message?: string
 }

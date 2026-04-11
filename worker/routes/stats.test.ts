@@ -1,5 +1,6 @@
 import { getStats } from './stats'
 import { describe, it, expect, beforeEach } from 'vitest'
+import type { GetStatsResponse, GetStatsError } from '../types'
 
 describe('getStats', () => {
   let mockEnv: Env
@@ -66,7 +67,7 @@ describe('getStats', () => {
     )
 
     expect(response.status).toBe(200)
-    const data = await response.json()
+    const data = await response.json() as GetStatsResponse
     expect(data.stats).toBeDefined()
     expect(data.stats.total_hours).toBeGreaterThanOrEqual(0)
     expect(data.stats.listening_heatmap).toBeDefined()
@@ -84,12 +85,12 @@ describe('getStats', () => {
     )
 
     expect(response.status).toBe(400)
-    const data = await response.json()
+    const data = await response.json() as GetStatsError
     expect(data.error).toBe('INVALID_USER_ID')
   })
 
   it('returns 404 for non-existent user', async () => {
-    mockEnv.DB.prepare = (query: string) => ({
+    mockEnv.DB.prepare = (_query: string) => ({
       bind: () => ({
         first: async () => null,
         all: async () => ({ results: [] })
@@ -104,7 +105,7 @@ describe('getStats', () => {
     )
 
     expect(response.status).toBe(404)
-    const data = await response.json()
+    const data = await response.json() as GetStatsError
     expect(data.error).toBe('USER_NOT_FOUND')
   })
 
@@ -133,7 +134,7 @@ describe('getStats', () => {
     )
 
     expect(response.status).toBe(403)
-    const data = await response.json()
+    const data = await response.json() as GetStatsError
     expect(data.error).toBe('PROFILE_PRIVATE')
   })
 })

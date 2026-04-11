@@ -1,4 +1,4 @@
-import { json, errorResponse } from '../lib/router'
+import { json } from '../lib/router'
 import {
   calculateTopArtists,
   calculateTopGenre,
