@@ -192,6 +192,28 @@ export interface UserBadge {
   badge?: Badge
 }
 
+// Activity types
+export interface ActivityItem {
+  id: string
+  user_id: string
+  user_name?: string
+  user_avatar_url?: string
+  activity_type: 'badge_earned' | 'song_liked' | 'playlist_created' |
+    'playlist_updated' | 'annotation_approved' | 'milestone_reached'
+  metadata: Record<string, any>
+  is_public: boolean
+  created_at: string
+}
+
+export interface ActivityPrivacySettings {
+  badge_earned: boolean
+  song_liked: boolean
+  playlist_created: boolean
+  playlist_updated: boolean
+  annotation_approved: boolean
+  milestone_reached: boolean
+}
+
 export interface Annotation {
   id: string
   detection_id: string | null
