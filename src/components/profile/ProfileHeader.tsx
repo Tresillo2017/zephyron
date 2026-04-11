@@ -1,5 +1,6 @@
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
+import { getAvatarLarge } from '../../lib/avatar'
 
 interface ProfileHeaderProps {
   user: {
@@ -39,7 +40,7 @@ export function ProfileHeader({
         >
           {user.avatar_url ? (
             <img
-              src={user.avatar_url}
+              src={getAvatarLarge(user.avatar_url) || user.avatar_url}
               alt={user.name}
               className="w-full h-full object-cover"
             />

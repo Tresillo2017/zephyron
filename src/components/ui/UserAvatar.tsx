@@ -1,3 +1,5 @@
+import { getAvatarSmall } from '../../lib/avatar'
+
 interface UserAvatarProps {
   avatarUrl?: string | null
   name?: string
@@ -11,7 +13,7 @@ export function UserAvatar({ avatarUrl, name, size = 32, className = '' }: UserA
   if (avatarUrl) {
     return (
       <img
-        src={avatarUrl}
+        src={getAvatarSmall(avatarUrl) || avatarUrl}
         alt={name || 'User avatar'}
         className={`rounded-full object-cover ${className}`}
         style={{ width: size, height: size }}

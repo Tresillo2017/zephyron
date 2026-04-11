@@ -61,28 +61,82 @@ export async function uploadAvatar(
     // 6. Read file as array buffer
     const arrayBuffer = await file.arrayBuffer()
 
-    // 7. Generate filename and upload to R2
-    // Note: Phase 1 uploads original file without server-side resizing
-    // Client handles preview/crop. Phase 2 can add sharp or Image Resizing.
-    const timestamp = Date.now()
-    const filename = `${timestamp}.webp`
-    const r2Key = `${userId}/${filename}` // Organize by user ID folder
-
     try {
-      await env.AVATARS.put(r2Key, arrayBuffer, {
+      // 7. Delete old avatars
+      const listResult = await env.AVATARS.list({ prefix: `${userId}/avatar-` })
+      for (const object of listResult.objects) {
+        await env.AVATARS.delete(object.key)
+      }
+
+      // 8. Upload original to temporary location
+      const tempKey = `temp/${userId}-${Date.now()}.webp`
+      await env.AVATARS.put(tempKey, arrayBuffer, {
         httpMetadata: {
-          contentType: 'image/webp',
-        },
+          contentType: 'image/webp'
+        }
       })
 
-      // 8. Save avatar_url to database
-      const avatarUrl = `https://avatars.zephyron.app/${r2Key}`
+      const tempUrl = `https://avatars.zephyron.app/${tempKey}`
+
+      // 9. Generate small size (128x128) using Workers Image Resizing
+      const smallResponse = await fetch(tempUrl, {
+        cf: {
+          image: {
+            width: 128,
+            height: 128,
+            fit: 'cover',
+            format: 'webp',
+            quality: 85
+          }
+        }
+      })
+
+      if (!smallResponse.ok) {
+        throw new Error('Failed to resize small image')
+      }
+
+      const smallBuffer = await smallResponse.arrayBuffer()
+      await env.AVATARS.put(`${userId}/avatar-small.webp`, smallBuffer, {
+        httpMetadata: {
+          contentType: 'image/webp'
+        }
+      })
+
+      // 10. Generate large size (512x512)
+      const largeResponse = await fetch(tempUrl, {
+        cf: {
+          image: {
+            width: 512,
+            height: 512,
+            fit: 'cover',
+            format: 'webp',
+            quality: 85
+          }
+        }
+      })
+
+      if (!largeResponse.ok) {
+        throw new Error('Failed to resize large image')
+      }
+
+      const largeBuffer = await largeResponse.arrayBuffer()
+      await env.AVATARS.put(`${userId}/avatar-large.webp`, largeBuffer, {
+        httpMetadata: {
+          contentType: 'image/webp'
+        }
+      })
+
+      // 11. Delete temp file
+      await env.AVATARS.delete(tempKey)
+
+      // 12. Save avatar_url to database (pointing to large size)
+      const avatarUrl = `https://avatars.zephyron.app/${userId}/avatar-large.webp`
 
       await env.DB.prepare(
         'UPDATE user SET avatar_url = ? WHERE id = ?'
       ).bind(avatarUrl, userId).run()
 
-      // 9. Return success
+      // 13. Return success
       return json<UploadAvatarResponse>({
         success: true,
         avatar_url: avatarUrl
@@ -91,9 +145,9 @@ export async function uploadAvatar(
     } catch (imageError) {
       console.error('Image processing error:', imageError)
       return json<UploadAvatarError>({
-        error: 'CORRUPT_IMAGE',
-        message: 'Unable to process image'
-      }, 400)
+        error: 'RESIZE_FAILED',
+        message: 'Failed to process image sizes'
+      }, 500)
     }
 
   } catch (error) {
