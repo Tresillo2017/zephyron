@@ -262,3 +262,26 @@ export interface GetPublicProfileResponse {
 export interface GetPublicProfileError {
   error: 'PROFILE_PRIVATE' | 'USER_NOT_FOUND'
 }
+
+// Profile Stats types
+export interface ProfileStats {
+  totalHours: number
+  totalSets: number
+  totalSessions: number
+  topArtists: Array<{
+    artist: string
+    hours: number
+    sets: number
+  }>
+  heatmap: number[][] // 7x24 grid (day x hour)
+  weekdayPattern: number[] // 7 days, total hours per day
+  avgSessionLength: number // in hours
+}
+
+export interface GetStatsResponse {
+  stats: ProfileStats
+}
+
+export interface GetStatsError {
+  error: 'USER_NOT_FOUND' | 'PROFILE_PRIVATE' | 'STATS_UNAVAILABLE'
+}
