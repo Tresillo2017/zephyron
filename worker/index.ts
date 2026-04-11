@@ -36,6 +36,8 @@ import { updateUsername } from './routes/user'
 import { uploadAvatar, updateProfileSettings, getPublicProfile } from './routes/profile'
 import { getStats } from './routes/stats'
 import { getBadges } from './routes/badges'
+import { getMyActivity, getUserActivity, getCommunityActivity } from './routes/activity'
+import { updatePrivacySettings, getPrivacySettings } from './routes/privacy'
 import * as sessions from './routes/sessions'
 import { getAnnualWrapped, downloadWrappedImage, getMonthlyWrapped } from './routes/wrapped'
 import { handleDetectionQueue, handleFeedbackQueue, handleCoverArtQueue } from './queues/index'
@@ -183,6 +185,13 @@ router.patch('/api/profile/settings', updateProfileSettings)
 router.get('/api/profile/:userId', getPublicProfile)
 router.get('/api/profile/:userId/stats', getStats)
 router.get('/api/profile/:userId/badges', getBadges)
+router.get('/api/profile/privacy', getPrivacySettings)
+router.patch('/api/profile/privacy', updatePrivacySettings)
+
+// Activity feed routes
+router.get('/api/activity/me', getMyActivity)
+router.get('/api/activity/user/:userId', getUserActivity)
+router.get('/api/activity/community', getCommunityActivity)
 
 // ═══════════════════════════════════════════
 // Admin routes — all protected by withAdmin()
