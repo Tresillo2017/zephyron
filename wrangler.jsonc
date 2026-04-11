@@ -84,7 +84,8 @@
     "crons": [
       "0 * * * *",  // Hourly: session cleanup (top of every hour)
       "0 5 1 * *",  // Monthly: stats aggregation (1st of month at 5am PT)
-      "0 5 2 1 *"   // Annual: Wrapped generation (Jan 2 at 5am PT)
+      "0 5 2 1 *",  // Annual: Wrapped generation (Jan 2 at 5am PT)
+      "0 6 * * *"   // Daily: badge calculations (6am PT)
     ]
   },
   // Environment variables

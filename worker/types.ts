@@ -285,3 +285,54 @@ export interface GetStatsError {
   error: 'INVALID_USER_ID' | 'USER_NOT_FOUND' | 'PROFILE_PRIVATE' | 'STATS_UNAVAILABLE'
   message?: string
 }
+
+// Badge types
+export interface Badge {
+  id: string
+  name: string
+  description: string
+  icon: string
+  category: 'milestone' | 'behavior' | 'genre' | 'time' | 'community' | 'special'
+  rarity: 'common' | 'rare' | 'epic' | 'legendary'
+  checkFn: (userId: string, env: Env) => Promise<boolean>
+}
+
+export interface UserBadge {
+  id: string
+  user_id: string
+  badge_id: string
+  earned_at: string
+  badge?: Badge
+}
+
+export interface GetBadgesResponse {
+  badges: UserBadge[]
+}
+
+export interface GetBadgesError {
+  error: 'INVALID_USER_ID' | 'USER_NOT_FOUND' | 'PROFILE_PRIVATE'
+}
+
+// Activity types
+export interface ActivityItem {
+  id: string
+  user_id: string
+  user_name?: string
+  user_avatar_url?: string
+  activity_type: 'badge_earned' | 'song_liked' | 'playlist_created' |
+    'playlist_updated' | 'annotation_approved' | 'milestone_reached'
+  metadata: Record<string, any>
+  is_public: boolean
+  created_at: string
+}
+
+export interface GetActivityResponse {
+  items: ActivityItem[]
+  total: number
+  page: number
+  hasMore: boolean
+}
+
+export interface GetActivityError {
+  error: 'UNAUTHORIZED' | 'INVALID_USER_ID' | 'PROFILE_PRIVATE' | 'INVALID_PAGE'
+}

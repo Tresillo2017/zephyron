@@ -35,6 +35,7 @@ import { getSong, getSongCover, likeSong, unlikeSong, getLikedSongs, getSongLike
 import { updateUsername } from './routes/user'
 import { uploadAvatar, updateProfileSettings, getPublicProfile } from './routes/profile'
 import { getStats } from './routes/stats'
+import { getBadges } from './routes/badges'
 import * as sessions from './routes/sessions'
 import { getAnnualWrapped, downloadWrappedImage, getMonthlyWrapped } from './routes/wrapped'
 import { handleDetectionQueue, handleFeedbackQueue, handleCoverArtQueue } from './queues/index'
@@ -181,6 +182,7 @@ router.post('/api/profile/avatar/upload', uploadAvatar)
 router.patch('/api/profile/settings', updateProfileSettings)
 router.get('/api/profile/:userId', getPublicProfile)
 router.get('/api/profile/:userId/stats', getStats)
+router.get('/api/profile/:userId/badges', getBadges)
 
 // ═══════════════════════════════════════════
 // Admin routes — all protected by withAdmin()

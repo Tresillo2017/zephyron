@@ -1,6 +1,7 @@
 import { cleanupOrphanedSessions } from './cleanup-sessions'
 import { generateMonthlyStats } from './monthly-stats'
 import { generateAnnualStats } from './annual-stats'
+import { processBadgesForAllUsers } from '../lib/badge-engine'
 
 /**
  * Cloudflare Workers Cron Handler
@@ -63,6 +64,17 @@ export async function handleScheduled(
         )
       } catch (error) {
         console.error('Annual stats aggregation failed:', error)
+        controller.noRetry()
+        throw error
+      }
+      break
+
+    case '0 6 * * *': // Daily: badge calculations (6am PT / 1pm UTC or 2pm UTC PDT)
+      try {
+        await processBadgesForAllUsers(env)
+        console.log('Badge calculation completed')
+      } catch (error) {
+        console.error('Badge calculation failed:', error)
         controller.noRetry()
         throw error
       }

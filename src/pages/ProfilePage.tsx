@@ -9,13 +9,14 @@ import { TabBar } from '../components/ui/TabBar'
 import { ProfileHeader } from '../components/profile/ProfileHeader'
 import { ProfilePictureUpload } from '../components/profile/ProfilePictureUpload'
 import { ProfileStatsSection } from '../components/profile/ProfileStatsSection'
+import { BadgesGrid } from '../components/profile/BadgesGrid'
 
 export function ProfilePage() {
   const { data: session } = useSession()
   const navigate = useNavigate()
   const [recentCount, setRecentCount] = useState(0)
   const [playlistCount, setPlaylistCount] = useState(0)
-  const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'playlists' | 'about'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'badges' | 'playlists' | 'about'>('overview')
   const [showAvatarUpload, setShowAvatarUpload] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [currentMonthStats, setCurrentMonthStats] = useState<{ total_hours: number } | null>(null)
@@ -36,6 +37,7 @@ export function ProfilePage() {
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'activity', label: 'Activity' },
+    { id: 'badges', label: 'Badges' },
     { id: 'playlists', label: 'Playlists' },
     { id: 'about', label: 'About' },
   ]
@@ -162,6 +164,10 @@ export function ProfilePage() {
               Full activity feed coming in Phase 3
             </p>
           </div>
+        )}
+
+        {activeTab === 'badges' && (
+          <BadgesGrid userId={user.id} />
         )}
 
         {activeTab === 'playlists' && (

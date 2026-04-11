@@ -174,6 +174,24 @@ export interface ProfileStats {
   weekday_pattern: { day: string; hours: number }[]
 }
 
+// Badge types
+export interface Badge {
+  id: string
+  name: string
+  description: string
+  icon: string
+  category: 'milestone' | 'behavior' | 'genre' | 'time' | 'community' | 'special'
+  rarity: 'common' | 'rare' | 'epic' | 'legendary'
+}
+
+export interface UserBadge {
+  id: string
+  user_id: string
+  badge_id: string
+  earned_at: string
+  badge?: Badge
+}
+
 export interface Annotation {
   id: string
   detection_id: string | null
