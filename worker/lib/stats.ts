@@ -209,3 +209,47 @@ export async function calculateLongestSet(
     return null;
   }
 }
+
+/**
+ * Calculate listening heatmap: 7x24 grid (day of week x hour of day)
+ * Pure function - shows play counts per hour slot across the week
+ * @param listenHistory - Array of listening events with started_at timestamps
+ * @returns 7x24 matrix where heatmap[day][hour] = play count (0=Sunday, 6=Saturday, 0-23 UTC hours)
+ */
+export function calculateHeatmap(listenHistory: Array<{ started_at: string }>): number[][] {
+  // Initialize 7x24 grid (7 days, 24 hours) with zeros
+  const heatmap: number[][] = Array(7).fill(null).map(() => Array(24).fill(0))
+
+  for (const listen of listenHistory) {
+    const date = new Date(listen.started_at)
+    const day = date.getUTCDay() // 0=Sunday, 6=Saturday
+    const hour = date.getUTCHours() // 0-23
+
+    heatmap[day][hour]++
+  }
+
+  return heatmap
+}
+
+/**
+ * Calculate weekday pattern: total listening hours per day of week
+ * Pure function - aggregates listening duration by weekday
+ * @param listenHistory - Array of listening events with started_at timestamps and duration_seconds
+ * @returns Array of 7 numbers (0=Sunday, 6=Saturday) representing total hours listened per day
+ */
+export function calculateWeekdayPattern(
+  listenHistory: Array<{ started_at: string; duration_seconds: number }>
+): number[] {
+  // Initialize 7-day array (0=Sunday, 6=Saturday) with zeros
+  const pattern: number[] = Array(7).fill(0)
+
+  for (const listen of listenHistory) {
+    const date = new Date(listen.started_at)
+    const day = date.getUTCDay() // 0=Sunday, 6=Saturday
+    const hours = listen.duration_seconds / 3600
+
+    pattern[day] += hours
+  }
+
+  return pattern
+}
