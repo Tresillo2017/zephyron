@@ -222,9 +222,15 @@ export function ProfilePage() {
         <ProfilePictureUpload
           currentAvatarUrl={avatarUrl}
           onUploadSuccess={async (url) => {
-            setAvatarUrl(url)
-            // Refresh session to update avatar in TopNav
-            await getSession()
+            // Refresh session to get updated avatar_url field
+            const updatedSession = await getSession()
+            // Update local state with the new URL from session
+            if (updatedSession?.data?.user?.avatar_url) {
+              setAvatarUrl(updatedSession.data.user.avatar_url)
+            } else {
+              // Fallback: use the URL from upload response
+              setAvatarUrl(url)
+            }
           }}
           onClose={() => setShowAvatarUpload(false)}
         />

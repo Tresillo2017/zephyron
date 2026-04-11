@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams, Link } from 'react-router'
-import { useSession, authClient } from '../lib/auth-client'
+import { useSession, authClient, getSession } from '../lib/auth-client'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Badge } from '../components/ui/Badge'
@@ -330,7 +330,17 @@ function ProfileTab() {
       {showAvatarUpload && (
         <ProfilePictureUpload
           currentAvatarUrl={avatarUrl}
-          onUploadSuccess={(url) => setAvatarUrl(url)}
+          onUploadSuccess={async (url) => {
+            // Refresh session to get updated avatar_url field
+            const updatedSession = await getSession()
+            // Update local state with the new URL from session
+            if (updatedSession?.data?.user?.avatar_url) {
+              setAvatarUrl(updatedSession.data.user.avatar_url)
+            } else {
+              // Fallback: use the URL from upload response
+              setAvatarUrl(url)
+            }
+          }}
           onClose={() => setShowAvatarUpload(false)}
         />
       )}

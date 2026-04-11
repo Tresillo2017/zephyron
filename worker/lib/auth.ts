@@ -66,6 +66,22 @@ export function createAuth(env: Env) {
           input: true,
           fieldName: 'invite_code',
         },
+        avatar_url: {
+          type: 'string',
+          required: false,
+          input: false,
+        },
+        bio: {
+          type: 'string',
+          required: false,
+          input: false,
+        },
+        is_profile_public: {
+          type: 'boolean',
+          required: false,
+          defaultValue: false,
+          input: false,
+        },
       },
     },
     session: {
