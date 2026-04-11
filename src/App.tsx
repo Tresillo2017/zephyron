@@ -40,6 +40,8 @@ import { ChangelogPage } from './pages/ChangelogPage'
 import { RequestSetPage } from './pages/RequestSetPage'
 import { WrappedPage } from './pages/WrappedPage'
 import { MonthlyWrappedPage } from './pages/MonthlyWrappedPage'
+import { ActivityPage } from './pages/ActivityPage'
+import { CommunityPage } from './pages/CommunityPage'
 
 /** Layout for authenticated app pages — top nav over content + player */
 function AppLayout() {
@@ -138,6 +140,8 @@ function App() {
           <Route path="playlists/:id" element={<PlaylistPage />} />
           <Route path="history" element={<HistoryPage />} />
           <Route path="liked-songs" element={<LikedSongsPage />} />
+          <Route path="activity" element={<ActivityPage />} />
+          <Route path="community" element={<CommunityPage />} />
           <Route path="artists" element={<ArtistsPage />} />
           <Route path="artists/:id" element={<ArtistPage />} />
           <Route path="events" element={<EventsPage />} />

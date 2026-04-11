@@ -10,6 +10,7 @@ import { ProfileHeader } from '../components/profile/ProfileHeader'
 import { ProfilePictureUpload } from '../components/profile/ProfilePictureUpload'
 import { ProfileStatsSection } from '../components/profile/ProfileStatsSection'
 import { BadgesGrid } from '../components/profile/BadgesGrid'
+import { ActivityFeed } from '../components/activity/ActivityFeed'
 
 export function ProfilePage() {
   const { data: session } = useSession()
@@ -156,14 +157,7 @@ export function ProfilePage() {
         )}
 
         {activeTab === 'activity' && (
-          <div className="card">
-            <h3 className="text-sm font-[var(--font-weight-medium)] mb-3" style={{ color: 'hsl(var(--c1))' }}>
-              Activity
-            </h3>
-            <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
-              Full activity feed coming in Phase 3
-            </p>
-          </div>
+          <ActivityFeed feed="user" userId={user.id} limit={5} />
         )}
 
         {activeTab === 'badges' && (
