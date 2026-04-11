@@ -160,6 +160,20 @@ export interface EventGenreBreakdown {
   count: number
 }
 
+// Profile Stats
+export interface ProfileStats {
+  total_hours: number
+  total_sessions: number
+  average_session_minutes: number
+  longest_session_minutes: number
+  top_artists: { artist: string; hours: number }[]
+  top_genres: { genre: string; count: number }[]
+  discoveries_count: number
+  longest_streak_days: number
+  listening_heatmap: number[][]
+  weekday_pattern: { day: string; hours: number }[]
+}
+
 export interface Annotation {
   id: string
   detection_id: string | null
