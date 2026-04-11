@@ -8,6 +8,7 @@ import { formatRelativeTime } from '../lib/formatTime'
 import { TabBar } from '../components/ui/TabBar'
 import { ProfileHeader } from '../components/profile/ProfileHeader'
 import { ProfilePictureUpload } from '../components/profile/ProfilePictureUpload'
+import { ProfileStatsSection } from '../components/profile/ProfileStatsSection'
 
 export function ProfilePage() {
   const { data: session } = useSession()
@@ -136,6 +137,9 @@ export function ProfilePage() {
                 </div>
               ))}
             </div>
+
+            {/* Listening Statistics */}
+            <ProfileStatsSection userId={user.id} />
 
             {/* Recent Activity Placeholder */}
             <div className="card">
