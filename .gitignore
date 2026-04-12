@@ -32,3 +32,6 @@ dist-ssr
 
 # worktrees
 .worktrees
+
+# Superpowers
+.superpowers
