@@ -444,6 +444,10 @@ export async function createArtistAdmin(data: Record<string, unknown>): Promise<
   return fetchApi('/admin/artists', { method: 'POST', body: JSON.stringify(data) })
 }
 
+export async function uploadArtistImageAdmin(id: string, imageUrl: string): Promise<void> {
+  await fetchApi(`/admin/artists/${id}/image`, { method: 'POST', body: JSON.stringify({ image_url: imageUrl }) })
+}
+
 // Events
 export async function fetchEvents(q?: string): Promise<{ data: any[] }> {
   const params = q ? `?q=${encodeURIComponent(q)}` : ''

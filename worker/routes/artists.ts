@@ -297,6 +297,67 @@ export async function deleteArtist(
   return json({ ok: true })
 }
 
+// POST /api/admin/artists/:id/image — Upload artist image from URL
+export async function uploadArtistImageFromUrl(
+  request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>
+): Promise<Response> {
+  const { id } = params
+
+  // Verify artist exists
+  const artist = await env.DB.prepare(
+    'SELECT id FROM artists WHERE id = ?'
+  ).bind(id).first<{ id: string }>()
+
+  if (!artist) {
+    return errorResponse('Artist not found', 404)
+  }
+
+  // Get image URL from body
+  let body: { image_url: string }
+  try {
+    body = await request.json()
+  } catch {
+    return errorResponse('Invalid JSON body', 400)
+  }
+
+  if (!body.image_url) {
+    return errorResponse('image_url is required', 400)
+  }
+
+  try {
+    // Download image from URL
+    const imageResponse = await fetch(body.image_url)
+    if (!imageResponse.ok) {
+      return errorResponse(`Failed to download image: ${imageResponse.status}`, 400)
+    }
+
+    const contentType = imageResponse.headers.get('content-type')
+    if (!contentType?.startsWith('image/')) {
+      return errorResponse('URL does not point to an image', 400)
+    }
+
+    const imageBuffer = await imageResponse.arrayBuffer()
+
+    // Upload to R2
+    const r2Key = `artists/${artist.id}/image.jpg`
+    await env.AUDIO_BUCKET.put(r2Key, imageBuffer, {
+      httpMetadata: {
+        contentType: contentType || 'image/jpeg',
+      },
+    })
+
+    return json({ ok: true, key: r2Key })
+  } catch (error) {
+    return errorResponse(
+      error instanceof Error ? error.message : 'Failed to upload image',
+      500
+    )
+  }
+}
+
 // GET /api/artists/:id/image — Serve artist profile image from R2
 export async function getArtistImage(
   _request: Request,

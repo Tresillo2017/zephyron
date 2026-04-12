@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { fetchArtists, syncArtistAdmin, updateArtistAdmin, deleteArtistAdmin, createArtistAdmin, getArtistImageUrl } from '../../lib/api'
+import { fetchArtists, syncArtistAdmin, updateArtistAdmin, deleteArtistAdmin, createArtistAdmin, uploadArtistImageAdmin, getArtistImageUrl } from '../../lib/api'
 import { Button } from '../ui/Button'
 import { Badge } from '../ui/Badge'
 import { Modal } from '../ui/Modal'
@@ -240,7 +240,6 @@ export function ImportArtistModal({ onClose, onImported, onCreated }: { onClose:
     try {
       const res = await createArtistAdmin({
         name: parsed.name,
-        image_url: parsed.image_url || null,
         country: parsed.country || null,
         spotify_url: parsed.spotify_url || null,
         soundcloud_url: parsed.soundcloud_url || null,
@@ -253,6 +252,17 @@ export function ImportArtistModal({ onClose, onImported, onCreated }: { onClose:
         x_url: parsed.x_url || null,
         source_1001_id: parsed.dj_id || null,
       })
+
+      // Upload profile image to R2 if found
+      if (parsed.image_url) {
+        try {
+          await uploadArtistImageAdmin(res.data.id, parsed.image_url)
+        } catch (imgErr) {
+          console.warn('Failed to upload profile image:', imgErr)
+          // Don't fail the whole import if image upload fails
+        }
+      }
+
       onCreated?.(res.data.id, parsed.name)
       onImported?.()
     } catch (err) {
@@ -378,17 +388,27 @@ function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose
   const [enrichHtml, setEnrichHtml] = useState('')
   const [enrichError, setEnrichError] = useState<string | null>(null)
   const [enrichSuccess, setEnrichSuccess] = useState(false)
+  const [isEnriching, setIsEnriching] = useState(false)
 
-  const handleEnrich = () => {
+  const handleEnrich = async () => {
     setEnrichError(null)
     setEnrichSuccess(false)
-    if (!enrichHtml.trim()) { setEnrichError('Paste the DJ page HTML first.'); return }
+    setIsEnriching(true)
+
+    if (!enrichHtml.trim()) {
+      setEnrichError('Paste the DJ page HTML first.')
+      setIsEnriching(false)
+      return
+    }
+
     try {
       const result = parseArtistSourceHtml(enrichHtml)
       if (!result.name || result.name === 'Unknown Artist') {
         setEnrichError('Could not parse artist data. Make sure you pasted the full DJ page HTML.')
+        setIsEnriching(false)
         return
       }
+
       // Fill only empty/missing fields — don't overwrite existing data
       if (!source1001Id && result.dj_id) setSource1001Id(result.dj_id)
       if (!spotifyUrl && result.spotify_url) setSpotifyUrl(result.spotify_url)
@@ -399,10 +419,23 @@ function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose
       if (!facebookUrl && result.facebook_url) setFacebookUrl(result.facebook_url)
       if (!instagramUrl && result.instagram_url) setInstagramUrl(result.instagram_url)
       if (!xUrl && result.x_url) setXUrl(result.x_url)
+
+      // Upload profile image if found
+      if (result.image_url) {
+        try {
+          await uploadArtistImageAdmin(artist.id, result.image_url)
+        } catch (imgErr) {
+          console.warn('Failed to upload profile image:', imgErr)
+          // Don't fail the whole enrichment if image upload fails
+        }
+      }
+
       setEnrichSuccess(true)
       setEnrichHtml('')
     } catch (err) {
       setEnrichError(err instanceof Error ? err.message : 'Parse failed')
+    } finally {
+      setIsEnriching(false)
     }
   }
 
@@ -457,7 +490,7 @@ function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose
           {showEnrich && (
             <div className="px-3 pb-3 pt-2 space-y-2" style={{ background: 'hsl(var(--b5) / 0.2)' }}>
               <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
-                Paste the DJ page HTML to fill in missing social links and source ID. Existing values are preserved.
+                Paste the DJ page HTML to fill in missing social links, profile image, and source ID. Existing values are preserved.
               </p>
               <textarea
                 value={enrichHtml}
@@ -466,12 +499,13 @@ function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose
                 placeholder="Paste /dj/... page HTML here..."
                 className="w-full px-3 py-2 rounded-lg text-xs font-mono resize-none focus:outline-none"
                 style={{ background: 'hsl(var(--b4) / 0.4)', color: 'hsl(var(--c1))' }}
+                disabled={isEnriching}
               />
-              <Button variant="secondary" size="sm" onClick={handleEnrich} disabled={!enrichHtml.trim()}>
-                Parse &amp; Fill Missing
+              <Button variant="secondary" size="sm" onClick={handleEnrich} disabled={!enrichHtml.trim() || isEnriching}>
+                {isEnriching ? 'Processing...' : 'Parse & Fill Missing'}
               </Button>
               {enrichError && <p className="text-xs" style={{ color: 'hsl(0, 60%, 55%)' }}>{enrichError}</p>}
-              {enrichSuccess && <p className="text-xs" style={{ color: 'hsl(140, 60%, 45%)' }}>Fields updated from 1001Tracklists data. Review below and save.</p>}
+              {enrichSuccess && <p className="text-xs" style={{ color: 'hsl(140, 60%, 45%)' }}>Fields and profile image updated from 1001Tracklists data. Review below and save.</p>}
             </div>
           )}
         </div>

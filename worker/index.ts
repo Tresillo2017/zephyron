@@ -20,7 +20,7 @@ import {
   fetch1001Tracklists, parse1001TracklistsHtml, import1001Tracklists, getVideoStreamUrl,
   fetchEventSets,
 } from './routes/admin-beta'
-import { listArtists, getArtist, createArtist, syncArtist, updateArtist, deleteArtist, getArtistImage, getArtistBackground } from './routes/artists'
+import { listArtists, getArtist, createArtist, syncArtist, updateArtist, deleteArtist, uploadArtistImageFromUrl, getArtistImage, getArtistBackground } from './routes/artists'
 import {
   getListenerCount, joinListeners, heartbeatListener, leaveListeners,
 } from './routes/listeners'
@@ -203,6 +203,7 @@ router.post('/api/admin/artists', withAdmin(createArtist))
 router.post('/api/admin/artists/:id/sync', withAdmin(syncArtist))
 router.put('/api/admin/artists/:id', withAdmin(updateArtist))
 router.delete('/api/admin/artists/:id', withAdmin(deleteArtist))
+router.post('/api/admin/artists/:id/image', withAdmin(uploadArtistImageFromUrl))
 
 // Admin / Events
 router.post('/api/admin/events', withAdmin(createEvent))
