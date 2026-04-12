@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { useProfileStore } from '../../stores/profileStore'
 import { StatsGrid } from './StatsGrid'
 import { TopArtistsList } from './TopArtistsList'
 import { ListeningHeatmap } from './ListeningHeatmap'
 import { WeekdayChart } from './WeekdayChart'
+import { ProfileStatsSkeleton } from '../ui/Skeleton'
 
 interface ProfileStatsSectionProps {
   userId: string
@@ -17,13 +18,7 @@ export function ProfileStatsSection({ userId }: ProfileStatsSectionProps) {
   }, [userId, fetchStats])
 
   if (statsLoading) {
-    return (
-      <div className="card p-8 text-center">
-        <div className="text-sm" style={{ color: 'hsl(var(--c2))' }}>
-          Loading statistics...
-        </div>
-      </div>
-    )
+    return <ProfileStatsSkeleton />
   }
 
   if (statsError) {

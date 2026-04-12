@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router'
 import { fetchArtist } from '../lib/api'
 import { useSession } from '../lib/auth-client'
-import { Skeleton } from '../components/ui/Skeleton'
+import { ArtistBannerSkeleton } from '../components/ui/Skeleton'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { TabBar } from '../components/ui/TabBar'
@@ -41,20 +41,7 @@ export function ArtistPage() {
   }
 
   if (isLoading || !artist) {
-    return (
-      <div>
-        <div className="h-[280px] bg-surface-raised" />
-        <div className="px-6 -mt-24 relative z-10 max-w-[1300px] mx-auto">
-          <div className="flex gap-6">
-            <Skeleton className="w-[180px] h-[180px] rounded-xl flex-shrink-0" />
-            <div className="flex-1 space-y-3 pt-16">
-              <Skeleton className="h-10 w-1/2" />
-              <Skeleton className="h-5 w-1/3" />
-            </div>
-          </div>
-        </div>
-      </div>
-    )
+    return <ArtistBannerSkeleton />
   }
 
   const tags = Array.isArray(artist.tags) ? artist.tags : []

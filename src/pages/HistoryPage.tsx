@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
 import { fetchHistory } from '../lib/api'
 import { usePlayerStore } from '../stores/playerStore'
-import { Skeleton } from '../components/ui/Skeleton'
+import { HistoryListSkeleton } from '../components/ui/Skeleton'
 import { Badge } from '../components/ui/Badge'
 import { formatTime, formatDuration, formatRelativeTime } from '../lib/formatTime'
 import type { ListenHistoryItem } from '../lib/types'
@@ -42,11 +42,7 @@ export function HistoryPage() {
       <h1 className="text-2xl font-bold text-text-primary mb-6">Listening History</h1>
 
       {isLoading ? (
-        <div className="space-y-2">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-lg" />
-          ))}
-        </div>
+        <HistoryListSkeleton count={5} />
       ) : history.length === 0 ? (
         <div className="text-center py-16">
           <svg className="w-16 h-16 text-text-muted/30 mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24">

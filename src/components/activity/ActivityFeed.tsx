@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { useProfileStore } from '../../stores/profileStore'
 import { ActivityItem } from './ActivityItem'
+import { ActivityFeedSkeleton } from '../ui/Skeleton'
 
 interface ActivityFeedProps {
   feed: 'me' | 'user' | 'community'
@@ -26,13 +27,7 @@ export function ActivityFeed({ feed, userId, limit, showLoadMore = false }: Acti
   const displayItems = limit ? activityFeed.slice(0, limit) : activityFeed
 
   if (activityLoading && activityFeed.length === 0) {
-    return (
-      <div className="card p-8 text-center">
-        <div className="text-sm" style={{ color: 'hsl(var(--c2))' }}>
-          Loading activity...
-        </div>
-      </div>
-    )
+    return <ActivityFeedSkeleton count={limit || 5} />
   }
 
   if (activityError) {

@@ -7,7 +7,7 @@ import { useWaveform } from "../hooks/useWaveform";
 import { usePlayerStore } from "../stores/playerStore";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
-import { Skeleton } from "../components/ui/Skeleton";
+import { SetBannerSkeleton } from "../components/ui/Skeleton";
 import { Waveform } from "../components/player/Waveform";
 import { DetectionGroup } from "../components/annotations/DetectionRow";
 import { AnnotationEditor } from "../components/annotations/AnnotationEditor";
@@ -243,20 +243,7 @@ export function SetPage() {
   }
 
   if (isLoading || !set) {
-    return (
-      <div>
-        <div className="h-[280px] bg-surface-raised" />
-        <div className="px-6 -mt-24 relative z-10 max-w-[1300px] mx-auto">
-          <div className="flex gap-6">
-            <Skeleton className="w-[180px] h-[180px] rounded-xl flex-shrink-0" />
-            <div className="flex-1 space-y-3 pt-16">
-              <Skeleton className="h-10 w-2/3" />
-              <Skeleton className="h-5 w-1/3" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <SetBannerSkeleton />;
   }
 
   const artistInfo = (set as any).artist_info as {
@@ -345,13 +332,7 @@ export function SetPage() {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/15 to-surface-overlay">
-                  <svg
-                    className="w-14 h-14 text-text-muted/20"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
-                  </svg>
+                  <img src="/logo-128.png" alt="" className="w-14 h-14 opacity-20 object-contain" />
                 </div>
               )}
             </div>

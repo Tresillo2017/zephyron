@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useProfileStore } from '../../stores/profileStore'
 import { BadgeCard } from './BadgeCard'
 import { BADGE_DEFINITIONS } from '../../lib/badgeDefinitions'
 import type { Badge } from '../../lib/types'
+import { BadgesGridSkeleton } from '../ui/Skeleton'
 
 // Convert badge definitions to full Badge type (frontend doesn't need checkFn)
 const ALL_BADGES: Badge[] = BADGE_DEFINITIONS.map(b => ({
@@ -22,13 +23,7 @@ export function BadgesGrid({ userId }: BadgesGridProps) {
   }, [userId, fetchBadges])
 
   if (badgesLoading) {
-    return (
-      <div className="card p-8 text-center">
-        <div className="text-sm" style={{ color: 'hsl(var(--c2))' }}>
-          Loading badges...
-        </div>
-      </div>
-    )
+    return <BadgesGridSkeleton />
   }
 
   if (badgesError) {

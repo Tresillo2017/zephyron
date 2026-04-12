@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import { fetchPlaylists, createPlaylist as createPlaylistApi } from '../lib/api'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
-import { Skeleton } from '../components/ui/Skeleton'
+import { PlaylistGridSkeleton } from '../components/ui/Skeleton'
 import { formatRelativeTime } from '../lib/formatTime'
 import type { Playlist } from '../lib/types'
 
@@ -76,11 +76,7 @@ export function PlaylistsPage() {
 
       {/* List */}
       {isLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-lg" />
-          ))}
-        </div>
+        <PlaylistGridSkeleton count={3} />
       ) : playlists.length === 0 ? (
         <div className="text-center py-16">
           <svg className="w-16 h-16 text-text-muted/30 mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24">
