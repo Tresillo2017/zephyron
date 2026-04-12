@@ -1,5 +1,5 @@
 import { json, errorResponse } from '../lib/router'
-import { requireAuth } from '../lib/auth'
+import { requireAuth, getOptionalAuth } from '../lib/auth'
 import type { ActivityItem, GetActivityResponse, GetActivityError } from '../types'
 
 /**
@@ -87,6 +87,9 @@ export async function getUserActivity(
   }
 
   try {
+    // Check authentication
+    const authUser = await getOptionalAuth(_request, env)
+
     // Check if user exists and profile is public
     const user = await env.DB.prepare(
       'SELECT id, is_profile_public FROM user WHERE id = ?'
@@ -98,16 +101,18 @@ export async function getUserActivity(
       }, 404)
     }
 
-    if (user.is_profile_public !== 1) {
+    // Allow access if: (1) profile is public OR (2) viewing own profile
+    const isOwnProfile = authUser?.id === userId
+    if (user.is_profile_public !== 1 && !isOwnProfile) {
       return json<GetActivityError>({
         error: 'PROFILE_PRIVATE'
       }, 403)
     }
 
-    // Get last 5 public activity items (for profile display)
+    // Get activity items: all items if own profile, only public items otherwise
     const result = await env.DB.prepare(`
       SELECT * FROM activity_items
-      WHERE user_id = ? AND is_public = 1
+      WHERE user_id = ? ${isOwnProfile ? '' : 'AND is_public = 1'}
       ORDER BY created_at DESC
       LIMIT 5
     `).bind(userId).all()

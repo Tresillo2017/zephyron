@@ -1,4 +1,5 @@
 import { json, errorResponse } from '../lib/router'
+import { getOptionalAuth } from '../lib/auth'
 import { getBadgeById } from '../lib/badges'
 import type { UserBadge, GetBadgesResponse, GetBadgesError } from '../types'
 
@@ -22,6 +23,9 @@ export async function getBadges(
   }
 
   try {
+    // Check authentication
+    const authUser = await getOptionalAuth(_request, env)
+
     // Check if user exists and profile is public
     const user = await env.DB.prepare(
       'SELECT id, is_profile_public FROM user WHERE id = ?'
@@ -33,7 +37,9 @@ export async function getBadges(
       }, 404)
     }
 
-    if (user.is_profile_public !== 1) {
+    // Allow access if: (1) profile is public OR (2) viewing own profile
+    const isOwnProfile = authUser?.id === userId
+    if (user.is_profile_public !== 1 && !isOwnProfile) {
       return json<GetBadgesError>({
         error: 'PROFILE_PRIVATE'
       }, 403)

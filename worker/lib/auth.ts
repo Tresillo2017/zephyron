@@ -238,3 +238,20 @@ export async function requireAuth(
     })
   }
 }
+
+/**
+ * Get authenticated user if present, or null if not authenticated.
+ * Does not return an error response - use for optional authentication.
+ */
+export async function getOptionalAuth(
+  request: Request,
+  env: Env
+): Promise<{ id: string; role: string; name: string; email: string } | null> {
+  try {
+    const auth = createAuth(env)
+    const session = await auth.api.getSession({ headers: request.headers })
+    return session?.user ? (session.user as any) : null
+  } catch (err) {
+    return null
+  }
+}

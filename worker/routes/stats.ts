@@ -1,4 +1,5 @@
 import { json } from '../lib/router'
+import { getOptionalAuth } from '../lib/auth'
 import {
   calculateTopArtists,
   calculateTopGenre,
@@ -34,6 +35,9 @@ export async function getStats(
   }
 
   try {
+    // Check authentication
+    const authUser = await getOptionalAuth(request, env)
+
     // Check if user exists and profile is public
     const user = await env.DB.prepare(
       'SELECT id, is_profile_public FROM user WHERE id = ?'
@@ -46,7 +50,9 @@ export async function getStats(
       }, 404)
     }
 
-    if (user.is_profile_public !== 1) {
+    // Allow access if: (1) profile is public OR (2) viewing own profile
+    const isOwnProfile = authUser?.id === userId
+    if (user.is_profile_public !== 1 && !isOwnProfile) {
       return json<GetStatsError>({
         error: 'PROFILE_PRIVATE',
         message: 'Profile is private'
