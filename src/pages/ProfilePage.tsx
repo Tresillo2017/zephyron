@@ -154,14 +154,20 @@ export function ProfilePage() {
             {/* Listening Statistics */}
             <ProfileStatsSection userId={user.id} />
 
-            {/* Recent Activity Placeholder */}
+            {/* Recent Activity */}
             <div className="card">
-              <h3 className="text-sm font-[var(--font-weight-medium)] mb-3" style={{ color: 'hsl(var(--c1))' }}>
-                Recent Activity
-              </h3>
-              <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
-                Activity feed coming in Phase 3
-              </p>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c1))' }}>
+                  Recent Activity
+                </h3>
+                <button
+                  onClick={() => setActiveTab('activity')}
+                  className="text-xs text-accent hover:text-accent-hover transition-colors"
+                >
+                  View all →
+                </button>
+              </div>
+              <ActivityFeed feed="me" limit={3} />
             </div>
           </div>
         )}
