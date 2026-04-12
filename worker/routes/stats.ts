@@ -78,15 +78,6 @@ export async function getStats(
       endDate = '2100-01-01'
     }
 
-    // Query listening history for heatmap and weekday pattern
-    const listeningHistory = await env.DB.prepare(`
-      SELECT started_at, duration_seconds
-      FROM listening_sessions
-      WHERE user_id = ?
-        AND session_date >= ?
-        AND session_date < ?
-    `).bind(userId, startDate, endDate).all()
-
     // Query unique session dates for streak calculation
     const sessionDates = await env.DB.prepare(`
       SELECT DISTINCT session_date
@@ -102,11 +93,15 @@ export async function getStats(
       topArtists,
       topGenre,
       discoveries,
+      heatmap,
+      weekdayPattern,
       basicStats
     ] = await Promise.all([
       calculateTopArtists(env, userId, startDate, endDate, 5),
       calculateTopGenre(env, userId, startDate, endDate),
       calculateDiscoveries(env, userId, startDate, endDate),
+      calculateHeatmap(env, userId, startDate, endDate),
+      calculateWeekdayPattern(env, userId, startDate, endDate),
       // Basic stats query
       env.DB.prepare(`
         SELECT
@@ -121,21 +116,10 @@ export async function getStats(
       `).bind(userId, startDate, endDate).first() as any
     ])
 
-    // Calculate heatmap, weekday pattern, and streak from raw data
-    const heatmap = calculateHeatmap(listeningHistory.results as Array<{ started_at: string }>)
-    const weekdayPatternRaw = calculateWeekdayPattern(
-      listeningHistory.results as Array<{ started_at: string; duration_seconds: number }>
-    )
+    // Calculate streak from session dates
     const streak = calculateStreak(
       (sessionDates.results as Array<{ session_date: string }>).map(row => row.session_date)
     )
-
-    // Convert weekday pattern from array of numbers to array of objects
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-    const weekdayPattern = weekdayPatternRaw.map((hours, index) => ({
-      day: dayNames[index],
-      hours: Math.round(hours * 10) / 10
-    }))
 
     // Build stats object
     const stats: ProfileStats = {
