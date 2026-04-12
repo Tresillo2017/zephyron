@@ -211,45 +211,102 @@ export async function calculateLongestSet(
 }
 
 /**
- * Calculate listening heatmap: 7x24 grid (day of week x hour of day)
- * Pure function - shows play counts per hour slot across the week
- * @param listenHistory - Array of listening events with started_at timestamps
- * @returns 7x24 matrix where heatmap[day][hour] = play count (0=Sunday, 6=Saturday, 0-23 UTC hours)
+ * Calculate listening heatmap: 7x24 grid (day x hour) with session counts
+ * @param env - Cloudflare environment with D1 database binding
+ * @param userId - User ID to calculate heatmap for
+ * @param startDate - Inclusive start date in YYYY-MM-DD format
+ * @param endDate - Exclusive end date in YYYY-MM-DD format
+ * @returns 7x24 array where heatmap[dayOfWeek][hour] = session count
  */
-export function calculateHeatmap(listenHistory: Array<{ started_at: string }>): number[][] {
-  // Initialize 7x24 grid (7 days, 24 hours) with zeros
-  const heatmap: number[][] = Array(7).fill(null).map(() => Array(24).fill(0))
+export async function calculateHeatmap(
+  env: Env,
+  userId: string,
+  startDate: string,
+  endDate: string
+): Promise<number[][]> {
+  // Initialize 7x24 grid with zeros
+  const heatmap: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
 
-  for (const listen of listenHistory) {
-    const date = new Date(listen.started_at)
-    const day = date.getUTCDay() // 0=Sunday, 6=Saturday
-    const hour = date.getUTCHours() // 0-23
+  const query = `
+    SELECT
+      CAST(strftime('%w', started_at) AS INTEGER) as day_of_week,
+      CAST(strftime('%H', started_at) AS INTEGER) as hour,
+      COUNT(*) as count
+    FROM listening_sessions
+    WHERE user_id = ?
+      AND session_date >= ?
+      AND session_date < ?
+    GROUP BY day_of_week, hour
+  `;
 
-    heatmap[day][hour]++
+  try {
+    const result = await env.DB.prepare(query).bind(userId, startDate, endDate).all();
+
+    for (const row of result.results as any[]) {
+      heatmap[row.day_of_week][row.hour] = row.count;
+    }
+
+    return heatmap;
+  } catch (error) {
+    console.error('Error calculating heatmap:', error);
+    return heatmap; // Return zero-filled grid on error
   }
-
-  return heatmap
 }
 
 /**
- * Calculate weekday pattern: total listening hours per day of week
- * Pure function - aggregates listening duration by weekday
- * @param listenHistory - Array of listening events with started_at timestamps and duration_seconds
- * @returns Array of 7 numbers (0=Sunday, 6=Saturday) representing total hours listened per day
+ * Calculate listening hours breakdown by day of week (Mon-Sun)
+ * @param env - Cloudflare environment with D1 database binding
+ * @param userId - User ID to calculate pattern for
+ * @param startDate - Inclusive start date in YYYY-MM-DD format
+ * @param endDate - Exclusive end date in YYYY-MM-DD format
+ * @returns Array of 7 objects with day abbreviation and hours
  */
-export function calculateWeekdayPattern(
-  listenHistory: Array<{ started_at: string; duration_seconds: number }>
-): number[] {
-  // Initialize 7-day array (0=Sunday, 6=Saturday) with zeros
-  const pattern: number[] = Array(7).fill(0)
+export async function calculateWeekdayPattern(
+  env: Env,
+  userId: string,
+  startDate: string,
+  endDate: string
+): Promise<{ day: string; hours: number }[]> {
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  for (const listen of listenHistory) {
-    const date = new Date(listen.started_at)
-    const day = date.getUTCDay() // 0=Sunday, 6=Saturday
-    const hours = listen.duration_seconds / 3600
+  // Initialize with zeros
+  const pattern = dayNames.map(day => ({ day, hours: 0 }));
 
-    pattern[day] += hours
+  const query = `
+    SELECT
+      CASE CAST(strftime('%w', started_at) AS INTEGER)
+        WHEN 0 THEN 'Sunday'
+        WHEN 1 THEN 'Monday'
+        WHEN 2 THEN 'Tuesday'
+        WHEN 3 THEN 'Wednesday'
+        WHEN 4 THEN 'Thursday'
+        WHEN 5 THEN 'Friday'
+        WHEN 6 THEN 'Saturday'
+      END as day_name,
+      SUM(duration_seconds) as total_seconds
+    FROM listening_sessions
+    WHERE user_id = ?
+      AND session_date >= ?
+      AND session_date < ?
+    GROUP BY strftime('%w', started_at)
+  `;
+
+  try {
+    const result = await env.DB.prepare(query).bind(userId, startDate, endDate).all();
+
+    const dayMap: Record<string, number> = {
+      'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
+      'Thursday': 4, 'Friday': 5, 'Saturday': 6
+    };
+
+    for (const row of result.results as any[]) {
+      const dayIndex = dayMap[row.day_name];
+      pattern[dayIndex].hours = Math.round((row.total_seconds / 3600) * 10) / 10;
+    }
+
+    return pattern;
+  } catch (error) {
+    console.error('Error calculating weekday pattern:', error);
+    return pattern; // Return zero-filled pattern on error
   }
-
-  return pattern
 }
