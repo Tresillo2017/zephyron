@@ -29,15 +29,6 @@ export default defineConfig({
     stubPlugin('@opentelemetry/api'),
     stubPlugin('@napi-rs/canvas'),
   ],
-  server: {
-    watch: {
-      usePolling: true,
-      interval: 300,
-    },
-    hmr: {
-      overlay: true,
-    },
-  },
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __TURNSTILE_SITE_KEY__: JSON.stringify(process.env.TURNSTILE_SITE_KEY || ''),
