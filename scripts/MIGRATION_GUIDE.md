@@ -16,21 +16,18 @@ This guide explains how to migrate existing artist profile images from external 
 Use the provided migration script to bulk upload images:
 
 ```bash
-# Install dependencies (if not already installed)
+# 1. Install dependencies (if not already installed)
 bun add @aws-sdk/client-s3
 
-# Set up environment variables
-export CLOUDFLARE_ACCOUNT_ID="your-account-id"
-export CLOUDFLARE_DATABASE_ID="your-d1-database-id"
-export CLOUDFLARE_D1_TOKEN="your-d1-api-token"
-export CLOUDFLARE_R2_ACCESS_KEY_ID="your-r2-access-key"
-export CLOUDFLARE_R2_SECRET_ACCESS_KEY="your-r2-secret-key"
-export CLOUDFLARE_R2_BUCKET_NAME="zephyron-audio"  # or your bucket name
+# 2. Configure environment variables
+# Copy the example and fill in your credentials
+cp scripts/.env.example .env
+# Then edit .env with your actual Cloudflare credentials
 
-# Dry run first to see what would be migrated
+# 3. Dry run first to see what would be migrated
 bun run scripts/migrate-artist-images.ts --dry-run
 
-# Migrate all artists
+# 4. Migrate all artists
 bun run scripts/migrate-artist-images.ts
 
 # Or migrate specific artist
@@ -40,12 +37,26 @@ bun run scripts/migrate-artist-images.ts --artist-id "artist-uuid"
 bun run scripts/migrate-artist-images.ts --limit 10
 ```
 
+**Setting up .env file:**
+
+Your `.env` file should contain:
+
+```bash
+CLOUDFLARE_ACCOUNT_ID=your-account-id
+CLOUDFLARE_DATABASE_ID=your-d1-database-id
+CLOUDFLARE_D1_TOKEN=your-d1-api-token
+CLOUDFLARE_R2_ACCESS_KEY_ID=your-r2-access-key
+CLOUDFLARE_R2_SECRET_ACCESS_KEY=your-r2-secret-key
+CLOUDFLARE_R2_BUCKET_NAME=zephyron-audio
+```
+
 **Getting API credentials:**
 
-1. **Account ID**: Found in Cloudflare dashboard URL
+1. **Account ID**: Found in Cloudflare dashboard URL (after `/accounts/`)
 2. **Database ID**: Run `wrangler d1 list` to get your D1 database ID
-3. **D1 Token**: Create at Cloudflare Dashboard → Profile → API Tokens → Create Token → Select "D1 Edit" template
+3. **D1 Token**: Dashboard → Profile → API Tokens → Create Token → "D1 Edit" template
 4. **R2 Keys**: Dashboard → R2 → Manage R2 API Tokens → Create API Token
+5. **Bucket Name**: Should match your wrangler.jsonc R2 binding (usually `zephyron-audio`)
 
 ### Option 2: Manual Upload via Wrangler
 

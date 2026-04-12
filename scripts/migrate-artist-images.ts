@@ -6,6 +6,11 @@
  * 2. Downloads each image from the external URL
  * 3. Uploads to R2 at key: artists/{id}/image.jpg
  *
+ * Setup:
+ *   1. Create .env file in project root with required variables (see .env.example)
+ *   2. Run: bun add @aws-sdk/client-s3
+ *   3. Run: bun run scripts/migrate-artist-images.ts [options]
+ *
  * Usage:
  *   bun run scripts/migrate-artist-images.ts [--dry-run] [--limit N] [--artist-id ID]
  *
@@ -14,7 +19,7 @@
  *   --limit N       Only process first N artists (default: all)
  *   --artist-id ID  Only process specific artist by ID
  *
- * Environment variables required:
+ * Environment variables required (loaded from .env):
  *   CLOUDFLARE_ACCOUNT_ID
  *   CLOUDFLARE_DATABASE_ID
  *   CLOUDFLARE_D1_TOKEN
@@ -24,6 +29,26 @@
  */
 
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { existsSync } from 'fs'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+
+// Get script directory for .env loading
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const projectRoot = join(__dirname, '..')
+const envPath = join(projectRoot, '.env')
+
+// Check .env exists
+if (!existsSync(envPath)) {
+  console.error('❌ .env file not found in project root')
+  console.error('   Create .env with required Cloudflare credentials')
+  console.error('   See scripts/MIGRATION_GUIDE.md for details')
+  process.exit(1)
+}
+
+// Bun automatically loads .env files from project root
+console.log('📄 Loading environment from .env file...')
 
 interface Artist {
   id: string
@@ -39,7 +64,7 @@ const limit = limitIndex !== -1 ? parseInt(args[limitIndex + 1], 10) : null
 const artistIdIndex = args.indexOf('--artist-id')
 const artistId = artistIdIndex !== -1 ? args[artistIdIndex + 1] : null
 
-// Validate environment
+// Validate environment variables
 const requiredEnvVars = [
   'CLOUDFLARE_ACCOUNT_ID',
   'CLOUDFLARE_DATABASE_ID',
@@ -48,12 +73,15 @@ const requiredEnvVars = [
   'CLOUDFLARE_R2_SECRET_ACCESS_KEY',
 ]
 
-for (const envVar of requiredEnvVars) {
-  if (!process.env[envVar]) {
-    console.error(`❌ Missing required environment variable: ${envVar}`)
-    process.exit(1)
-  }
+const missingVars = requiredEnvVars.filter(v => !process.env[v])
+if (missingVars.length > 0) {
+  console.error('❌ Missing required environment variables in .env:')
+  missingVars.forEach(v => console.error(`   - ${v}`))
+  console.error('\n   See scripts/MIGRATION_GUIDE.md for setup instructions')
+  process.exit(1)
 }
+
+console.log('✅ All required environment variables loaded\n')
 
 const BUCKET_NAME = process.env.CLOUDFLARE_R2_BUCKET_NAME || 'zephyron-audio'
 const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID!
