@@ -357,7 +357,6 @@ export function ImportArtistModal({ onClose, onImported, onCreated }: { onClose:
 
 function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose: () => void; onSaved: () => void }) {
   const [name, setName] = useState(artist.name)
-  const [imageUrl, setImageUrl] = useState(artist.image_url || '')
   const [bioSummary, setBioSummary] = useState(artist.bio_summary || '')
   const [tagsStr, setTagsStr] = useState(
     (() => { try { return JSON.parse(artist.tags || '[]').join(', ') } catch { return '' } })()
@@ -391,7 +390,6 @@ function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose
         return
       }
       // Fill only empty/missing fields — don't overwrite existing data
-      if (!imageUrl && result.image_url) setImageUrl(result.image_url)
       if (!source1001Id && result.dj_id) setSource1001Id(result.dj_id)
       if (!spotifyUrl && result.spotify_url) setSpotifyUrl(result.spotify_url)
       if (!soundcloudUrl && result.soundcloud_url) setSoundcloudUrl(result.soundcloud_url)
@@ -415,7 +413,6 @@ function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose
       const tags = tagsStr.split(',').map((t: string) => t.trim()).filter(Boolean)
       await updateArtistAdmin(artist.id, {
         name: name.trim(),
-        image_url: imageUrl.trim() || null,
         bio_summary: bioSummary.trim() || null,
         tags,
         source_1001_id: source1001Id.trim() || null,
@@ -439,19 +436,6 @@ function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose
   return (
     <Modal isOpen onClose={onClose} title={`Edit: ${artist.name}`}>
       <div className="space-y-3">
-        {/* Image preview */}
-        {imageUrl && (
-          <div className="flex justify-center">
-            <img
-              src={imageUrl}
-              alt="Preview"
-              className="w-20 h-20 rounded-full object-cover"
-              style={{ boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)' }}
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-            />
-          </div>
-        )}
-
         {/* 1001TL Enrichment section */}
         <div className="rounded-lg overflow-hidden" style={{ boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.2)' }}>
           <button
@@ -473,7 +457,7 @@ function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose
           {showEnrich && (
             <div className="px-3 pb-3 pt-2 space-y-2" style={{ background: 'hsl(var(--b5) / 0.2)' }}>
               <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
-                Paste the DJ page HTML to fill in missing social links, image, and source ID. Existing values are preserved.
+                Paste the DJ page HTML to fill in missing social links and source ID. Existing values are preserved.
               </p>
               <textarea
                 value={enrichHtml}
@@ -493,12 +477,6 @@ function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose
         </div>
 
         <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} />
-        <Input
-          label="Image URL"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          placeholder="https://... (paste any image URL)"
-        />
         <div>
           <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>Bio</label>
           <textarea
