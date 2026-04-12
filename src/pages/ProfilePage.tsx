@@ -90,19 +90,29 @@ export function ProfilePage() {
         )}
 
         {/* Wrapped CTA Section */}
-        <div className="card">
-          <h3 className="text-sm font-[var(--font-weight-medium)] mb-2" style={{ color: 'hsl(var(--c1))' }}>
-            Your {new Date().getFullYear()} Wrapped
-          </h3>
-          <p className="text-sm mb-4" style={{ color: 'hsl(var(--c2))' }}>
-            See your year in electronic music
-          </p>
-          <Link to={`/app/wrapped/${new Date().getFullYear()}`} className="no-underline">
-            <Button variant="primary" className="w-full justify-center">
-              View Wrapped
-            </Button>
-          </Link>
-        </div>
+        {(() => {
+          const now = new Date()
+          const currentYear = now.getFullYear()
+          const currentMonth = now.getMonth() + 1 // 1-12
+          // Only show wrapped in December or after the year has ended
+          const showWrapped = currentMonth === 12
+
+          return showWrapped ? (
+            <div className="card">
+              <h3 className="text-sm font-[var(--font-weight-medium)] mb-2" style={{ color: 'hsl(var(--c1))' }}>
+                Your {currentYear} Wrapped
+              </h3>
+              <p className="text-sm mb-4" style={{ color: 'hsl(var(--c2))' }}>
+                See your year in electronic music
+              </p>
+              <Link to={`/app/wrapped/${currentYear}`} className="no-underline">
+                <Button variant="primary" className="w-full justify-center">
+                  View Wrapped
+                </Button>
+              </Link>
+            </div>
+          ) : null
+        })()}
 
         {/* Profile Header */}
         <ProfileHeader
