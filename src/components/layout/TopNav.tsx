@@ -80,15 +80,7 @@ export function TopNav() {
         to="/app"
         className="flex items-center gap-2 no-underline shrink-0 mr-2"
       >
-        <div className="w-6 h-6 bg-accent/90 rounded-md flex items-center justify-center">
-          <svg
-            viewBox="0 0 24 24"
-            className="w-3.5 h-3.5 text-white"
-            fill="currentColor"
-          >
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
-          </svg>
-        </div>
+        <img src="/logo-128.png" alt="Zephyron logo" className="w-6 h-6 object-contain" />
         <span className="text-sm font-[var(--font-weight-bold)] text-text-primary tracking-tight hidden sm:inline">
           Zephyron
         </span>

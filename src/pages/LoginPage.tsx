@@ -37,11 +37,7 @@ export function LoginPage() {
         <div className="absolute top-1/3 -right-20 w-[300px] h-[300px] rounded-full bg-accent/5 blur-[80px]" />
         <div className="relative z-10">
           <Link to="/" className="flex items-center gap-2.5 mb-12 no-underline">
-            <div className="w-8 h-8 bg-accent/90 rounded-lg flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 text-white" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
-              </svg>
-            </div>
+            <img src="/logo-128.png" alt="Zephyron logo" className="w-8 h-8 object-contain" />
             <span className="text-lg font-semibold text-text-primary tracking-tight">Zephyron</span>
           </Link>
           <p className="text-2xl font-semibold text-text-primary leading-snug mb-3">
@@ -58,11 +54,7 @@ export function LoginPage() {
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <Link to="/" className="flex items-center gap-2.5 mb-10 lg:hidden no-underline">
-            <div className="w-7 h-7 bg-accent/90 rounded-lg flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="w-4 h-4 text-white" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
-              </svg>
-            </div>
+            <img src="/logo-128.png" alt="Zephyron logo" className="w-7 h-7 object-contain" />
             <span className="text-base font-semibold text-text-primary tracking-tight">Zephyron</span>
           </Link>
 

@@ -201,9 +201,7 @@ export function PlayerBar() {
                   <img src={getCoverUrl(currentSet.id)} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-text-muted" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
-                    </svg>
+                    <img src="/logo-128.png" alt="" className="w-4 h-4 opacity-30 object-contain" />
                   </div>
                 )}
               </div>

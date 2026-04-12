@@ -70,14 +70,35 @@ export function MonthlyWrappedPage() {
   }, [yearMonth])
 
   if (error) {
+    // Determine if it's a "no data" error vs a real error
+    const isNoData = error.includes('Not enough listening data') || error.includes('No data')
+
     return (
       <div className="px-6 lg:px-10 py-6">
         <div className="max-w-3xl mx-auto">
-          <div className="card flex flex-col items-center justify-center py-12">
-            <p className="text-sm" style={{ color: 'hsl(var(--c2))' }}>
-              {error}
-            </p>
-            <Link to="/app/profile" className="mt-4">
+          <div className="card flex flex-col items-center justify-center py-12 px-6">
+            {isNoData ? (
+              <>
+                <div className="text-5xl mb-4">📊</div>
+                <p className="text-lg font-[var(--font-weight-bold)] mb-2" style={{ color: 'hsl(var(--c1))' }}>
+                  No Data Yet
+                </p>
+                <p className="text-sm text-center max-w-md mb-6" style={{ color: 'hsl(var(--c2))' }}>
+                  You don't have enough listening activity for this month yet. Start listening to some sets to generate your monthly wrapped!
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="text-5xl mb-4">⚠️</div>
+                <p className="text-lg font-[var(--font-weight-bold)] mb-2" style={{ color: 'hsl(var(--c1))' }}>
+                  Unable to Load
+                </p>
+                <p className="text-sm text-center max-w-md mb-6" style={{ color: 'hsl(var(--c2))' }}>
+                  {error}
+                </p>
+              </>
+            )}
+            <Link to="/app/profile">
               <Button variant="primary">Back to Profile</Button>
             </Link>
           </div>
