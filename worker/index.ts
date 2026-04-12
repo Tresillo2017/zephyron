@@ -20,7 +20,7 @@ import {
   fetch1001Tracklists, parse1001TracklistsHtml, import1001Tracklists, getVideoStreamUrl,
   fetchEventSets,
 } from './routes/admin-beta'
-import { listArtists, getArtist, createArtist, syncArtist, updateArtist, deleteArtist, getArtistBackground } from './routes/artists'
+import { listArtists, getArtist, createArtist, syncArtist, updateArtist, deleteArtist, getArtistImage, getArtistBackground } from './routes/artists'
 import {
   getListenerCount, joinListeners, heartbeatListener, leaveListeners,
 } from './routes/listeners'
@@ -139,6 +139,7 @@ router.get('/api/annotations/set/:setId', getAnnotations)
 
 // Artists (public read)
 router.get('/api/artists', listArtists)
+router.get('/api/artists/:id/image', getArtistImage)
 router.get('/api/artists/:id/background', getArtistBackground)
 router.get('/api/artists/:id', getArtist)
 

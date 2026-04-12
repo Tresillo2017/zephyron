@@ -462,6 +462,10 @@ export function getEventLogoUrl(id: string): string {
   return `${API_BASE}/events/${id}/logo`
 }
 
+export function getArtistImageUrl(artistId: string): string {
+  return `${API_BASE}/artists/${artistId}/image`
+}
+
 export async function createEventAdmin(data: Record<string, unknown>): Promise<{ data: { id: string; slug: string } }> {
   return fetchApi('/admin/events', { method: 'POST', body: JSON.stringify(data) })
 }

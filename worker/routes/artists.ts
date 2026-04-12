@@ -297,6 +297,40 @@ export async function deleteArtist(
   return json({ ok: true })
 }
 
+// GET /api/artists/:id/image — Serve artist profile image from R2
+export async function getArtistImage(
+  _request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>
+): Promise<Response> {
+  const { id } = params
+
+  // Try by id or slug
+  const artist = await env.DB.prepare(
+    'SELECT id FROM artists WHERE id = ? OR slug = ?'
+  ).bind(id, id).first<{ id: string }>()
+
+  if (!artist) {
+    return new Response(null, { status: 404 })
+  }
+
+  // The profile image is stored in R2 at artists/{id}/image.jpg
+  const r2Key = `artists/${artist.id}/image.jpg`
+  const object = await env.AUDIO_BUCKET.get(r2Key)
+
+  if (!object) {
+    return new Response(null, { status: 404 })
+  }
+
+  const headers = new Headers()
+  headers.set('Content-Type', object.httpMetadata?.contentType || 'image/jpeg')
+  headers.set('Cache-Control', 'public, max-age=86400')
+  headers.set('Access-Control-Allow-Origin', '*')
+
+  return new Response(object.body, { status: 200, headers })
+}
+
 // GET /api/artists/:id/background — Serve artist background image from R2
 export async function getArtistBackground(
   _request: Request,

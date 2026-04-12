@@ -18,6 +18,7 @@ import {
   getVideoPreviewUrl,
   getEventCoverUrl,
   getEventLogoUrl,
+  getArtistImageUrl,
   submitSourceRequest,
 } from "../lib/api";
 import { DETECTION_STATUS_LABELS } from "../lib/constants";
@@ -872,9 +873,9 @@ export function SetPage() {
                   to={`/app/artists/${artistInfo.slug || artistInfo.id}`}
                   className="flex items-center gap-3 mb-3 no-underline group"
                 >
-                  {artistInfo.image_url ? (
+                  {artistInfo.id ? (
                     <img
-                      src={artistInfo.image_url}
+                      src={getArtistImageUrl(artistInfo.id)}
                       alt={artistInfo.name}
                       className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
                     />

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { fetchArtists, syncArtistAdmin, updateArtistAdmin, deleteArtistAdmin, createArtistAdmin } from '../../lib/api'
+import { fetchArtists, syncArtistAdmin, updateArtistAdmin, deleteArtistAdmin, createArtistAdmin, getArtistImageUrl } from '../../lib/api'
 import { Button } from '../ui/Button'
 import { Badge } from '../ui/Badge'
 import { Modal } from '../ui/Modal'
@@ -127,8 +127,8 @@ export function ArtistsTab({ editId }: { editId?: string } = {}) {
                   className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center"
                   style={{ background: 'hsl(var(--b4) / 0.6)' }}
                 >
-                  {artist.image_url ? (
-                    <img src={artist.image_url} alt={artist.name} className="w-full h-full object-cover" />
+                  {artist.id ? (
+                    <img src={getArtistImageUrl(artist.id)} alt={artist.name} className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-sm font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c3))' }}>
                       {artist.name.charAt(0)}
