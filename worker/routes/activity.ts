@@ -79,7 +79,8 @@ export async function getUserActivity(
 ): Promise<Response> {
   const userId = params.userId
 
-  if (!userId || !/^[a-zA-Z0-9_-]{12}$/.test(userId)) {
+  // Validate user ID format (alphanumeric with _ or -, 8-64 chars)
+  if (!userId || !/^[a-zA-Z0-9_-]{8,64}$/.test(userId)) {
     return json<GetActivityError>({
       error: 'INVALID_USER_ID'
     }, 400)
