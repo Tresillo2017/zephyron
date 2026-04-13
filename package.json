@@ -21,12 +21,12 @@
     "kysely-d1": "^0.4.0",
     "nanoid": "^5.1.7",
     "node-vibrant": "3.1.6",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "react-icons": "^5.6.0",
     "react-qr-code": "^2.0.18",
     "react-router": "^7.13.2",
-    "undici": "^8.0.0",
+    "undici": "^8.0.3",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
