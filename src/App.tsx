@@ -1,10 +1,13 @@
+import React from 'react'
 import { Routes, Route, Outlet, Navigate } from 'react-router'
 import { useSession } from './lib/auth-client'
+import { useThemeStore } from './stores/themeStore'
 import { TopNav } from './components/layout/TopNav'
 import { PlayerBar } from './components/layout/PlayerBar'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { WhatsNew } from './components/WhatsNew'
 import { CookieConsent } from './components/CookieConsent'
+import { Toaster } from 'sileo'
 
 // Public pages
 import { LandingPage } from './pages/LandingPage'
@@ -15,7 +18,6 @@ import { PrivacyPage } from './pages/PrivacyPage'
 import { TermsPage } from './pages/TermsPage'
 import { TwoFactorPage } from './pages/TwoFactorPage'
 import { NotFoundPage } from './pages/NotFoundPage'
-import { ChangelogPage as PublicChangelogPage } from './pages/ChangelogPage'
 
 // App pages (authenticated)
 import { HomePage } from './pages/HomePage'
@@ -33,8 +35,11 @@ import { ArtistsPage } from './pages/ArtistsPage'
 import { ArtistPage } from './pages/ArtistPage'
 import { EventsPage } from './pages/EventsPage'
 import { EventPage } from './pages/EventPage'
-import { ChangelogPage } from './pages/ChangelogPage'
 import { RequestSetPage } from './pages/RequestSetPage'
+import { WrappedPage } from './pages/WrappedPage'
+import { MonthlyWrappedPage } from './pages/MonthlyWrappedPage'
+import { ActivityPage } from './pages/ActivityPage'
+import { CommunityPage } from './pages/CommunityPage'
 
 /** Layout for authenticated app pages — top nav over content + player */
 function AppLayout() {
@@ -89,6 +94,26 @@ function RedirectIfAuth({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  const theme = useThemeStore((state) => state.theme)
+
+  // Compute toast styles from CSS variables to match Zephyron's HSL-parametric system
+  // Sileo uses SVG <rect> elements with fill attribute that CSS background can't override
+  const toastOptions = React.useMemo(() => {
+    if (typeof window === 'undefined') return undefined
+    const root = document.documentElement
+    const styles = getComputedStyle(root)
+    const b5 = styles.getPropertyValue('--b5').trim()
+    const c1 = styles.getPropertyValue('--c1').trim()
+
+    return {
+      fill: b5 ? `hsl(${b5})` : undefined,
+      styles: {
+        title: c1 ? `color: hsl(${c1})` : 'color: white',
+        description: c1 ? `color: hsl(${c1} / 0.8)` : 'color: rgba(255, 255, 255, 0.8)',
+      },
+    }
+  }, [theme])
+
   return (
     <ErrorBoundary>
       <CookieConsent />
@@ -101,7 +126,6 @@ function App() {
         <Route path="about" element={<AboutPage />} />
         <Route path="privacy" element={<PrivacyPage />} />
         <Route path="terms" element={<TermsPage />} />
-        <Route path="changelog" element={<PublicChangelogPage />} />
 
         {/* Protected app routes */}
         <Route path="app" element={<RequireAuth />}>
@@ -113,6 +137,8 @@ function App() {
           <Route path="playlists/:id" element={<PlaylistPage />} />
           <Route path="history" element={<HistoryPage />} />
           <Route path="liked-songs" element={<LikedSongsPage />} />
+          <Route path="activity" element={<ActivityPage />} />
+          <Route path="community" element={<CommunityPage />} />
           <Route path="artists" element={<ArtistsPage />} />
           <Route path="artists/:id" element={<ArtistPage />} />
           <Route path="events" element={<EventsPage />} />
@@ -120,13 +146,19 @@ function App() {
           <Route path="admin" element={<AdminPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="settings" element={<SettingsPage />} />
-          <Route path="changelog" element={<ChangelogPage />} />
           <Route path="request-set" element={<RequestSetPage />} />
+          <Route path="wrapped/:year" element={<WrappedPage />} />
+          <Route path="wrapped/monthly/:yearMonth" element={<MonthlyWrappedPage />} />
         </Route>
 
         {/* 404 */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      <Toaster
+        position="top-center"
+        theme={theme === 'light' ? 'light' : 'dark'}
+        options={toastOptions}
+      />
     </ErrorBoundary>
   )
 }

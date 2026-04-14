@@ -1,21 +1,48 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { useSession, signOut } from '../lib/auth-client'
-import { fetchHistory, fetchPlaylists } from '../lib/api'
+import { useSession, signOut, getSession } from '../lib/auth-client'
+import { fetchHistory, fetchPlaylists, fetchMonthlyWrapped } from '../lib/api'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { formatRelativeTime } from '../lib/formatTime'
+import { TabBar } from '../components/ui/TabBar'
+import { ProfileHeader } from '../components/profile/ProfileHeader'
+import { ProfilePictureUpload } from '../components/profile/ProfilePictureUpload'
+import { ProfileStatsSection } from '../components/profile/ProfileStatsSection'
+import { BadgesGrid } from '../components/profile/BadgesGrid'
+import { ActivityFeed } from '../components/activity/ActivityFeed'
+import type { ExtendedUser } from '../lib/auth-types'
 
 export function ProfilePage() {
   const { data: session } = useSession()
   const navigate = useNavigate()
   const [recentCount, setRecentCount] = useState(0)
   const [playlistCount, setPlaylistCount] = useState(0)
+  const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'badges' | 'playlists' | 'about'>('overview')
+  const [showAvatarUpload, setShowAvatarUpload] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [currentMonthStats, setCurrentMonthStats] = useState<{ total_hours: number } | null>(null)
 
   useEffect(() => {
     fetchHistory().then((r) => setRecentCount(r.data?.length || 0)).catch(() => {})
     fetchPlaylists().then((r) => setPlaylistCount(r.data?.length || 0)).catch(() => {})
+
+    // Fetch current month stats
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth() + 1
+    fetchMonthlyWrapped(currentYear, currentMonth)
+      .then((data) => setCurrentMonthStats({ total_hours: data.total_hours }))
+      .catch(() => {})
   }, [])
+
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'activity', label: 'Activity' },
+    { id: 'badges', label: 'Badges' },
+    { id: 'playlists', label: 'Playlists' },
+    { id: 'about', label: 'About' },
+  ]
 
   if (!session?.user) {
     return (
@@ -29,15 +56,13 @@ export function ProfilePage() {
   }
 
   const user = session.user as any
-  const reputation = user.reputation || 0
-  const annotations = user.totalAnnotations || user.total_annotations || 0
-  const votes = user.totalVotes || user.total_votes || 0
 
-  const tier =
-    reputation >= 500 ? { name: 'Expert', hue: 'var(--h3)' }
-      : reputation >= 100 ? { name: 'Contributor', hue: '40, 80%, 55%' }
-      : reputation >= 10 ? { name: 'Active', hue: 'var(--c1)' }
-      : { name: 'Newcomer', hue: 'var(--c3)' }
+  // Initialize avatarUrl from user data
+  useEffect(() => {
+    if (user?.avatar_url) {
+      setAvatarUrl(user.avatar_url)
+    }
+  }, [user?.avatar_url])
 
   const handleSignOut = async () => {
     await signOut()
@@ -46,149 +71,188 @@ export function ProfilePage() {
 
   return (
     <div className="px-6 lg:px-10 py-6">
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="max-w-5xl mx-auto space-y-5">
 
-        {/* ── MAIN COLUMN ── */}
-        <div className="flex-1 min-w-0 space-y-5">
-
-          {/* Profile header card */}
+        {/* Quick Stats Section */}
+        {currentMonthStats && (
           <div className="card">
-            <div className="flex items-center gap-5">
-              {/* Avatar */}
-              <div
-                className="w-20 h-20 rounded-[var(--card-radius)] flex items-center justify-center shrink-0 text-3xl font-[var(--font-weight-bold)]"
-                style={{ background: 'hsl(var(--h3) / 0.12)', color: 'hsl(var(--h3))' }}
-              >
-                {user.name?.charAt(0).toUpperCase() || '?'}
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-xl font-[var(--font-weight-bold)] truncate" style={{ color: 'hsl(var(--c1))' }}>
-                  {user.name}
-                </h1>
-                <p className="text-sm mt-0.5" style={{ color: 'hsl(var(--c3))' }}>{user.email}</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge variant="accent">{user.role || 'user'}</Badge>
-                  <span className="text-xs font-[var(--font-weight-medium)]" style={{ color: `hsl(${tier.hue})` }}>{tier.name}</span>
-                  <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>·</span>
-                  <span className="text-xs font-mono" style={{ color: 'hsl(var(--h3))' }}>{reputation} pts</span>
-                </div>
-              </div>
+            <h3 className="text-sm font-[var(--font-weight-medium)] mb-4" style={{ color: 'hsl(var(--c1))' }}>
+              This Month
+            </h3>
+            <div className="flex items-end gap-2">
+              <p className="text-4xl font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--h3))' }}>
+                {Math.round(currentMonthStats.total_hours * 10) / 10}
+              </p>
+              <p className="text-sm mb-1" style={{ color: 'hsl(var(--c2))' }}>
+                hours listened
+              </p>
             </div>
           </div>
+        )}
 
-          {/* Stats row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              { value: reputation, label: 'Reputation', accent: true },
-              { value: annotations, label: 'Annotations', accent: false },
-              { value: votes, label: 'Votes', accent: false },
-              { value: recentCount, label: 'Listened', accent: false },
-            ].map((stat) => (
-              <div key={stat.label} className="card !p-4">
-                <p className="text-2xl font-[var(--font-weight-bold)]" style={{ color: stat.accent ? 'hsl(var(--h3))' : 'hsl(var(--c1))' }}>
-                  {stat.value}
-                </p>
-                <p className="text-[11px] mt-1" style={{ color: 'hsl(var(--c3))' }}>{stat.label}</p>
-              </div>
-            ))}
-          </div>
+        {/* Wrapped CTA Section */}
+        {(() => {
+          const now = new Date()
+          const currentYear = now.getFullYear()
+          const currentMonth = now.getMonth() + 1 // 1-12
+          // Only show wrapped in December or after the year has ended
+          const showWrapped = currentMonth === 12
 
-          {/* Reputation guide */}
-          <div className="card">
-            <h3 className="text-sm font-[var(--font-weight-bold)] mb-4" style={{ color: 'hsl(var(--h3))' }}>Reputation</h3>
-            <p className="text-xs mb-4" style={{ color: 'hsl(var(--c3))' }}>
-              Earn reputation by contributing to the community. Higher reputation unlocks more trust.
-            </p>
-            <div className="space-y-3">
+          return showWrapped ? (
+            <div className="card">
+              <h3 className="text-sm font-[var(--font-weight-medium)] mb-2" style={{ color: 'hsl(var(--c1))' }}>
+                Your {currentYear} Wrapped
+              </h3>
+              <p className="text-sm mb-4" style={{ color: 'hsl(var(--c2))' }}>
+                See your year in electronic music
+              </p>
+              <Link to={`/app/wrapped/${currentYear}`} className="no-underline">
+                <Button variant="primary" className="w-full justify-center">
+                  View Wrapped
+                </Button>
+              </Link>
+            </div>
+          ) : null
+        })()}
+
+        {/* Profile Header */}
+        <ProfileHeader
+          user={{
+            ...user,
+            avatar_url: avatarUrl,
+          }}
+          isOwnProfile={true}
+          onEditClick={() => navigate('/app/settings?tab=profile')}
+          onAvatarClick={() => setShowAvatarUpload(true)}
+        />
+
+        {/* TabBar */}
+        <TabBar
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as any)}
+        />
+
+        {/* Tab Content */}
+        {activeTab === 'overview' && (
+          <div className="space-y-5">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {[
-                { action: 'Annotation approved', points: '+10', positive: true },
-                { action: 'Correction confirmed by community', points: '+25', positive: true },
-                { action: 'Vote on a track detection', points: '+1', positive: true },
-                { action: 'Annotation rejected', points: '-5', positive: false },
-              ].map((item) => (
-                <div key={item.action} className="flex items-center justify-between">
-                  <span className="text-sm" style={{ color: 'hsl(var(--c2))' }}>{item.action}</span>
-                  <span className="text-sm font-mono font-[var(--font-weight-medium)]" style={{ color: item.positive ? 'hsl(var(--h3))' : 'hsl(0, 60%, 55%)' }}>
-                    {item.points}
-                  </span>
+                { value: playlistCount, label: 'Playlists' },
+                { value: 0, label: 'Liked Songs' },
+                { value: recentCount, label: 'Sets Listened' },
+              ].map((stat) => (
+                <div key={stat.label} className="card !p-4">
+                  <p className="text-2xl font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c1))' }}>
+                    {stat.value}
+                  </p>
+                  <p className="text-[11px] mt-1" style={{ color: 'hsl(var(--c3))' }}>{stat.label}</p>
                 </div>
               ))}
             </div>
 
-            {/* Tier progress */}
-            <div className="mt-5 pt-4" style={{ borderTop: '1px solid hsl(var(--b4) / 0.2)' }}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-[var(--font-weight-medium)]" style={{ color: `hsl(${tier.hue})` }}>{tier.name}</span>
-                <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>
-                  {reputation >= 500 ? 'Max tier' : reputation >= 100 ? `${500 - reputation} pts to Expert` : reputation >= 10 ? `${100 - reputation} pts to Contributor` : `${10 - reputation} pts to Active`}
-                </span>
-              </div>
-              <div className="h-1.5 rounded-full" style={{ background: 'hsl(var(--b3))' }}>
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    background: 'hsl(var(--h3))',
-                    width: `${Math.min(100, reputation >= 500 ? 100 : reputation >= 100 ? ((reputation - 100) / 400) * 100 : reputation >= 10 ? ((reputation - 10) / 90) * 100 : (reputation / 10) * 100)}%`,
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+            {/* Listening Statistics */}
+            <ProfileStatsSection userId={user.id} />
 
-        {/* ── SIDEBAR ── */}
-        <div className="lg:w-[300px] shrink-0 space-y-5">
-
-          {/* Quick actions */}
-          <div className="card">
-            <h3 className="text-xs mb-3" style={{ color: 'hsl(var(--c3))' }}>Quick actions</h3>
-            <div className="space-y-0.5">
-              {[
-                { to: '/app/playlists', label: 'My Playlists', count: playlistCount, icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
-                { to: '/app/history', label: 'Listening History', count: recentCount, icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-                { to: '/app/settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
-              ].map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg no-underline transition-colors"
-                  style={{ color: 'hsl(var(--c2))' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'hsl(var(--b3) / 0.4)'; e.currentTarget.style.color = 'hsl(var(--c1))' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'hsl(var(--c2))' }}
+            {/* Recent Activity */}
+            <div className="card">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c1))' }}>
+                  Recent Activity
+                </h3>
+                <button
+                  onClick={() => setActiveTab('activity')}
+                  className="text-xs text-accent hover:text-accent-hover transition-colors"
                 >
-                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
-                  </svg>
-                  <span className="text-sm flex-1">{item.label}</span>
-                  {item.count !== undefined && item.count > 0 && (
-                    <span className="text-[10px] font-mono" style={{ color: 'hsl(var(--c3))' }}>{item.count}</span>
-                  )}
-                </Link>
-              ))}
+                  View all →
+                </button>
+              </div>
+              <ActivityFeed feed="me" limit={3} />
             </div>
           </div>
+        )}
 
-          {/* Account info */}
+        {activeTab === 'activity' && (
+          <ActivityFeed feed="user" userId={user.id} limit={5} />
+        )}
+
+        {activeTab === 'badges' && (
+          <BadgesGrid userId={user.id} />
+        )}
+
+        {activeTab === 'playlists' && (
           <div className="card">
-            <h3 className="text-xs mb-3" style={{ color: 'hsl(var(--c3))' }}>Account</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c1))' }}>
+                Playlists
+              </h3>
+              <span className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
+                {playlistCount} {playlistCount === 1 ? 'playlist' : 'playlists'}
+              </span>
+            </div>
+            <p className="text-sm mb-3" style={{ color: 'hsl(var(--c3))' }}>
+              Manage your playlists
+            </p>
+            <Link
+              to="/app/playlists"
+              className="inline-flex items-center gap-2 text-sm no-underline hover:underline"
+              style={{ color: 'hsl(var(--h3))' }}
+            >
+              View all playlists
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+        )}
+
+        {activeTab === 'about' && (
+          <div className="card">
+            <h3 className="text-sm font-[var(--font-weight-medium)] mb-4" style={{ color: 'hsl(var(--c1))' }}>
+              About
+            </h3>
             <div className="space-y-3">
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-sm" style={{ color: 'hsl(var(--c3))' }}>Role</span>
-                <span className="text-sm" style={{ color: 'hsl(var(--c1))' }}>{user.role || 'user'}</span>
+                <Badge variant="accent">{user.role || 'user'}</Badge>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm" style={{ color: 'hsl(var(--c3))' }}>Joined</span>
-                <span className="text-sm" style={{ color: 'hsl(var(--c2))' }}>{user.createdAt ? formatRelativeTime(user.createdAt) : 'Unknown'}</span>
+                <span className="text-sm" style={{ color: 'hsl(var(--c2))' }}>
+                  {user.createdAt ? formatRelativeTime(user.createdAt) : 'Unknown'}
+                </span>
               </div>
             </div>
+            <div className="mt-6 pt-6" style={{ borderTop: '1px solid hsl(var(--b4) / 0.25)' }}>
+              <Button variant="ghost" onClick={handleSignOut} className="w-full justify-center">
+                Sign out
+              </Button>
+            </div>
           </div>
+        )}
 
-          {/* Sign out */}
-          <Button variant="ghost" onClick={handleSignOut} className="w-full justify-center">
-            Sign out
-          </Button>
-        </div>
       </div>
+
+      {/* Avatar Upload Modal */}
+      {showAvatarUpload && (
+        <ProfilePictureUpload
+          currentAvatarUrl={avatarUrl}
+          onUploadSuccess={async (url) => {
+            // Refresh session to get updated avatar_url field
+            const updatedSession = await getSession()
+            // Update local state with the new URL from session
+            const user = updatedSession?.data?.user as ExtendedUser | undefined
+            if (user?.avatar_url) {
+              setAvatarUrl(user.avatar_url)
+            } else {
+              // Fallback: use the URL from upload response
+              setAvatarUrl(url)
+            }
+          }}
+          onClose={() => setShowAvatarUpload(false)}
+        />
+      )}
     </div>
   )
 }

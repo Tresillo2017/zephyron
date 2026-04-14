@@ -20,7 +20,7 @@ import {
   fetch1001Tracklists, parse1001TracklistsHtml, import1001Tracklists, getVideoStreamUrl,
   fetchEventSets,
 } from './routes/admin-beta'
-import { listArtists, getArtist, createArtist, syncArtist, updateArtist, deleteArtist, getArtistBackground } from './routes/artists'
+import { listArtists, getArtist, createArtist, syncArtist, updateArtist, deleteArtist, uploadArtistImageFromUrl, getArtistImage, getArtistBackground } from './routes/artists'
 import {
   getListenerCount, joinListeners, heartbeatListener, leaveListeners,
 } from './routes/listeners'
@@ -33,7 +33,16 @@ import { submitSetRequest, listSetRequests, approveSetRequest, rejectSetRequest 
 import { createSourceRequest, listSourceRequests, approveSourceRequest, rejectSourceRequest } from './routes/source-requests'
 import { getSong, getSongCover, likeSong, unlikeSong, getLikedSongs, getSongLikeStatus, listSongsAdmin, updateSongAdmin, deleteSongAdmin, cacheSongCoverAdmin, enrichSongAdmin } from './routes/songs'
 import { updateUsername } from './routes/user'
+import { uploadAvatar, updateProfileSettings, getPublicProfile } from './routes/profile'
+import { getStats } from './routes/stats'
+import { getBadges } from './routes/badges'
+import { getMyActivity, getUserActivity, getCommunityActivity } from './routes/activity'
+import { updatePrivacySettings, getPrivacySettings } from './routes/privacy'
+import * as sessions from './routes/sessions'
+import { getAnnualWrapped, downloadWrappedImage, getMonthlyWrapped } from './routes/wrapped'
+import { getTrendingSets, getRandomSet, testDiscordWebhook } from './routes/discord'
 import { handleDetectionQueue, handleFeedbackQueue, handleCoverArtQueue } from './queues/index'
+import { handleScheduled } from './cron'
 
 // Re-export Durable Object class for Cloudflare runtime
 export { AudioSessionDO } from './durable-objects/audio-session'
@@ -131,6 +140,7 @@ router.get('/api/annotations/set/:setId', getAnnotations)
 
 // Artists (public read)
 router.get('/api/artists', listArtists)
+router.get('/api/artists/:id/image', getArtistImage)
 router.get('/api/artists/:id/background', getArtistBackground)
 router.get('/api/artists/:id', getArtist)
 
@@ -153,6 +163,16 @@ router.delete('/api/playlists/:id/items/:setId', removePlaylistItem)
 router.get('/api/history', getHistory)
 router.post('/api/history', updateHistory)
 
+// Sessions (authenticated)
+router.post('/api/sessions/start', sessions.startSession)
+router.patch('/api/sessions/:id/progress', sessions.updateProgress)
+router.post('/api/sessions/:id/end', sessions.endSession)
+
+// Wrapped (authenticated)
+router.get('/api/wrapped/:year', getAnnualWrapped)
+router.get('/api/wrapped/:year/download', downloadWrappedImage)
+router.get('/api/wrapped/monthly/:yearMonth', getMonthlyWrapped)
+
 // Set request petitions — DB-backed (authenticated)
 router.post('/api/petitions', withAuth(submitSetRequest))
 // Source suggestions for existing sourceless sets (any authenticated user)
@@ -160,6 +180,25 @@ router.post('/api/sets/:id/request-source', withAuth(createSourceRequest))
 
 // User profile
 router.patch('/api/user/username', updateUsername)
+
+// Profile routes
+router.post('/api/profile/avatar/upload', uploadAvatar)
+router.patch('/api/profile/settings', updateProfileSettings)
+router.get('/api/profile/:userId', getPublicProfile)
+router.get('/api/profile/:userId/stats', getStats)
+router.get('/api/profile/:userId/badges', getBadges)
+router.get('/api/profile/privacy', getPrivacySettings)
+router.patch('/api/profile/privacy', updatePrivacySettings)
+
+// Activity feed routes
+router.get('/api/activity/me', getMyActivity)
+router.get('/api/activity/user/:userId', getUserActivity)
+router.get('/api/activity/community', getCommunityActivity)
+
+// Discord Bot Integration
+router.get('/api/sets/trending', getTrendingSets)
+router.get('/api/sets/random', getRandomSet)
+router.post('/api/discord/test', withAdmin(testDiscordWebhook))
 
 // ═══════════════════════════════════════════
 // Admin routes — all protected by withAdmin()
@@ -170,6 +209,7 @@ router.post('/api/admin/artists', withAdmin(createArtist))
 router.post('/api/admin/artists/:id/sync', withAdmin(syncArtist))
 router.put('/api/admin/artists/:id', withAdmin(updateArtist))
 router.delete('/api/admin/artists/:id', withAdmin(deleteArtist))
+router.post('/api/admin/artists/:id/image', withAdmin(uploadArtistImageFromUrl))
 
 // Admin / Events
 router.post('/api/admin/events', withAdmin(createEvent))
@@ -279,6 +319,10 @@ export default {
         console.error(`Unknown queue: ${batch.queue}`)
         batch.ackAll()
     }
+  },
+
+  async scheduled(controller, env, ctx) {
+    await handleScheduled(controller, env, ctx)
   },
 } satisfies ExportedHandler<Env>
 

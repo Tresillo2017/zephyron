@@ -347,6 +347,40 @@ export async function createSet(
     }
   }
 
+  // Notify Discord bot in background (non-blocking)
+  _ctx.waitUntil((async () => {
+    try {
+      const { notifyDiscordBot } = await import('./discord')
+      const setData = await env.DB.prepare('SELECT * FROM sets WHERE id = ?').bind(id).first()
+      const artistData = body.artist_id ? await env.DB.prepare('SELECT * FROM artists WHERE id = ?').bind(body.artist_id).first() : null
+
+      if (setData && artistData) {
+        await notifyDiscordBot(env, 'set.uploaded', {
+          set: {
+            id: setData.id,
+            title: setData.title,
+            description: setData.description,
+            artwork_url: setData.cover_art_r2_key
+              ? `https://audio.zephyron.app/audio/${setData.cover_art_r2_key}`
+              : 'https://zephyron.app/og-image.png',
+            duration: setData.duration_seconds || 0,
+            genre: setData.genre || 'Unknown',
+            plays: setData.play_count || 0,
+            rating: 0,
+            created_at: setData.created_at,
+          },
+          artist: {
+            id: artistData.id,
+            name: artistData.name,
+            avatar_url: artistData.image_url,
+          },
+        })
+      }
+    } catch (err) {
+      console.error('[createSet] Discord notification failed (non-blocking):', err)
+    }
+  })())
+
   return json({ data: { id }, ok: true }, 201)
 }
 

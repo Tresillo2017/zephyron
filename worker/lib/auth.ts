@@ -66,6 +66,22 @@ export function createAuth(env: Env) {
           input: true,
           fieldName: 'invite_code',
         },
+        avatar_url: {
+          type: 'string',
+          required: false,
+          input: false,
+        },
+        bio: {
+          type: 'string',
+          required: false,
+          input: false,
+        },
+        is_profile_public: {
+          type: 'boolean',
+          required: false,
+          defaultValue: false,
+          input: false,
+        },
       },
     },
     session: {
@@ -220,5 +236,22 @@ export async function requireAuth(
       status: 401,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     })
+  }
+}
+
+/**
+ * Get authenticated user if present, or null if not authenticated.
+ * Does not return an error response - use for optional authentication.
+ */
+export async function getOptionalAuth(
+  request: Request,
+  env: Env
+): Promise<{ id: string; role: string; name: string; email: string } | null> {
+  try {
+    const auth = createAuth(env)
+    const session = await auth.api.getSession({ headers: request.headers })
+    return session?.user ? (session.user as any) : null
+  } catch (err) {
+    return null
   }
 }

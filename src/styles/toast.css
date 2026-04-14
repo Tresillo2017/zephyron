@@ -1,0 +1,115 @@
+/* ═══ Sileo Toast Overrides ═══
+   Styles Sileo's default components to match Zephyron's HSL-parametric design system.
+   All colors use CSS custom properties for automatic theme adaptation. */
+
+/* Container positioning */
+[data-sileo-toaster] {
+  z-index: 45; /* Between player (40) and modals (50) */
+}
+
+/* Base toast styling - applies to all variants */
+[data-sileo-toast] {
+  background: hsl(var(--b5));
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-border), var(--card-shadow);
+  padding: 16px 20px;
+  min-width: 320px;
+  max-width: 450px;
+  font-family: var(--font-sans);
+}
+
+/* Variant-specific accent colors */
+[data-sileo-toast][data-type="success"] {
+  --toast-accent: hsl(var(--h3));
+}
+[data-sileo-toast][data-type="error"] {
+  --toast-accent: var(--color-danger);
+}
+[data-sileo-toast][data-type="warning"] {
+  --toast-accent: var(--color-warning);
+}
+[data-sileo-toast][data-type="info"] {
+  --toast-accent: hsl(var(--c2));
+}
+
+/* Icon styling */
+[data-sileo-toast] [data-icon] {
+  color: var(--toast-accent);
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Title text */
+[data-sileo-toast] [data-title] {
+  font-weight: var(--font-weight-medium);
+  color: hsl(var(--c1));
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Description text */
+[data-sileo-toast] [data-description] {
+  font-weight: var(--font-weight);
+  color: hsl(var(--c2));
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+/* Close button */
+[data-sileo-toast] [data-close-button] {
+  color: hsl(var(--c3));
+  background: transparent;
+  border-radius: 6px;
+  padding: 4px;
+  transition: background-color 0.2s var(--ease-out-custom), color 0.2s var(--ease-out-custom);
+}
+[data-sileo-toast] [data-close-button]:hover {
+  background: hsl(var(--b3) / 0.5);
+  color: hsl(var(--c1));
+}
+
+/* Action button */
+[data-sileo-toast] [data-action-button] {
+  background: hsl(var(--b3));
+  color: hsl(var(--c2));
+  border-radius: var(--button-radius);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  transition: transform 0.2s var(--ease-out-custom), background-color 0.2s var(--ease-out-custom);
+}
+[data-sileo-toast] [data-action-button]:hover {
+  background: hsl(var(--b2));
+}
+[data-sileo-toast] [data-action-button]:active {
+  transform: scale(0.98);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  [data-sileo-toast] {
+    min-width: 90vw;
+    max-width: 90vw;
+    margin: 0 12px;
+  }
+
+  [data-sileo-toaster] {
+    padding-top: 12px; /* Closer to top edge on mobile */
+  }
+}
+
+@media (min-width: 769px) {
+  [data-sileo-toaster] {
+    padding-top: 16px; /* Standard desktop spacing */
+  }
+}
+
+/* Reduced motion support (respects global preference from index.css) */
+@media (prefers-reduced-motion: reduce) {
+  [data-sileo-toast] {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

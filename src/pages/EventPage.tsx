@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link, useNavigate } from 'react-router'
-import { fetchEvent, getEventCoverUrl, getEventLogoUrl } from '../lib/api'
+import { fetchEvent, getEventCoverUrl, getEventLogoUrl, getArtistImageUrl } from '../lib/api'
 import { useSession } from '../lib/auth-client'
 import { Skeleton } from '../components/ui/Skeleton'
 import { Badge } from '../components/ui/Badge'
@@ -333,8 +333,8 @@ export function EventPage() {
                           className="w-8 h-8 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
                           style={{ background: 'hsl(var(--b3))', boxShadow: 'var(--card-border)' }}
                         >
-                          {artist.image_url ? (
-                            <img src={artist.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                          {artist.id ? (
+                            <img src={getArtistImageUrl(artist.id)} alt="" className="w-full h-full object-cover" loading="lazy" />
                           ) : (
                             <span className="text-[11px] font-bold text-text-muted">{artist.name.charAt(0).toUpperCase()}</span>
                           )}
@@ -439,8 +439,8 @@ export function EventPage() {
                         className="w-10 h-10 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
                         style={{ background: 'hsl(var(--b3))', boxShadow: 'var(--card-border)' }}
                       >
-                        {artist.image_url ? (
-                          <img src={artist.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                        {artist.id ? (
+                          <img src={getArtistImageUrl(artist.id)} alt="" className="w-full h-full object-cover" loading="lazy" />
                         ) : (
                           <span className="text-sm font-bold text-text-muted">{artist.name.charAt(0).toUpperCase()}</span>
                         )}

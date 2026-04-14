@@ -29,3 +29,9 @@ dist-ssr
 !.dev.vars.example
 .env*
 !.env.example
+
+# worktrees
+.worktrees
+
+# Superpowers
+.superpowers

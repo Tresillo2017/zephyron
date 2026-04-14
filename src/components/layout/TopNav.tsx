@@ -1,6 +1,8 @@
 import { Link, useNavigate, useLocation } from "react-router";
 import { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "../../lib/auth-client";
+import { UserAvatar } from "../ui/UserAvatar";
+import { openChangelog } from "../WhatsNew";
 
 export function TopNav() {
   const { data: session } = useSession();
@@ -79,15 +81,7 @@ export function TopNav() {
         to="/app"
         className="flex items-center gap-2 no-underline shrink-0 mr-2"
       >
-        <div className="w-6 h-6 bg-accent/90 rounded-md flex items-center justify-center">
-          <svg
-            viewBox="0 0 24 24"
-            className="w-3.5 h-3.5 text-white"
-            fill="currentColor"
-          >
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
-          </svg>
-        </div>
+        <img src="/logo-128.png" alt="Zephyron logo" className="w-6 h-6 object-contain" />
         <span className="text-sm font-[var(--font-weight-bold)] text-text-primary tracking-tight hidden sm:inline">
           Zephyron
         </span>
@@ -171,9 +165,11 @@ export function TopNav() {
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-2 px-2 py-1 rounded-full hover:bg-surface-hover/50 transition-colors"
             >
-              <div className="w-6 h-6 bg-accent/15 rounded-full flex items-center justify-center text-accent text-[10px] font-bold">
-                {session.user.name?.charAt(0).toUpperCase() || "?"}
-              </div>
+              <UserAvatar
+                avatarUrl={(session.user as any)?.avatar_url}
+                name={session.user.name}
+                size={24}
+              />
               <span className="text-sm text-text-primary hidden sm:inline">
                 {session.user.name}
               </span>
@@ -206,8 +202,12 @@ export function TopNav() {
               >
                 {/* User info */}
                 <div className="flex flex-col items-center py-3 mb-2">
-                  <div className="w-14 h-14 bg-accent/15 rounded-full flex items-center justify-center text-accent text-xl font-bold mb-2">
-                    {session.user.name?.charAt(0).toUpperCase() || "?"}
+                  <div className="mb-2">
+                    <UserAvatar
+                      avatarUrl={(session.user as any)?.avatar_url}
+                      name={session.user.name}
+                      size={56}
+                    />
                   </div>
                   <p className="text-sm font-medium text-text-primary">
                     @{session.user.name}
@@ -251,11 +251,6 @@ export function TopNav() {
                     label: "Settings",
                     icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z",
                   },
-                  {
-                    to: "/app/changelog",
-                    label: "Changelog",
-                    icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2",
-                  },
                 ].map((item) => (
                   <Link
                     key={item.to}
@@ -279,6 +274,30 @@ export function TopNav() {
                     {item.label}
                   </Link>
                 ))}
+
+                {/* Changelog button */}
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false)
+                    openChangelog()
+                  }}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors w-full"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
+                  Changelog
+                </button>
 
                 <div className="mt-2 pt-2">
                   <a

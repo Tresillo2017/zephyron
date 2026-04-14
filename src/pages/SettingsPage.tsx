@@ -1,12 +1,17 @@
 import { useState } from 'react'
 import { useSearchParams, Link } from 'react-router'
-import { useSession, authClient } from '../lib/auth-client'
+import { useSession, authClient, getSession } from '../lib/auth-client'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Badge } from '../components/ui/Badge'
 import { useThemeStore, ACCENTS } from '../stores/themeStore'
-import { updateUsername } from '../lib/api'
 import QRCode from 'react-qr-code'
+import { ProfilePictureUpload } from '../components/profile/ProfilePictureUpload'
+import { BioEditor } from '../components/profile/BioEditor'
+import { DisplayNameEditor } from '../components/profile/DisplayNameEditor'
+import { updateProfileSettings } from '../lib/api'
+import { sileo } from 'sileo'
+import type { ExtendedUser } from '../lib/auth-types'
 
 type Tab = 'profile' | 'visual' | 'security' | 'account'
 
@@ -223,79 +228,124 @@ function SettingRow({ label, description, children, noBorder }: {
 /* ─────────────────────────── Profile Tab ─────────────────────────── */
 
 function ProfileTab() {
-  const { data: session } = useSession()
+  const { data: session, isPending } = useSession()
   const user = session?.user as any
-  const [name, setName] = useState(user?.name || '')
-  const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [showAvatarUpload, setShowAvatarUpload] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || null)
+  const [bio, setBio] = useState(user?.bio || '')
+  const [displayName, setDisplayName] = useState(user?.name || '')
+  const [isProfilePublic, setIsProfilePublic] = useState(user?.is_profile_public || false)
+  const [savingPrivacy, setSavingPrivacy] = useState(false)
 
-  const handleUpdateUsername = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!name.trim() || name === user?.name) return
+  if (isPending) {
+    return <div className="text-sm text-text-muted">Loading...</div>
+  }
 
-    setSaving(true)
-    setMessage(null)
+  if (!user) {
+    return <div className="text-sm text-text-muted">Not signed in</div>
+  }
+
+  const initial = user.name?.charAt(0).toUpperCase() || '?'
+
+  const handlePrivacyToggle = async (checked: boolean) => {
+    setIsProfilePublic(checked)
+    setSavingPrivacy(true)
 
     try {
-      await updateUsername(name.trim())
-      setMessage({ type: 'success', text: 'Username updated successfully' })
+      await updateProfileSettings({ is_profile_public: checked })
+      sileo.success({ title: 'Privacy settings updated', duration: 3000 })
     } catch (err: any) {
-      const msg = err?.message || 'Failed to update username'
-      // 409 = already taken, surface a clear message
-      if (msg.includes('already taken') || err?.status === 409) {
-        setMessage({ type: 'error', text: 'That username is already taken' })
-      } else {
-        setMessage({ type: 'error', text: msg })
-      }
+      sileo.error({ title: 'Failed to update privacy settings', duration: 7000 })
+      setIsProfilePublic(!checked) // Revert
     } finally {
-      setSaving(false)
+      setSavingPrivacy(false)
     }
   }
 
   return (
     <div className="space-y-8">
-      {/* Avatar + basic info */}
-      <div className="flex items-center gap-4">
-        <div className="w-16 h-16 bg-accent/15 rounded-full flex items-center justify-center text-accent text-2xl font-bold">
-          {user?.name?.charAt(0).toUpperCase() || '?'}
-        </div>
-        <div>
-          <p className="text-lg font-semibold text-text-primary">{user?.name}</p>
-          <p className="text-sm text-text-secondary">{user?.email}</p>
-        </div>
-      </div>
-
-      {/* Edit username */}
-      <form onSubmit={handleUpdateUsername} className="space-y-4">
-        <div className="bg-surface-raised border border-border rounded-xl p-5 space-y-4">
-          <h3 className="text-sm font-semibold text-text-primary">Username</h3>
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Your username"
-            maxLength={32}
-          />
-          {message && (
-            <p className={`text-xs ${message.type === 'success' ? 'text-accent' : 'text-danger'}`}>
-              {message.text}
-            </p>
-          )}
-          <div className="flex justify-end">
-            <Button type="submit" variant="primary" size="sm" disabled={saving || name === user?.name}>
-              {saving ? 'Saving...' : 'Save'}
-            </Button>
+      {/* Profile Picture */}
+      <div>
+        <h3 className="text-sm font-semibold text-text-primary mb-3">Profile Picture</h3>
+        <div className="flex items-center gap-4">
+          <div
+            className="w-20 h-20 rounded-lg flex items-center justify-center overflow-hidden shrink-0"
+            style={{
+              background: avatarUrl ? 'transparent' : 'hsl(var(--h3) / 0.12)',
+              color: 'hsl(var(--h3))',
+              fontSize: avatarUrl ? 'inherit' : '2rem',
+              fontWeight: avatarUrl ? 'inherit' : 'var(--font-weight-bold)',
+              boxShadow: 'var(--card-border), var(--card-shadow)',
+            }}
+          >
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+            ) : (
+              initial
+            )}
           </div>
+          <Button variant="secondary" size="sm" onClick={() => setShowAvatarUpload(true)}>
+            Change Picture
+          </Button>
         </div>
-      </form>
-
-      {/* Email info */}
-      <div className="bg-surface-raised border border-border rounded-xl p-5">
-        <h3 className="text-sm font-semibold text-text-primary mb-1">Email Address</h3>
-        <p className="text-sm text-text-secondary">{user?.email}</p>
-        <p className="text-xs text-text-muted mt-2">
-          Contact support to change your email address.
-        </p>
       </div>
+
+      {/* Display Name */}
+      <div>
+        <DisplayNameEditor
+          initialName={displayName}
+          onUpdate={(name) => setDisplayName(name)}
+        />
+      </div>
+
+      {/* Bio */}
+      <div>
+        <BioEditor
+          initialBio={bio}
+          onUpdate={(newBio) => setBio(newBio)}
+        />
+      </div>
+
+      {/* Privacy */}
+      <div>
+        <h3 className="text-sm font-semibold text-text-primary mb-3">Privacy</h3>
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isProfilePublic}
+            onChange={(e) => handlePrivacyToggle(e.target.checked)}
+            disabled={savingPrivacy}
+            className="w-4 h-4 rounded cursor-pointer"
+            style={{
+              accentColor: 'hsl(var(--h3))',
+            }}
+          />
+          <div>
+            <p className="text-sm text-text-primary">Make my profile public</p>
+            <p className="text-xs text-text-muted">When enabled, other users can view your profile</p>
+          </div>
+        </label>
+      </div>
+
+      {/* Avatar upload modal */}
+      {showAvatarUpload && (
+        <ProfilePictureUpload
+          currentAvatarUrl={avatarUrl}
+          onUploadSuccess={async (url) => {
+            // Refresh session to get updated avatar_url field
+            const updatedSession = await getSession()
+            // Update local state with the new URL from session
+            const user = updatedSession?.data?.user as ExtendedUser | undefined
+            if (user?.avatar_url) {
+              setAvatarUrl(user.avatar_url)
+            } else {
+              // Fallback: use the URL from upload response
+              setAvatarUrl(url)
+            }
+          }}
+          onClose={() => setShowAvatarUpload(false)}
+        />
+      )}
     </div>
   )
 }

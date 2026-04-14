@@ -160,6 +160,60 @@ export interface EventGenreBreakdown {
   count: number
 }
 
+// Profile Stats
+export interface ProfileStats {
+  total_hours: number
+  total_sessions: number
+  average_session_minutes: number
+  longest_session_minutes: number
+  top_artists: { artist: string; hours: number }[]
+  top_genres: { genre: string; count: number }[]
+  discoveries_count: number
+  longest_streak_days: number
+  listening_heatmap: number[][]
+  weekday_pattern: { day: string; hours: number }[]
+}
+
+// Badge types
+export interface Badge {
+  id: string
+  name: string
+  description: string
+  icon: string
+  category: 'milestone' | 'behavior' | 'genre' | 'time' | 'community' | 'special'
+  rarity: 'common' | 'rare' | 'epic' | 'legendary'
+}
+
+export interface UserBadge {
+  id: string
+  user_id: string
+  badge_id: string
+  earned_at: string
+  badge?: Badge
+}
+
+// Activity types
+export interface ActivityItem {
+  id: string
+  user_id: string
+  user_name?: string
+  user_avatar_url?: string
+  activity_type: 'badge_earned' | 'song_liked' | 'playlist_created' |
+    'playlist_updated' | 'annotation_approved' | 'milestone_reached'
+  metadata: Record<string, any>
+  is_public: boolean
+  created_at: string
+}
+
+export interface ActivityPrivacySettings {
+  badge_earned: boolean
+  song_liked: boolean
+  playlist_created: boolean
+  playlist_updated: boolean
+  annotation_approved: boolean
+  milestone_reached: boolean
+}
+
 export interface Annotation {
   id: string
   detection_id: string | null
@@ -231,4 +285,30 @@ export interface SearchResults {
 export interface Genre {
   genre: string
   count: number
+}
+
+// User profiles
+export interface User {
+  id: string
+  email: string | null
+  name: string  // Display name (editable by user)
+  avatar_url: string | null
+  bio: string | null
+  is_profile_public: boolean
+  role: 'listener' | 'annotator' | 'curator' | 'admin'
+  created_at: string
+
+  // Deprecated (keep for backward compatibility, remove in Phase 3):
+  reputation?: number
+  total_annotations?: number
+  total_votes?: number
+}
+
+export interface PublicUser {
+  id: string
+  name: string
+  avatar_url: string | null
+  bio: string | null
+  role: string
+  created_at: string
 }

@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router'
 import { searchSets, getEventCoverUrl } from '../lib/api'
 import { SetGrid } from '../components/sets/SetGrid'
 import { Badge } from '../components/ui/Badge'
+import { SearchResultSkeleton } from '../components/ui/Skeleton'
 import { formatTime, formatConfidence } from '../lib/formatTime'
 import type { SearchResults } from '../lib/types'
 
@@ -52,7 +53,7 @@ export function SearchPage() {
 
       {isLoading ? (
         <div className="mt-8">
-          <SetGrid sets={[]} isLoading={true} />
+          <SearchResultSkeleton />
         </div>
       ) : results ? (
         <>

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router'
-import { fetchArtist } from '../lib/api'
+import { fetchArtist, getArtistImageUrl } from '../lib/api'
 import { useSession } from '../lib/auth-client'
-import { Skeleton } from '../components/ui/Skeleton'
+import { ArtistBannerSkeleton } from '../components/ui/Skeleton'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { TabBar } from '../components/ui/TabBar'
@@ -41,20 +41,7 @@ export function ArtistPage() {
   }
 
   if (isLoading || !artist) {
-    return (
-      <div>
-        <div className="h-[280px] bg-surface-raised" />
-        <div className="px-6 -mt-24 relative z-10 max-w-[1300px] mx-auto">
-          <div className="flex gap-6">
-            <Skeleton className="w-[180px] h-[180px] rounded-xl flex-shrink-0" />
-            <div className="flex-1 space-y-3 pt-16">
-              <Skeleton className="h-10 w-1/2" />
-              <Skeleton className="h-5 w-1/3" />
-            </div>
-          </div>
-        </div>
-      </div>
-    )
+    return <ArtistBannerSkeleton />
   }
 
   const tags = Array.isArray(artist.tags) ? artist.tags : []
@@ -69,8 +56,8 @@ export function ArtistPage() {
       <div className="relative h-[280px] overflow-hidden">
         {artist.background_url ? (
           <img src={artist.background_url} alt="" className="w-full h-full object-cover object-top" />
-        ) : artist.image_url ? (
-          <img src={artist.image_url} alt="" className="w-full h-full object-cover scale-150 blur-[30px] opacity-40" />
+        ) : artist.id ? (
+          <img src={getArtistImageUrl(artist.id)} alt="" className="w-full h-full object-cover scale-150 blur-[30px] opacity-40" />
         ) : (
           <div className="w-full h-full bg-surface-raised" />
         )}
@@ -83,8 +70,8 @@ export function ArtistPage() {
           <div className="flex items-end gap-5 mb-6">
             <div className="w-[130px] h-[130px] sm:w-[160px] sm:h-[160px] rounded-[var(--card-radius)] overflow-hidden flex-shrink-0 bg-surface-overlay"
               style={{ boxShadow: 'var(--subtle-shadow)' }}>
-              {artist.image_url ? (
-                <img src={artist.image_url} alt={artist.name} className="w-full h-full object-cover" />
+              {artist.id ? (
+                <img src={getArtistImageUrl(artist.id)} alt={artist.name} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/15 to-surface-overlay">
                   <span className="text-5xl font-bold text-text-muted/30">{artist.name?.charAt(0)}</span>

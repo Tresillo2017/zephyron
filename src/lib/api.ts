@@ -1,4 +1,4 @@
-import type { DjSet, DjSetWithDetections, Detection, Song, SearchResults, Genre, Playlist, PlaylistWithItems, ListenHistoryItem, Annotation } from './types'
+import type { DjSet, DjSetWithDetections, Detection, Song, SearchResults, Genre, Playlist, PlaylistWithItems, ListenHistoryItem, Annotation, User, PublicUser } from './types'
 
 const API_BASE = '/api'
 
@@ -444,6 +444,10 @@ export async function createArtistAdmin(data: Record<string, unknown>): Promise<
   return fetchApi('/admin/artists', { method: 'POST', body: JSON.stringify(data) })
 }
 
+export async function uploadArtistImageAdmin(id: string, imageUrl: string): Promise<void> {
+  await fetchApi(`/admin/artists/${id}/image`, { method: 'POST', body: JSON.stringify({ image_url: imageUrl }) })
+}
+
 // Events
 export async function fetchEvents(q?: string): Promise<{ data: any[] }> {
   const params = q ? `?q=${encodeURIComponent(q)}` : ''
@@ -460,6 +464,10 @@ export function getEventCoverUrl(id: string): string {
 
 export function getEventLogoUrl(id: string): string {
   return `${API_BASE}/events/${id}/logo`
+}
+
+export function getArtistImageUrl(artistId: string): string {
+  return `${API_BASE}/artists/${artistId}/image`
 }
 
 export async function createEventAdmin(data: Record<string, unknown>): Promise<{ data: { id: string; slug: string } }> {
@@ -776,4 +784,179 @@ export async function approveAdminSetRequest(id: string): Promise<{ data: { id: 
 
 export async function rejectAdminSetRequest(id: string): Promise<{ data: { id: string; status: string }; ok: boolean }> {
   return fetchApi(`/admin/set-requests/${id}/reject`, { method: 'POST' })
+}
+
+// ═══════════════════════════════════════════
+// PROFILE MANAGEMENT
+// ═══════════════════════════════════════════
+
+export async function uploadAvatar(file: File): Promise<{ success: true; avatar_url: string }> {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const anonId = localStorage.getItem('zephyron_anonymous_id')
+  const headers: Record<string, string> = {}
+  if (anonId) {
+    headers['X-Anonymous-Id'] = anonId
+  }
+
+  const res = await fetch(`${API_BASE}/profile/avatar/upload`, {
+    method: 'POST',
+    headers,
+    body: formData,
+    credentials: 'include',
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: 'Upload failed' }))
+    throw new Error(error.message || 'Failed to upload avatar')
+  }
+
+  return res.json()
+}
+
+export async function updateProfileSettings(settings: {
+  name?: string
+  bio?: string
+  is_profile_public?: boolean
+}): Promise<{ success: true; user: User }> {
+  const res = await fetch(`${API_BASE}/profile/settings`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(settings),
+    credentials: 'include',
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: 'Update failed' }))
+    throw new Error(error.message || 'Failed to update profile settings')
+  }
+
+  return res.json()
+}
+
+export async function getPublicProfile(userId: string): Promise<{ user: PublicUser }> {
+  const res = await fetch(`${API_BASE}/profile/${userId}`, {
+    method: 'GET',
+    headers: getHeaders(),
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Failed to fetch profile' }))
+    throw new Error(error.error || 'Failed to fetch public profile')
+  }
+
+  return res.json()
+}
+
+// Session tracking (Phase 2 Analytics)
+export interface SessionResponse {
+  session_id: string
+  started_at: string
+}
+
+export async function startSession(setId: string): Promise<SessionResponse> {
+  const res = await fetch(`${API_BASE}/sessions/start`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ set_id: setId }),
+    credentials: 'include',
+  })
+
+  if (!res.ok) {
+    throw new Error('Failed to start session')
+  }
+
+  return res.json()
+}
+
+export async function updateSessionProgress(
+  sessionId: string,
+  positionSeconds: number
+): Promise<{ ok: boolean }> {
+  const res = await fetch(`${API_BASE}/sessions/${sessionId}/progress`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ position_seconds: positionSeconds }),
+    credentials: 'include',
+  })
+
+  if (!res.ok) {
+    throw new Error('Failed to update progress')
+  }
+
+  return res.json()
+}
+
+export async function endSession(
+  sessionId: string,
+  positionSeconds: number
+): Promise<{ ok: boolean; qualifies: boolean }> {
+  const res = await fetch(`${API_BASE}/sessions/${sessionId}/end`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ position_seconds: positionSeconds }),
+    credentials: 'include',
+  })
+
+  if (!res.ok) {
+    throw new Error('Failed to end session')
+  }
+
+  return res.json()
+}
+
+// Wrapped analytics (Phase 2 Analytics)
+export interface WrappedData {
+  year: number
+  total_hours: number
+  top_artists: string[]
+  top_artist: { name: string; hours: number } | null
+  top_genre: string | null
+  discoveries_count: number
+  longest_streak_days: number
+  image_url: string | null
+  generated_at: string
+}
+
+export async function fetchWrapped(year: string | number): Promise<WrappedData> {
+  const res = await fetch(`${API_BASE}/wrapped/${year}`, {
+    credentials: 'include',
+  })
+
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new Error('No data for this year')
+    }
+    throw new Error('Failed to fetch Wrapped data')
+  }
+
+  return res.json()
+}
+
+export interface MonthlyWrappedData {
+  year: number
+  month: number
+  total_hours: number
+  top_artists: string[]
+  top_genre: string | null
+  longest_set: { id: string; title: string; artist: string } | null
+  discoveries_count: number
+  generated_at: string
+}
+
+export async function fetchMonthlyWrapped(year: number, month: number): Promise<MonthlyWrappedData> {
+  const yearMonth = `${year}-${month.toString().padStart(2, '0')}`
+  const res = await fetch(`${API_BASE}/wrapped/monthly/${yearMonth}`, {
+    credentials: 'include',
+  })
+
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new Error('No data for this month')
+    }
+    throw new Error('Failed to fetch monthly data')
+  }
+
+  return res.json()
 }

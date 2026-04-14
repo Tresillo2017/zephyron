@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
-import { fetchArtists } from '../lib/api'
+import { fetchArtists, getArtistImageUrl } from '../lib/api'
 import { Skeleton } from '../components/ui/Skeleton'
 import { formatPlayCount } from '../lib/formatTime'
 
@@ -51,8 +51,8 @@ export function ArtistsPage() {
               >
                 {/* Artist image */}
                 <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-surface-overlay">
-                  {artist.image_url ? (
-                    <img src={artist.image_url} alt={artist.name} className="w-full h-full object-cover" loading="lazy" />
+                  {artist.id ? (
+                    <img src={getArtistImageUrl(artist.id)} alt={artist.name} className="w-full h-full object-cover" loading="lazy" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/15 to-surface-overlay">
                       <span className="text-lg font-bold text-text-muted/40">{artist.name?.charAt(0)}</span>

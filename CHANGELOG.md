@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Here's the full rewritten changelog for Zephyron. I made every entry shorter, used simple everyday words, and focused on what it means for you as a user — like faster listening or easier navigation. [keepachangelog](https://keepachangelog.com/en/1.1.0/)
 
+## [0.4.0-alpha] - 2026-04-14
+
+### New
+- Profile system with listening stats, heatmaps, and weekday patterns.
+- Badge system with 20 achievements — earn them by listening, discovering, and participating.
+- Activity feed shows your listening milestones, badges earned, and playlist updates.
+- Wrapped feature generates annual and monthly analytics with shareable images.
+- Skeleton loaders throughout the app show placeholders while content loads.
+- Artists now have profile images stored on R2 with automatic multi-size generation.
+- Session tracking automatically saves your listening history and position.
+
+### Improved
+- Profile pages show quick stats overview with total hours, sessions, and top artists.
+- Avatars now generate in multiple sizes (40px, 80px, 200px) for better performance.
+- What's New popout redesigned to match app design with proper card styling.
+- GitHub Actions now automatically check TypeScript, run tests, and scan for security issues.
+- Admin panel can auto-upload artist images from 1001Tracklists.
+
+### Fixed
+- Build now works properly — resolved all 66 TypeScript errors across the entire codebase.
+- Album color extraction works again (node-vibrant v4 compatibility fix).
+- Cloudflare Workers environment types are now consistent and won't conflict during builds.
+- Profile stats API correctly validates Better Auth user IDs.
+- Avatar URLs persist properly in Better Auth sessions.
+- Toast notifications are now readable on dark backgrounds.
+- Stats endpoint uses proper DB-querying functions instead of raw queries.
+
 ## [0.3.4-alpha] - 2026-04-03
 
 ### New

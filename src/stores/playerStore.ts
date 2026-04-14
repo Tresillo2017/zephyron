@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { DjSet, Detection, Song } from '../lib/types'
-import { fetchStreamUrl, fetchVideoStreamUrl, fetchDetections, incrementPlayCount, updateListenPosition } from '../lib/api'
+import { fetchStreamUrl, fetchVideoStreamUrl, fetchDetections, incrementPlayCount, startSession, updateSessionProgress, endSession } from '../lib/api'
+import { useAuthStore } from './authStore'
 
 interface PlayerState {
   // Current playback
@@ -32,6 +33,11 @@ interface PlayerState {
   // Audio element ref
   audioElement: HTMLAudioElement | null
 
+  // Session tracking
+  currentSessionId: string | null
+  lastProgressUpdate: number | null
+  progressUpdateInterval: ReturnType<typeof setInterval> | null
+
   // Actions
   setAudioElement: (el: HTMLAudioElement) => void
   setVideoElement: (el: HTMLVideoElement | null) => void
@@ -50,18 +56,18 @@ interface PlayerState {
   playPrevious: () => void
   setDetections: (detections: Detection[]) => void
   updateCurrentDetection: () => void
-  savePosition: () => void
   toggleFullScreen: () => void
   setVideoMode: (enabled: boolean) => void
   loadVideoStream: () => Promise<void>
+
+  // Session tracking actions (internal)
+  _startTrackingSession: (setId: string) => Promise<void>
+  _endTrackingSession: () => Promise<void>
 
   // Theater mode
   isTheaterMode: boolean
   setTheaterMode: (enabled: boolean) => void
 }
-
-// Debounce position saving
-let savePositionTimeout: ReturnType<typeof setTimeout> | null = null
 
 // Read persisted volume from localStorage (fallback 0.8)
 function getPersistedVolume(): number {
@@ -96,6 +102,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   currentDetections: [],
   currentSong: null,
   audioElement: null,
+  currentSessionId: null,
+  lastProgressUpdate: null,
+  progressUpdateInterval: null,
 
   setAudioElement: (el) => {
     if (el) {
@@ -116,6 +125,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       audioElement.play().catch(() => {})
       set({ isPlaying: true })
       return
+    }
+
+    // End current session before starting new one
+    if (currentSet?.id !== djSet.id) {
+      await get()._endTrackingSession()
     }
 
     // New set — resolve the stream URL
@@ -162,6 +176,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
       // Track play count (fire and forget)
       incrementPlayCount(djSet.id).catch(() => {})
+
+      // Start session tracking (fire and forget)
+      get()._startTrackingSession(djSet.id)
     } catch (err) {
       console.error('[player] Failed to resolve stream URL:', err)
       set({ isLoadingStream: false })
@@ -176,6 +193,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         el.load()
         el.play().catch(() => {})
         set({ isPlaying: true })
+
+        // Start session tracking (fire and forget)
+        get()._startTrackingSession(djSet.id)
       } catch {
         console.error('[player] Retry also failed')
       }
@@ -198,7 +218,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     if (audioElement) audioElement.pause()
     if (isVideoMode && videoElement) videoElement.pause()
     set({ isPlaying: false })
-    get().savePosition()
+    // End session tracking on pause
+    get()._endTrackingSession()
   },
 
   togglePlay: () => {
@@ -251,10 +272,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   setCurrentTime: (time) => {
     set({ currentTime: time })
     get().updateCurrentDetection()
-
-    // Debounced position save
-    if (savePositionTimeout) clearTimeout(savePositionTimeout)
-    savePositionTimeout = setTimeout(() => get().savePosition(), 10000)
   },
 
   setDuration: (duration) => set({ duration }),
@@ -268,6 +285,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     if (queueIndex < queue.length - 1) {
       const nextIndex = queueIndex + 1
       set({ queueIndex: nextIndex })
+      // play() will handle ending the previous session
       get().play(queue[nextIndex])
     }
   },
@@ -282,6 +300,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     if (queueIndex > 0) {
       const prevIndex = queueIndex - 1
       set({ queueIndex: prevIndex })
+      // play() will handle ending the previous session
       get().play(queue[prevIndex])
     }
   },
@@ -300,10 +319,68 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     set({ currentDetection: current, currentDetections: active, currentSong: current?.song || null })
   },
 
-  savePosition: () => {
-    const { currentSet, currentTime } = get()
-    if (currentSet && currentTime > 0) {
-      updateListenPosition(currentSet.id, currentTime).catch(() => {})
+  // Session tracking helper: start a new session
+  _startTrackingSession: async (setId: string) => {
+    try {
+      const isAuthenticated = useAuthStore.getState().isAuthenticated
+      if (!isAuthenticated) {
+        // Don't track anonymous users
+        return
+      }
+
+      const response = await startSession(setId)
+      const { currentSessionId: _currentSessionId, progressUpdateInterval } = get()
+
+      // Clear existing interval if any
+      if (progressUpdateInterval) clearInterval(progressUpdateInterval)
+
+      set({
+        currentSessionId: response.session_id,
+        lastProgressUpdate: Date.now(),
+      })
+
+      // Set up progress update interval (every 30 seconds)
+      const interval = setInterval(() => {
+        const { currentSessionId: sessionId, currentTime } = get()
+        if (sessionId) {
+          updateSessionProgress(sessionId, Math.floor(currentTime))
+            .catch((err) => console.error('[player] Failed to update session progress:', err))
+        }
+      }, 30000)
+
+      set({ progressUpdateInterval: interval })
+    } catch (err) {
+      console.error('[player] Failed to start session:', err)
+    }
+  },
+
+  // Session tracking helper: end current session
+  _endTrackingSession: async () => {
+    try {
+      const { currentSessionId, currentTime, progressUpdateInterval } = get()
+
+      // Clear progress update interval
+      if (progressUpdateInterval) {
+        clearInterval(progressUpdateInterval)
+      }
+
+      if (currentSessionId) {
+        await endSession(currentSessionId, Math.floor(currentTime))
+      }
+
+      set({
+        currentSessionId: null,
+        lastProgressUpdate: null,
+        progressUpdateInterval: null,
+      })
+    } catch (err) {
+      console.error('[player] Failed to end session:', err)
+      // Still clear session state even if API call fails
+      set({
+        currentSessionId: null,
+        lastProgressUpdate: null,
+        progressUpdateInterval: null,
+      })
     }
   },
 
