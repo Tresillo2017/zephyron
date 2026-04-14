@@ -1,4 +1,3 @@
-import React from 'react'
 
 interface TopArtistsListProps {
   artists: { artist: string; hours: number }[]

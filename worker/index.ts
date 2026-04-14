@@ -40,6 +40,7 @@ import { getMyActivity, getUserActivity, getCommunityActivity } from './routes/a
 import { updatePrivacySettings, getPrivacySettings } from './routes/privacy'
 import * as sessions from './routes/sessions'
 import { getAnnualWrapped, downloadWrappedImage, getMonthlyWrapped } from './routes/wrapped'
+import { getTrendingSets, getRandomSet, testDiscordWebhook } from './routes/discord'
 import { handleDetectionQueue, handleFeedbackQueue, handleCoverArtQueue } from './queues/index'
 import { handleScheduled } from './cron'
 
@@ -193,6 +194,11 @@ router.patch('/api/profile/privacy', updatePrivacySettings)
 router.get('/api/activity/me', getMyActivity)
 router.get('/api/activity/user/:userId', getUserActivity)
 router.get('/api/activity/community', getCommunityActivity)
+
+// Discord Bot Integration
+router.get('/api/sets/trending', getTrendingSets)
+router.get('/api/sets/random', getRandomSet)
+router.post('/api/discord/test', withAdmin(testDiscordWebhook))
 
 // ═══════════════════════════════════════════
 // Admin routes — all protected by withAdmin()

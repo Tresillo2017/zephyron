@@ -1,7 +1,10 @@
 /**
  * Helper function to convert formatToParts to a record
  */
-function formatPartsToMap(formatter: Intl.DateTimeFormat, date: Date): Record<string, string> {
+function formatPartsToMap(
+  formatter: Intl.DateTimeFormat,
+  date: Date
+): Record<string, string> {
   const parts = formatter.formatToParts(date);
   const partMap: Record<string, string> = {};
 
@@ -20,26 +23,28 @@ function formatPartsToMap(formatter: Intl.DateTimeFormat, date: Date): Record<st
  */
 export function utcToPacific(utcTimestamp: string): string {
   // Validate input
-  if (!utcTimestamp || typeof utcTimestamp !== 'string') {
-    throw new Error('Invalid input: timestamp must be a non-empty string');
+  if (!utcTimestamp || typeof utcTimestamp !== "string") {
+    throw new Error("Invalid input: timestamp must be a non-empty string");
   }
 
   const date = new Date(utcTimestamp);
 
   // Check if date is valid
   if (isNaN(date.getTime())) {
-    throw new Error(`Invalid timestamp: "${utcTimestamp}" is not a valid ISO 8601 date`);
+    throw new Error(
+      `Invalid timestamp: "${utcTimestamp}" is not a valid ISO 8601 date`
+    );
   }
 
   // Format using Pacific timezone
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Los_Angeles',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
     hour12: false,
   });
 
@@ -54,14 +59,14 @@ export function utcToPacific(utcTimestamp: string): string {
 
   // Determine UTC offset for Pacific timezone
   // Get the UTC date/time and the Pacific date/time, then calculate the difference
-  const utcFormatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'UTC',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+  const utcFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
     hour12: false,
   });
 
@@ -80,7 +85,10 @@ export function utcToPacific(utcTimestamp: string): string {
   }
 
   // Format offset as -08:00 or -07:00 (negative for west of UTC)
-  const offsetStr = offsetHours <= 0 ? `-${String(Math.abs(offsetHours)).padStart(2, '0')}` : `+${String(offsetHours).padStart(2, '0')}`;
+  const offsetStr =
+    offsetHours <= 0
+      ? `-${String(Math.abs(offsetHours)).padStart(2, "0")}`
+      : `+${String(offsetHours).padStart(2, "0")}`;
 
   return `${year}-${month}-${day}T${hour}:${minute}:${second}${offsetStr}:00`;
 }
@@ -93,23 +101,25 @@ export function utcToPacific(utcTimestamp: string): string {
  */
 export function getSessionDate(utcTimestamp: string): string {
   // Validate input
-  if (!utcTimestamp || typeof utcTimestamp !== 'string') {
-    throw new Error('Invalid input: timestamp must be a non-empty string');
+  if (!utcTimestamp || typeof utcTimestamp !== "string") {
+    throw new Error("Invalid input: timestamp must be a non-empty string");
   }
 
   const date = new Date(utcTimestamp);
 
   // Check if date is valid
   if (isNaN(date.getTime())) {
-    throw new Error(`Invalid timestamp: "${utcTimestamp}" is not a valid ISO 8601 date`);
+    throw new Error(
+      `Invalid timestamp: "${utcTimestamp}" is not a valid ISO 8601 date`
+    );
   }
 
   // Format using Pacific timezone
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Los_Angeles',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
   });
 
   const partMap = formatPartsToMap(formatter, date);

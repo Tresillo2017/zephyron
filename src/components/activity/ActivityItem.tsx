@@ -1,4 +1,3 @@
-import React from 'react'
 import type { ActivityItem as ActivityItemType } from '../../lib/types'
 
 interface ActivityItemProps {

@@ -24,3 +24,9 @@ GITHUB_TOKEN=
 # Cloudflare Turnstile — Required for "Request a Set" form protection
 # Get keys at: https://dash.cloudflare.com/turnstile
 TURNSTILE_SECRET_KEY=
+
+# Discord Bot Integration — Optional (for auto-posting new sets to Discord)
+# Webhook URL from your deployed Discord bot (e.g., https://zephyron-bot.your-account.workers.dev/webhooks/zephyron)
+# Secret should match ZEPHYRON_WEBHOOK_SECRET in the bot's .dev.vars
+DISCORD_BOT_WEBHOOK_URL=
+DISCORD_WEBHOOK_SECRET=

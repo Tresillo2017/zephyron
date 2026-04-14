@@ -235,7 +235,7 @@ export interface UploadAvatarResponse {
 }
 
 export interface UploadAvatarError {
-  error: 'NO_FILE' | 'INVALID_FORMAT' | 'FILE_TOO_LARGE' | 'CORRUPT_IMAGE' | 'UPLOAD_FAILED'
+  error: 'NO_FILE' | 'INVALID_FORMAT' | 'FILE_TOO_LARGE' | 'CORRUPT_IMAGE' | 'UPLOAD_FAILED' | 'RESIZE_FAILED'
   message?: string
 }
 
@@ -335,4 +335,19 @@ export interface GetActivityResponse {
 
 export interface GetActivityError {
   error: 'UNAUTHORIZED' | 'INVALID_USER_ID' | 'PROFILE_PRIVATE' | 'INVALID_PAGE'
+}
+
+// Cloudflare Worker Environment
+export interface Env {
+  DB: D1Database
+  AUDIO_BUCKET: R2Bucket
+  AVATARS: R2Bucket
+  WRAPPED_IMAGES: R2Bucket
+  AUDIO_SESSION: DurableObjectNamespace
+  ML_QUEUE: Queue
+  COVER_ART_QUEUE: Queue
+  FEEDBACK_QUEUE: Queue
+  LASTFM_API_KEY: string
+  DISCORD_BOT_WEBHOOK_URL: string
+  DISCORD_WEBHOOK_SECRET: string
 }

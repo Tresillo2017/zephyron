@@ -1,4 +1,3 @@
-import React from 'react'
 
 interface WeekdayChartProps {
   data: { day: string; hours: number }[]

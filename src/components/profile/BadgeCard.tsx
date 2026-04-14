@@ -1,4 +1,3 @@
-import React from 'react'
 import type { UserBadge, Badge } from '../../lib/types'
 
 interface BadgeCardProps {
