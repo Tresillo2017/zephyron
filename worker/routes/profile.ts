@@ -221,8 +221,8 @@ export async function updateProfileSettings(
         return errorResponse('Bio must be less than 160 characters', 400)
       }
 
-      // Strip HTML tags for security
-      const sanitizedBio = bio.replace(/<[^>]*>/g, '')
+      // Strip HTML delimiters for security (prevents tag/script reconstruction)
+      const sanitizedBio = bio.replace(/[<>]/g, '')
       sqlUpdates.bio = sanitizedBio
     }
 
