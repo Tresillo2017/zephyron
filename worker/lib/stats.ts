@@ -79,7 +79,7 @@ export async function calculateTopGenre(
   `;
 
   try {
-    const result = await env.DB.prepare(query).bind(userId, startDate, endDate).first();
+    const result = await env.DB.prepare(query).bind(userId, startDate, endDate).first<{ genre: string }>();
     return result?.genre ?? null;
   } catch (error) {
     console.error('Error calculating top genre:', error);
@@ -125,7 +125,7 @@ export async function calculateDiscoveries(
   try {
     const result = await env.DB.prepare(query)
       .bind(userId, startDate, endDate, userId, startDate)
-      .first();
+      .first<{ discovery_count: number }>();
     return result?.discovery_count ?? 0;
   } catch (error) {
     console.error('Error calculating discoveries:', error);
@@ -202,7 +202,7 @@ export async function calculateLongestSet(
   try {
     const result = await env.DB.prepare(query)
       .bind(userId, startDate, endDate)
-      .first();
+      .first<{ set_id: string }>();
     return result?.set_id ?? null;
   } catch (error) {
     console.error('Error calculating longest set:', error);

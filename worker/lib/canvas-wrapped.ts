@@ -3,7 +3,7 @@
  * Generates a 1080x1920 PNG showing user's annual listening statistics
  */
 
-import { createCanvas, GlobalFonts, Image } from '@napi-rs/canvas'
+import { createCanvas, GlobalFonts, Image as _Image } from '@napi-rs/canvas'
 import type { Env } from '../types'
 
 // Try to register Geist fonts (optional - fallback to system fonts)
@@ -203,7 +203,9 @@ export async function generateWrappedImage(
   // Upload to R2
   const r2Key = `wrapped/${stats.year}/${userId}.png`
   await env.WRAPPED_IMAGES.put(r2Key, buffer, {
-    contentType: 'image/png',
+    httpMetadata: {
+      contentType: 'image/png',
+    },
   })
 
   return {

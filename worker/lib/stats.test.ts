@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, _vi, beforeEach } from 'vitest';
 import {
   calculateTopArtists,
   calculateTopGenre,
@@ -14,8 +14,8 @@ describe('Stats Aggregation Utilities', () => {
     it('returns artists weighted by duration, sorted DESC', async () => {
       const mockEnv = {
         DB: {
-          prepare: (query: string) => ({
-            bind: (...params: unknown[]) => ({
+          prepare: (_query: string) => ({
+            bind: (..._params: unknown[]) => ({
               all: async () => ({
                 results: [
                   { track_artist: 'Artist A', total_duration: 3600 },
@@ -44,8 +44,8 @@ describe('Stats Aggregation Utilities', () => {
     it('respects the limit parameter', async () => {
       const mockEnv = {
         DB: {
-          prepare: (query: string) => ({
-            bind: (...params: unknown[]) => {
+          prepare: (_query: string) => ({
+            bind: (..._params: unknown[]) => {
               // params[3] is the limit
               const limit = params[3] as number;
               const allResults = [
@@ -79,8 +79,8 @@ describe('Stats Aggregation Utilities', () => {
     it('returns empty array when no artists found', async () => {
       const mockEnv = {
         DB: {
-          prepare: (query: string) => ({
-            bind: (...params: unknown[]) => ({
+          prepare: (_query: string) => ({
+            bind: (..._params: unknown[]) => ({
               all: async () => ({
                 results: [],
               }),
@@ -104,12 +104,12 @@ describe('Stats Aggregation Utilities', () => {
     it('divides session duration by track count (Cartesian product fix)', async () => {
       const mockEnv = {
         DB: {
-          prepare: (query: string) => {
+          prepare: (_query: string) => {
             // Verify the query contains the track_count join and division
-            expect(query).toContain('/ track_count.count');
-            expect(query).toContain('COUNT(*) as count');
+            expect(_query).toContain('/ track_count.count');
+            expect(_query).toContain('COUNT(*) as count');
             return {
-              bind: (...params: unknown[]) => ({
+              bind: (..._params: unknown[]) => ({
                 all: async () => ({
                   // If a 1-hour session had 15 tracks and artist A is on 5 tracks:
                   // Old (buggy) query: 5 * 3600 = 18000 seconds
@@ -141,8 +141,8 @@ describe('Stats Aggregation Utilities', () => {
     it('returns the most listened genre', async () => {
       const mockEnv = {
         DB: {
-          prepare: (query: string) => ({
-            bind: (...params: unknown[]) => ({
+          prepare: (_query: string) => ({
+            bind: (..._params: unknown[]) => ({
               all: async () => ({
                 results: [
                   { genre: 'Techno', play_count: 15 },
@@ -170,8 +170,8 @@ describe('Stats Aggregation Utilities', () => {
     it('returns null when no genres found', async () => {
       const mockEnv = {
         DB: {
-          prepare: (query: string) => ({
-            bind: (...params: unknown[]) => ({
+          prepare: (_query: string) => ({
+            bind: (..._params: unknown[]) => ({
               all: async () => ({
                 results: [],
               }),
@@ -196,8 +196,8 @@ describe('Stats Aggregation Utilities', () => {
     it('returns count of new artists in time window', async () => {
       const mockEnv = {
         DB: {
-          prepare: (query: string) => ({
-            bind: (...params: unknown[]) => ({
+          prepare: (_query: string) => ({
+            bind: (..._params: unknown[]) => ({
               all: async () => ({
                 results: [],
               }),
@@ -222,8 +222,8 @@ describe('Stats Aggregation Utilities', () => {
     it('returns 0 when no new discoveries', async () => {
       const mockEnv = {
         DB: {
-          prepare: (query: string) => ({
-            bind: (...params: unknown[]) => ({
+          prepare: (_query: string) => ({
+            bind: (..._params: unknown[]) => ({
               all: async () => ({
                 results: [],
               }),
@@ -293,8 +293,8 @@ describe('Stats Aggregation Utilities', () => {
     it('returns set_id with most listening time', async () => {
       const mockEnv = {
         DB: {
-          prepare: (query: string) => ({
-            bind: (...params: unknown[]) => ({
+          prepare: (_query: string) => ({
+            bind: (..._params: unknown[]) => ({
               all: async () => ({
                 results: [],
               }),
@@ -319,8 +319,8 @@ describe('Stats Aggregation Utilities', () => {
     it('returns null when no sets found', async () => {
       const mockEnv = {
         DB: {
-          prepare: (query: string) => ({
-            bind: (...params: unknown[]) => ({
+          prepare: (_query: string) => ({
+            bind: (..._params: unknown[]) => ({
               all: async () => ({
                 results: [],
               }),
@@ -347,8 +347,8 @@ describe('Stats Aggregation Utilities', () => {
     beforeEach(() => {
       mockEnv = {
         DB: {
-          prepare: (query: string) => ({
-            bind: (...args: any[]) => ({
+          prepare: (_query: string) => ({
+            bind: (..._args: any[]) => ({
               all: async () => ({
                 results: [
                   { day_of_week: 0, hour: 14, count: 5 },  // Sunday 2pm: 5 sessions

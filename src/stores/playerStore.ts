@@ -329,7 +329,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       }
 
       const response = await startSession(setId)
-      const { currentSessionId, progressUpdateInterval } = get()
+      const { currentSessionId: _currentSessionId, progressUpdateInterval } = get()
 
       // Clear existing interval if any
       if (progressUpdateInterval) clearInterval(progressUpdateInterval)

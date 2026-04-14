@@ -11,6 +11,7 @@ import { BioEditor } from '../components/profile/BioEditor'
 import { DisplayNameEditor } from '../components/profile/DisplayNameEditor'
 import { updateProfileSettings } from '../lib/api'
 import { sileo } from 'sileo'
+import type { ExtendedUser } from '../lib/auth-types'
 
 type Tab = 'profile' | 'visual' | 'security' | 'account'
 
@@ -334,8 +335,9 @@ function ProfileTab() {
             // Refresh session to get updated avatar_url field
             const updatedSession = await getSession()
             // Update local state with the new URL from session
-            if (updatedSession?.data?.user?.avatar_url) {
-              setAvatarUrl(updatedSession.data.user.avatar_url)
+            const user = updatedSession?.data?.user as ExtendedUser | undefined
+            if (user?.avatar_url) {
+              setAvatarUrl(user.avatar_url)
             } else {
               // Fallback: use the URL from upload response
               setAvatarUrl(url)

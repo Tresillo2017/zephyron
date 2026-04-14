@@ -14,6 +14,7 @@ import {
   calculateStreak,
 } from '../lib/stats'
 import { generateWrappedImage } from '../lib/canvas-wrapped'
+import type { Env } from '../types'
 
 export async function generateAnnualStats(
   env: Env,

@@ -6,6 +6,7 @@ import {
   calculateDiscoveries,
   calculateLongestSet,
 } from '../lib/stats'
+import type { Env } from '../types'
 
 type AuthRouteHandler = (
   request: Request,

@@ -11,6 +11,7 @@ import { ProfilePictureUpload } from '../components/profile/ProfilePictureUpload
 import { ProfileStatsSection } from '../components/profile/ProfileStatsSection'
 import { BadgesGrid } from '../components/profile/BadgesGrid'
 import { ActivityFeed } from '../components/activity/ActivityFeed'
+import type { ExtendedUser } from '../lib/auth-types'
 
 export function ProfilePage() {
   const { data: session } = useSession()
@@ -241,8 +242,9 @@ export function ProfilePage() {
             // Refresh session to get updated avatar_url field
             const updatedSession = await getSession()
             // Update local state with the new URL from session
-            if (updatedSession?.data?.user?.avatar_url) {
-              setAvatarUrl(updatedSession.data.user.avatar_url)
+            const user = updatedSession?.data?.user as ExtendedUser | undefined
+            if (user?.avatar_url) {
+              setAvatarUrl(user.avatar_url)
             } else {
               // Fallback: use the URL from upload response
               setAvatarUrl(url)

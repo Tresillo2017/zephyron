@@ -4,8 +4,8 @@ import { generateMonthlyStats } from './monthly-stats'
 describe('generateMonthlyStats', () => {
   it('aggregates sessions from previous month and returns processedUsers count', async () => {
     // 2026-04-01
-    const startDate = '2026-03-01'
-    const endDate = '2026-04-01'
+    const _startDate = '2026-03-01'
+    const _endDate = '2026-04-01'
 
     const mockPrepare = vi.fn()
     const mockBind = vi.fn()

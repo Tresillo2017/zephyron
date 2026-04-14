@@ -350,4 +350,8 @@ export interface Env {
   LASTFM_API_KEY: string
   DISCORD_BOT_WEBHOOK_URL: string
   DISCORD_WEBHOOK_SECRET: string
+  BETTER_AUTH_URL: string
+  BETTER_AUTH_SECRET: string
+  INVIDIOUS_BASE_URL: string
+  YOUTUBE_API_KEY: string
 }

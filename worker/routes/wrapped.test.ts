@@ -61,7 +61,7 @@ describe('Wrapped API Endpoints', () => {
         top_genre: 'House',
       }
 
-      if (wrappedImage?.r2_key) {
+      if ((wrappedImage as any)?.r2_key) {
         response.image_url = `/api/wrapped/${year}/download`
       }
 
@@ -79,7 +79,7 @@ describe('Wrapped API Endpoints', () => {
         top_genre: 'House',
       }
 
-      if (wrappedImage?.r2_key) {
+      if ((wrappedImage as any)?.r2_key) {
         response.image_url = `/api/wrapped/${year}/download`
       }
 
@@ -168,7 +168,7 @@ describe('Wrapped API Endpoints', () => {
 
     it('calculates date boundaries for current month', async () => {
       const year = 2026
-      const month = 4
+      const month: number = 4
       const startDate = `${year}-${String(month).padStart(2, '0')}-01`
       const nextMonth = month === 12 ? 1 : month + 1
       const nextYear = month === 12 ? year + 1 : year

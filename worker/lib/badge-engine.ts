@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import { BADGE_DEFINITIONS, getBadgeById } from './badges'
 import { createActivityItem } from './activity'
+import type { Env } from '../types'
 
 /**
  * Process badges for a single user

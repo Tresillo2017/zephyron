@@ -1,6 +1,7 @@
 import { json, errorResponse } from '../lib/router'
 import { requireAuth, createAuth } from '../lib/auth'
 import type {
+  Env,
   UploadAvatarResponse,
   UploadAvatarError,
   UpdateProfileSettingsRequest,

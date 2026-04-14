@@ -28,7 +28,7 @@ vi.mock('@napi-rs/canvas', () => ({
       width,
       height,
       getContext: () => ctx,
-      toBuffer: (format: string) => Buffer.from('fake-png-data'),
+      toBuffer: (_format: string) => Buffer.from('fake-png-data'),
     }
   },
   GlobalFonts: {

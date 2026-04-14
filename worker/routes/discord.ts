@@ -1,6 +1,6 @@
 // Discord Bot Integration Routes
 import { json, errorResponse } from '../lib/router'
-import type { DjSet } from '../types'
+import type { DjSet, Env } from '../types'
 
 // POST /api/webhooks/discord — Notify Discord bot of events
 // This endpoint is called internally when events occur
