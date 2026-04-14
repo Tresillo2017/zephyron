@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import Vibrant from "node-vibrant";
+import { Vibrant } from "node-vibrant/browser";
 
 export interface AlbumColors {
   vibrant: string;

@@ -1,4 +1,4 @@
-import { describe, it, expect, _vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   calculateTopArtists,
   calculateTopGenre,
@@ -46,8 +46,8 @@ describe('Stats Aggregation Utilities', () => {
         DB: {
           prepare: (_query: string) => ({
             bind: (..._params: unknown[]) => {
-              // params[3] is the limit
-              const limit = params[3] as number;
+              // _params[3] is the limit
+              const limit = _params[3] as number;
               const allResults = [
                 { track_artist: 'Artist A', total_duration: 3600 },
                 { track_artist: 'Artist B', total_duration: 2400 },

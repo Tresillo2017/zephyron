@@ -2,6 +2,7 @@ import { cleanupOrphanedSessions } from './cleanup-sessions'
 import { generateMonthlyStats } from './monthly-stats'
 import { generateAnnualStats } from './annual-stats'
 import { processBadgesForAllUsers } from '../lib/badge-engine'
+import type { Env } from '../types'
 
 /**
  * Cloudflare Workers Cron Handler

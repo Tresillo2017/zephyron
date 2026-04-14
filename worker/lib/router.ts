@@ -1,6 +1,8 @@
 // Minimal URL pattern router for Cloudflare Workers
 // No external dependencies needed
 
+import type { Env } from '../types'
+
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS'
 
 type RouteHandler = (

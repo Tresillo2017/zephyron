@@ -18,7 +18,6 @@ import { PrivacyPage } from './pages/PrivacyPage'
 import { TermsPage } from './pages/TermsPage'
 import { TwoFactorPage } from './pages/TwoFactorPage'
 import { NotFoundPage } from './pages/NotFoundPage'
-import { ChangelogPage as PublicChangelogPage } from './pages/ChangelogPage'
 
 // App pages (authenticated)
 import { HomePage } from './pages/HomePage'
@@ -36,7 +35,6 @@ import { ArtistsPage } from './pages/ArtistsPage'
 import { ArtistPage } from './pages/ArtistPage'
 import { EventsPage } from './pages/EventsPage'
 import { EventPage } from './pages/EventPage'
-import { ChangelogPage } from './pages/ChangelogPage'
 import { RequestSetPage } from './pages/RequestSetPage'
 import { WrappedPage } from './pages/WrappedPage'
 import { MonthlyWrappedPage } from './pages/MonthlyWrappedPage'
@@ -128,7 +126,6 @@ function App() {
         <Route path="about" element={<AboutPage />} />
         <Route path="privacy" element={<PrivacyPage />} />
         <Route path="terms" element={<TermsPage />} />
-        <Route path="changelog" element={<PublicChangelogPage />} />
 
         {/* Protected app routes */}
         <Route path="app" element={<RequireAuth />}>
@@ -149,7 +146,6 @@ function App() {
           <Route path="admin" element={<AdminPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="settings" element={<SettingsPage />} />
-          <Route path="changelog" element={<ChangelogPage />} />
           <Route path="request-set" element={<RequestSetPage />} />
           <Route path="wrapped/:year" element={<WrappedPage />} />
           <Route path="wrapped/monthly/:yearMonth" element={<MonthlyWrappedPage />} />

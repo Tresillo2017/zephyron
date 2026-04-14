@@ -35,8 +35,6 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      // Use browser version of node-vibrant for client-side builds
-      'node-vibrant': 'node-vibrant/lib/browser.js',
       // Stub out canvas library (Worker-only, not used in frontend)
       '@napi-rs/canvas': '/src/lib/canvas-stub.ts',
     },

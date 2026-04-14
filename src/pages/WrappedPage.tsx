@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link, useNavigate } from 'react-router'
+import { useParams, Link } from 'react-router'
 import { fetchWrapped, type WrappedData } from '../lib/api'
 import { Button } from '../components/ui/Button'
 import { Skeleton } from '../components/ui/Skeleton'
 
 export function WrappedPage() {
   const { year } = useParams<{ year: string }>()
-  const _navigate = useNavigate()
   const [wrapped, setWrapped] = useState<WrappedData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

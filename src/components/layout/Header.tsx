@@ -78,8 +78,14 @@ export function Header() {
       </header>
 
       {mobileMenuOpen && (
-        <div className="sm:hidden fixed inset-0 top-14 z-50 bg-surface/95 backdrop-blur-sm">
-          <div className="flex flex-col p-4 gap-1">
+        <div
+          className="sm:hidden fixed inset-0 top-14 z-50 bg-surface/95 backdrop-blur-sm"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <div
+            className="flex flex-col p-4 gap-1"
+            onClick={(e) => e.stopPropagation()}
+          >
             <form onSubmit={handleSearch} className="mb-3">
               <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search sets, artists, tracks..." className="w-full px-4 py-3 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent" />
             </form>
