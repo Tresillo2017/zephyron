@@ -2,17 +2,23 @@ import { useState, useEffect, useRef } from 'react'
 import { sileo } from 'sileo'
 import { uploadAvatar } from '../../lib/api'
 import { Button } from '../ui/Button'
+import { Modal } from '../ui/Modal'
 
 interface ProfilePictureUploadProps {
   currentAvatarUrl: string | null
-  onUploadSuccess: (avatarUrl: string) => void
+  onUploadSuccess: (url: string) => void
   onClose: () => void
+  /** Override the upload function — defaults to uploadAvatar */
+  uploadFn?: (file: File) => Promise<{ success: true; avatar_url?: string; banner_url?: string }>
+  title?: string
 }
 
 export function ProfilePictureUpload({
   currentAvatarUrl,
   onUploadSuccess,
   onClose,
+  uploadFn,
+  title = 'Upload Profile Picture',
 }: ProfilePictureUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -21,23 +27,6 @@ export function ProfilePictureUpload({
   const [progress, setProgress] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  // Escape key handling
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !uploading) onClose()
-    }
-    document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
-  }, [onClose, uploading])
-
-  // Body scroll lock
-  useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [])
 
   // Cleanup progress interval on unmount
   useEffect(() => {
@@ -131,10 +120,11 @@ export function ProfilePictureUpload({
     progressIntervalRef.current = intervalId
 
     try {
-      const result = await uploadAvatar(selectedFile)
+      const fn = uploadFn ?? uploadAvatar
+      const result = await fn(selectedFile)
       setProgress(100)
-      sileo.success({ description: 'Profile picture updated successfully' })
-      onUploadSuccess(result.avatar_url)
+      sileo.success({ description: 'Image updated successfully' })
+      onUploadSuccess((result as any).avatar_url ?? (result as any).banner_url ?? '')
       onClose()
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to upload avatar'
@@ -155,39 +145,27 @@ export function ProfilePictureUpload({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={onClose}
+    <Modal
+      isOpen
+      onClose={uploading ? () => {} : onClose}
+      title={title}
     >
-      <div
-        className="card max-w-md w-full mx-4"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="upload-dialog-title"
-      >
-        <h2
-          id="upload-dialog-title"
-          className="text-lg font-[var(--font-weight-bold)] text-[hsl(var(--c1))] mb-4"
-        >
-          Upload Profile Picture
-        </h2>
-
+      <div className="space-y-4">
         {/* Current Avatar */}
         {currentAvatarUrl && !previewUrl && (
-          <div className="mb-4">
-            <p className="text-sm text-[hsl(var(--c2))] mb-2">Current:</p>
+          <div className="flex items-center gap-3">
             <img
               src={currentAvatarUrl}
               alt="Current avatar"
-              className="w-32 h-32 rounded-full object-cover"
+              className="w-12 h-12 rounded-full object-cover"
             />
+            <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>Current picture</p>
           </div>
         )}
 
         {/* Drag & Drop Zone */}
         <div
-          className={`relative border-2 border-dashed rounded-[var(--card-radius)] p-8 mb-4 text-center cursor-pointer transition-colors ${
+          className={`relative border-2 border-dashed rounded-[var(--card-radius)] p-8 text-center cursor-pointer transition-colors ${
             isDragging
               ? 'border-[hsl(var(--h3))] bg-[hsl(var(--h3)/0.1)]'
               : 'border-[hsl(var(--b3))] hover:border-[hsl(var(--b4))] hover:bg-[hsl(var(--b4)/0.3)]'
@@ -219,81 +197,65 @@ export function ProfilePictureUpload({
               <img
                 src={previewUrl}
                 alt="Preview"
-                className="w-32 h-32 rounded-full object-cover mb-3"
+                className="w-24 h-24 rounded-full object-cover mb-3"
               />
-              <p className="text-sm text-[hsl(var(--c2))]">
-                {selectedFile?.name}
-              </p>
-              <p className="text-xs text-[hsl(var(--c3))] mt-1">
+              <p className="text-sm" style={{ color: 'hsl(var(--c2))' }}>{selectedFile?.name}</p>
+              <p className="text-xs mt-1" style={{ color: 'hsl(var(--c3))' }}>
                 {selectedFile && (selectedFile.size / 1024 / 1024).toFixed(2)} MB
               </p>
             </div>
           ) : (
             <>
               <svg
-                className="w-12 h-12 mx-auto mb-3 text-[hsl(var(--c3))]"
+                className="w-10 h-10 mx-auto mb-3"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                style={{ color: 'hsl(var(--c3))' }}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
-              <p className="text-sm font-[var(--font-weight-medium)] text-[hsl(var(--c1))] mb-1">
+              <p className="text-sm font-[var(--font-weight-medium)] mb-1" style={{ color: 'hsl(var(--c1))' }}>
                 Drop an image here or click to browse
               </p>
-              <p className="text-xs text-[hsl(var(--c3))]">
-                PNG, JPG, GIF up to 10MB
-              </p>
+              <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>PNG, JPG, GIF up to 10MB</p>
             </>
           )}
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="mb-4 p-3 rounded-[var(--button-radius)] bg-danger/10 border border-danger/20">
+          <div className="p-3 rounded-[var(--button-radius)] bg-danger/10 border border-danger/20">
             <p className="text-sm text-danger">{error}</p>
           </div>
         )}
 
         {/* Upload Progress */}
         {uploading && (
-          <div className="mb-4">
-            <div className="flex justify-between text-xs text-[hsl(var(--c2))] mb-1">
+          <div>
+            <div className="flex justify-between text-xs mb-1" style={{ color: 'hsl(var(--c2))' }}>
               <span>Uploading...</span>
               <span>{progress}%</span>
             </div>
-            <div className="h-2 bg-[hsl(var(--b3))] rounded-full overflow-hidden">
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'hsl(var(--b3))' }}>
               <div
-                className="h-full bg-[hsl(var(--h3))] transition-all duration-300"
-                style={{ width: `${progress}%` }}
+                className="h-full rounded-full transition-all duration-300"
+                style={{ width: `${progress}%`, background: 'hsl(var(--h3))' }}
               />
             </div>
           </div>
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-3 justify-end">
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            disabled={uploading}
-          >
+        <div className="flex gap-2 justify-end pt-1">
+          <Button variant="ghost" size="sm" onClick={onClose} disabled={uploading}>
             Cancel
           </Button>
-          <Button
-            variant="primary"
-            onClick={handleUpload}
-            disabled={!selectedFile || uploading}
-          >
+          <Button variant="primary" size="sm" onClick={handleUpload} disabled={!selectedFile || uploading}>
             {uploading ? 'Uploading...' : 'Save'}
           </Button>
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }

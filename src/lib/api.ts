@@ -815,6 +815,28 @@ export async function uploadAvatar(file: File): Promise<{ success: true; avatar_
   return res.json()
 }
 
+export async function uploadBanner(file: File): Promise<{ success: true; banner_url: string }> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const res = await fetch(`${API_BASE}/profile/banner/upload`, {
+    method: 'POST',
+    body: formData,
+    credentials: 'include',
+  })
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: 'Upload failed' }))
+    throw new Error(error.message || 'Failed to upload banner')
+  }
+  return res.json()
+}
+
+export async function deleteBanner(): Promise<void> {
+  await fetch(`${API_BASE}/profile/banner`, {
+    method: 'DELETE',
+    credentials: 'include',
+  })
+}
+
 export async function updateProfileSettings(settings: {
   name?: string
   bio?: string

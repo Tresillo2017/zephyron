@@ -1,9 +1,10 @@
 import React from 'react'
-import { Routes, Route, Outlet, Navigate } from 'react-router'
+import { Routes, Route, Navigate } from 'react-router'
 import { useSession } from './lib/auth-client'
 import { useThemeStore } from './stores/themeStore'
 import { TopNav } from './components/layout/TopNav'
 import { PlayerBar } from './components/layout/PlayerBar'
+import { PageTransition } from './components/layout/PageTransition'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { WhatsNew } from './components/WhatsNew'
 import { CookieConsent } from './components/CookieConsent'
@@ -30,7 +31,6 @@ import { HistoryPage } from './pages/HistoryPage'
 import { LikedSongsPage } from './pages/LikedSongsPage'
 import { AdminPage } from './pages/AdminPage'
 import { ProfilePage } from './pages/ProfilePage'
-import { SettingsPage } from './pages/SettingsPage'
 import { ArtistsPage } from './pages/ArtistsPage'
 import { ArtistPage } from './pages/ArtistPage'
 import { EventsPage } from './pages/EventsPage'
@@ -47,7 +47,7 @@ function AppLayout() {
     <div className="h-screen flex flex-col bg-surface text-text-primary">
       <div id="app-scroll-container" className="flex-1 overflow-y-auto relative">
         <TopNav />
-        <Outlet />
+        <PageTransition />
       </div>
       <PlayerBar />
       <WhatsNew />
@@ -95,6 +95,12 @@ function RedirectIfAuth({ children }: { children: React.ReactNode }) {
 
 function App() {
   const theme = useThemeStore((state) => state.theme)
+
+  // Apply reduce-motion preference from localStorage on startup
+  React.useEffect(() => {
+    const reduce = localStorage.getItem('reduceMotion') === 'true'
+    document.documentElement.classList.toggle('reduce-motion', reduce)
+  }, [])
 
   // Compute toast styles from CSS variables to match Zephyron's HSL-parametric system
   // Sileo uses SVG <rect> elements with fill attribute that CSS background can't override
@@ -145,7 +151,6 @@ function App() {
           <Route path="events/:id" element={<EventPage />} />
           <Route path="admin" element={<AdminPage />} />
           <Route path="profile" element={<ProfilePage />} />
-          <Route path="settings" element={<SettingsPage />} />
           <Route path="request-set" element={<RequestSetPage />} />
           <Route path="wrapped/:year" element={<WrappedPage />} />
           <Route path="wrapped/monthly/:yearMonth" element={<MonthlyWrappedPage />} />

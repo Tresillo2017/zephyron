@@ -168,6 +168,17 @@ html, body, #root {
   -moz-osx-font-smoothing: grayscale;
 }
 
+#app-scroll-container {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app-scroll-container { scroll-behavior: auto; }
+}
+.reduce-motion #app-scroll-container {
+  scroll-behavior: auto;
+}
+
 /* ═══ Range slider thumb ═══ */
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -453,7 +464,84 @@ select option {
   to { opacity: 1; }
 }
 
-/* Reduced motion */
+/* Fade out */
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Card/modal exit — reverse of solarium */
+@keyframes solarium-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+    filter: blur(3px);
+  }
+}
+
+/* Tab content transition — faster/lighter than page-enter */
+@keyframes tab-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Page transition — standard forward */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Page transition — opening a detail page (set, artist, event) */
+@keyframes page-open {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Page transition — back navigation (POP) */
+@keyframes page-back {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* User-requested reduced motion (toggle in Appearance settings) */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* System-level reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

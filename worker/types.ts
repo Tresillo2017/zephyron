@@ -133,6 +133,7 @@ export interface PublicUser {
   id: string
   name: string
   avatar_url: string | null
+  banner_url?: string | null
   bio: string | null
   role: string
   created_at: string

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
 interface ModalProps {
   isOpen: boolean
@@ -6,13 +6,28 @@ interface ModalProps {
   title: string
   children: React.ReactNode
   className?: string
+  size?: 'sm' | 'md' | 'lg'
 }
 
-export function Modal({ isOpen, onClose, title, children, className = '' }: ModalProps) {
-  const overlayRef = useRef<HTMLDivElement>(null)
+const SIZE_CLASSES = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg' }
+
+export function Modal({ isOpen, onClose, title, children, className = '', size = 'md' }: ModalProps) {
+  const [rendered, setRendered] = useState(isOpen)
+  const [exiting, setExiting] = useState(false)
 
   useEffect(() => {
-    if (!isOpen) return
+    if (isOpen) {
+      setRendered(true)
+      setExiting(false)
+    } else if (rendered) {
+      setExiting(true)
+      const t = setTimeout(() => { setRendered(false); setExiting(false) }, 200)
+      return () => clearTimeout(t)
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!rendered) return
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handleEsc)
     document.body.style.overflow = 'hidden'
@@ -20,20 +35,26 @@ export function Modal({ isOpen, onClose, title, children, className = '' }: Moda
       document.removeEventListener('keydown', handleEsc)
       document.body.style.overflow = ''
     }
-  }, [isOpen, onClose])
+  }, [rendered, onClose])
 
-  if (!isOpen) return null
+  if (!rendered) return null
 
   return (
     <div
-      ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center animate-[fade-in_0.15s_ease-out]"
-      onClick={(e) => { if (e.target === overlayRef.current) onClose() }}
+      className={`fixed inset-0 z-50 flex items-center justify-center ${
+        exiting
+          ? 'animate-[fade-out_0.15s_ease-in_forwards]'
+          : 'animate-[fade-in_0.15s_ease-out]'
+      }`}
     >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
 
       <div
-        className={`relative w-full max-w-md mx-4 max-h-[85vh] flex flex-col animate-[solarium_0.2s_var(--ease-spring)] ${className}`}
+        className={`relative w-full ${SIZE_CLASSES[size]} mx-4 max-h-[85vh] flex flex-col ${
+          exiting
+            ? 'animate-[solarium-out_0.2s_ease-in_forwards]'
+            : 'animate-[solarium_0.2s_var(--ease-spring)]'
+        } ${className}`}
         style={{
           background: 'hsl(var(--b5) / 0.92)',
           backdropFilter: 'var(--card-blur)',

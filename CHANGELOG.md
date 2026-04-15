@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Here's the full rewritten changelog for Zephyron. I made every entry shorter, used simple everyday words, and focused on what it means for you as a user — like faster listening or easier navigation. [keepachangelog](https://keepachangelog.com/en/1.1.0/)
 
+## [0.4.1-alpha] - 2026-04-15
+
+### New
+- Profile banner — upload a cover photo that appears behind your avatar on your profile page.
+- Edit Profile modal — click "Edit Profile" to open an inline editor with banner, avatar, display name, and bio all in one place.
+- Privacy settings — granular controls for public profile, listening activity visibility, and liked songs visibility.
+- Reduce animations toggle in Appearance settings — disables all transitions and animations across the app instantly.
+- Artist page stats bar — listeners, scrobbles, and set count shown directly below the banner.
+- Similar artists scroll row — shown on the artist home tab, no longer hidden behind a separate tab.
+- Playlist creation modal — "New Playlist" opens a proper popout with exit animation, dismissable by clicking outside.
+- Page transitions — forward navigation fades in, detail pages (sets, artists, events) get a scale-open effect, browser back slides from above.
+- Smooth scrolling throughout the app.
+
+### Improved
+- Artist page hero banner increased to 340px with a left gradient that keeps the artist name readable over any photo.
+- Artist page sidebar simplified — stats are in the new stats bar, tags card removed.
+- Settings page consistency — all tabs now use the same card header, row, and toggle design language.
+- Toggle switches redesigned as 42×24px pill switches with a spring animation and press-scale feedback.
+- Security tab redesigned — feedback banners with icons, 2FA status dot indicator, API key rows with a key icon and pill revoke button.
+- Account tab now shows email, role, member since date, and a copyable user ID.
+- Custom accent hue slider is now full-width and no longer overflows its card.
+- Modal animations — enter (scale + blur) and exit (reverse) with spring easing.
+- "Edit Profile" sidebar entry replaced with a dedicated Privacy page.
+- Placeholder image used for sets and artists without cover art.
+- Fullscreen player shows an EXPERIMENTAL badge when video mode is active.
+- Hardcoded danger colours replaced with HSL theme variables throughout.
+
+### Fixed
+- Profile banner not saving — `banner_url` was missing from Better Auth session fields.
+- Reduce animations preference now applied on page load, not just when visiting the Appearance tab.
+
 ## [0.4.0-alpha] - 2026-04-14
 
 ### New

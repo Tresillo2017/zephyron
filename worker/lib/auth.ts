@@ -71,6 +71,11 @@ export function createAuth(env: Env) {
           required: false,
           input: false,
         },
+        banner_url: {
+          type: 'string',
+          required: false,
+          input: false,
+        },
         bio: {
           type: 'string',
           required: false,
@@ -80,6 +85,18 @@ export function createAuth(env: Env) {
           type: 'boolean',
           required: false,
           defaultValue: false,
+          input: false,
+        },
+        show_activity: {
+          type: 'boolean',
+          required: false,
+          defaultValue: true,
+          input: false,
+        },
+        show_liked_songs: {
+          type: 'boolean',
+          required: false,
+          defaultValue: true,
           input: false,
         },
       },

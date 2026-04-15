@@ -33,7 +33,7 @@ import { submitSetRequest, listSetRequests, approveSetRequest, rejectSetRequest 
 import { createSourceRequest, listSourceRequests, approveSourceRequest, rejectSourceRequest } from './routes/source-requests'
 import { getSong, getSongCover, likeSong, unlikeSong, getLikedSongs, getSongLikeStatus, listSongsAdmin, updateSongAdmin, deleteSongAdmin, cacheSongCoverAdmin, enrichSongAdmin } from './routes/songs'
 import { updateUsername } from './routes/user'
-import { uploadAvatar, updateProfileSettings, getPublicProfile } from './routes/profile'
+import { uploadAvatar, uploadBanner, deleteBanner, updateProfileSettings, getPublicProfile } from './routes/profile'
 import { getStats } from './routes/stats'
 import { getBadges } from './routes/badges'
 import { getMyActivity, getUserActivity, getCommunityActivity } from './routes/activity'
@@ -183,6 +183,8 @@ router.patch('/api/user/username', updateUsername)
 
 // Profile routes
 router.post('/api/profile/avatar/upload', uploadAvatar)
+router.post('/api/profile/banner/upload', uploadBanner)
+router.delete('/api/profile/banner', deleteBanner)
 router.patch('/api/profile/settings', updateProfileSettings)
 router.get('/api/profile/:userId', getPublicProfile)
 router.get('/api/profile/:userId/stats', getStats)
