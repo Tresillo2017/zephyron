@@ -473,6 +473,18 @@ select option {
   }
 }
 
+/* Tab content transition — faster/lighter than page-enter */
+@keyframes tab-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Page transition — standard forward */
 @keyframes page-enter {
   from {
