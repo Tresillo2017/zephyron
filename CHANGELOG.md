@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Here's the full rewritten changelog for Zephyron. I made every entry shorter, used simple everyday words, and focused on what it means for you as a user — like faster listening or easier navigation. [keepachangelog](https://keepachangelog.com/en/1.1.0/)
 
-## [0.5.0-alpha] - 2026-04-15
+## [0.4.1-alpha] - 2026-04-15
 
 ### New
 - Profile banner — upload a cover photo that appears behind your avatar on your profile page.
