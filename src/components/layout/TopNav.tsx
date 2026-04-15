@@ -2,7 +2,15 @@ import { Link, useNavigate, useLocation } from "react-router";
 import { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "../../lib/auth-client";
 import { UserAvatar } from "../ui/UserAvatar";
+import { Logo } from "../ui/Logo";
 import { openChangelog } from "../WhatsNew";
+import {
+  searchSets,
+  getCoverUrl,
+  getEventCoverUrl,
+  getSongCoverUrl,
+} from "../../lib/api";
+import type { SearchResults } from "../../lib/types";
 
 export function TopNav() {
   const { data: session } = useSession();
@@ -10,19 +18,65 @@ export function TopNav() {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [menuExiting, setMenuExiting] = useState(false);
+  const menuExitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [showSearchPreview, setShowSearchPreview] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResults | null>(
+    null
+  );
+  const [isSearching, setIsSearching] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  const closeMenu = () => {
+    if (menuExitTimer.current) clearTimeout(menuExitTimer.current)
+    setMenuExiting(true)
+    menuExitTimer.current = setTimeout(() => {
+      setShowUserMenu(false)
+      setMenuExiting(false)
+    }, 150)
+  }
 
   // Close menu on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setShowUserMenu(false);
+        closeMenu();
+      }
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowSearchPreview(false);
       }
     };
-    if (showUserMenu) document.addEventListener("mousedown", handler);
+    if (showUserMenu || showSearchPreview) {
+      document.addEventListener("mousedown", handler);
+    }
     return () => document.removeEventListener("mousedown", handler);
-  }, [showUserMenu]);
+  }, [showUserMenu, showSearchPreview]);
+
+  // Debounced search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults(null);
+      setShowSearchPreview(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const { data } = await searchSets(searchQuery.trim());
+        setSearchResults(data);
+        setShowSearchPreview(true);
+      } catch {
+        setSearchResults(null);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Scroll-driven blur — listen to the actual scroll container, not window
   useEffect(() => {
@@ -42,7 +96,7 @@ export function TopNav() {
   };
 
   const handleSignOut = async () => {
-    setShowUserMenu(false);
+    closeMenu();
     await signOut();
     navigate("/");
   };
@@ -53,15 +107,23 @@ export function TopNav() {
   // Non-banner: glass always visible (blur + bg from page load), deepens on scroll
   // Banner: transparent until scrolled past threshold (~280px banner)
   const glassOpacity = hasBanner
-    ? (scrolled ? 0.92 : 0)
-    : (scrolled ? 0.95 : 0.85);
+    ? scrolled
+      ? 0.92
+      : 0
+    : scrolled
+    ? 0.95
+    : 0.85;
   const blurAmount = hasBanner
-    ? (scrolled ? 'blur(20px)' : 'blur(0px)')
-    : (scrolled ? 'blur(24px)' : 'blur(20px)');
+    ? scrolled
+      ? "blur(20px)"
+      : "blur(0px)"
+    : scrolled
+    ? "blur(24px)"
+    : "blur(20px)";
 
   return (
     <nav
-      className="sticky top-0 z-40 flex items-center h-[calc(20px+var(--button-height))] px-5 gap-4"
+      className="sticky top-0 z-40 flex items-center h-[calc(20px+var(--button-height))] px-4 sm:px-6 gap-3 sm:gap-4"
       style={{ background: "transparent" }}
     >
       {/* Gradient overlay behind nav — transitions in on scroll */}
@@ -69,72 +131,483 @@ export function TopNav() {
         className="absolute inset-0 -z-10"
         style={{
           background: `hsl(var(--b6) / ${glassOpacity})`,
-          backdropFilter: `${blurAmount} saturate(200%)`,
-          WebkitBackdropFilter: `${blurAmount} saturate(200%)`,
-          boxShadow: scrolled ? '0 1px 0 hsl(var(--br1) / 0.15)' : 'none',
-          transition: 'background 0.3s ease, backdrop-filter 0.3s ease, box-shadow 0.3s ease',
+          backdropFilter: `${blurAmount} saturate(180%)`,
+          WebkitBackdropFilter: `${blurAmount} saturate(180%)`,
+          boxShadow: scrolled ? "0 1px 0 hsl(var(--b4) / 0.2)" : "none",
+          transition:
+            "background 0.3s ease, backdrop-filter 0.3s ease, box-shadow 0.3s ease",
         }}
       />
 
       {/* Logo */}
-      <Link
-        to="/app"
-        className="flex items-center gap-2 no-underline shrink-0 mr-2"
-      >
-        <img src="/logo-128.png" alt="Zephyron logo" className="w-6 h-6 object-contain" />
-        <span className="text-sm font-[var(--font-weight-bold)] text-text-primary tracking-tight hidden sm:inline">
-          Zephyron
-        </span>
-        <span
-          className="text-[9px] font-mono px-1.5 py-0.5 rounded"
-          style={{
-            background: "hsl(var(--h3) / 0.15)",
-            color: "hsl(var(--h3))",
-          }}
-        >
-          v{__APP_VERSION__}
-        </span>
+      <Link to="/app" className="flex items-center gap-2 no-underline shrink-0">
+        <Logo size={24} />
+        <div className="hidden sm:flex items-center gap-2">
+          <span
+            className="text-sm font-[var(--font-weight-bold)] tracking-tight"
+            style={{ color: "hsl(var(--c1))" }}
+          >
+            Zephyron
+          </span>
+          <span
+            className="text-[9px] font-mono px-1.5 py-0.5 rounded"
+            style={{
+              background: "hsl(var(--h3) / 0.12)",
+              color: "hsl(var(--h3))",
+            }}
+          >
+            v{__APP_VERSION__}
+          </span>
+        </div>
       </Link>
 
       {/* Main nav links */}
-      <div className="hidden md:flex items-center gap-1">
+      <div className="hidden md:flex items-center gap-0.5 ml-2">
         {[
           { to: "/app", label: "Home" },
           { to: "/app/browse", label: "Browse" },
           { to: "/app/artists", label: "Artists" },
           { to: "/app/events", label: "Events" },
-        ].map((link) => (
-          <Link
-            key={link.to}
-            to={link.to}
-            className={`px-3 py-1.5 rounded-lg text-sm no-underline transition-colors ${
-              location.pathname === link.to
-                ? "text-text-primary bg-surface-hover/50"
-                : "text-text-muted hover:text-text-secondary"
-            }`}
-          >
-            {link.label}
-          </Link>
-        ))}
+        ].map((link) => {
+          const isActive =
+            location.pathname === link.to ||
+            (link.to !== "/app" && location.pathname.startsWith(link.to));
+          return (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="px-3 py-1.5 rounded-lg text-sm no-underline transition-all"
+              style={{
+                color: isActive ? "hsl(var(--c1))" : "hsl(var(--c3))",
+                background: isActive ? "hsl(var(--b4) / 0.4)" : "transparent",
+                fontWeight: isActive
+                  ? "var(--font-weight-medium)"
+                  : "var(--font-weight-default)",
+              }}
+            >
+              {link.label}
+            </Link>
+          );
+        })}
       </div>
 
       {/* Center: search */}
-      <form onSubmit={handleSearch} className="flex-1 max-w-md mx-auto">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search for anything"
-          className="w-full px-4 py-1.5 bg-transparent border-none text-sm text-text-secondary placeholder:text-text-muted text-center focus:outline-none focus:text-text-primary"
-        />
+      <form
+        onSubmit={handleSearch}
+        className="flex-1 max-w-lg mx-auto hidden sm:block"
+      >
+        <div className="relative" ref={searchRef}>
+          <svg
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
+            style={{ color: "hsl(var(--c3) / 0.6)" }}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => searchQuery && setShowSearchPreview(true)}
+            placeholder="Search sets, artists, events..."
+            className="w-full pl-9 pr-4 py-1.5 rounded-lg text-sm focus:outline-none transition-all"
+            style={{
+              background: scrolled ? "hsl(var(--b4) / 0.4)" : "transparent",
+              color: "hsl(var(--c1))",
+              border: scrolled
+                ? "1px solid hsl(var(--b4) / 0.3)"
+                : "1px solid transparent",
+            }}
+          />
+
+          {/* Search preview dropdown */}
+          {showSearchPreview && searchQuery && (
+            <div
+              className="absolute top-full left-0 right-0 mt-2 max-h-[480px] overflow-y-auto rounded-[var(--card-radius)] p-2"
+              style={{
+                background: "hsl(var(--b5) / 0.97)",
+                backdropFilter: "blur(24px) saturate(180%)",
+                WebkitBackdropFilter: "blur(24px) saturate(180%)",
+                boxShadow:
+                  "0 8px 32px rgba(0,0,0,0.4), inset 0 0 0 1px hsl(var(--b4) / 0.3)",
+              }}
+            >
+              {isSearching ? (
+                <div className="px-3 py-8 text-center">
+                  <p className="text-sm" style={{ color: "hsl(var(--c3))" }}>
+                    Searching...
+                  </p>
+                </div>
+              ) : searchResults ? (
+                <>
+                  {/* Sets */}
+                  {searchResults.sets.length > 0 && (
+                    <div className="mb-3">
+                      <p
+                        className="text-xs font-mono tracking-wider uppercase px-3 py-2"
+                        style={{ color: "hsl(var(--c3))" }}
+                      >
+                        Sets
+                      </p>
+                      <div className="space-y-1">
+                        {searchResults.sets.slice(0, 5).map((set) => (
+                          <Link
+                            key={set.id}
+                            to={`/app/sets/${set.id}`}
+                            onClick={() => {
+                              setShowSearchPreview(false);
+                              setSearchQuery("");
+                            }}
+                            className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all no-underline"
+                            style={{ color: "hsl(var(--c2))" }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background =
+                                "hsl(var(--b4) / 0.4)";
+                              e.currentTarget.style.color = "hsl(var(--c1))";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "transparent";
+                              e.currentTarget.style.color = "hsl(var(--c2))";
+                            }}
+                          >
+                            {/* Set cover thumbnail */}
+                            <div
+                              className="w-10 h-10 rounded-lg overflow-hidden shrink-0"
+                              style={{
+                                background: "hsl(var(--b4) / 0.3)",
+                                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                              }}
+                            >
+                              {set.cover_image_r2_key ? (
+                                <img
+                                  src={getCoverUrl(set.id)}
+                                  alt=""
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <div
+                                  className="w-full h-full flex items-center justify-center"
+                                  style={{
+                                    background:
+                                      "linear-gradient(135deg, hsl(var(--h3) / 0.15), hsl(var(--b4) / 0.3))",
+                                  }}
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    style={{ color: "hsl(var(--c3) / 0.3)" }}
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={1.5}
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z"
+                                    />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm truncate">{set.title}</p>
+                              <p
+                                className="text-xs truncate"
+                                style={{ color: "hsl(var(--c3))" }}
+                              >
+                                {set.artist}
+                              </p>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Events */}
+                  {searchResults.events.length > 0 && (
+                    <div className="mb-3">
+                      <p
+                        className="text-xs font-mono tracking-wider uppercase px-3 py-2"
+                        style={{ color: "hsl(var(--c3))" }}
+                      >
+                        Events
+                      </p>
+                      <div className="space-y-1">
+                        {searchResults.events.slice(0, 3).map((event) => (
+                          <Link
+                            key={event.id}
+                            to={`/app/events/${event.slug || event.id}`}
+                            onClick={() => {
+                              setShowSearchPreview(false);
+                              setSearchQuery("");
+                            }}
+                            className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all no-underline"
+                            style={{ color: "hsl(var(--c2))" }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background =
+                                "hsl(var(--b4) / 0.4)";
+                              e.currentTarget.style.color = "hsl(var(--c1))";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "transparent";
+                              e.currentTarget.style.color = "hsl(var(--c2))";
+                            }}
+                          >
+                            {/* Event cover thumbnail */}
+                            <div
+                              className="w-10 h-10 rounded-lg overflow-hidden shrink-0"
+                              style={{
+                                background: "hsl(var(--b4) / 0.3)",
+                                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                              }}
+                            >
+                              {event.cover_image_r2_key ? (
+                                <img
+                                  src={getEventCoverUrl(event.id)}
+                                  alt=""
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <div
+                                  className="w-full h-full flex items-center justify-center"
+                                  style={{
+                                    background:
+                                      "linear-gradient(135deg, hsl(var(--h3) / 0.15), hsl(var(--b4) / 0.3))",
+                                  }}
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    style={{ color: "hsl(var(--c3) / 0.3)" }}
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={1.5}
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
+                                    />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm truncate">{event.name}</p>
+                              <p
+                                className="text-xs"
+                                style={{ color: "hsl(var(--c3))" }}
+                              >
+                                {event.set_count}{" "}
+                                {event.set_count === 1 ? "set" : "sets"}
+                              </p>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tracks */}
+                  {searchResults.tracks.length > 0 && (
+                    <div>
+                      <p
+                        className="text-xs font-mono tracking-wider uppercase px-3 py-2"
+                        style={{ color: "hsl(var(--c3))" }}
+                      >
+                        Tracks
+                      </p>
+                      <div className="space-y-1">
+                        {searchResults.tracks.slice(0, 5).map((track) => {
+                          const coverUrl = track.song?.cover_art_r2_key
+                            ? getSongCoverUrl(track.song.id)
+                            : track.song?.cover_art_url ||
+                              track.song?.lastfm_album_art ||
+                              null;
+
+                          return (
+                            <Link
+                              key={track.id}
+                              to={`/app/sets/${track.set_id}`}
+                              onClick={() => {
+                                setShowSearchPreview(false);
+                                setSearchQuery("");
+                              }}
+                              className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all no-underline"
+                              style={{ color: "hsl(var(--c2))" }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background =
+                                  "hsl(var(--b4) / 0.4)";
+                                e.currentTarget.style.color = "hsl(var(--c1))";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background =
+                                  "transparent";
+                                e.currentTarget.style.color = "hsl(var(--c2))";
+                              }}
+                            >
+                              {/* Track cover thumbnail */}
+                              <div
+                                className="w-10 h-10 rounded-lg overflow-hidden shrink-0"
+                                style={{
+                                  background: "hsl(var(--b4) / 0.3)",
+                                  boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                                }}
+                              >
+                                {coverUrl ? (
+                                  <img
+                                    src={coverUrl}
+                                    alt=""
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                  />
+                                ) : (
+                                  <div
+                                    className="w-full h-full flex items-center justify-center"
+                                    style={{
+                                      background:
+                                        "linear-gradient(135deg, hsl(var(--h3) / 0.15), hsl(var(--b4) / 0.3))",
+                                    }}
+                                  >
+                                    <svg
+                                      className="w-4 h-4"
+                                      style={{ color: "hsl(var(--c3) / 0.3)" }}
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                      strokeWidth={1.5}
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z"
+                                      />
+                                    </svg>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm truncate">
+                                  {track.track_title}
+                                </p>
+                                <p
+                                  className="text-xs truncate"
+                                  style={{ color: "hsl(var(--c3))" }}
+                                >
+                                  {track.track_artist} · {track.set_artist}
+                                </p>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No results */}
+                  {searchResults.sets.length === 0 &&
+                    searchResults.events.length === 0 &&
+                    searchResults.tracks.length === 0 && (
+                      <div className="px-3 py-8 text-center">
+                        <p
+                          className="text-sm"
+                          style={{ color: "hsl(var(--c3))" }}
+                        >
+                          No results found for "{searchQuery}"
+                        </p>
+                      </div>
+                    )}
+
+                  {/* View all results link */}
+                  {(searchResults.sets.length > 0 ||
+                    searchResults.events.length > 0 ||
+                    searchResults.tracks.length > 0) && (
+                    <>
+                      <div
+                        className="h-px my-2"
+                        style={{ background: "hsl(var(--b4) / 0.3)" }}
+                      />
+                      <Link
+                        to={`/app/search?q=${encodeURIComponent(searchQuery)}`}
+                        onClick={() => {
+                          setShowSearchPreview(false);
+                          setSearchQuery("");
+                        }}
+                        className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all no-underline"
+                        style={{ color: "hsl(var(--h3))" }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background =
+                            "hsl(var(--b4) / 0.4)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent";
+                        }}
+                      >
+                        <span className="text-sm font-[var(--font-weight-medium)]">
+                          View all results
+                        </span>
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M13 7l5 5m0 0l-5 5m5-5H6"
+                          />
+                        </svg>
+                      </Link>
+                    </>
+                  )}
+                </>
+              ) : null}
+            </div>
+          )}
+        </div>
       </form>
 
       {/* Right: icons + user */}
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-1.5 shrink-0">
+        {/* Search icon for mobile */}
+        <Link
+          to="/app/search"
+          className="md:hidden p-2 rounded-lg transition-colors"
+          style={{ color: "hsl(var(--c3))" }}
+          title="Search"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </Link>
+
         {session?.user?.role === "admin" && (
           <Link
             to="/app/admin"
-            className="p-1.5 text-text-muted hover:text-text-primary transition-colors no-underline"
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: "hsl(var(--c3))" }}
             title="Admin"
           >
             <svg
@@ -162,19 +635,31 @@ export function TopNav() {
         {session?.user ? (
           <div className="relative" ref={menuRef}>
             <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2 px-2 py-1 rounded-full hover:bg-surface-hover/50 transition-colors"
+              onClick={() => showUserMenu ? closeMenu() : setShowUserMenu(true)}
+              className="flex items-center gap-2 pl-2 pr-3 py-1 rounded-full transition-all"
+              style={{
+                background: showUserMenu
+                  ? "hsl(var(--b4) / 0.4)"
+                  : "transparent",
+              }}
             >
               <UserAvatar
                 avatarUrl={(session.user as any)?.avatar_url}
                 name={session.user.name}
-                size={24}
+                size={26}
               />
-              <span className="text-sm text-text-primary hidden sm:inline">
+              <span
+                className="text-sm hidden sm:inline"
+                style={{ color: "hsl(var(--c1))" }}
+              >
                 {session.user.name}
               </span>
               <svg
-                className="w-3 h-3 text-text-muted"
+                className="w-3 h-3 transition-transform"
+                style={{
+                  color: "hsl(var(--c3))",
+                  transform: showUserMenu ? "rotate(180deg)" : "rotate(0deg)",
+                }}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -188,31 +673,51 @@ export function TopNav() {
               </svg>
             </button>
 
-            {/* Dropdown menu — bleh style glass */}
-            {showUserMenu && (
+            {/* Dropdown menu */}
+            {(showUserMenu || menuExiting) && (
               <div
-                className="absolute right-0 top-full mt-2 w-[280px] p-[10px] z-50 rounded-[var(--card-radius)]"
+                className="absolute right-0 top-full mt-2 w-[280px] p-2.5 z-50 rounded-[var(--card-radius)]"
                 style={{
-                  background: "hsl(var(--b5) / 0.95)",
-                  backdropFilter: "var(--card-blur)",
-                  WebkitBackdropFilter: "var(--card-blur)",
-                  boxShadow: "var(--menu-shadow)",
-                  animation: "solarium 0.2s var(--ease-out-custom)",
+                  background: "hsl(var(--b5) / 0.97)",
+                  backdropFilter: "blur(24px) saturate(180%)",
+                  WebkitBackdropFilter: "blur(24px) saturate(180%)",
+                  boxShadow:
+                    "0 8px 32px rgba(0,0,0,0.4), inset 0 0 0 1px hsl(var(--b4) / 0.3)",
+                  animation: menuExiting
+                    ? "solarium-out 0.15s ease-in forwards"
+                    : "solarium 0.2s var(--ease-out-custom)",
                 }}
               >
                 {/* User info */}
-                <div className="flex flex-col items-center py-3 mb-2">
-                  <div className="mb-2">
+                <div className="flex flex-col items-center py-4 mb-1">
+                  <div className="mb-3">
                     <UserAvatar
                       avatarUrl={(session.user as any)?.avatar_url}
                       name={session.user.name}
-                      size={56}
+                      size={64}
                     />
                   </div>
-                  <p className="text-sm font-medium text-text-primary">
+                  <p
+                    className="text-sm font-[var(--font-weight-medium)]"
+                    style={{ color: "hsl(var(--c1))" }}
+                  >
                     @{session.user.name}
                   </p>
+                  {(session.user as any)?.email && (
+                    <p
+                      className="text-xs mt-0.5"
+                      style={{ color: "hsl(var(--c3))" }}
+                    >
+                      {(session.user as any).email}
+                    </p>
+                  )}
                 </div>
+
+                {/* Divider */}
+                <div
+                  className="h-px my-2"
+                  style={{ background: "hsl(var(--b4) / 0.3)" }}
+                />
 
                 {/* Nav links */}
                 {[
@@ -220,21 +725,6 @@ export function TopNav() {
                     to: "/app",
                     label: "Home",
                     icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
-                  },
-                  {
-                    to: "/app/playlists",
-                    label: "Playlists",
-                    icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10",
-                  },
-                  {
-                    to: "/app/history",
-                    label: "History",
-                    icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
-                  },
-                  {
-                    to: "/app/liked-songs",
-                    label: "Liked Songs",
-                    icon: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z",
                   },
                   {
                     to: "/app/request-set",
@@ -246,17 +736,21 @@ export function TopNav() {
                     label: "Profile",
                     icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
                   },
-                  {
-                    to: "/app/settings",
-                    label: "Settings",
-                    icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z",
-                  },
                 ].map((item) => (
                   <Link
                     key={item.to}
                     to={item.to}
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors no-underline"
+                    onClick={() => closeMenu()}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all no-underline"
+                    style={{ color: "hsl(var(--c2))" }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = "hsl(var(--c1))";
+                      e.currentTarget.style.background = "hsl(var(--b4) / 0.4)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "hsl(var(--c2))";
+                      e.currentTarget.style.background = "transparent";
+                    }}
                   >
                     <svg
                       className="w-4 h-4"
@@ -278,10 +772,19 @@ export function TopNav() {
                 {/* Changelog button */}
                 <button
                   onClick={() => {
-                    setShowUserMenu(false)
-                    openChangelog()
+                    setShowUserMenu(false);
+                    openChangelog();
                   }}
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors w-full"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all w-full"
+                  style={{ color: "hsl(var(--c2))" }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = "hsl(var(--c1))";
+                    e.currentTarget.style.background = "hsl(var(--b4) / 0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = "hsl(var(--c2))";
+                    e.currentTarget.style.background = "transparent";
+                  }}
                 >
                   <svg
                     className="w-4 h-4"
@@ -299,49 +802,71 @@ export function TopNav() {
                   Changelog
                 </button>
 
-                <div className="mt-2 pt-2">
-                  <a
-                    href="https://github.com/Tresillo2017/zephyron/issues/new?template=bug_report.yml"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setShowUserMenu(false)}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-text-muted hover:text-text-secondary hover:bg-surface-hover transition-colors no-underline"
+                {/* Divider */}
+                <div
+                  className="h-px my-2"
+                  style={{ background: "hsl(var(--b4) / 0.3)" }}
+                />
+
+                <a
+                  href="https://github.com/Tresillo2017/zephyron/issues/new?template=bug_report.yml"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setShowUserMenu(false)}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all no-underline"
+                  style={{ color: "hsl(var(--c3))" }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = "hsl(var(--c2))";
+                    e.currentTarget.style.background = "hsl(var(--b4) / 0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = "hsl(var(--c3))";
+                    e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={1.5}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
-                      />
-                    </svg>
-                    Report Issue
-                  </a>
-                  <button
-                    onClick={handleSignOut}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-text-muted hover:text-danger hover:bg-surface-hover transition-colors"
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+                    />
+                  </svg>
+                  Report Issue
+                </a>
+                <button
+                  onClick={handleSignOut}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all"
+                  style={{ color: "hsl(var(--c3))" }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = "#ef4444";
+                    e.currentTarget.style.background = "hsl(var(--b4) / 0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = "hsl(var(--c3))";
+                    e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={1.5}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                      />
-                    </svg>
-                    Sign out
-                  </button>
-                </div>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
+                  </svg>
+                  Sign out
+                </button>
               </div>
             )}
           </div>
