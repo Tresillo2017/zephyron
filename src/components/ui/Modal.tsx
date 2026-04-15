@@ -6,9 +6,12 @@ interface ModalProps {
   title: string
   children: React.ReactNode
   className?: string
+  size?: 'sm' | 'md' | 'lg'
 }
 
-export function Modal({ isOpen, onClose, title, children, className = '' }: ModalProps) {
+const SIZE_CLASSES = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg' }
+
+export function Modal({ isOpen, onClose, title, children, className = '', size = 'md' }: ModalProps) {
   const [rendered, setRendered] = useState(isOpen)
   const [exiting, setExiting] = useState(false)
 
@@ -47,7 +50,7 @@ export function Modal({ isOpen, onClose, title, children, className = '' }: Moda
       <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
 
       <div
-        className={`relative w-full max-w-md mx-4 max-h-[85vh] flex flex-col ${
+        className={`relative w-full ${SIZE_CLASSES[size]} mx-4 max-h-[85vh] flex flex-col ${
           exiting
             ? 'animate-[solarium-out_0.2s_ease-in_forwards]'
             : 'animate-[solarium_0.2s_var(--ease-spring)]'

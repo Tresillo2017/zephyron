@@ -14,6 +14,8 @@ import {
   getSongCoverUrl,
   createPlaylist as createPlaylistApi,
   updateProfileSettings,
+  uploadBanner,
+  deleteBanner,
 } from "../lib/api";
 import { getAvailableServices, ServiceIconLink } from "../lib/services";
 import { Badge } from "../components/ui/Badge";
@@ -64,7 +66,7 @@ export function ProfilePage() {
     | "playlists"
     | "liked-songs"
     | "history"
-    | "settings"
+    | "privacy"
     | "appearance"
     | "security"
     | "account"
@@ -73,12 +75,14 @@ export function ProfilePage() {
   const [recentCount, setRecentCount] = useState(0);
   const [playlistCount, setPlaylistCount] = useState(0);
   const [showAvatarUpload, setShowAvatarUpload] = useState(false);
+  const [showBannerUpload, setShowBannerUpload] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [currentMonthStats, setCurrentMonthStats] = useState<{
     total_hours: number;
   } | null>(null);
   const [settingsExpanded, setSettingsExpanded] = useState(
-    ["settings", "appearance", "security", "account"].includes(activeTab)
+    ["privacy", "appearance", "security", "account"].includes(activeTab)
   );
 
   // Listen history state
@@ -94,6 +98,11 @@ export function ProfilePage() {
   const [showCreate, setShowCreate] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
+
+  // Edit profile modal
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editDisplayName, setEditDisplayName] = useState<string | null>(null);
+  const [editBio, setEditBio] = useState<string | null>(null);
 
   // Liked songs state
   const [likedSongs, setLikedSongs] = useState<LikedSong[]>([]);
@@ -186,12 +195,14 @@ export function ProfilePage() {
 
   const user = session.user as any;
 
-  // Initialize avatarUrl from user data
+  // Initialize avatarUrl + bannerUrl from user data
   useEffect(() => {
-    if (user?.avatar_url) {
-      setAvatarUrl(user.avatar_url);
-    }
+    if (user?.avatar_url) setAvatarUrl(user.avatar_url);
   }, [user?.avatar_url]);
+
+  useEffect(() => {
+    if (user?.banner_url) setBannerUrl(user.banner_url);
+  }, [user?.banner_url]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -250,7 +261,7 @@ export function ProfilePage() {
     params.set("tab", tab);
     setSearchParams(params);
     // Expand settings dropdown if navigating to a settings tab
-    if (["settings", "appearance", "security", "account"].includes(tab)) {
+    if (["privacy", "appearance", "security", "account"].includes(tab)) {
       setSettingsExpanded(true);
     }
   };
@@ -342,7 +353,7 @@ export function ProfilePage() {
             <button
               onClick={() => setSettingsExpanded(!settingsExpanded)}
               className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                ["settings", "appearance", "security", "account"].includes(
+                ["privacy", "appearance", "security", "account"].includes(
                   activeTab
                 )
                   ? "font-[var(--font-weight-medium)]"
@@ -350,7 +361,7 @@ export function ProfilePage() {
               }`}
               style={{
                 color: [
-                  "settings",
+                  "privacy",
                   "appearance",
                   "security",
                   "account",
@@ -358,7 +369,7 @@ export function ProfilePage() {
                   ? "hsl(var(--c1))"
                   : "hsl(var(--c2))",
                 background: [
-                  "settings",
+                  "privacy",
                   "appearance",
                   "security",
                   "account",
@@ -415,9 +426,9 @@ export function ProfilePage() {
               <div className="mt-1 ml-4 space-y-1">
                 {[
                   {
-                    id: "settings",
-                    label: "Edit Profile",
-                    icon: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z",
+                    id: "privacy",
+                    label: "Privacy",
+                    icon: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z",
                   },
                   {
                     id: "appearance",
@@ -540,10 +551,16 @@ export function ProfilePage() {
             user={{
               ...user,
               avatar_url: avatarUrl,
+              banner_url: bannerUrl,
             }}
             isOwnProfile={true}
-            onEditClick={() => setActiveTab("settings")}
+            onEditClick={() => {
+              setEditDisplayName(user.name || "");
+              setEditBio((user as any).bio || "");
+              setShowEditModal(true);
+            }}
             onAvatarClick={() => setShowAvatarUpload(true)}
+            onBannerClick={() => setShowBannerUpload(true)}
           />
 
           {/* Tab Content */}
@@ -1092,7 +1109,7 @@ export function ProfilePage() {
             </div>
           )}
 
-          {activeTab === "settings" && <SettingsTab />}
+          {activeTab === "privacy" && <PrivacyTab />}
           {activeTab === "appearance" && <AppearanceTab />}
           {activeTab === "security" && <SecurityTab />}
           {activeTab === "account" && <AccountTab />}
@@ -1306,345 +1323,381 @@ export function ProfilePage() {
           onClose={() => setShowAvatarUpload(false)}
         />
       )}
+
+      {/* Banner Upload Modal */}
+      {showBannerUpload && (
+        <ProfilePictureUpload
+          currentAvatarUrl={bannerUrl}
+          uploadFn={uploadBanner}
+          title="Upload Cover Photo"
+          onUploadSuccess={(url) => {
+            setBannerUrl(url);
+          }}
+          onClose={() => setShowBannerUpload(false)}
+        />
+      )}
+
+      {/* Edit Profile modal */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Edit Profile"
+        size="lg"
+      >
+        <div>
+          {/* Banner + avatar preview */}
+          <div className="relative -mx-5 -mt-5 mb-5">
+            {/* Banner */}
+            <div
+              className="relative h-28 overflow-hidden cursor-pointer group"
+              onClick={() => { setShowEditModal(false); setShowBannerUpload(true); }}
+            >
+              {bannerUrl ? (
+                <img src={bannerUrl} alt="" className="w-full h-full object-cover object-center" />
+              ) : (
+                <div
+                  className="w-full h-full"
+                  style={{ background: 'linear-gradient(135deg, hsl(var(--h3) / 0.1), hsl(var(--b4)))' }}
+                />
+              )}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ background: 'rgba(0,0,0,0.35)' }}
+              >
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-[var(--font-weight-medium)]"
+                  style={{ background: 'rgba(0,0,0,0.5)', color: '#fff', backdropFilter: 'blur(8px)' }}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {bannerUrl ? 'Change cover' : 'Add cover'}
+                </div>
+              </div>
+            </div>
+
+            {/* Avatar overlapping banner */}
+            <div className="absolute left-5 bottom-0 translate-y-1/2">
+              <div
+                className="relative w-16 h-16 rounded-xl overflow-hidden cursor-pointer group/av"
+                style={{ boxShadow: '0 0 0 3px hsl(var(--b5)), var(--subtle-shadow)' }}
+                onClick={() => { setShowEditModal(false); setShowAvatarUpload(true); }}
+              >
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div
+                    className="w-full h-full flex items-center justify-center text-xl font-[var(--font-weight-bold)]"
+                    style={{ background: 'hsl(var(--h3) / 0.15)', color: 'hsl(var(--h3))' }}
+                  >
+                    {user.name?.charAt(0).toUpperCase() || '?'}
+                  </div>
+                )}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/av:opacity-100 transition-opacity rounded-xl"
+                  style={{ background: 'rgba(0,0,0,0.45)' }}
+                >
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Remove cover button */}
+            {bannerUrl && (
+              <button
+                className="absolute right-3 bottom-2 text-[10px] px-2 py-1 rounded transition-colors"
+                style={{ color: 'rgba(255,255,255,0.6)', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)' }}
+                onClick={async () => {
+                  await deleteBanner();
+                  setBannerUrl(null);
+                }}
+              >
+                Remove
+              </button>
+            )}
+          </div>
+
+          {/* Spacer for overlapping avatar */}
+          <div className="h-10" />
+
+          {/* Display name */}
+          <div className="space-y-4">
+            <DisplayNameEditor
+              initialName={editDisplayName ?? user.name ?? ''}
+              onUpdate={(name) => setEditDisplayName(name)}
+            />
+
+            <div style={{ borderTop: '1px solid hsl(var(--b4) / 0.25)', paddingTop: 16 }}>
+              <BioEditor
+                initialBio={editBio ?? (user as any).bio ?? ''}
+                onUpdate={(bio) => setEditBio(bio)}
+              />
+            </div>
+
+            <div className="flex justify-end pt-2" style={{ borderTop: '1px solid hsl(var(--b4) / 0.25)' }}>
+              <Button variant="primary" size="sm" onClick={() => setShowEditModal(false)}>
+                Done
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
 
-/* ─────────────────────────── Settings Tab Components ─────────────────────────── */
+/* ─────────────────────────── Shared primitives ─────────────────────────── */
 
+/** Consistent section card: title + optional description + content */
+function SettingSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="card space-y-4">
+      <div>
+        <h3 className="text-sm font-[var(--font-weight-medium)]" style={{ color: "hsl(var(--c1))" }}>
+          {title}
+        </h3>
+        {description && (
+          <p className="text-xs mt-0.5" style={{ color: "hsl(var(--c3))" }}>{description}</p>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/** Row with label+description on the left, control on the right */
 function SettingRow({
   label,
   description,
   children,
-  noBorder,
 }: {
   label: string;
   description?: string;
   children: React.ReactNode;
-  noBorder?: boolean;
 }) {
   return (
-    <div
-      className={`flex items-center justify-between gap-4 px-[var(--card-padding)] py-3.5 ${
-        noBorder ? "pb-[var(--card-padding)]" : ""
-      }`}
-    >
+    <div className="flex items-center justify-between gap-6 py-3" style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)" }}>
       <div className="min-w-0">
-        <p
-          className="text-sm"
-          style={{
-            color: "hsl(var(--c1))",
-            fontWeight: "var(--font-weight-medium)",
-          }}
-        >
-          {label}
-        </p>
-        {description && (
-          <p className="text-xs mt-0.5" style={{ color: "hsl(var(--c3))" }}>
-            {description}
-          </p>
-        )}
+        <p className="text-sm font-[var(--font-weight-medium)]" style={{ color: "hsl(var(--c1))" }}>{label}</p>
+        {description && <p className="text-xs mt-0.5" style={{ color: "hsl(var(--c3))" }}>{description}</p>}
       </div>
-      <div className="shrink-0 flex items-center">{children}</div>
+      <div className="shrink-0">{children}</div>
     </div>
   );
 }
 
-function SettingsTab() {
-  const { data: session, isPending } = useSession();
-  const user = session?.user as any;
-  const [showAvatarUpload, setShowAvatarUpload] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || null);
-  const [bio, setBio] = useState(user?.bio || "");
-  const [displayName, setDisplayName] = useState(user?.name || "");
-  const [isProfilePublic, setIsProfilePublic] = useState(
-    user?.is_profile_public || false
+/** 42×24px pill switch — white knob, accent fill when on, spring animation */
+function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
+  const [pressing, setPressing] = useState(false);
+
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => !disabled && onChange(!checked)}
+      disabled={disabled}
+      onMouseDown={() => setPressing(true)}
+      onMouseUp={() => setPressing(false)}
+      onMouseLeave={() => setPressing(false)}
+      style={{
+        width: 42,
+        height: 24,
+        borderRadius: 999,
+        padding: 0,
+        border: 'none',
+        flexShrink: 0,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        background: checked ? 'hsl(var(--h3))' : 'hsl(var(--b3))',
+        boxShadow: checked ? '0 0 0 1px hsl(var(--h3) / 0.4)' : 'inset 0 0 0 1px hsl(var(--b4) / 0.5)',
+        transform: pressing ? 'scale(0.93)' : 'scale(1)',
+        transition: 'background 0.2s var(--ease-out-custom), box-shadow 0.2s var(--ease-out-custom), transform 0.1s var(--ease-out-custom)',
+        position: 'relative',
+        opacity: disabled ? 0.5 : 1,
+      }}
+    >
+      <span
+        style={{
+          position: 'absolute',
+          top: 2,
+          left: checked ? 20 : 2,
+          width: 20,
+          height: 20,
+          borderRadius: '50%',
+          background: '#fff',
+          boxShadow: pressing
+            ? '0 1px 3px rgba(0,0,0,0.2)'
+            : '0 1px 4px rgba(0,0,0,0.35)',
+          transition: 'left 0.25s var(--ease-spring), box-shadow 0.15s var(--ease-out-custom)',
+        }}
+      />
+    </button>
   );
-  const [savingPrivacy, setSavingPrivacy] = useState(false);
+}
 
-  if (isPending) {
-    return (
-      <div className="text-sm" style={{ color: "hsl(var(--c3))" }}>
-        Loading...
-      </div>
-    );
-  }
+/* ─────────────────────────── Privacy ─────────────────────────── */
 
-  if (!user) {
-    return (
-      <div className="text-sm" style={{ color: "hsl(var(--c3))" }}>
-        Not signed in
-      </div>
-    );
-  }
+function PrivacyTab() {
+  const { data: session } = useSession();
+  const user = session?.user as any;
 
-  const initial = user.name?.charAt(0).toUpperCase() || "?";
+  const [isProfilePublic, setIsProfilePublic] = useState(user?.is_profile_public ?? false);
+  const [showActivity, setShowActivity] = useState(user?.show_activity ?? true);
+  const [showLikedSongs, setShowLikedSongs] = useState(user?.show_liked_songs ?? true);
+  const [saving, setSaving] = useState<string | null>(null);
 
-  const handlePrivacyToggle = async (checked: boolean) => {
-    setIsProfilePublic(checked);
-    setSavingPrivacy(true);
-
+  const save = async (field: string, value: boolean, revert: () => void) => {
+    setSaving(field);
     try {
-      await updateProfileSettings({ is_profile_public: checked });
-      sileo.success({ title: "Privacy settings updated", duration: 3000 });
-    } catch (err: any) {
-      sileo.error({
-        title: "Failed to update privacy settings",
-        duration: 7000,
-      });
-      setIsProfilePublic(!checked);
+      await updateProfileSettings({ [field]: value } as any);
+    } catch {
+      sileo.error({ title: "Failed to save", duration: 5000 });
+      revert();
     } finally {
-      setSavingPrivacy(false);
+      setSaving(null);
     }
   };
 
   return (
     <div className="space-y-4">
-      {/* Profile Picture */}
-      <div className="card">
-        <h3
-          className="text-sm font-[var(--font-weight-medium)] mb-3"
-          style={{ color: "hsl(var(--c1))" }}
-        >
-          Profile Picture
-        </h3>
-        <div className="flex items-center gap-4">
-          <div
-            className="w-20 h-20 rounded-lg flex items-center justify-center overflow-hidden shrink-0"
-            style={{
-              background: avatarUrl ? "transparent" : "hsl(var(--h3) / 0.12)",
-              color: "hsl(var(--h3))",
-              fontSize: avatarUrl ? "inherit" : "2rem",
-              fontWeight: avatarUrl ? "inherit" : "var(--font-weight-bold)",
-              boxShadow: "var(--card-border), var(--card-shadow)",
-            }}
-          >
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt={user.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              initial
-            )}
-          </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setShowAvatarUpload(true)}
-          >
-            Change Picture
-          </Button>
-        </div>
-      </div>
-
-      {/* Display Name */}
-      <div className="card">
-        <DisplayNameEditor
-          initialName={displayName}
-          onUpdate={(name) => setDisplayName(name)}
-        />
-      </div>
-
-      {/* Bio */}
-      <div className="card">
-        <BioEditor initialBio={bio} onUpdate={(newBio) => setBio(newBio)} />
-      </div>
-
-      {/* Privacy */}
-      <div className="card">
-        <h3
-          className="text-sm font-[var(--font-weight-medium)] mb-3"
-          style={{ color: "hsl(var(--c1))" }}
-        >
-          Privacy
-        </h3>
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
+      <SettingSection title="Visibility" description="Control who can see your profile and content.">
+        <SettingRow label="Public profile" description="Other users can view your profile, stats, and history">
+          <Toggle
             checked={isProfilePublic}
-            onChange={(e) => handlePrivacyToggle(e.target.checked)}
-            disabled={savingPrivacy}
-            className="w-4 h-4 rounded cursor-pointer"
-            style={{
-              accentColor: "hsl(var(--h3))",
-            }}
+            onChange={(v) => { setIsProfilePublic(v); save("is_profile_public", v, () => setIsProfilePublic(!v)); }}
+            disabled={saving !== null}
           />
-          <div>
-            <p className="text-sm" style={{ color: "hsl(var(--c1))" }}>
-              Make my profile public
-            </p>
-            <p className="text-xs" style={{ color: "hsl(var(--c3))" }}>
-              When enabled, other users can view your profile
-            </p>
-          </div>
-        </label>
-      </div>
-
-      {/* Avatar upload modal */}
-      {showAvatarUpload && (
-        <ProfilePictureUpload
-          currentAvatarUrl={avatarUrl}
-          onUploadSuccess={async (url) => {
-            const updatedSession = await getSession();
-            const user = updatedSession?.data?.user as ExtendedUser | undefined;
-            if (user?.avatar_url) {
-              setAvatarUrl(user.avatar_url);
-            } else {
-              setAvatarUrl(url);
-            }
-          }}
-          onClose={() => setShowAvatarUpload(false)}
-        />
-      )}
+        </SettingRow>
+        <SettingRow label="Show listening activity" description="Display what you're listening to on your profile">
+          <Toggle
+            checked={showActivity}
+            onChange={(v) => { setShowActivity(v); save("show_activity", v, () => setShowActivity(!v)); }}
+            disabled={saving !== null}
+          />
+        </SettingRow>
+        <SettingRow label="Show liked songs" description="Others can see your liked songs list">
+          <Toggle
+            checked={showLikedSongs}
+            onChange={(v) => { setShowLikedSongs(v); save("show_liked_songs", v, () => setShowLikedSongs(!v)); }}
+            disabled={saving !== null}
+          />
+        </SettingRow>
+      </SettingSection>
     </div>
   );
 }
 
 function AppearanceTab() {
-  const { theme, accent, customHue, setTheme, setAccent, setCustomHue } =
-    useThemeStore();
+  const { theme, accent, customHue, setTheme, setAccent, setCustomHue } = useThemeStore();
+  const [reduceMotion, setReduceMotion] = useState(() => localStorage.getItem("reduceMotion") === "true");
 
-  const themeCards: {
-    id: string;
-    label: string;
-    bg: string;
-    fg: string;
-    text: string;
-  }[] = [
-    {
-      id: "dark",
-      label: "Dark",
-      bg: "hsl(255,4%,14%)",
-      fg: "hsl(255,5%,18%)",
-      text: "hsl(255,30%,87%)",
-    },
-    {
-      id: "darker",
-      label: "Darker",
-      bg: "hsl(255,3%,6%)",
-      fg: "hsl(255,4%,9%)",
-      text: "hsl(255,30%,87%)",
-    },
-    {
-      id: "oled",
-      label: "OLED",
-      bg: "#000",
-      fg: "hsl(255,3%,4%)",
-      text: "hsl(255,30%,87%)",
-    },
-    {
-      id: "light",
-      label: "Light",
-      bg: "hsl(255,5%,94%)",
-      fg: "#fff",
-      text: "hsl(255,4%,6%)",
-    },
+  const handleReduceMotion = (v: boolean) => {
+    setReduceMotion(v);
+    localStorage.setItem("reduceMotion", String(v));
+    document.documentElement.classList.toggle("reduce-motion", v);
+  };
+
+  const themeCards = [
+    { id: "dark",   label: "Dark",   bg: "hsl(255,4%,14%)", text: "hsl(255,30%,87%)" },
+    { id: "darker", label: "Darker", bg: "hsl(255,3%,6%)",  text: "hsl(255,30%,87%)" },
+    { id: "oled",   label: "OLED",   bg: "#000",            text: "hsl(255,30%,87%)" },
+    { id: "light",  label: "Light",  bg: "hsl(255,5%,94%)", text: "hsl(255,4%,6%)"  },
   ];
 
   return (
     <div className="space-y-4">
-      {/* Appearance section */}
-      <div className="card">
-        <h3
-          className="text-sm font-[var(--font-weight-bold)] mb-5 px-[var(--card-padding)] pt-[var(--card-padding)]"
-          style={{ color: "hsl(var(--h3))" }}
-        >
-          Appearance
-        </h3>
-
-        {/* Themes */}
-        <SettingRow label="Themes" noBorder>
-          <div className="flex gap-3 flex-wrap">
-            {themeCards.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTheme(t.id as any)}
-                className="flex flex-col items-center gap-1.5 cursor-pointer group"
-              >
-                <div
-                  className={`w-[52px] h-[40px] rounded-lg flex items-center justify-center text-sm font-[var(--font-weight-bold)] transition-all ${
-                    theme === t.id
-                      ? "ring-2 ring-accent ring-offset-1 ring-offset-surface"
-                      : "group-hover:scale-105"
-                  }`}
-                  style={{
-                    background: t.bg,
-                    color: t.text,
-                    boxShadow: "var(--card-border)",
-                  }}
-                >
-                  Aa
-                </div>
-                <span
-                  className={`text-[11px]`}
-                  style={{
-                    color: theme === t.id ? "hsl(var(--c1))" : "hsl(var(--c3))",
-                  }}
-                >
-                  {t.label}
-                </span>
-              </button>
-            ))}
-          </div>
-        </SettingRow>
-      </div>
-
-      {/* Accent section */}
-      <div className="card">
-        <h3
-          className="text-sm font-[var(--font-weight-bold)] mb-5 px-[var(--card-padding)] pt-[var(--card-padding)]"
-          style={{ color: "hsl(var(--h3))" }}
-        >
-          Accent
-        </h3>
-
-        <SettingRow label="Accent colour">
-          <div className="flex items-center gap-2 flex-wrap">
-            {ACCENTS.map((a) => (
-              <button
-                key={a.id}
-                onClick={() => setAccent(a.id as any)}
-                className={`w-[28px] h-[28px] rounded-full cursor-pointer transition-all ${
-                  accent === a.id && customHue === null
-                    ? "ring-2 ring-white scale-110"
-                    : "hover:scale-110"
-                }`}
-                style={{ background: `hsl(${a.hue}, 60%, 55%)` }}
-                title={a.label}
-              />
-            ))}
-          </div>
-        </SettingRow>
-
-        <SettingRow
-          label="Custom accent hue"
-          description="Fine-tune the exact hue value"
-          noBorder
-        >
-          <div className="flex items-center gap-3 w-full max-w-[300px]">
-            <input
-              type="range"
-              min={0}
-              max={360}
-              value={customHue ?? 255}
-              onChange={(e) => setCustomHue(parseInt(e.target.value))}
-              className="flex-1 h-[6px] rounded-full appearance-none cursor-pointer"
-              style={{
-                background:
-                  "linear-gradient(to right, hsl(0,70%,55%), hsl(60,70%,55%), hsl(120,70%,55%), hsl(180,70%,55%), hsl(240,70%,55%), hsl(300,70%,55%), hsl(360,70%,55%))",
-              }}
-            />
-            <span
-              className="text-xs font-mono w-8 text-right"
-              style={{ color: "hsl(var(--c3))" }}
+      <SettingSection title="Theme" description="Choose how Zephyron looks.">
+        <div className="flex gap-3 flex-wrap pt-1">
+          {themeCards.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTheme(t.id as any)}
+              className="flex flex-col items-center gap-1.5 cursor-pointer group"
             >
-              {customHue ?? 255}
-            </span>
-          </div>
+              <div
+                className={`w-[52px] h-[40px] rounded-lg flex items-center justify-center text-sm font-[var(--font-weight-bold)] transition-all ${
+                  theme === t.id ? "ring-2 ring-accent ring-offset-1 ring-offset-surface" : "group-hover:scale-105"
+                }`}
+                style={{ background: t.bg, color: t.text, boxShadow: "var(--card-border)" }}
+              >
+                Aa
+              </div>
+              <span className="text-[11px]" style={{ color: theme === t.id ? "hsl(var(--c1))" : "hsl(var(--c3))" }}>
+                {t.label}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <SettingRow label="Reduce animations" description="Minimise motion across the interface">
+          <Toggle checked={reduceMotion} onChange={handleReduceMotion} />
         </SettingRow>
-      </div>
+      </SettingSection>
+
+      <SettingSection title="Accent colour" description="Pick an accent colour or set a custom hue.">
+        <div className="flex items-center gap-2 flex-wrap">
+          {ACCENTS.map((a) => (
+            <button
+              key={a.id}
+              onClick={() => setAccent(a.id as any)}
+              className={`w-[28px] h-[28px] rounded-full cursor-pointer transition-all ${
+                accent === a.id && customHue === null ? "ring-2 ring-white scale-110" : "hover:scale-110"
+              }`}
+              style={{ background: `hsl(${a.hue}, 60%, 55%)` }}
+              title={a.label}
+            />
+          ))}
+        </div>
+
+        <div className="py-3" style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)" }}>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-[var(--font-weight-medium)]" style={{ color: "hsl(var(--c1))" }}>Custom hue</p>
+            <span className="text-xs font-mono" style={{ color: "hsl(var(--c3))" }}>{customHue ?? 255}</span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={360}
+            value={customHue ?? 255}
+            onChange={(e) => setCustomHue(parseInt(e.target.value))}
+            className="w-full h-[6px] rounded-full appearance-none cursor-pointer block"
+            style={{ background: "linear-gradient(to right, hsl(0,70%,55%), hsl(60,70%,55%), hsl(120,70%,55%), hsl(180,70%,55%), hsl(240,70%,55%), hsl(300,70%,55%), hsl(360,70%,55%))" }}
+          />
+          <p className="text-xs mt-1.5" style={{ color: "hsl(var(--c3))" }}>Fine-tune the exact hue value (0–360)</p>
+        </div>
+      </SettingSection>
+    </div>
+  );
+}
+
+/* ── Shared feedback banner ── */
+function FeedbackBanner({ type, text }: { type: "success" | "error"; text: string }) {
+  const isSuccess = type === "success";
+  return (
+    <div
+      className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg text-xs"
+      style={{
+        background: isSuccess ? "hsl(var(--h3) / 0.08)" : "hsl(0 60% 55% / 0.08)",
+        border: `1px solid ${isSuccess ? "hsl(var(--h3) / 0.25)" : "hsl(0 60% 55% / 0.25)"}`,
+        color: isSuccess ? "hsl(var(--h3))" : "hsl(0 60% 60%)",
+      }}
+    >
+      <svg className="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        {isSuccess
+          ? <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          : <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+        }
+      </svg>
+      {text}
     </div>
   );
 }
@@ -1664,46 +1717,21 @@ function ChangePasswordSection() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
-
-    if (newPassword.length < 8) {
-      setMessage({
-        type: "error",
-        text: "Password must be at least 8 characters",
-      });
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setMessage({ type: "error", text: "Passwords do not match" });
-      return;
-    }
-
+    if (newPassword.length < 8) { setMessage({ type: "error", text: "Password must be at least 8 characters" }); return; }
+    if (newPassword !== confirmPassword) { setMessage({ type: "error", text: "Passwords do not match" }); return; }
     setSaving(true);
-
     try {
-      const { error } = await authClient.changePassword({
-        currentPassword,
-        newPassword,
-      });
-
+      const { error } = await authClient.changePassword({ currentPassword, newPassword });
       if (error) {
-        setMessage({
-          type: "error",
-          text: error.message || "Failed to change password",
-        });
+        setMessage({ type: "error", text: error.message || "Failed to change password" });
       } else {
         setMessage({ type: "success", text: "Password changed successfully" });
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
+        setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
       }
     } catch {
       setMessage({ type: "error", text: "Something went wrong" });
@@ -1713,62 +1741,19 @@ function ChangePasswordSection() {
   };
 
   return (
-    <form onSubmit={handleChangePassword}>
-      <div className="card space-y-4">
-        <h3
-          className="text-sm font-[var(--font-weight-medium)]"
-          style={{ color: "hsl(var(--c1))" }}
-        >
-          Change Password
-        </h3>
-        <Input
-          type="password"
-          label="Current Password"
-          value={currentPassword}
-          onChange={(e) => setCurrentPassword(e.target.value)}
-          placeholder="Enter current password"
-          autoComplete="current-password"
-        />
-        <Input
-          type="password"
-          label="New Password"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          placeholder="At least 8 characters"
-          autoComplete="new-password"
-        />
-        <Input
-          type="password"
-          label="Confirm New Password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          placeholder="Repeat new password"
-          autoComplete="new-password"
-        />
-        {message && (
-          <p
-            className="text-xs"
-            style={{
-              color: message.type === "success" ? "hsl(var(--h3))" : "#ef4444",
-            }}
-          >
-            {message.text}
-          </p>
-        )}
-        <div className="flex justify-end">
-          <Button
-            type="submit"
-            variant="primary"
-            size="sm"
-            disabled={
-              saving || !currentPassword || !newPassword || !confirmPassword
-            }
-          >
-            {saving ? "Changing..." : "Change Password"}
+    <SettingSection title="Change password" description="Use a strong password of at least 8 characters.">
+      <form onSubmit={handleChangePassword} className="space-y-3">
+        <Input type="password" label="Current password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Enter current password" autoComplete="current-password" />
+        <Input type="password" label="New password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 8 characters" autoComplete="new-password" />
+        <Input type="password" label="Confirm new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repeat new password" autoComplete="new-password" />
+        {message && <FeedbackBanner type={message.type} text={message.text} />}
+        <div className="flex justify-end pt-1">
+          <Button type="submit" variant="primary" size="sm" disabled={saving || !currentPassword || !newPassword || !confirmPassword}>
+            {saving ? "Saving…" : "Update password"}
           </Button>
         </div>
-      </div>
-    </form>
+      </form>
+    </SettingSection>
   );
 }
 
@@ -1777,9 +1762,7 @@ function TwoFactorSection() {
   const user = session?.user as any;
   const is2FAEnabled = user?.twoFactorEnabled;
 
-  const [step, setStep] = useState<
-    "idle" | "enabling" | "qr" | "verify" | "backup" | "disabling"
-  >("idle");
+  const [step, setStep] = useState<"idle" | "enabling" | "qr" | "verify" | "backup" | "disabling">("idle");
   const [password, setPassword] = useState("");
   const [totpURI, setTotpURI] = useState("");
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
@@ -1788,293 +1771,128 @@ function TwoFactorSection() {
   const [error, setError] = useState("");
 
   const handleEnable2FA = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
+    e.preventDefault(); setLoading(true); setError("");
     try {
-      const { data, error: err } = await authClient.twoFactor.enable({
-        password,
-      });
-
-      if (err) {
-        setError(err.message || "Failed to enable 2FA");
-        setLoading(false);
-        return;
-      }
-
-      if (data) {
-        setTotpURI(data.totpURI);
-        setBackupCodes(data.backupCodes);
-        setStep("qr");
-      }
-    } catch {
-      setError("Something went wrong");
-    } finally {
-      setLoading(false);
-    }
+      const { data, error: err } = await authClient.twoFactor.enable({ password });
+      if (err) { setError(err.message || "Failed to enable 2FA"); return; }
+      if (data) { setTotpURI(data.totpURI); setBackupCodes(data.backupCodes); setStep("qr"); }
+    } catch { setError("Something went wrong"); } finally { setLoading(false); }
   };
 
   const handleVerifyTotp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
+    e.preventDefault(); setLoading(true); setError("");
     try {
-      const { error: err } = await authClient.twoFactor.verifyTotp({
-        code: verifyCode,
-      });
-
-      if (err) {
-        setError(err.message || "Invalid code");
-        setLoading(false);
-        return;
-      }
-
+      const { error: err } = await authClient.twoFactor.verifyTotp({ code: verifyCode });
+      if (err) { setError(err.message || "Invalid code"); return; }
       setStep("backup");
-    } catch {
-      setError("Something went wrong");
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError("Something went wrong"); } finally { setLoading(false); }
   };
 
   const handleDisable2FA = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
+    e.preventDefault(); setLoading(true); setError("");
     try {
-      const { error: err } = await authClient.twoFactor.disable({
-        password,
-      });
-
-      if (err) {
-        setError(err.message || "Failed to disable 2FA");
-        setLoading(false);
-        return;
-      }
-
-      setStep("idle");
-      setPassword("");
-    } catch {
-      setError("Something went wrong");
-    } finally {
-      setLoading(false);
-    }
+      const { error: err } = await authClient.twoFactor.disable({ password });
+      if (err) { setError(err.message || "Failed to disable 2FA"); return; }
+      setStep("idle"); setPassword("");
+    } catch { setError("Something went wrong"); } finally { setLoading(false); }
   };
 
-  const resetFlow = () => {
-    setStep("idle");
-    setPassword("");
-    setTotpURI("");
-    setBackupCodes([]);
-    setVerifyCode("");
-    setError("");
-  };
+  const resetFlow = () => { setStep("idle"); setPassword(""); setTotpURI(""); setBackupCodes([]); setVerifyCode(""); setError(""); };
 
   return (
-    <div className="card space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3
-            className="text-sm font-[var(--font-weight-medium)]"
-            style={{ color: "hsl(var(--c1))" }}
-          >
-            Two-Factor Authentication
-          </h3>
-          <p className="text-xs mt-0.5" style={{ color: "hsl(var(--c3))" }}>
-            Add an extra layer of security using an authenticator app
-          </p>
+    <SettingSection title="Two-factor authentication" description="Require a verification code from your authenticator app on every sign-in.">
+      {/* Status row */}
+      <div className="flex items-center justify-between py-1">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full" style={{ background: is2FAEnabled ? "hsl(var(--h3))" : "hsl(var(--c3))" }} />
+          <span className="text-sm" style={{ color: "hsl(var(--c2))" }}>
+            {is2FAEnabled ? "Enabled" : "Not enabled"}
+          </span>
         </div>
-        {is2FAEnabled && <Badge variant="accent">Enabled</Badge>}
+        {step === "idle" && (
+          is2FAEnabled
+            ? <Button variant="ghost" size="sm" onClick={() => setStep("disabling")} style={{ color: "hsl(0 60% 55%)" }}>Disable</Button>
+            : <Button variant="primary" size="sm" onClick={() => setStep("enabling")}>Enable</Button>
+        )}
       </div>
 
-      {/* Idle state — enable or disable */}
-      {step === "idle" && !is2FAEnabled && (
-        <Button variant="primary" size="sm" onClick={() => setStep("enabling")}>
-          Enable 2FA
-        </Button>
-      )}
-
-      {step === "idle" && is2FAEnabled && (
-        <Button variant="danger" size="sm" onClick={() => setStep("disabling")}>
-          Disable 2FA
-        </Button>
-      )}
-
-      {/* Step: enter password to enable */}
+      {/* Step: confirm password to enable */}
       {step === "enabling" && (
-        <form onSubmit={handleEnable2FA} className="space-y-3">
-          <Input
-            type="password"
-            label="Confirm your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter your password"
-            autoComplete="current-password"
-          />
-          {error && (
-            <p className="text-xs" style={{ color: "#ef4444" }}>
-              {error}
-            </p>
-          )}
+        <form onSubmit={handleEnable2FA} className="space-y-3 pt-2" style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)" }}>
+          <p className="text-xs" style={{ color: "hsl(var(--c3))" }}>Confirm your password to continue.</p>
+          <Input type="password" label="Password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" autoComplete="current-password" />
+          {error && <FeedbackBanner type="error" text={error} />}
           <div className="flex gap-2">
-            <Button
-              type="submit"
-              variant="primary"
-              size="sm"
-              disabled={loading || !password}
-            >
-              {loading ? "Verifying..." : "Continue"}
-            </Button>
-            <Button type="button" variant="ghost" size="sm" onClick={resetFlow}>
-              Cancel
-            </Button>
+            <Button type="submit" variant="primary" size="sm" disabled={loading || !password}>{loading ? "Verifying…" : "Continue"}</Button>
+            <Button type="button" variant="ghost" size="sm" onClick={resetFlow}>Cancel</Button>
           </div>
         </form>
       )}
 
-      {/* Step: show QR code */}
+      {/* Step: QR + verify */}
       {step === "qr" && (
-        <div className="space-y-4">
-          <p className="text-sm" style={{ color: "hsl(var(--c2))" }}>
-            Scan this QR code with your authenticator app (Google Authenticator,
-            Authy, 1Password, etc.)
+        <div className="space-y-4 pt-2" style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)" }}>
+          <p className="text-xs" style={{ color: "hsl(var(--c3))" }}>
+            Scan with Google Authenticator, Authy, 1Password, or any TOTP app.
           </p>
-          <div className="flex justify-center py-4">
-            <div className="bg-white p-3 rounded-lg">
-              <QRCode value={totpURI} size={180} />
+          <div className="flex justify-center">
+            <div className="p-3 rounded-xl" style={{ background: "#fff", boxShadow: "var(--card-border)" }}>
+              <QRCode value={totpURI} size={168} />
             </div>
           </div>
           <form onSubmit={handleVerifyTotp} className="space-y-3">
             <Input
-              label="Enter the 6-digit code from your app"
+              label="6-digit code"
               value={verifyCode}
-              onChange={(e) =>
-                setVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-              }
-              placeholder="000000"
-              className="font-mono text-center tracking-[0.3em] text-lg"
+              onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="000 000"
+              className="font-mono text-center tracking-[0.4em] text-lg"
               maxLength={6}
               autoComplete="one-time-code"
             />
-            {error && (
-              <p className="text-xs" style={{ color: "#ef4444" }}>
-                {error}
-              </p>
-            )}
+            {error && <FeedbackBanner type="error" text={error} />}
             <div className="flex gap-2">
-              <Button
-                type="submit"
-                variant="primary"
-                size="sm"
-                disabled={loading || verifyCode.length !== 6}
-              >
-                {loading ? "Verifying..." : "Verify & Enable"}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={resetFlow}
-              >
-                Cancel
-              </Button>
+              <Button type="submit" variant="primary" size="sm" disabled={loading || verifyCode.length !== 6}>{loading ? "Verifying…" : "Verify & enable"}</Button>
+              <Button type="button" variant="ghost" size="sm" onClick={resetFlow}>Cancel</Button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Step: show backup codes */}
+      {/* Step: backup codes */}
       {step === "backup" && (
-        <div className="space-y-4">
-          <div
-            style={{
-              background: "hsl(var(--h3) / 0.08)",
-              border: "1px solid hsl(var(--h3) / 0.25)",
-              borderRadius: 8,
-              padding: 16,
-            }}
-          >
-            <p
-              className="text-sm font-[var(--font-weight-medium)] mb-1"
-              style={{ color: "hsl(var(--h3))" }}
-            >
-              2FA is now enabled
-            </p>
-            <p className="text-xs" style={{ color: "hsl(var(--c2))" }}>
-              Save these backup codes in a secure location. Each code can only
-              be used once.
-            </p>
-          </div>
+        <div className="space-y-4 pt-2" style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)" }}>
+          <FeedbackBanner type="success" text="2FA is now enabled. Save these backup codes — each can only be used once." />
           <div className="grid grid-cols-2 gap-2">
             {backupCodes.map((code, i) => (
-              <code
-                key={i}
-                className="rounded px-3 py-1.5 text-xs font-mono text-center"
-                style={{
-                  background: "hsl(var(--b4) / 0.4)",
-                  color: "hsl(var(--c1))",
-                  boxShadow: "inset 0 0 0 1px hsl(var(--b4) / 0.25)",
-                }}
-              >
+              <code key={i} className="rounded-lg px-3 py-2 text-xs font-mono text-center tracking-wider"
+                style={{ background: "hsl(var(--b4) / 0.4)", color: "hsl(var(--c1))", boxShadow: "inset 0 0 0 1px hsl(var(--b4) / 0.25)" }}>
                 {code}
               </code>
             ))}
           </div>
-          <Button variant="primary" size="sm" onClick={resetFlow}>
-            Done
-          </Button>
+          <Button variant="primary" size="sm" onClick={resetFlow}>Done</Button>
         </div>
       )}
 
-      {/* Step: enter password to disable */}
+      {/* Step: confirm password to disable */}
       {step === "disabling" && (
-        <form onSubmit={handleDisable2FA} className="space-y-3">
-          <Input
-            type="password"
-            label="Confirm your password to disable 2FA"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter your password"
-            autoComplete="current-password"
-          />
-          {error && (
-            <p className="text-xs" style={{ color: "#ef4444" }}>
-              {error}
-            </p>
-          )}
+        <form onSubmit={handleDisable2FA} className="space-y-3 pt-2" style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)" }}>
+          <p className="text-xs" style={{ color: "hsl(var(--c3))" }}>Enter your password to disable two-factor authentication.</p>
+          <Input type="password" label="Password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" autoComplete="current-password" />
+          {error && <FeedbackBanner type="error" text={error} />}
           <div className="flex gap-2">
-            <Button
-              type="submit"
-              variant="danger"
-              size="sm"
-              disabled={loading || !password}
-            >
-              {loading ? "Disabling..." : "Disable 2FA"}
-            </Button>
-            <Button type="button" variant="ghost" size="sm" onClick={resetFlow}>
-              Cancel
-            </Button>
+            <Button type="submit" variant="danger" size="sm" disabled={loading || !password}>{loading ? "Disabling…" : "Disable 2FA"}</Button>
+            <Button type="button" variant="ghost" size="sm" onClick={resetFlow}>Cancel</Button>
           </div>
         </form>
       )}
-    </div>
+    </SettingSection>
   );
 }
 
 function ApiKeysSection() {
-  const [keys, setKeys] = useState<
-    Array<{
-      id: string;
-      name: string | null;
-      start: string | null;
-      createdAt: string;
-      expiresAt: string | null;
-      enabled: boolean;
-    }>
-  >([]);
+  const [keys, setKeys] = useState<Array<{ id: string; name: string | null; start: string | null; createdAt: string; expiresAt: string | null; enabled: boolean }>>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [newKeyName, setNewKeyName] = useState("Browser Extension");
@@ -2083,223 +1901,122 @@ function ApiKeysSection() {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
 
-  // Load existing keys
   const loadKeys = async () => {
     try {
       const { data, error: err } = await (authClient.apiKey as any).list();
-      if (err) {
-        setError(err.message || "Failed to load API keys");
-        return;
-      }
+      if (err) { setError(err.message || "Failed to load API keys"); return; }
       setKeys(data || []);
-    } catch {
-      setError("Failed to load API keys");
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError("Failed to load API keys"); } finally { setLoading(false); }
   };
 
-  useState(() => {
-    loadKeys();
-  });
+  useState(() => { loadKeys(); });
 
   const handleCreate = async () => {
-    setCreating(true);
-    setError("");
+    setCreating(true); setError("");
     try {
-      const { data, error: err } = await (authClient.apiKey as any).create({
-        name: newKeyName.trim() || "API Key",
-      });
-      if (err) {
-        setError(err.message || "Failed to create API key");
-        setCreating(false);
-        return;
-      }
-      setNewKey(data.key);
-      loadKeys();
-    } catch {
-      setError("Failed to create API key");
-    } finally {
-      setCreating(false);
-    }
+      const { data, error: err } = await (authClient.apiKey as any).create({ name: newKeyName.trim() || "API Key" });
+      if (err) { setError(err.message || "Failed to create API key"); return; }
+      setNewKey(data.key); loadKeys();
+    } catch { setError("Failed to create API key"); } finally { setCreating(false); }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await (authClient.apiKey as any).delete({ keyId: id });
       setKeys((prev) => prev.filter((k) => k.id !== id));
-    } catch {
-      setError("Failed to delete API key");
-    }
+    } catch { setError("Failed to delete API key"); }
   };
 
   const handleCopy = () => {
-    if (newKey) {
-      navigator.clipboard.writeText(newKey);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+    if (!newKey) return;
+    navigator.clipboard.writeText(newKey);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="card space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3
-            className="text-sm font-[var(--font-weight-medium)]"
-            style={{ color: "hsl(var(--c1))" }}
-          >
-            API Keys
-          </h3>
-          <p className="text-xs mt-0.5" style={{ color: "hsl(var(--c3))" }}>
-            Create API keys for the browser extension and external tools
-          </p>
-        </div>
-        {!showCreate && !newKey && (
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setShowCreate(true)}
-          >
-            Create Key
-          </Button>
-        )}
-      </div>
-
-      {/* Newly created key — show once */}
+    <SettingSection title="API keys" description="Keys for the browser extension and external integrations.">
+      {/* New key reveal */}
       {newKey && (
-        <div className="space-y-3">
-          <div
-            style={{
-              background: "hsl(var(--h3) / 0.08)",
-              border: "1px solid hsl(var(--h3) / 0.25)",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <p
-              className="text-xs font-[var(--font-weight-medium)] mb-2"
-              style={{ color: "hsl(var(--h3))" }}
-            >
-              Copy your API key now — it won't be shown again
-            </p>
-            <div className="flex items-center gap-2">
-              <code
-                className="flex-1 text-xs font-mono rounded px-2.5 py-1.5 select-all break-all"
-                style={{
-                  background: "hsl(var(--b4)/0.4)",
-                  color: "hsl(var(--c1))",
-                }}
-              >
-                {newKey}
-              </code>
-              <Button variant="secondary" size="sm" onClick={handleCopy}>
-                {copied ? "Copied!" : "Copy"}
-              </Button>
-            </div>
+        <div className="space-y-3 p-3 rounded-lg" style={{ background: "hsl(var(--h3) / 0.06)", border: "1px solid hsl(var(--h3) / 0.2)" }}>
+          <p className="text-xs font-[var(--font-weight-medium)]" style={{ color: "hsl(var(--h3))" }}>
+            Copy your key now — it won't be shown again
+          </p>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 text-xs font-mono rounded-lg px-3 py-2 select-all break-all"
+              style={{ background: "hsl(var(--b4) / 0.5)", color: "hsl(var(--c1))", boxShadow: "inset 0 0 0 1px hsl(var(--b4) / 0.3)" }}>
+              {newKey}
+            </code>
+            <Button variant="secondary" size="sm" onClick={handleCopy}>{copied ? "Copied!" : "Copy"}</Button>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setNewKey(null);
-              setShowCreate(false);
-            }}
-          >
-            Done
-          </Button>
+          <Button variant="ghost" size="sm" onClick={() => { setNewKey(null); setShowCreate(false); }}>Done</Button>
         </div>
       )}
 
       {/* Create form */}
       {showCreate && !newKey && (
-        <div className="flex items-end gap-2">
+        <div className="flex items-end gap-2 pt-1" style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)" }}>
           <div className="flex-1">
-            <Input
-              label="Key name"
-              value={newKeyName}
-              onChange={(e) => setNewKeyName(e.target.value)}
-              placeholder="e.g. Browser Extension"
-            />
+            <Input label="Key name" value={newKeyName} onChange={(e) => setNewKeyName(e.target.value)} placeholder="e.g. Browser Extension" />
           </div>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleCreate}
-            disabled={creating}
-          >
-            {creating ? "Creating..." : "Create"}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowCreate(false)}
-          >
-            Cancel
-          </Button>
+          <Button variant="primary" size="sm" onClick={handleCreate} disabled={creating}>{creating ? "Creating…" : "Create"}</Button>
+          <Button variant="ghost" size="sm" onClick={() => setShowCreate(false)}>Cancel</Button>
         </div>
       )}
 
-      {error && (
-        <p className="text-xs" style={{ color: "#ef4444" }}>
-          {error}
-        </p>
-      )}
+      {error && <FeedbackBanner type="error" text={error} />}
 
-      {/* Existing keys list */}
+      {/* Keys list */}
       {loading ? (
-        <p className="text-xs" style={{ color: "hsl(var(--c3))" }}>
-          Loading keys...
-        </p>
+        <p className="text-xs" style={{ color: "hsl(var(--c3))" }}>Loading…</p>
       ) : keys.length > 0 ? (
         <div className="space-y-2">
           {keys.map((key) => (
-            <div
-              key={key.id}
-              className="flex items-center justify-between py-2 px-3 rounded-lg"
-              style={{
-                background: "hsl(var(--b4) / 0.2)",
-                boxShadow: "inset 0 0 0 1px hsl(var(--b4) / 0.25)",
-              }}
-            >
-              <div className="min-w-0">
-                <p
-                  className="text-sm truncate"
-                  style={{ color: "hsl(var(--c1))" }}
-                >
+            <div key={key.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
+              style={{ background: "hsl(var(--b4) / 0.2)", boxShadow: "inset 0 0 0 1px hsl(var(--b4) / 0.3)" }}>
+              {/* Key icon */}
+              <svg className="w-3.5 h-3.5 shrink-0" style={{ color: "hsl(var(--c3))" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-[var(--font-weight-medium)] truncate" style={{ color: "hsl(var(--c1))" }}>
                   {key.name || "Unnamed key"}
                 </p>
-                <p
-                  className="text-[10px] font-mono"
-                  style={{ color: "hsl(var(--c3))" }}
-                >
-                  {key.start ? `${key.start}${"•".repeat(8)}` : "••••••••"}
+                <p className="text-[10px] font-mono mt-0.5" style={{ color: "hsl(var(--c3))" }}>
+                  {key.start ? `${key.start}••••••••` : "••••••••"}
                   {" · "}
-                  Created {new Date(key.createdAt).toLocaleDateString()}
-                  {key.expiresAt &&
-                    ` · Expires ${new Date(
-                      key.expiresAt
-                    ).toLocaleDateString()}`}
+                  {new Date(key.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                  {key.expiresAt && ` · Expires ${new Date(key.expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`}
                 </p>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
                 onClick={() => handleDelete(key.id)}
-                style={{ color: "#ef4444" }}
-                className="shrink-0"
+                className="text-xs px-2 py-1 rounded-lg transition-colors shrink-0"
+                style={{ color: "hsl(0 60% 55%)", background: "hsl(0 60% 55% / 0.08)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "hsl(0 60% 55% / 0.15)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "hsl(0 60% 55% / 0.08)"; }}
               >
                 Revoke
-              </Button>
+              </button>
             </div>
           ))}
         </div>
       ) : !showCreate && !newKey ? (
-        <p className="text-xs" style={{ color: "hsl(var(--c3))" }}>
-          No API keys created yet.
-        </p>
+        <p className="text-xs" style={{ color: "hsl(var(--c3))" }}>No API keys yet.</p>
       ) : null}
-    </div>
+
+      {/* Add key button */}
+      {!showCreate && !newKey && (
+        <div style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)", paddingTop: 12 }}>
+          <Button variant="secondary" size="sm" onClick={() => setShowCreate(true)}>
+            <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            New key
+          </Button>
+        </div>
+      )}
+    </SettingSection>
   );
 }
 
@@ -2307,6 +2024,7 @@ function AccountTab() {
   const { data: session } = useSession();
   const user = session?.user as any;
   const [signingOut, setSigningOut] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
 
   const handleSignOutAll = async () => {
     setSigningOut(true);
@@ -2318,80 +2036,68 @@ function AccountTab() {
     }
   };
 
+  const copyUserId = () => {
+    navigator.clipboard.writeText(user?.id || "");
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 2000);
+  };
+
+  const InfoRow = ({ label, children }: { label: string; children: React.ReactNode }) => (
+    <div className="flex items-center justify-between py-2.5" style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)" }}>
+      <span className="text-sm" style={{ color: "hsl(var(--c3))" }}>{label}</span>
+      <div className="text-sm" style={{ color: "hsl(var(--c2))" }}>{children}</div>
+    </div>
+  );
+
   return (
     <div className="space-y-4">
-      {/* Account info */}
-      <div className="card">
-        <h3
-          className="text-sm font-[var(--font-weight-medium)] mb-4"
-          style={{ color: "hsl(var(--c1))" }}
-        >
-          Account Information
-        </h3>
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between items-center">
-            <span style={{ color: "hsl(var(--c3))" }}>Role</span>
-            <Badge variant="accent">{user?.role || "user"}</Badge>
-          </div>
-          <div className="flex justify-between items-center">
-            <span style={{ color: "hsl(var(--c3))" }}>Member since</span>
-            <span style={{ color: "hsl(var(--c2))" }}>
-              {user?.createdAt
-                ? new Date(user.createdAt).toLocaleDateString()
-                : "Unknown"}
-            </span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span style={{ color: "hsl(var(--c3))" }}>App version</span>
-            <Link
-              to="/app/changelog"
-              className="text-xs font-mono hover:underline no-underline"
-              style={{ color: "hsl(var(--h3))" }}
-            >
-              v{__APP_VERSION__}
-            </Link>
-          </div>
-        </div>
-      </div>
+      <SettingSection title="Account information" description="Details about your Zephyron account.">
+        <InfoRow label="Display name">
+          <span className="font-[var(--font-weight-medium)]" style={{ color: "hsl(var(--c1))" }}>{user?.name}</span>
+        </InfoRow>
+        {user?.email && (
+          <InfoRow label="Email">
+            <span className="font-mono text-xs">{user.email}</span>
+          </InfoRow>
+        )}
+        <InfoRow label="Role">
+          <Badge variant="accent">{user?.role || "user"}</Badge>
+        </InfoRow>
+        <InfoRow label="Member since">
+          {user?.createdAt ? new Date(user.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "Unknown"}
+        </InfoRow>
+        <InfoRow label="User ID">
+          <button
+            onClick={copyUserId}
+            className="flex items-center gap-1.5 font-mono text-xs px-2 py-1 rounded transition-colors"
+            style={{ background: "hsl(var(--b4) / 0.4)", color: copiedId ? "hsl(var(--h3))" : "hsl(var(--c3))" }}
+            title="Click to copy"
+          >
+            {copiedId ? "Copied!" : `${user?.id?.slice(0, 10)}…`}
+          </button>
+        </InfoRow>
+        <InfoRow label="App version">
+          <Link to="/app/changelog" className="font-mono text-xs hover:underline no-underline" style={{ color: "hsl(var(--h3))" }}>
+            v{__APP_VERSION__}
+          </Link>
+        </InfoRow>
+      </SettingSection>
 
-      {/* Sessions */}
-      <div className="card">
-        <h3
-          className="text-sm font-[var(--font-weight-medium)] mb-3"
-          style={{ color: "hsl(var(--c1))" }}
-        >
-          Active Sessions
-        </h3>
-        <p className="text-xs mb-3" style={{ color: "hsl(var(--c3))" }}>
-          Sign out of all other sessions across all devices.
-        </p>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handleSignOutAll}
-          disabled={signingOut}
-        >
-          {signingOut ? "Signing out..." : "Sign Out All Devices"}
+      <SettingSection title="Sessions" description="Manage your active login sessions.">
+        <Button variant="secondary" size="sm" onClick={handleSignOutAll} disabled={signingOut}>
+          {signingOut ? "Signing out…" : "Sign out all devices"}
         </Button>
-      </div>
+      </SettingSection>
 
-      {/* Danger zone */}
-      <div
-        className="card"
-        style={{ border: "1px solid hsl(0 60% 40% / 0.2)" }}
-      >
-        <h3
-          className="text-sm font-[var(--font-weight-medium)] mb-3"
-          style={{ color: "hsl(0 60% 55%)" }}
-        >
-          Danger Zone
+      <div className="card" style={{ border: "1px solid hsl(0 60% 40% / 0.2)" }}>
+        <h3 className="text-sm font-[var(--font-weight-medium)] mb-1" style={{ color: "hsl(0 60% 55%)" }}>
+          Danger zone
         </h3>
-        <p className="text-xs mb-3" style={{ color: "hsl(var(--c3))" }}>
-          Account deletion is not yet available. Contact support if you need to
-          delete your account.
+        <p className="text-xs mb-4" style={{ color: "hsl(var(--c3))" }}>
+          Account deletion is not yet available. Contact support if you need to delete your account.
         </p>
         <Button variant="danger" size="sm" disabled>
-          Delete Account
+          Delete account
         </Button>
       </div>
     </div>

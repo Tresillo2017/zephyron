@@ -168,6 +168,17 @@ html, body, #root {
   -moz-osx-font-smoothing: grayscale;
 }
 
+#app-scroll-container {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app-scroll-container { scroll-behavior: auto; }
+}
+.reduce-motion #app-scroll-container {
+  scroll-behavior: auto;
+}
+
 /* ═══ Range slider thumb ═══ */
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -521,7 +532,16 @@ select option {
   }
 }
 
-/* Reduced motion */
+/* User-requested reduced motion (toggle in Appearance settings) */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* System-level reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

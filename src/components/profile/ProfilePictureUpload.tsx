@@ -6,14 +6,19 @@ import { Modal } from '../ui/Modal'
 
 interface ProfilePictureUploadProps {
   currentAvatarUrl: string | null
-  onUploadSuccess: (avatarUrl: string) => void
+  onUploadSuccess: (url: string) => void
   onClose: () => void
+  /** Override the upload function — defaults to uploadAvatar */
+  uploadFn?: (file: File) => Promise<{ success: true; avatar_url?: string; banner_url?: string }>
+  title?: string
 }
 
 export function ProfilePictureUpload({
   currentAvatarUrl,
   onUploadSuccess,
   onClose,
+  uploadFn,
+  title = 'Upload Profile Picture',
 }: ProfilePictureUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -115,10 +120,11 @@ export function ProfilePictureUpload({
     progressIntervalRef.current = intervalId
 
     try {
-      const result = await uploadAvatar(selectedFile)
+      const fn = uploadFn ?? uploadAvatar
+      const result = await fn(selectedFile)
       setProgress(100)
-      sileo.success({ description: 'Profile picture updated successfully' })
-      onUploadSuccess(result.avatar_url)
+      sileo.success({ description: 'Image updated successfully' })
+      onUploadSuccess((result as any).avatar_url ?? (result as any).banner_url ?? '')
       onClose()
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to upload avatar'
@@ -142,7 +148,7 @@ export function ProfilePictureUpload({
     <Modal
       isOpen
       onClose={uploading ? () => {} : onClose}
-      title="Upload Profile Picture"
+      title={title}
     >
       <div className="space-y-4">
         {/* Current Avatar */}

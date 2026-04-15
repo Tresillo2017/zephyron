@@ -161,6 +161,93 @@ export async function uploadAvatar(
 }
 
 /**
+ * POST /api/profile/banner/upload
+ * Uploads a profile banner to R2 AVATARS bucket and updates user banner_url.
+ */
+export async function uploadBanner(
+  request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  _params: Record<string, string>
+): Promise<Response> {
+  const authResult = await requireAuth(request, env)
+  if (authResult instanceof Response) return authResult
+
+  const { user } = authResult
+  const userId = user.id
+
+  try {
+    const formData = await request.formData()
+    const file = formData.get('file') as File | null
+
+    if (!file) return json({ error: 'NO_FILE', message: 'No file provided' }, 400)
+    if (!file.type.startsWith('image/')) return json({ error: 'INVALID_FORMAT', message: 'Only image files allowed' }, 400)
+
+    const MAX_SIZE = 10 * 1024 * 1024
+    if (file.size > MAX_SIZE) return json({ error: 'FILE_TOO_LARGE', message: 'Maximum file size is 10MB' }, 400)
+
+    const arrayBuffer = await file.arrayBuffer()
+
+    try {
+      // Delete old banner
+      await env.AVATARS.delete(`${userId}/banner.webp`)
+
+      // Upload temp
+      const tempKey = `temp/${userId}-banner-${Date.now()}.webp`
+      await env.AVATARS.put(tempKey, arrayBuffer, { httpMetadata: { contentType: 'image/webp' } })
+
+      const tempUrl = `https://avatars.zephyron.app/${tempKey}`
+
+      // Resize to 1500×500 banner dimensions
+      const bannerResponse = await fetch(tempUrl, {
+        cf: { image: { width: 1500, height: 500, fit: 'cover', format: 'webp', quality: 85 } }
+      })
+
+      if (!bannerResponse.ok) throw new Error('Failed to resize banner')
+
+      const bannerBuffer = await bannerResponse.arrayBuffer()
+      await env.AVATARS.put(`${userId}/banner.webp`, bannerBuffer, { httpMetadata: { contentType: 'image/webp' } })
+      await env.AVATARS.delete(tempKey)
+
+      const bannerUrl = `https://avatars.zephyron.app/${userId}/banner.webp`
+
+      await env.DB.prepare('UPDATE user SET banner_url = ? WHERE id = ?').bind(bannerUrl, userId).run()
+
+      return json({ success: true, banner_url: bannerUrl })
+
+    } catch (imageError) {
+      console.error('Banner processing error:', imageError)
+      return json({ error: 'RESIZE_FAILED', message: 'Failed to process banner image' }, 500)
+    }
+
+  } catch (error) {
+    console.error('Banner upload error:', error)
+    return json({ error: 'UPLOAD_FAILED', message: 'Failed to upload banner' }, 500)
+  }
+}
+
+/**
+ * DELETE /api/profile/banner
+ * Removes the user's banner image.
+ */
+export async function deleteBanner(
+  request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  _params: Record<string, string>
+): Promise<Response> {
+  const authResult = await requireAuth(request, env)
+  if (authResult instanceof Response) return authResult
+
+  const { user } = authResult
+
+  await env.AVATARS.delete(`${user.id}/banner.webp`)
+  await env.DB.prepare('UPDATE user SET banner_url = NULL WHERE id = ?').bind(user.id).run()
+
+  return json({ success: true })
+}
+
+/**
  * PATCH /api/profile/settings
  * Updates user profile settings: name, bio, is_profile_public.
  */
@@ -179,7 +266,7 @@ export async function updateProfileSettings(
   try {
     // 2. Parse request body
     const body = await request.json() as UpdateProfileSettingsRequest
-    let { name, bio, is_profile_public } = body
+    let { name, bio, is_profile_public, show_activity, show_liked_songs } = body as any
 
     // 3. Validate and sanitize inputs
     const sqlUpdates: Record<string, any> = {}
@@ -228,6 +315,12 @@ export async function updateProfileSettings(
 
     if (is_profile_public !== undefined) {
       sqlUpdates.is_profile_public = is_profile_public ? 1 : 0
+    }
+    if (show_activity !== undefined) {
+      sqlUpdates.show_activity = show_activity ? 1 : 0
+    }
+    if (show_liked_songs !== undefined) {
+      sqlUpdates.show_liked_songs = show_liked_songs ? 1 : 0
     }
 
     // 4. Execute updates
@@ -299,11 +392,12 @@ export async function getPublicProfile(
   try {
     // Query uses idx_user_public_profiles for efficient public profile lookups
     const user = await env.DB.prepare(
-      'SELECT id, name, avatar_url, bio, role, is_profile_public, created_at FROM user WHERE id = ?'
+      'SELECT id, name, avatar_url, banner_url, bio, role, is_profile_public, created_at FROM user WHERE id = ?'
     ).bind(userId).first() as {
       id: string
       name: string
       avatar_url: string | null
+      banner_url: string | null
       bio: string | null
       role: string
       is_profile_public: number
@@ -329,6 +423,7 @@ export async function getPublicProfile(
       id: user.id,
       name: user.name,
       avatar_url: user.avatar_url,
+      banner_url: user.banner_url,
       bio: user.bio,
       role: user.role,
       created_at: user.created_at

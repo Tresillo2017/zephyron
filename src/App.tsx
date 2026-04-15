@@ -96,6 +96,12 @@ function RedirectIfAuth({ children }: { children: React.ReactNode }) {
 function App() {
   const theme = useThemeStore((state) => state.theme)
 
+  // Apply reduce-motion preference from localStorage on startup
+  React.useEffect(() => {
+    const reduce = localStorage.getItem('reduceMotion') === 'true'
+    document.documentElement.classList.toggle('reduce-motion', reduce)
+  }, [])
+
   // Compute toast styles from CSS variables to match Zephyron's HSL-parametric system
   // Sileo uses SVG <rect> elements with fill attribute that CSS background can't override
   const toastOptions = React.useMemo(() => {
