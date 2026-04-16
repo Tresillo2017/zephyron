@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router'
 import { signUp } from '../lib/auth-client'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
+import { Logo } from '../components/ui/Logo'
 
 export function RegisterPage() {
   const [name, setName] = useState('')
@@ -51,7 +52,7 @@ export function RegisterPage() {
         <div className="absolute top-1/3 -right-20 w-[300px] h-[300px] rounded-full bg-accent/5 blur-[80px]" />
         <div className="relative z-10">
           <Link to="/" className="flex items-center gap-2.5 mb-12 no-underline">
-            <img src="/logo-128.png" alt="Zephyron logo" className="w-8 h-8 object-contain" />
+            <Logo size={32} />
             <span className="text-lg font-semibold text-text-primary tracking-tight">Zephyron</span>
           </Link>
           <p className="text-2xl font-semibold text-text-primary leading-snug mb-3">
@@ -68,7 +69,7 @@ export function RegisterPage() {
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <Link to="/" className="flex items-center gap-2.5 mb-10 lg:hidden no-underline">
-            <img src="/logo-128.png" alt="Zephyron logo" className="w-7 h-7 object-contain" />
+            <Logo size={28} />
             <span className="text-base font-semibold text-text-primary tracking-tight">Zephyron</span>
           </Link>
 

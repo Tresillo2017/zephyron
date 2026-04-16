@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router'
 import { useState } from 'react'
 import { useSession, signOut } from '../../lib/auth-client'
+import { Logo } from '../ui/Logo'
 
 export function Header() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -33,7 +34,8 @@ export function Header() {
     <>
       <header className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-6 bg-surface-raised border-b border-border shrink-0">
         <Link to="/app" className="flex items-center gap-2 no-underline">
-          <img src="/logo-128.png" alt="Zephyron logo" className="w-7 h-7 sm:w-8 sm:h-8 object-contain" />
+          <Logo size={32} className="hidden sm:block" />
+          <Logo size={28} className="sm:hidden" />
           <span className="text-base sm:text-lg font-bold text-text-primary tracking-tight">Zephyron</span>
         </Link>
 

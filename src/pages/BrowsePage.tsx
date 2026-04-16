@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router'
 import { useSets, useGenres } from '../hooks/useSets'
 import { SetGrid } from '../components/sets/SetGrid'
@@ -17,14 +17,14 @@ export function BrowsePage() {
 
   const { sets, totalPages, isLoading } = useSets({
     page: currentPage,
-    pageSize: 20,
+    pageSize: 24,
     genre: currentGenre,
     sort: currentSort,
   })
 
   const { genres } = useGenres()
 
-  const updateParams = (updates: Record<string, string | undefined>) => {
+  const updateParams = useCallback((updates: Record<string, string | undefined>) => {
     const newParams = new URLSearchParams(searchParams)
     for (const [key, value] of Object.entries(updates)) {
       if (value) {
@@ -34,60 +34,103 @@ export function BrowsePage() {
       }
     }
     setSearchParams(newParams)
-  }
+  }, [searchParams, setSearchParams])
 
-  const handleGenreChange = (genre: string | undefined) => {
+  const handleGenreChange = useCallback((genre: string | undefined) => {
     setCurrentGenre(genre)
     setCurrentPage(1)
     updateParams({ genre, page: undefined })
-  }
+  }, [updateParams])
 
-  const handleSortChange = (sort: string) => {
+  const handleSortChange = useCallback((sort: string) => {
     setCurrentSort(sort)
     setCurrentPage(1)
     updateParams({ sort, page: undefined })
-  }
+  }, [updateParams])
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page)
     updateParams({ page: page.toString() })
-    window.scrollTo(0, 0)
-  }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [updateParams])
+
+  // Memoize genre buttons to prevent re-renders
+  const genreButtons = useMemo(() => (
+    <>
+      <button
+        onClick={() => handleGenreChange(undefined)}
+        className="px-4 py-2 text-sm rounded-lg transition-all shrink-0"
+        style={{
+          background: !currentGenre ? 'hsl(var(--h3))' : 'hsl(var(--b4) / 0.3)',
+          color: !currentGenre ? 'white' : 'hsl(var(--c2))',
+          boxShadow: !currentGenre ? '0 2px 8px hsl(var(--h3) / 0.3)' : 'inset 0 0 0 1px hsl(var(--b4) / 0.3)',
+          fontWeight: !currentGenre ? 'var(--font-weight-medium)' : 'var(--font-weight-default)',
+        }}
+      >
+        All
+      </button>
+      {genres.map((g) => (
+        <button
+          key={g.genre}
+          onClick={() => handleGenreChange(g.genre)}
+          className="px-4 py-2 text-sm rounded-lg transition-all shrink-0"
+          style={{
+            background: currentGenre === g.genre ? 'hsl(var(--h3))' : 'hsl(var(--b4) / 0.3)',
+            color: currentGenre === g.genre ? 'white' : 'hsl(var(--c2))',
+            boxShadow: currentGenre === g.genre ? '0 2px 8px hsl(var(--h3) / 0.3)' : 'inset 0 0 0 1px hsl(var(--b4) / 0.3)',
+            fontWeight: currentGenre === g.genre ? 'var(--font-weight-medium)' : 'var(--font-weight-default)',
+          }}
+        >
+          #{g.genre} <span style={{ opacity: 0.6 }}>({g.count})</span>
+        </button>
+      ))}
+    </>
+  ), [genres, currentGenre, handleGenreChange])
 
   return (
     <div className="px-6 lg:px-10 py-6">
-      <h1 className="text-2xl font-bold text-text-primary mb-8">Browse Sets</h1>
+      {/* Header */}
+      <div className="mb-8">
+        <h1
+          className="text-2xl font-[var(--font-weight-bold)] mb-1"
+          style={{ color: 'hsl(var(--c1))' }}
+        >
+          Browse Sets
+        </h1>
+        <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+          Explore {sets.length > 0 && `${totalPages * 24}+`} DJ sets across all genres
+        </p>
+      </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-10">
+      <div className="flex flex-col gap-4 mb-8">
         {/* Genre filter */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            variant={!currentGenre ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => handleGenreChange(undefined)}
+        <div>
+          <h3
+            className="text-xs font-mono tracking-wider mb-3 uppercase"
+            style={{ color: 'hsl(var(--c3))' }}
           >
-            All
-          </Button>
-          {genres.map((g) => (
-            <Button
-              key={g.genre}
-              variant={currentGenre === g.genre ? 'primary' : 'secondary'}
-              size="sm"
-              onClick={() => handleGenreChange(g.genre)}
-            >
-              {g.genre} ({g.count})
-            </Button>
-          ))}
+            Filter by Genre
+          </h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            {genreButtons}
+          </div>
         </div>
 
         {/* Sort */}
-        <div className="flex items-center gap-2 sm:ml-auto">
-          <span className="text-xs text-text-muted">Sort:</span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-mono tracking-wider uppercase" style={{ color: 'hsl(var(--c3))' }}>
+            Sort:
+          </span>
           <select
             value={currentSort}
             onChange={(e) => handleSortChange(e.target.value)}
-            className="bg-surface-overlay border border-border rounded px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:border-accent"
+            className="px-3 py-2 rounded-lg text-sm focus:outline-none"
+            style={{
+              background: 'hsl(var(--b4) / 0.4)',
+              color: 'hsl(var(--c1))',
+              boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.3)',
+            }}
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -98,20 +141,28 @@ export function BrowsePage() {
         </div>
       </div>
 
+      {/* Divider */}
+      <div
+        className="h-px mb-8"
+        style={{
+          background: 'linear-gradient(to right, hsl(var(--b4) / 0) 0%, hsl(var(--b4) / 0.5) 50%, hsl(var(--b4) / 0) 100%)',
+        }}
+      />
+
       {/* Grid */}
       <SetGrid sets={sets} isLoading={isLoading} />
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-10">
+        <div className="flex items-center justify-center gap-3 mt-12">
           <Button
             size="sm"
             disabled={currentPage <= 1}
             onClick={() => handlePageChange(currentPage - 1)}
           >
-            Previous
+            ← Previous
           </Button>
-          <span className="text-sm text-text-secondary px-4">
+          <span className="text-sm font-mono tabular-nums px-4" style={{ color: 'hsl(var(--c2))' }}>
             Page {currentPage} of {totalPages}
           </span>
           <Button
@@ -119,7 +170,7 @@ export function BrowsePage() {
             disabled={currentPage >= totalPages}
             onClick={() => handlePageChange(currentPage + 1)}
           >
-            Next
+            Next →
           </Button>
         </div>
       )}

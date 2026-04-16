@@ -1,4 +1,5 @@
 import { getAvatarSmall } from '../../lib/avatar'
+import { getPlaceholder } from '../../lib/placeholders'
 
 interface UserAvatarProps {
   avatarUrl?: string | null
@@ -17,6 +18,7 @@ export function UserAvatar({ avatarUrl, name, size = 32, className = '' }: UserA
         alt={name || 'User avatar'}
         className={`rounded-full object-cover ${className}`}
         style={{ width: size, height: size }}
+        onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder('circle') }}
       />
     )
   }

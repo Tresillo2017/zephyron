@@ -4,10 +4,7 @@ import { useSession } from '../lib/auth-client'
 import {
   fetchSets,
   fetchSet,
-  fetchMLStats,
-  fetchDetectionJobs,
   triggerDetection,
-  evolvePrompt,
   redetectLowConfidence,
   deleteSetAdmin,
   updateSetAdmin,
@@ -16,6 +13,14 @@ import {
   fetchEvents,
   import1001Tracklists,
   type Track1001Preview,
+  fetchAdminSourceRequests,
+  approveAdminSourceRequest,
+  rejectAdminSourceRequest,
+  fetchAdminSetRequests,
+  approveAdminSetRequest,
+  rejectAdminSetRequest,
+  type SourceRequest,
+  type SetRequest,
 } from '../lib/api'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
@@ -23,8 +28,9 @@ import { Skeleton } from '../components/ui/Skeleton'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { AutocompleteInput, type AutocompleteOption } from '../components/ui/AutocompleteInput'
+import { PageSidebar } from '../components/layout/PageSidebar'
 import { parse1001TracklistFromHtml } from '../lib/parse-1001tracklists'
-import { formatRelativeTime, formatDuration } from '../lib/formatTime'
+import { formatDuration } from '../lib/formatTime'
 import { InviteCodesTab } from '../components/admin/InviteCodesTab'
 import { SetsUploadTab } from '../components/admin/SetsUploadTab'
 import { ModerationTab } from '../components/admin/ModerationTab'
@@ -35,32 +41,8 @@ import { SongsTab } from '../components/admin/SongsTab'
 import { GENRES } from '../lib/constants'
 import type { DjSet } from '../lib/types'
 
-type Tab = 'sets' | 'songs' | 'artists' | 'events' | 'users' | 'invites' | 'ml' | 'moderation'
+type Tab = 'sets' | 'songs' | 'artists' | 'events' | 'users' | 'invites' | 'moderation'
 
-interface MLStats {
-  totalDetections: number
-  confirmedCorrect: number
-  corrected: number
-  falsePositives: number
-  missedTracks: number
-  accuracyRate: number
-  promptVersion: number
-  feedbackPending: number
-}
-
-interface DetectionJob {
-  id: string
-  set_id: string
-  status: string
-  total_segments: number
-  completed_segments: number
-  detections_found: number
-  error_message: string | null
-  set_title: string
-  set_artist: string
-  created_at: string
-  completed_at: string | null
-}
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'sets', label: 'Sets', icon: 'M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z' },
@@ -70,7 +52,6 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'users', label: 'Users', icon: 'M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z' },
   { id: 'invites', label: 'Invites', icon: 'M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z' },
   { id: 'moderation', label: 'Moderation', icon: 'M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z' },
-  { id: 'ml', label: 'ML Pipeline', icon: 'M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z' },
 ]
 
 export function AdminPage() {
@@ -81,7 +62,8 @@ export function AdminPage() {
   const [activeTab, setActiveTab] = useState<Tab>(tabParam && TABS.some((t) => t.id === tabParam) ? tabParam : 'sets')
 
   // Sync tab changes to URL
-  const handleTabChange = (tab: Tab) => {
+  const handleTabChange = (tabId: string) => {
+    const tab = tabId as Tab
     setActiveTab(tab)
     setSearchParams({ tab }, { replace: true })
   }
@@ -97,45 +79,17 @@ export function AdminPage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-var(--nav-height)-var(--player-height,72px))]">
+    <div className="flex min-h-screen">
       {/* Sidebar */}
-      <nav
-        className="w-[200px] shrink-0 py-6 pl-6 lg:pl-10 pr-4 flex flex-col gap-1 sticky top-0 self-start"
-      >
-        <h1
-          className="text-sm font-[var(--font-weight-bold)] mb-4 px-3"
-          style={{ color: 'hsl(var(--c2))' }}
-        >
-          Admin
-        </h1>
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => handleTabChange(tab.id)}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm whitespace-nowrap cursor-pointer transition-colors text-left w-full"
-            style={{
-              background: activeTab === tab.id ? 'hsl(var(--h3) / 0.1)' : undefined,
-              color: activeTab === tab.id ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
-              transitionDuration: 'var(--trans)',
-              transitionTimingFunction: 'var(--ease-out-custom)',
-            }}
-            onMouseEnter={(e) => {
-              if (activeTab !== tab.id) e.currentTarget.style.color = 'hsl(var(--c2))'
-            }}
-            onMouseLeave={(e) => {
-              if (activeTab !== tab.id) e.currentTarget.style.color = 'hsl(var(--c3))'
-            }}
-          >
-            <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24">
-              <path d={tab.icon} />
-            </svg>
-            <span className={activeTab === tab.id ? 'font-[var(--font-weight-medium)]' : ''}>{tab.label}</span>
-          </button>
-        ))}
-      </nav>
+      <PageSidebar
+        title="Admin"
+        tabs={TABS}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+      />
 
       {/* Content */}
-      <main className="flex-1 min-w-0 py-6 pr-6 lg:pr-10 pl-4">
+      <main className="flex-1 min-w-0 py-6 pr-6 lg:pr-10 pl-6">
         {activeTab === 'sets' && <SetsListTab editId={editId} />}
         {activeTab === 'songs' && <SongsTab />}
         {activeTab === 'artists' && <ArtistsTab editId={editId} />}
@@ -143,7 +97,6 @@ export function AdminPage() {
         {activeTab === 'users' && <UsersTab />}
         {activeTab === 'invites' && <InviteCodesTab />}
         {activeTab === 'moderation' && <ModerationTab />}
-        {activeTab === 'ml' && <MLPipelineTab />}
       </main>
     </div>
   )
@@ -183,6 +136,8 @@ const PAGE_SIZE = 50
 
 function SetsListTab({ editId }: { editId?: string }) {
   const [, setSearchParams] = useSearchParams()
+  const [setsView, setSetsView] = useState<'all' | 'requests'>('all')
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   // Data
   const [sets, setSets] = useState<DjSet[]>([])
   const [total, setTotal] = useState(0)
@@ -207,6 +162,11 @@ function SetsListTab({ editId }: { editId?: string }) {
   const [batchAction, setBatchAction] = useState<'delete' | 'detect' | 'redetect' | 'update' | ''>('')
   const [batchGenre, setBatchGenre] = useState('')
   const [batchDetectionStatus, setBatchDetectionStatus] = useState('')
+  const [batchArtist, setBatchArtist] = useState('')
+  const [batchArtistId, setBatchArtistId] = useState<string | null>(null)
+  const [batchEvent, setBatchEvent] = useState('')
+  const [batchEventId, setBatchEventId] = useState<string | null>(null)
+  const [batchVenue, setBatchVenue] = useState('')
   const [isBatching, setIsBatching] = useState(false)
   const [batchMsg, setBatchMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
@@ -319,6 +279,15 @@ function SetsListTab({ editId }: { editId?: string }) {
       if (batchAction === 'update') {
         if (batchGenre) updates.genre = batchGenre
         if (batchDetectionStatus) updates.detection_status = batchDetectionStatus
+        if (batchArtist) {
+          updates.artist = batchArtist
+          if (batchArtistId) updates.artist_id = batchArtistId
+        }
+        if (batchEvent) {
+          updates.event = batchEvent
+          if (batchEventId) updates.event_id = batchEventId
+        }
+        if (batchVenue) updates.venue = batchVenue
         if (Object.keys(updates).length === 0) {
           setBatchMsg({ type: 'error', text: 'Select at least one field to update.' })
           setIsBatching(false)
@@ -342,6 +311,13 @@ function SetsListTab({ editId }: { editId?: string }) {
       setBatchMsg({ type: 'success', text: msg })
       setSelectedIds(new Set())
       setBatchAction('')
+      setBatchGenre('')
+      setBatchDetectionStatus('')
+      setBatchArtist('')
+      setBatchArtistId(null)
+      setBatchEvent('')
+      setBatchEventId(null)
+      setBatchVenue('')
       loadSets()
     } catch (err) {
       setBatchMsg({ type: 'error', text: err instanceof Error ? err.message : 'Batch operation failed' })
@@ -353,27 +329,290 @@ function SetsListTab({ editId }: { editId?: string }) {
   const selectCls = 'px-2.5 py-1.5 rounded-lg text-xs focus:outline-none appearance-none cursor-pointer'
   const selectStyle = { background: 'hsl(var(--b4) / 0.4)', color: 'hsl(var(--c2))' }
 
+  // Helper to check if a set's metadata is complete
+  const isSetMetadataComplete = (set: DjSet) => {
+    // A set is considered "complete" if it has:
+    // - Title and artist (always required)
+    // - Event linked (event_id is present when set is linked to an event)
+    // - Genre specified
+    // - Stream source available
+    // - Detection completed
+    const hasBasics = !!(set.title && set.artist)
+    const hasEvent = !!set.event_id // Only complete if actually linked to an event entity
+    const hasGenre = !!set.genre
+    const hasSource = !!((set as any).stream_type && (set as any).stream_type !== 'none')
+    const hasDetection = set.detection_status === 'complete'
+
+    return hasBasics && hasEvent && hasGenre && hasSource && hasDetection
+  }
+
+  // Requests state
+  const [requestsTab, setRequestsTab] = useState<'source' | 'sets'>('source')
+  const [sourceRequests, setSourceRequests] = useState<SourceRequest[]>([])
+  const [setRequests, setSetRequests] = useState<SetRequest[]>([])
+  const [requestsLoading, setRequestsLoading] = useState(false)
+  const [requestActionMsg, setRequestActionMsg] = useState<string | null>(null)
+
+  const loadRequests = useCallback(async () => {
+    setRequestsLoading(true)
+    try {
+      const [srcRes, setRes] = await Promise.all([
+        fetchAdminSourceRequests('pending'),
+        fetchAdminSetRequests('pending'),
+      ])
+      setSourceRequests(srcRes.data || [])
+      setSetRequests(setRes.data || [])
+    } catch {}
+    setRequestsLoading(false)
+  }, [])
+
+  useEffect(() => {
+    if (setsView === 'requests') {
+      loadRequests()
+    }
+  }, [setsView, loadRequests])
+
+  const handleSourceApprove = async (id: string) => {
+    try {
+      await approveAdminSourceRequest(id)
+      setRequestActionMsg('Source applied to set.')
+      loadRequests()
+    } catch (e: any) {
+      setRequestActionMsg(e?.message || 'Failed')
+    }
+  }
+
+  const handleSourceReject = async (id: string) => {
+    try {
+      await rejectAdminSourceRequest(id)
+      setRequestActionMsg('Request rejected.')
+      loadRequests()
+    } catch (e: any) {
+      setRequestActionMsg(e?.message || 'Failed')
+    }
+  }
+
+  const handleSetApprove = async (id: string) => {
+    try {
+      await approveAdminSetRequest(id)
+      setRequestActionMsg('Set request marked as approved.')
+      loadRequests()
+    } catch (e: any) {
+      setRequestActionMsg(e?.message || 'Failed')
+    }
+  }
+
+  const handleSetReject = async (id: string) => {
+    try {
+      await rejectAdminSetRequest(id)
+      setRequestActionMsg('Set request rejected.')
+      loadRequests()
+    } catch (e: any) {
+      setRequestActionMsg(e?.message || 'Failed')
+    }
+  }
+
   return (
     <>
-      {/* Header row */}
+      {/* Header row with tabs */}
       <div className="flex items-center justify-between mb-4 gap-4">
-        <div className="flex items-center gap-3">
-          <p className="text-sm font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c1))' }}>
-            {total} set{total !== 1 ? 's' : ''}
-          </p>
-          {activeFilterCount > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-md" style={{ background: 'hsl(var(--h3) / 0.12)', color: 'hsl(var(--h3))' }}>
-              {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''}
-            </span>
-          )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setSetsView('all')}
+            className="px-3 py-1.5 rounded-lg text-sm font-[var(--font-weight-medium)] transition-colors"
+            style={{
+              background: setsView === 'all' ? 'hsl(var(--h3) / 0.12)' : 'transparent',
+              color: setsView === 'all' ? 'hsl(var(--h3))' : 'hsl(var(--c2))',
+            }}
+          >
+            All Sets
+            <span className="ml-1.5 text-xs opacity-70">({total})</span>
+          </button>
+          <button
+            onClick={() => setSetsView('requests')}
+            className="px-3 py-1.5 rounded-lg text-sm font-[var(--font-weight-medium)] transition-colors"
+            style={{
+              background: setsView === 'requests' ? 'hsl(var(--h3) / 0.12)' : 'transparent',
+              color: setsView === 'requests' ? 'hsl(var(--h3))' : 'hsl(var(--c2))',
+            }}
+          >
+            Requested Sets
+          </button>
         </div>
-        <Button variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
-          Add Set
-        </Button>
+        {setsView === 'all' && (
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid hsl(var(--b4) / 0.4)' }}>
+              <button
+                onClick={() => setViewMode('list')}
+                className="px-2 py-1 transition-colors"
+                style={{
+                  background: viewMode === 'list' ? 'hsl(var(--b4) / 0.5)' : 'transparent',
+                  color: viewMode === 'list' ? 'hsl(var(--c1))' : 'hsl(var(--c3))',
+                }}
+                title="List view"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className="px-2 py-1 transition-colors"
+                style={{
+                  background: viewMode === 'grid' ? 'hsl(var(--b4) / 0.5)' : 'transparent',
+                  color: viewMode === 'grid' ? 'hsl(var(--c1))' : 'hsl(var(--c3))',
+                }}
+                title="Grid view"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                </svg>
+              </button>
+            </div>
+            <Button variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
+              Add Set
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* Search + Filters bar */}
-      <div className="rounded-xl p-3 mb-4" style={{ background: 'hsl(var(--b5) / 0.4)', boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.2)' }}>
+      {/* Requests view */}
+      {setsView === 'requests' && (
+        <div className="rounded-xl overflow-hidden" style={{ boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)' }}>
+          <div className="flex items-center gap-0" style={{ background: 'hsl(var(--b5) / 0.6)', borderBottom: '1px solid hsl(var(--b4) / 0.2)' }}>
+            <button
+              onClick={() => setRequestsTab('source')}
+              className="px-4 py-2.5 text-xs font-medium transition-colors flex items-center gap-1.5"
+              style={{
+                color: requestsTab === 'source' ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
+                borderBottom: requestsTab === 'source' ? '2px solid hsl(var(--h3))' : '2px solid transparent',
+              }}
+            >
+              Source Requests
+              {sourceRequests.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono" style={{ background: 'hsl(var(--h3) / 0.2)', color: 'hsl(var(--h3))' }}>
+                  {sourceRequests.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setRequestsTab('sets')}
+              className="px-4 py-2.5 text-xs font-medium transition-colors flex items-center gap-1.5"
+              style={{
+                color: requestsTab === 'sets' ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
+                borderBottom: requestsTab === 'sets' ? '2px solid hsl(var(--h3))' : '2px solid transparent',
+              }}
+            >
+              Set Requests
+              {setRequests.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono" style={{ background: 'hsl(var(--h3) / 0.2)', color: 'hsl(var(--h3))' }}>
+                  {setRequests.length}
+                </span>
+              )}
+            </button>
+            <button onClick={loadRequests} className="ml-auto mr-3 p-1.5 rounded-md transition-colors" style={{ color: 'hsl(var(--c3))' }} title="Refresh">
+              <svg className={`w-3.5 h-3.5 ${requestsLoading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
+
+          {requestActionMsg && (
+            <div className="px-4 py-2 text-xs" style={{ background: 'hsl(var(--h3) / 0.1)', color: 'hsl(var(--h3))' }}>
+              {requestActionMsg}
+              <button onClick={() => setRequestActionMsg(null)} className="ml-2 opacity-60 hover:opacity-100">×</button>
+            </div>
+          )}
+
+          <div className="max-h-[600px] overflow-y-auto">
+            {requestsTab === 'source' && (
+              <>
+                {sourceRequests.length === 0 ? (
+                  <p className="text-center py-12 text-sm" style={{ color: 'hsl(var(--c3))' }}>No pending source requests</p>
+                ) : (
+                  sourceRequests.map((req) => (
+                    <div key={req.id} className="flex items-start gap-3 px-4 py-3" style={{ borderBottom: '1px solid hsl(var(--b4) / 0.1)' }}>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate" style={{ color: 'hsl(var(--c1))' }}>
+                          {req.set_title} — {req.set_artist}
+                        </p>
+                        <p className="text-xs mt-0.5 truncate" style={{ color: 'hsl(var(--c3))' }}>
+                          <span className="uppercase font-mono mr-1">{req.source_type}</span>
+                          <a href={req.source_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+                            {req.source_url.length > 60 ? req.source_url.slice(0, 60) + '…' : req.source_url}
+                          </a>
+                        </p>
+                        {req.user_name && (
+                          <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--c3))' }}>by {req.user_name}</p>
+                        )}
+                        {req.notes && (
+                          <p className="text-xs italic mt-1" style={{ color: 'hsl(var(--c3))' }}>{req.notes}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-1.5 shrink-0">
+                        <Button size="sm" onClick={() => handleSourceApprove(req.id)}>
+                          Apply
+                        </Button>
+                        <Button variant="danger" size="sm" onClick={() => handleSourceReject(req.id)}>
+                          Reject
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </>
+            )}
+
+            {requestsTab === 'sets' && (
+              <>
+                {setRequests.length === 0 ? (
+                  <p className="text-center py-12 text-sm" style={{ color: 'hsl(var(--c3))' }}>No pending set requests</p>
+                ) : (
+                  setRequests.map((req) => (
+                    <div key={req.id} className="flex items-start gap-3 px-4 py-3" style={{ borderBottom: '1px solid hsl(var(--b4) / 0.1)' }}>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium" style={{ color: 'hsl(var(--c1))' }}>
+                          {req.artist} — {req.title}
+                        </p>
+                        {req.source_url && (
+                          <p className="text-xs mt-0.5 truncate" style={{ color: 'hsl(var(--c3))' }}>
+                            <span className="uppercase font-mono mr-1">{req.source_type}</span>
+                            <a href={req.source_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+                              {req.source_url}
+                            </a>
+                          </p>
+                        )}
+                        <div className="flex gap-2 mt-0.5">
+                          {req.event && <Badge variant="muted">{req.event}</Badge>}
+                          {req.genre && <Badge variant="muted">{req.genre}</Badge>}
+                          {req.user_name && <span className="text-xs" style={{ color: 'hsl(var(--c3))' }}>by {req.user_name}</span>}
+                        </div>
+                        {req.notes && (
+                          <p className="text-xs italic mt-1" style={{ color: 'hsl(var(--c3))' }}>{req.notes}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-1.5 shrink-0">
+                        <Button size="sm" onClick={() => handleSetApprove(req.id)}>
+                          Approve
+                        </Button>
+                        <Button variant="danger" size="sm" onClick={() => handleSetReject(req.id)}>
+                          Reject
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* All Sets view */}
+      {setsView === 'all' && (
+        <>
+          {/* Search + Filters bar */}
+          <div className="rounded-xl p-3 mb-4" style={{ background: 'hsl(var(--b5) / 0.4)', boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.2)' }}>
         {/* Search row */}
         <div className="flex gap-3 mb-3">
           <div className="relative flex-1">
@@ -460,6 +699,51 @@ function SetsListTab({ editId }: { editId?: string }) {
                 <option value="">Detection status...</option>
                 {DETECTION_OPTIONS.filter((o) => o.value).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
+              <div className="relative inline-block">
+                <AutocompleteInput
+                  value={batchArtist}
+                  onChange={setBatchArtist}
+                  onSelect={(opt) => setBatchArtistId(opt.id)}
+                  onClear={() => setBatchArtistId(null)}
+                  selectedId={batchArtistId}
+                  fetchOptions={async (q) => {
+                    const res = await fetchArtists(q)
+                    return (res.data || []).map((a: Record<string, unknown>) => ({
+                      id: a.id as string,
+                      label: a.name as string,
+                      sublabel: a.set_count ? `${a.set_count} sets` : undefined
+                    }))
+                  }}
+                  placeholder="Artist..."
+                  className="!text-xs !py-1.5"
+                />
+              </div>
+              <div className="relative inline-block">
+                <AutocompleteInput
+                  value={batchEvent}
+                  onChange={setBatchEvent}
+                  onSelect={(opt) => setBatchEventId(opt.id)}
+                  onClear={() => setBatchEventId(null)}
+                  selectedId={batchEventId}
+                  fetchOptions={async (q) => {
+                    const res = await fetchEvents(q)
+                    return (res.data || []).map((e: Record<string, unknown>) => ({
+                      id: e.id as string,
+                      label: e.name as string,
+                      sublabel: (e.series as string) || undefined
+                    }))
+                  }}
+                  placeholder="Event/Festival..."
+                  className="!text-xs !py-1.5"
+                />
+              </div>
+              <input
+                value={batchVenue}
+                onChange={(e) => setBatchVenue(e.target.value)}
+                placeholder="Venue (stage/room)..."
+                className="px-2.5 py-1.5 rounded-lg text-xs focus:outline-none"
+                style={selectStyle}
+              />
             </>
           )}
 
@@ -513,28 +797,30 @@ function SetsListTab({ editId }: { editId?: string }) {
         </div>
       ) : (
         <>
-          {/* Table header */}
-          <div
-            className="flex items-center gap-3 px-4 py-2 mb-1 text-[10px] uppercase tracking-wider"
-            style={{ color: 'hsl(var(--c3))' }}
-          >
-            <input
-              type="checkbox"
-              checked={allSelected}
-              onChange={toggleAll}
-              className="w-3.5 h-3.5 rounded shrink-0 cursor-pointer accent-[hsl(var(--h3))]"
-            />
-            <span className="flex-1 min-w-0">Title / Artist</span>
-            <span className="w-20 text-center hidden sm:block">Genre</span>
-            <span className="w-20 text-center hidden md:block">Source</span>
-            <span className="w-16 text-center hidden md:block">Duration</span>
-            <span className="w-16 text-center">Status</span>
-            <span className="w-14 text-right hidden sm:block">Plays</span>
-            <span className="w-12" />
-          </div>
+          {viewMode === 'list' ? (
+            <>
+              {/* Table header */}
+              <div
+                className="flex items-center gap-3 px-4 py-2 mb-1 text-[10px] uppercase tracking-wider"
+                style={{ color: 'hsl(var(--c3))' }}
+              >
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleAll}
+                  className="w-3.5 h-3.5 rounded shrink-0 cursor-pointer accent-[hsl(var(--h3))]"
+                />
+                <span className="flex-1 min-w-0">Title / Artist</span>
+                <span className="w-20 text-center hidden sm:block">Genre</span>
+                <span className="w-20 text-center hidden md:block">Source</span>
+                <span className="w-16 text-center hidden md:block">Duration</span>
+                <span className="w-24 text-center">Status</span>
+                <span className="w-14 text-right hidden sm:block">Plays</span>
+                <span className="w-12" />
+              </div>
 
-          {/* Set rows */}
-          <div className="space-y-1.5">
+              {/* Set rows */}
+              <div className="space-y-1.5">
             {sets.map((set) => {
               const isSelected = selectedIds.has(set.id)
               const sourceLabel = set.stream_type === 'invidious' ? 'YouTube'
@@ -589,17 +875,27 @@ function SetsListTab({ editId }: { editId?: string }) {
                     <span className="w-16 text-center text-xs font-mono hidden md:block" style={{ color: 'hsl(var(--c3))' }}>
                       {formatDuration(set.duration_seconds)}
                     </span>
-                    <span className="w-16 text-center">
-                      <Badge
-                        variant={
-                          set.detection_status === 'complete' ? 'accent'
-                            : set.detection_status === 'processing' ? 'default'
-                            : set.detection_status === 'failed' ? 'default'
-                            : 'muted'
-                        }
+                    <span className="w-24 text-center">
+                      <div
+                        className="inline-block relative group cursor-help"
+                        title={`Metadata: ${isSetMetadataComplete(set) ? 'Complete' : 'Incomplete'} | Detection: ${set.detection_status}`}
                       >
-                        {set.detection_status}
-                      </Badge>
+                        <Badge variant={isSetMetadataComplete(set) ? 'accent' : 'muted'}>
+                          {isSetMetadataComplete(set) ? 'Complete' : 'Incomplete'}
+                        </Badge>
+                        {/* Hover tooltip */}
+                        <div
+                          className="absolute left-1/2 bottom-full mb-1 -translate-x-1/2 px-2 py-1.5 rounded-md text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50"
+                          style={{ background: 'hsl(var(--b3))', color: 'hsl(var(--c1))', boxShadow: 'var(--menu-shadow)' }}
+                        >
+                          <div className="text-left">
+                            <div>Event: {set.event_id ? '✓' : '✗'}</div>
+                            <div>Genre: {set.genre ? '✓' : '✗'}</div>
+                            <div>Source: {(set as any).stream_type && (set as any).stream_type !== 'none' ? '✓' : '✗'}</div>
+                            <div>Detection: {set.detection_status}</div>
+                          </div>
+                        </div>
+                      </div>
                     </span>
                     <span className="w-14 text-right text-xs font-mono hidden sm:block" style={{ color: 'hsl(var(--c3))' }}>
                       {set.play_count > 0 ? set.play_count : '—'}
@@ -611,7 +907,85 @@ function SetsListTab({ editId }: { editId?: string }) {
                 </div>
               )
             })}
-          </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Grid view */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sets.map((set) => {
+                  const isSelected = selectedIds.has(set.id)
+                  const sourceLabel = set.stream_type === 'invidious' ? 'YouTube'
+                    : set.stream_type === 'soundcloud' ? 'SoundCloud'
+                    : set.stream_type === 'hearthis' ? 'HearThis'
+                    : set.stream_type === 'r2' ? 'R2'
+                    : 'None'
+                  return (
+                    <div
+                      key={set.id}
+                      className="card !p-4 relative transition-all duration-150"
+                      style={{
+                        boxShadow: isSelected
+                          ? 'inset 0 0 0 2px hsl(var(--h3) / 0.3), 0 0 0 1px hsl(var(--h3) / 0.1)'
+                          : undefined,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleOne(set.id)}
+                        className="absolute top-3 right-3 w-4 h-4 rounded cursor-pointer accent-[hsl(var(--h3))]"
+                      />
+                      <Link to={`/app/sets/${set.id}`} className="no-underline group block mb-3">
+                        <p className="text-base font-[var(--font-weight-medium)] group-hover:underline mb-1 pr-6" style={{ color: 'hsl(var(--c1))' }}>
+                          {set.title}
+                        </p>
+                        <p className="text-sm mb-2" style={{ color: 'hsl(var(--c2))' }}>{set.artist}</p>
+                        {set.event && (
+                          <p className="text-xs truncate" style={{ color: 'hsl(var(--c3))' }}>
+                            {set.event}
+                          </p>
+                        )}
+                      </Link>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {set.genre && <Badge variant="muted">{set.genre}</Badge>}
+                        <div
+                          className="inline-block relative group cursor-help"
+                          title={`Metadata: ${isSetMetadataComplete(set) ? 'Complete' : 'Incomplete'} | Detection: ${set.detection_status}`}
+                        >
+                          <Badge variant={isSetMetadataComplete(set) ? 'accent' : 'muted'}>
+                            {isSetMetadataComplete(set) ? 'Complete' : 'Incomplete'}
+                          </Badge>
+                          {/* Hover tooltip */}
+                          <div
+                            className="absolute left-1/2 bottom-full mb-1 -translate-x-1/2 px-2 py-1.5 rounded-md text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50"
+                            style={{ background: 'hsl(var(--b3))', color: 'hsl(var(--c1))', boxShadow: 'var(--menu-shadow)' }}
+                          >
+                            <div className="text-left">
+                              <div>Event: {set.event_id ? '✓' : '✗'}</div>
+                              <div>Genre: {set.genre ? '✓' : '✗'}</div>
+                              <div>Source: {(set as any).stream_type && (set as any).stream_type !== 'none' ? '✓' : '✗'}</div>
+                              <div>Detection: {set.detection_status}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-xs" style={{ color: 'hsl(var(--c3))' }}>
+                        <span className="font-mono">{formatDuration(set.duration_seconds)}</span>
+                        <span>{sourceLabel}</span>
+                        <span>{set.play_count > 0 ? `${set.play_count} plays` : '—'}</span>
+                      </div>
+                      <div className="mt-3 pt-3" style={{ borderTop: '1px solid hsl(var(--b4) / 0.2)' }}>
+                        <Button variant="ghost" size="sm" onClick={() => setEditingSet(set)} className="w-full justify-center">
+                          Edit
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
 
           {/* Pagination */}
           {totalPages > 1 && (
@@ -684,6 +1058,8 @@ function SetsListTab({ editId }: { editId?: string }) {
               </div>
             </div>
           )}
+        </>
+      )}
         </>
       )}
 
@@ -1155,84 +1531,3 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
   )
 }
 
-// ═══════════════════════════════════════════
-// ML PIPELINE TAB
-// ═══════════════════════════════════════════
-
-function MLPipelineTab() {
-  const [stats, setStats] = useState<MLStats | null>(null)
-  const [jobs, setJobs] = useState<DetectionJob[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [evolving, setEvolving] = useState(false)
-
-  const loadData = useCallback(async () => {
-    setIsLoading(true)
-    try {
-      const [statsRes, jobsRes] = await Promise.all([fetchMLStats(), fetchDetectionJobs()])
-      setStats(statsRes.data)
-      setJobs(jobsRes.data)
-    } catch {
-      // silent
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  useEffect(() => { loadData() }, [loadData])
-
-  const handleEvolve = async () => {
-    setEvolving(true)
-    try {
-      await evolvePrompt()
-      await loadData()
-    } catch {
-      // silent
-    } finally {
-      setEvolving(false)
-    }
-  }
-
-  if (isLoading) return <Skeleton className="h-64 w-full rounded-lg" />
-
-  return (
-    <div>
-      {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-          <StatCard label="Total Detections" value={stats.totalDetections} />
-          <StatCard label="Accuracy" value={`${Math.round(stats.accuracyRate * 100)}%`} accent />
-          <StatCard label="Prompt Version" value={`v${stats.promptVersion}`} />
-          <StatCard label="Pending Feedback" value={stats.feedbackPending} />
-        </div>
-      )}
-      <div className="flex gap-3 mb-6">
-        <Button variant="primary" onClick={handleEvolve} disabled={evolving}>
-          {evolving ? 'Evolving...' : 'Evolve Prompt'}
-        </Button>
-        <Button variant="secondary" onClick={loadData}>Refresh</Button>
-      </div>
-      {jobs.length > 0 && (
-        <div className="space-y-2">
-          {jobs.map((job) => (
-            <div key={job.id} className="card !p-4 flex items-center gap-4">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-[var(--font-weight-medium)] truncate" style={{ color: 'hsl(var(--c1))' }}>{job.set_title} - {job.set_artist}</p>
-                <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>{job.completed_segments}/{job.total_segments} segments{job.detections_found > 0 && ` · ${job.detections_found} tracks`}</p>
-              </div>
-              <Badge variant={job.status === 'complete' ? 'accent' : job.status === 'failed' ? 'default' : 'muted'}>{job.status}</Badge>
-              <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>{formatRelativeTime(job.created_at)}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function StatCard({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
-  return (
-    <div className="card p-4">
-      <p className="text-xs mb-1" style={{ color: 'hsl(var(--c3))' }}>{label}</p>
-      <p className="text-2xl font-[var(--font-weight-bold)]" style={{ color: accent ? 'hsl(var(--h3))' : 'hsl(var(--c1))' }}>{value}</p>
-    </div>
-  )
-}

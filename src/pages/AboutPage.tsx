@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { Logo } from '../components/ui/Logo'
 
 export function AboutPage() {
   return (
@@ -6,7 +7,7 @@ export function AboutPage() {
       {/* Nav */}
       <header className="flex items-center justify-between px-5 sm:px-8 py-5 relative z-10">
         <Link to="/" className="flex items-center gap-2.5 no-underline">
-          <img src="/logo-128.png" alt="Zephyron logo" className="w-8 h-8 object-contain" />
+          <Logo size={32} />
           <span className="text-lg font-semibold text-text-primary tracking-tight">Zephyron</span>
         </Link>
         <div className="flex items-center gap-4">

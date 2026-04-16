@@ -35,6 +35,7 @@ interface Artist {
 export function ArtistsTab({ editId }: { editId?: string } = {}) {
   const [artists, setArtists] = useState<Artist[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const [syncing, setSyncing] = useState<string | null>(null)
   const [editingArtist, setEditingArtist] = useState<Artist | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
@@ -104,19 +105,48 @@ export function ArtistsTab({ editId }: { editId?: string } = {}) {
           onFocus={(e) => { e.currentTarget.style.boxShadow = 'inset 0 0 0 1px hsl(var(--h3) / 0.5)' }}
           onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
         />
+        {/* View toggle */}
+        <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid hsl(var(--b4) / 0.4)' }}>
+          <button
+            onClick={() => setViewMode('list')}
+            className="px-2.5 py-1.5 transition-all"
+            style={{
+              background: viewMode === 'list' ? 'hsl(var(--h3) / 0.15)' : 'transparent',
+              color: viewMode === 'list' ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
+            }}
+            title="List view"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setViewMode('grid')}
+            className="px-2.5 py-1.5 transition-all"
+            style={{
+              background: viewMode === 'grid' ? 'hsl(var(--h3) / 0.15)' : 'transparent',
+              color: viewMode === 'grid' ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
+            }}
+            title="Grid view"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+            </svg>
+          </button>
+        </div>
         <Button variant="primary" size="sm" onClick={() => setShowImport(true)}>
           Import from 1001TL
         </Button>
       </div>
 
-      {/* List */}
+      {/* List/Grid */}
       {filtered.length === 0 ? (
         <div className="card text-center py-12">
           <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
             {search ? 'No artists match your search.' : 'No artists yet. Artists are created when you run detection on sets, or use "Import from 1001TL" above.'}
           </p>
         </div>
-      ) : (
+      ) : viewMode === 'list' ? (
         <div className="space-y-2">
           {filtered.map((artist) => {
             const tags = (() => { try { return JSON.parse(artist.tags || '[]') } catch { return [] } })()
@@ -172,6 +202,90 @@ export function ArtistsTab({ editId }: { editId?: string } = {}) {
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => setEditingArtist(artist)}>Edit</Button>
                   <Button variant="danger" size="sm" onClick={() => setConfirmDelete(artist.id)}>Delete</Button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filtered.map((artist) => {
+            const tags = (() => { try { return JSON.parse(artist.tags || '[]') } catch { return [] } })()
+            return (
+              <div key={artist.id} className="card !p-4">
+                {/* Artist image */}
+                <div
+                  className="aspect-square rounded-lg overflow-hidden mb-3 flex items-center justify-center"
+                  style={{ background: 'hsl(var(--b4) / 0.6)' }}
+                >
+                  {artist.id ? (
+                    <img src={getArtistImageUrl(artist.id)} alt={artist.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-4xl font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c3))' }}>
+                      {artist.name.charAt(0)}
+                    </span>
+                  )}
+                </div>
+
+                {/* Name */}
+                <h3 className="text-sm font-[var(--font-weight-medium)] truncate mb-2" style={{ color: 'hsl(var(--c1))' }}>
+                  {artist.name}
+                </h3>
+
+                {/* Bio summary */}
+                {artist.bio_summary && (
+                  <p className="text-xs mb-2 line-clamp-2" style={{ color: 'hsl(var(--c3))' }}>
+                    {artist.bio_summary}
+                  </p>
+                )}
+
+                {/* Tags */}
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {tags.slice(0, 3).map((tag: string) => (
+                      <Badge key={tag} variant="muted">{tag}</Badge>
+                    ))}
+                  </div>
+                )}
+
+                {/* Stats */}
+                <div className="flex items-center gap-2 mb-3 text-xs" style={{ color: 'hsl(var(--c3))' }}>
+                  {artist.listeners > 0 && (
+                    <span>{formatPlayCount(artist.listeners)} listeners</span>
+                  )}
+                  {artist.playcount > 0 && (
+                    <span>{formatPlayCount(artist.playcount)} plays</span>
+                  )}
+                  <span className="font-mono">{artist.set_count} set{artist.set_count !== 1 ? 's' : ''}</span>
+                </div>
+
+                {/* Source & sync info */}
+                <div className="flex items-center gap-2 mb-3 text-xs">
+                  {artist.source_1001_id && (
+                    <span className="font-mono" style={{ color: 'hsl(var(--h3) / 0.7)' }}>1001TL:{artist.source_1001_id}</span>
+                  )}
+                  {artist.last_synced_at && (
+                    <span className="font-mono" style={{ color: 'hsl(var(--c3))' }}>synced {formatRelativeTime(artist.last_synced_at)}</span>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-1.5">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSync(artist.id)}
+                    disabled={syncing === artist.id}
+                    className="flex-1"
+                  >
+                    {syncing === artist.id ? '...' : 'Sync'}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setEditingArtist(artist)} className="flex-1">
+                    Edit
+                  </Button>
+                  <Button variant="danger" size="sm" onClick={() => setConfirmDelete(artist.id)} className="flex-1">
+                    Delete
+                  </Button>
                 </div>
               </div>
             )

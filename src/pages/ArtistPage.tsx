@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router'
 import { fetchArtist, getArtistImageUrl } from '../lib/api'
 import { useSession } from '../lib/auth-client'
+import { getPlaceholder } from '../lib/placeholders'
 import { ArtistBannerSkeleton } from '../components/ui/Skeleton'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -70,12 +71,18 @@ export function ArtistPage() {
       {/* ═══ BANNER — 340px cinematic, left gradient for text legibility ═══ */}
       <div className="relative h-[340px] overflow-hidden">
         {artist.background_url ? (
-          <img src={artist.background_url} alt="" className="w-full h-full object-cover object-top" />
+          <img
+            src={artist.background_url}
+            alt=""
+            className="w-full h-full object-cover object-top"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder('square') }}
+          />
         ) : (
           <img
-            src={artist.id ? getArtistImageUrl(artist.id) : '/placeholder1.png'}
+            src={artist.id ? getArtistImageUrl(artist.id) : getPlaceholder('square')}
             alt=""
             className="w-full h-full object-cover scale-150 blur-[30px] opacity-40"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder('square') }}
           />
         )}
         {/* Bottom gradient — fades into page background */}
@@ -100,10 +107,10 @@ export function ArtistPage() {
               }}
             >
               <img
-                src={artist.id ? getArtistImageUrl(artist.id) : '/placeholder1.png'}
+                src={artist.id ? getArtistImageUrl(artist.id) : getPlaceholder('square')}
                 alt={artist.name}
                 className="w-full h-full object-cover"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder1.png' }}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder('square') }}
               />
             </div>
 
@@ -250,10 +257,11 @@ export function ArtistPage() {
                             style={{ width: 72 }}
                           >
                             <img
-                              src="/placeholder1.png"
+                              src={getPlaceholder('circle')}
                               alt={sa.name}
                               className="w-14 h-14 rounded-full object-cover transition-transform group-hover:scale-105"
                               style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)' }}
+                              onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder('circle') }}
                             />
                             <span
                               className="text-[10px] text-center leading-tight"

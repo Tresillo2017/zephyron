@@ -3,6 +3,7 @@ import { usePlayerStore } from '../../stores/playerStore'
 import { Badge } from '../ui/Badge'
 import { formatDuration, formatPlayCount } from '../../lib/formatTime'
 import { getCoverUrl } from '../../lib/api'
+import { getPlaceholder } from '../../lib/placeholders'
 import type { DjSet } from '../../lib/types'
 
 interface SetCardProps {
@@ -43,7 +44,7 @@ export function SetCard({ set }: SetCardProps) {
           />
         ) : (
           <img
-            src="/placeholder1.png"
+            src={getPlaceholder('square')}
             alt=""
             className="absolute inset-0 w-full h-full object-cover opacity-60"
           />

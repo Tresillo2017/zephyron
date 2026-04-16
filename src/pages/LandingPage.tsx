@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { Logo } from '../components/ui/Logo'
 
 export function LandingPage() {
   return (
@@ -6,7 +7,7 @@ export function LandingPage() {
       {/* ── Header ── */}
       <header className="flex items-center justify-between px-5 sm:px-8 lg:px-16 py-5 relative z-10">
         <div className="flex items-center gap-2.5">
-          <img src="/logo-128.png" alt="Zephyron logo" className="w-8 h-8 object-contain" />
+          <Logo size={32} />
           <span className="text-lg font-semibold text-text-primary tracking-tight">Zephyron</span>
         </div>
         <nav className="flex items-center gap-5">
