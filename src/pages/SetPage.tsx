@@ -8,7 +8,6 @@ import { usePlayerStore } from "../stores/playerStore";
 import { getPlaceholder } from "../lib/placeholders";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
-import { Logo } from "../components/ui/Logo";
 import { SetBannerSkeleton } from "../components/ui/Skeleton";
 import { Waveform } from "../components/player/Waveform";
 import { DetectionGroup } from "../components/annotations/DetectionRow";

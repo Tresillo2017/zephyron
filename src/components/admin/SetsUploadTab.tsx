@@ -1,18 +1,10 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   adminCreateSet,
   fetchArtists,
   fetchEvents,
   import1001Tracklists,
   type Track1001Preview,
-  fetchAdminSourceRequests,
-  approveAdminSourceRequest,
-  rejectAdminSourceRequest,
-  fetchAdminSetRequests,
-  approveAdminSetRequest,
-  rejectAdminSetRequest,
-  type SourceRequest,
-  type SetRequest,
 } from "../../lib/api";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
@@ -31,72 +23,6 @@ import { GENRES } from "../../lib/constants";
 // ─── Inline Requests Panel ────────────────────────────────────────────────────
 
 function RequestsPanel() {
-  const [activeTab, setActiveTab] = useState<"source" | "sets">("source");
-  const [sourceRequests, setSourceRequests] = useState<SourceRequest[]>([]);
-  const [setRequests, setSetRequests] = useState<SetRequest[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [actionMsg, setActionMsg] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const [srcRes, setRes] = await Promise.all([
-        fetchAdminSourceRequests("pending"),
-        fetchAdminSetRequests("pending"),
-      ]);
-      setSourceRequests(srcRes.data || []);
-      setSetRequests(setRes.data || []);
-    } catch {}
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const handleSourceApprove = async (id: string) => {
-    try {
-      await approveAdminSourceRequest(id);
-      setActionMsg("Source applied to set.");
-      load();
-    } catch (e: any) {
-      setActionMsg(e?.message || "Failed");
-    }
-  };
-
-  const handleSourceReject = async (id: string) => {
-    try {
-      await rejectAdminSourceRequest(id);
-      setActionMsg("Request rejected.");
-      load();
-    } catch (e: any) {
-      setActionMsg(e?.message || "Failed");
-    }
-  };
-
-  const handleSetApprove = async (id: string) => {
-    try {
-      await approveAdminSetRequest(id);
-      setActionMsg("Set request marked as approved.");
-      load();
-    } catch (e: any) {
-      setActionMsg(e?.message || "Failed");
-    }
-  };
-
-  const handleSetReject = async (id: string) => {
-    try {
-      await rejectAdminSetRequest(id);
-      setActionMsg("Set request rejected.");
-      load();
-    } catch (e: any) {
-      setActionMsg(e?.message || "Failed");
-    }
-  };
-
-  const sourceCount = sourceRequests.length;
-  const setCount = setRequests.length;
-
   return (
     <div
       className="mt-5 rounded-xl overflow-hidden"
