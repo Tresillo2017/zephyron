@@ -5,6 +5,7 @@ import { useSet } from "../hooks/useSets";
 import { useListeners } from "../hooks/useListeners";
 import { useWaveform } from "../hooks/useWaveform";
 import { usePlayerStore } from "../stores/playerStore";
+import { getPlaceholder } from "../lib/placeholders";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { SetBannerSkeleton } from "../components/ui/Skeleton";
@@ -311,7 +312,11 @@ export function SetPage() {
             className="w-full h-full object-cover object-center"
           />
         ) : (
-          <div className="w-full h-full bg-surface-raised" />
+          <img
+            src={getPlaceholder('square')}
+            alt=""
+            className="w-full h-full object-cover object-center opacity-40"
+          />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/30 to-transparent" />
       </div>
@@ -330,11 +335,14 @@ export function SetPage() {
                   src={getCoverUrl(set.id)}
                   alt={set.title}
                   className="w-full h-full object-cover"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder('square') }}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/15 to-surface-overlay">
-                  <img src="/logo-128.png" alt="" className="w-14 h-14 opacity-20 object-contain" />
-                </div>
+                <img
+                  src={getPlaceholder('square')}
+                  alt=""
+                  className="w-full h-full object-cover opacity-60"
+                />
               )}
             </div>
 
@@ -760,14 +768,13 @@ export function SetPage() {
                       alt={(set as any).event_info.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder('square') }}
                     />
                   ) : (
-                    <div
-                      className="w-full h-full"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, hsl(var(--h3) / 0.2), hsl(var(--b4)))",
-                      }}
+                    <img
+                      src={getPlaceholder('square')}
+                      alt=""
+                      className="w-full h-full object-cover opacity-30"
                     />
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
@@ -782,6 +789,7 @@ export function SetPage() {
                           alt=""
                           className="w-full h-full object-cover"
                           loading="lazy"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder('square') }}
                         />
                       </div>
                     )}
@@ -805,8 +813,8 @@ export function SetPage() {
               {/* Metadata section */}
               <div className="p-5" style={{ background: "hsl(var(--b5))" }}>
                 <div className="flex items-center gap-2 flex-wrap mb-3">
-                  {set.genre && <Badge variant="accent">{set.genre}</Badge>}
-                  {(set as any).subgenre && (
+                  {set.genre && set.genre.trim() && <Badge variant="accent">{set.genre}</Badge>}
+                  {(set as any).subgenre && (set as any).subgenre.trim() && (
                     <Badge variant="muted">{(set as any).subgenre}</Badge>
                   )}
                 </div>
@@ -878,6 +886,7 @@ export function SetPage() {
                       src={getArtistImageUrl(artistInfo.id)}
                       alt={artistInfo.name}
                       className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder('square') }}
                     />
                   ) : (
                     <div className="w-10 h-10 rounded-lg bg-surface-overlay flex items-center justify-center flex-shrink-0">

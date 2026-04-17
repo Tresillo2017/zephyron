@@ -32,6 +32,7 @@ function getEventYear(event: Event): string | null {
 export function EventsTab({ editId }: { editId?: string } = {}) {
   const [events, setEvents] = useState<Event[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const [showCreate, setShowCreate] = useState(false)
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
@@ -87,6 +88,35 @@ export function EventsTab({ editId }: { editId?: string } = {}) {
           onFocus={(e) => { e.currentTarget.style.boxShadow = 'inset 0 0 0 1px hsl(var(--h3) / 0.5)' }}
           onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
         />
+        {/* View toggle */}
+        <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid hsl(var(--b4) / 0.4)' }}>
+          <button
+            onClick={() => setViewMode('list')}
+            className="px-2.5 py-1.5 transition-all"
+            style={{
+              background: viewMode === 'list' ? 'hsl(var(--h3) / 0.15)' : 'transparent',
+              color: viewMode === 'list' ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
+            }}
+            title="List view"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setViewMode('grid')}
+            className="px-2.5 py-1.5 transition-all"
+            style={{
+              background: viewMode === 'grid' ? 'hsl(var(--h3) / 0.15)' : 'transparent',
+              color: viewMode === 'grid' ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
+            }}
+            title="Grid view"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+            </svg>
+          </button>
+        </div>
         <Button variant="primary" size="sm" onClick={() => setShowCreate(true)}>Create Event</Button>
       </div>
 
@@ -96,7 +126,7 @@ export function EventsTab({ editId }: { editId?: string } = {}) {
             {search ? 'No events match your search.' : 'No events yet.'}
           </p>
         </div>
-      ) : (
+      ) : viewMode === 'list' ? (
         <div className="space-y-2">
           {filtered.map((event) => {
             const year = getEventYear(event)
@@ -135,6 +165,86 @@ export function EventsTab({ editId }: { editId?: string } = {}) {
                   <Button variant="ghost" size="sm" onClick={() => setLinkingEvent(event.id)}>Manage Sets</Button>
                   <Button variant="ghost" size="sm" onClick={() => setEditingEvent(event)}>Edit</Button>
                   <Button variant="danger" size="sm" onClick={() => setConfirmDelete(event.id)}>Delete</Button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filtered.map((event) => {
+            const year = getEventYear(event)
+            return (
+              <div key={event.id} className="card !p-4">
+                {/* Cover image */}
+                <div
+                  className="aspect-video rounded-lg overflow-hidden mb-3 flex items-center justify-center"
+                  style={{ background: 'hsl(var(--b4))', boxShadow: 'var(--card-border)' }}
+                >
+                  {event.cover_image_r2_key ? (
+                    <img src={`${getEventCoverUrl(event.id)}?v=${refreshKey}`} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <span className="text-4xl font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c3) / 0.4)' }}>
+                      {event.name.charAt(0)}
+                    </span>
+                  )}
+                </div>
+
+                {/* Name */}
+                <h3 className="text-sm font-[var(--font-weight-medium)] truncate mb-2" style={{ color: 'hsl(var(--c1))' }}>
+                  {event.name}
+                </h3>
+
+                {/* Meta info */}
+                <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                  {event.location && (
+                    <span className="text-xs" style={{ color: 'hsl(var(--c3))' }}>{event.location}</span>
+                  )}
+                  {year && (
+                    <span className="text-[10px] font-mono px-1.5 py-0 rounded" style={{ color: 'hsl(var(--h3))', background: 'hsl(var(--h3) / 0.1)' }}>
+                      {year}
+                    </span>
+                  )}
+                  {event.series && <Badge variant="muted">{event.series}</Badge>}
+                </div>
+
+                {/* Description */}
+                {event.description && (
+                  <p className="text-xs mb-3 line-clamp-2" style={{ color: 'hsl(var(--c3))' }}>
+                    {event.description}
+                  </p>
+                )}
+
+                {/* Stats */}
+                <div className="flex items-center gap-2 mb-3 text-xs">
+                  <span className="font-mono" style={{ color: 'hsl(var(--c3))' }}>
+                    {event.set_count} set{event.set_count !== 1 ? 's' : ''}
+                  </span>
+                  {event.source_1001_id && (
+                    <span className="font-mono" style={{ color: 'hsl(var(--h3) / 0.7)' }}>
+                      1001TL:{event.source_1001_id}
+                    </span>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="space-y-1.5">
+                  {event.source_1001_id && (
+                    <Button variant="secondary" size="sm" onClick={() => setImportingEvent(event)} className="w-full">
+                      Import Sets
+                    </Button>
+                  )}
+                  <div className="flex gap-1.5">
+                    <Button variant="ghost" size="sm" onClick={() => setLinkingEvent(event.id)} className="flex-1">
+                      Manage
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setEditingEvent(event)} className="flex-1">
+                      Edit
+                    </Button>
+                    <Button variant="danger" size="sm" onClick={() => setConfirmDelete(event.id)} className="flex-1">
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               </div>
             )

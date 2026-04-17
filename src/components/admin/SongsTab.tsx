@@ -26,6 +26,7 @@ export function SongsTab() {
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [editingSong, setEditingSong] = useState<Song | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Song | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -123,6 +124,34 @@ export function SongsTab() {
             color: "hsl(var(--c1))",
           }}
         />
+        <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid hsl(var(--b4) / 0.4)' }}>
+          <button
+            onClick={() => setViewMode('list')}
+            className="px-2 py-1 transition-colors"
+            style={{
+              background: viewMode === 'list' ? 'hsl(var(--b4) / 0.5)' : 'transparent',
+              color: viewMode === 'list' ? 'hsl(var(--c1))' : 'hsl(var(--c3))',
+            }}
+            title="List view"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setViewMode('grid')}
+            className="px-2 py-1 transition-colors"
+            style={{
+              background: viewMode === 'grid' ? 'hsl(var(--b4) / 0.5)' : 'transparent',
+              color: viewMode === 'grid' ? 'hsl(var(--c1))' : 'hsl(var(--c3))',
+            }}
+            title="Grid view"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* List */}
@@ -134,7 +163,7 @@ export function SongsTab() {
               : "No songs in the database yet."}
           </p>
         </div>
-      ) : (
+      ) : viewMode === 'list' ? (
         <div className="space-y-1.5">
           {songs.map((song) => (
             <div key={song.id} className="card !p-3">
@@ -336,6 +365,160 @@ export function SongsTab() {
                     </svg>
                   </Button>
                 </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {songs.map((song) => (
+            <div key={song.id} className="card !p-4">
+              {/* Cover art */}
+              <div className="aspect-square rounded-lg overflow-hidden mb-3" style={{ background: 'hsl(var(--b4) / 0.4)' }}>
+                {song.cover_art_r2_key || song.cover_art_url || song.lastfm_album_art ? (
+                  <img
+                    src={
+                      song.cover_art_r2_key
+                        ? getSongCoverUrl(song.id)
+                        : (song.cover_art_url || song.lastfm_album_art)!
+                    }
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <svg
+                      className="w-12 h-12"
+                      style={{ color: "hsl(var(--c3) / 0.3)" }}
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+
+              {/* Info */}
+              <p
+                className="text-sm truncate font-[var(--font-weight-medium)] mb-1"
+                style={{ color: "hsl(var(--c1))" }}
+              >
+                {song.title}
+              </p>
+              <p className="text-xs truncate mb-3" style={{ color: "hsl(var(--c2))" }}>
+                {song.artist}
+                {song.label && ` · ${song.label}`}
+              </p>
+
+              {/* Stats */}
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {song.source && <Badge variant="muted">{song.source}</Badge>}
+                {(song.like_count ?? 0) > 0 && (
+                  <Badge variant="accent">{song.like_count} likes</Badge>
+                )}
+                {(song.detection_count ?? 0) > 0 && (
+                  <Badge variant="muted">{song.detection_count} uses</Badge>
+                )}
+              </div>
+
+              {/* Service links */}
+              {getAvailableServices(song as unknown as Record<string, unknown>).length > 0 && (
+                <div className="flex items-center gap-1.5 mb-3">
+                  {getAvailableServices(song as unknown as Record<string, unknown>)
+                    .slice(0, 6)
+                    .map(({ url, service }) => (
+                      <ServiceIconLink
+                        key={service.key}
+                        url={url}
+                        service={service}
+                        size={16}
+                      />
+                    ))}
+                </div>
+              )}
+
+              {/* Action message */}
+              {actionMsg[song.id] && (
+                <p className="text-[10px] mb-2" style={{ color: "hsl(var(--h3))" }}>
+                  {actionMsg[song.id]}
+                </p>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-1 pt-3" style={{ borderTop: '1px solid hsl(var(--b4) / 0.2)' }}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleEnrich(song)}
+                  title="Enrich"
+                  className="flex-1"
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleCacheCover(song)}
+                  title="Cache"
+                  className="flex-1"
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEditingSong(song)}
+                  className="flex-1"
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setConfirmDelete(song)}
+                  title="Delete"
+                  className="flex-1"
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    style={{ color: "hsl(0, 60%, 55%)" }}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </Button>
               </div>
             </div>
           ))}

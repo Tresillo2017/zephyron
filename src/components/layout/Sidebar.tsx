@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router'
 import { useState } from 'react'
 import { useSession, signOut } from '../../lib/auth-client'
+import { Logo } from '../ui/Logo'
 
 const NAV_ITEMS = [
   { to: '/app', label: 'Home', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -43,7 +44,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="px-5 pt-5 pb-6">
         <Link to="/app" className="flex items-center gap-2.5 no-underline" onClick={() => setMobileOpen(false)}>
-          <img src="/logo-128.png" alt="Zephyron logo" className="w-8 h-8 object-contain" />
+          <Logo size={32} />
           <span className="text-lg font-semibold text-text-primary tracking-tight">Zephyron</span>
         </Link>
       </div>
@@ -157,21 +158,11 @@ export function Sidebar() {
               </div>
             </Link>
             <div className="flex items-center gap-1 px-2">
-              <Link
-                to="/app/settings"
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors no-underline flex-1"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Settings
-              </Link>
-              <button onClick={handleSignOut} className="text-text-muted hover:text-text-primary transition-colors p-1.5 rounded-lg hover:bg-surface-hover flex-shrink-0" title="Sign out">
+              <button onClick={handleSignOut} className="w-full text-text-muted hover:text-text-primary transition-colors px-2 py-1.5 rounded-lg hover:bg-surface-hover flex items-center gap-2 text-xs" title="Sign out">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
+                Sign Out
               </button>
             </div>
           </div>
@@ -195,7 +186,7 @@ export function Sidebar() {
       {/* Mobile: top bar with hamburger */}
       <div className="md:hidden flex items-center justify-between h-14 px-4 bg-[hsl(var(--b5)/0.85)] backdrop-blur-xl border-b border-[hsl(var(--br1)/0.5)] shrink-0">
         <Link to="/app" className="flex items-center gap-2 no-underline">
-          <img src="/logo-128.png" alt="Zephyron logo" className="w-7 h-7 object-contain" />
+          <Logo size={28} />
           <span className="text-base font-semibold text-text-primary tracking-tight">Zephyron</span>
         </Link>
         <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2 text-text-secondary hover:text-text-primary transition-colors">

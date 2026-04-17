@@ -17,7 +17,6 @@ export function BadgeCard({ userBadge, badge, locked = false }: BadgeCardProps) 
   return (
     <div
       className="card p-4 flex flex-col items-center text-center relative cursor-pointer hover:scale-105 transition-transform"
-      title={badgeDef.description}
       style={{
         opacity: locked ? 0.5 : 1
       }}
@@ -38,6 +37,13 @@ export function BadgeCard({ userBadge, badge, locked = false }: BadgeCardProps) 
         style={{ color: 'hsl(var(--c1))' }}
       >
         {badgeDef.name}
+      </div>
+
+      <div
+        className="text-xs mb-2 line-clamp-2"
+        style={{ color: 'hsl(var(--c2))' }}
+      >
+        {badgeDef.description}
       </div>
 
       <div

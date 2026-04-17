@@ -2,6 +2,7 @@ import { useRef, useEffect, useCallback, useState } from 'react'
 import { usePlayerStore } from '../../stores/playerStore'
 import { formatTime } from '../../lib/formatTime'
 import { getCoverUrl, fetchStoryboard, type StoryboardData } from '../../lib/api'
+import { Logo } from '../ui/Logo'
 import { FullScreenPlayer } from '../player/FullScreenPlayer'
 import type { Detection } from '../../lib/types'
 
@@ -201,7 +202,9 @@ export function PlayerBar() {
                   <img src={getCoverUrl(currentSet.id)} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <img src="/logo-128.png" alt="" className="w-4 h-4 opacity-30 object-contain" />
+                    <div className="opacity-30">
+                      <Logo size={16} alt="" />
+                    </div>
                   </div>
                 )}
               </div>

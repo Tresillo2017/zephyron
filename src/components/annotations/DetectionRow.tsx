@@ -92,7 +92,7 @@ export function DetectionGroup({
           </span>
 
           {/* Artwork */}
-          <TrackArtwork coverUrl={coverUrl} size={40} />
+          <TrackArtwork coverUrl={coverUrl} size={48} />
 
           {/* Track info */}
           <div className="flex-1 min-w-0">
@@ -157,7 +157,7 @@ export function DetectionGroup({
                   </span>
 
                   {/* Small artwork */}
-                  <TrackArtwork coverUrl={wtCover} size={28} />
+                  <TrackArtwork coverUrl={wtCover} size={32} />
 
                   {/* Track info */}
                   <div className="flex-1 min-w-0">
@@ -234,7 +234,11 @@ function TrackArtwork({ coverUrl, size }: { coverUrl: string | null; size: numbe
     return (
       <div
         className="rounded-lg overflow-hidden shrink-0"
-        style={{ width: size, height: size, boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.2)' }}
+        style={{
+          width: size,
+          height: size,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15), inset 0 0 0 1px hsl(var(--b4) / 0.2)',
+        }}
       >
         <img src={coverUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
       </div>
@@ -244,9 +248,19 @@ function TrackArtwork({ coverUrl, size }: { coverUrl: string | null; size: numbe
   return (
     <div
       className="rounded-lg shrink-0 flex items-center justify-center"
-      style={{ width: size, height: size, background: 'hsl(var(--b4) / 0.4)' }}
+      style={{
+        width: size,
+        height: size,
+        background: 'linear-gradient(135deg, hsl(var(--b4) / 0.5), hsl(var(--b4) / 0.3))',
+        boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)',
+      }}
     >
-      <svg className="w-4 h-4" style={{ color: 'hsl(var(--c3) / 0.3)' }} fill="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="w-4 h-4"
+        style={{ color: 'hsl(var(--c3) / 0.25)' }}
+        fill="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
       </svg>
     </div>
