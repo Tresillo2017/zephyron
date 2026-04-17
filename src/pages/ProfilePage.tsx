@@ -489,7 +489,7 @@ export function ProfilePage() {
 
       {/* Main content */}
       <main className="flex-1 px-6 lg:px-10 py-6">
-        <div className="max-w-5xl mx-auto space-y-5">
+        <div key={activeTab} className="max-w-5xl mx-auto space-y-5" style={{ animation: 'tab-enter 0.18s var(--ease-spring) both' }}>
           {/* Quick Stats Section */}
           {currentMonthStats && (
             <div className="card">
