@@ -22,12 +22,12 @@ const ANIMATIONS: Record<AnimationKey, string> = {
 }
 
 export function PageTransition() {
-  const { key, pathname } = useLocation()
+  const { pathname } = useLocation()
   const navType = useNavigationType()
   const animation = ANIMATIONS[resolveAnimation(pathname, navType)]
 
   return (
-    <div key={key} style={{ animation }}>
+    <div key={pathname} style={{ animation }}>
       <Outlet />
     </div>
   )

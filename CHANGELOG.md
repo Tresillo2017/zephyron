@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Here's the full rewritten changelog for Zephyron. I made every entry shorter, used simple everyday words, and focused on what it means for you as a user — like faster listening or easier navigation. [keepachangelog](https://keepachangelog.com/en/1.1.0/)
 
+## [0.4.2-alpha] - 2026-04-17
+
+### Improved
+- Page transitions no longer animate persistent UI elements — the profile sidebar stays in place when switching tabs; only the content area fades in.
+
+### Fixed
+- TypeScript build errors from unused imports and stub code in the admin Sets Upload tab and Set page.
+
 ## [0.4.1-alpha] - 2026-04-15
 
 ### New
