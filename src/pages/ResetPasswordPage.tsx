@@ -27,8 +27,6 @@ export function ResetPasswordPage() {
       return
     }
 
-    if (!token) return
-
     setIsLoading(true)
     try {
       const result = await authClient.resetPassword({ newPassword, token })
@@ -114,7 +112,7 @@ export function ResetPasswordPage() {
                 required
                 error={confirmError ?? undefined}
               />
-              {submitError && !isExpiredToken && (
+              {submitError && (
                 <p className="text-xs text-danger">{submitError}</p>
               )}
               <Button variant="primary" type="submit" disabled={isLoading} className="w-full">
