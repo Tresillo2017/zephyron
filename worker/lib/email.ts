@@ -74,12 +74,14 @@ export async function sendVerificationEmail(
   to: string,
   name: string,
   url: string
-): Promise<void> {
+  const safeName = escapeHtml(name)
+  const safeUrl = escapeHtml(url)
   const html = emailWrapper(
     'Verify your email — Zephyron',
-    `<p>Hey ${name},</p>
+    `<p>Hey ${safeName},</p>
 <p>Confirm your email address to finish setting up your Zephyron account.</p>
-<a class="btn" href="${url}">Verify email</a>
+<a class="btn" href="${safeUrl}">Verify email</a>
+<p class="muted">Or paste this link into your browser:<br /><a style="color:#7c6fa0;word-break:break-all" href="${safeUrl}">${safeUrl}</a></p>
 <p class="muted">Or paste this link into your browser:<br /><a style="color:#7c6fa0;word-break:break-all" href="${url}">${url}</a></p>
 <p class="muted">This link expires in 24 hours.</p>`
   )
