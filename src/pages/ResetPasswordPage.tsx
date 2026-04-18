@@ -14,6 +14,7 @@ export function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [confirmError, setConfirmError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [isExpiredToken, setIsExpiredToken] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,24 +27,27 @@ export function ResetPasswordPage() {
       return
     }
 
-    if (!token) return // handled by the no-token render below
+    if (!token) return
 
     setIsLoading(true)
     try {
       const result = await authClient.resetPassword({ newPassword, token })
       if (result.error) {
-        setSubmitError(result.error.message || 'This link has expired or is invalid.')
+        const msg = (result.error.message ?? '').toLowerCase()
+        if (msg.includes('expired') || msg.includes('invalid') || msg.includes('not found')) {
+          setIsExpiredToken(true)
+        } else {
+          setSubmitError(result.error.message || 'Something went wrong. Please try again.')
+        }
       } else {
         navigate('/login')
       }
     } catch (_err) {
-      setSubmitError('This link has expired or is invalid.')
+      setSubmitError('Something went wrong. Please try again.')
     } finally {
       setIsLoading(false)
     }
   }
-
-  const isTokenError = !token || !!submitError?.toLowerCase().includes('expired') || !!submitError?.toLowerCase().includes('invalid')
 
   return (
     <div className="min-h-screen bg-surface flex flex-col lg:flex-row">
@@ -73,7 +77,7 @@ export function ResetPasswordPage() {
             <span className="text-base font-semibold text-text-primary tracking-tight">Zephyron</span>
           </Link>
 
-          {!token || isTokenError ? (
+          {!token || isExpiredToken ? (
             <div
               className="rounded-xl p-5 space-y-3"
               style={{ background: 'hsl(0 60% 50% / 0.08)', boxShadow: 'inset 0 0 0 1px hsl(0 60% 50% / 0.2)' }}
@@ -110,7 +114,7 @@ export function ResetPasswordPage() {
                 required
                 error={confirmError ?? undefined}
               />
-              {submitError && !isTokenError && (
+              {submitError && !isExpiredToken && (
                 <p className="text-xs text-danger">{submitError}</p>
               )}
               <Button variant="primary" type="submit" disabled={isLoading} className="w-full">
