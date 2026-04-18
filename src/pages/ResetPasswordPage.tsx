@@ -7,7 +7,7 @@ import { Logo } from '../components/ui/Logo'
 
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
-  const token = searchParams.get('token')
+  const token = searchParams.get('token') ?? undefined
   const navigate = useNavigate()
 
   const [newPassword, setNewPassword] = useState('')
