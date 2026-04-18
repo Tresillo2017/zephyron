@@ -18,11 +18,9 @@ function buildMessage(to: string, subject: string, html: string, text: string): 
   msg.setSender({ name: FROM_NAME, addr: FROM })
   msg.setRecipient(to)
   msg.setSubject(subject)
-  // Required headers for deliverability
+  // Standard headers for delivery and threading (RFC 5322)
   msg.setHeader('Message-ID', `<${crypto.randomUUID()}@zephyron.app>`)
   msg.setHeader('Date', new Date().toUTCString())
-  msg.setHeader('List-Unsubscribe', '<mailto:noreply@zephyron.app?subject=unsubscribe>')
-  msg.setHeader('X-Mailer', 'Zephyron/1.0')
   msg.addMessage({ contentType: 'text/plain', data: text })
   msg.addMessage({ contentType: 'text/html', data: html })
   return new EmailMessage(FROM, to, msg.asRaw())
