@@ -194,10 +194,12 @@ export function createAuth(env: Env) {
                 .bind(inviteCode)
                 .run()
             }
-            // Send welcome email (fire-and-forget — don't block registration)
-            sendWelcomeEmail(env, user.email, user.name).catch((err) =>
+            // Send welcome email and await it so the Worker tracks the async work.
+            try {
+              await sendWelcomeEmail(env, user.email, user.name)
+            } catch (err) {
               console.error('[email] Welcome email failed:', err)
-            )
+            }
           },
         },
       },
