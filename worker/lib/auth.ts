@@ -53,7 +53,7 @@ export function createAuth(env: Env) {
     user: {
       changeEmail: {
         enabled: true,
-        sendChangeEmailVerification: async ({ user, newEmail, url }: { user: { name: string; email: string }, newEmail: string, url: string }) => {
+        sendChangeEmailVerification: async ({ user, newEmail, url }) => {
           await sendEmailChangeEmail(env, newEmail, user.name, url)
         },
       },
