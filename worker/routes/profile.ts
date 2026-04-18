@@ -266,7 +266,8 @@ export async function updateProfileSettings(
   try {
     // 2. Parse request body
     const body = await request.json() as UpdateProfileSettingsRequest
-    let { name, bio, is_profile_public, show_activity, show_liked_songs } = body as any
+    let { name } = body as any
+    const { bio, is_profile_public, show_activity, show_liked_songs } = body as any
 
     // 3. Validate and sanitize inputs
     const sqlUpdates: Record<string, any> = {}
