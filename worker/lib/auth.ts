@@ -53,7 +53,7 @@ export function createAuth(env: Env) {
     user: {
       changeEmail: {
         enabled: true,
-        sendChangeEmailVerification: async ({ user, newEmail, url }: { user: { name: string; email: string }; newEmail: string; url: string }) => {
+        sendChangeEmailConfirmation: async ({ user, newEmail, url }: { user: { name: string; email: string }; newEmail: string; url: string }) => {
           await sendEmailChangeEmail(env, newEmail, user.name, url)
         },
       },
@@ -145,7 +145,7 @@ export function createAuth(env: Env) {
         rateLimit: {
           enabled: false,
         },
-      }),
+      }) as any,
     ],
     databaseHooks: {
       user: {
