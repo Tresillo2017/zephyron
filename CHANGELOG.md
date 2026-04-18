@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Here's the full rewritten changelog for Zephyron. I made every entry shorter, used simple everyday words, and focused on what it means for you as a user — like faster listening or easier navigation. [keepachangelog](https://keepachangelog.com/en/1.1.0/)
 
+## [0.4.4-alpha] - 2026-04-18
+
+### New
+- Forgot password flow — click "Forgot password?" on the login page to request a reset link by email. The login form transitions in-place through the request and confirmation steps without any page navigation.
+- Password reset page at `/reset-password` — follow the emailed link to set a new password. Expired or invalid links show a clear error with a link back to request a new one.
+
 ## [0.4.3-alpha] - 2026-04-18
 
 ### New

@@ -27,6 +27,11 @@ export function ResetPasswordPage() {
       return
     }
 
+    if (!token) {
+      setIsExpiredToken(true)
+      return
+    }
+
     setIsLoading(true)
     try {
       const result = await authClient.resetPassword({ newPassword, token })
