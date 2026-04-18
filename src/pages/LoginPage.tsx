@@ -5,18 +5,21 @@ import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Logo } from '../components/ui/Logo'
 
+type Step = 'login' | 'forgot' | 'sent'
+
 export function LoginPage() {
+  const [step, setStep] = useState<Step>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [forgotEmail, setForgotEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setIsLoading(true)
-
     try {
       const result = await signIn.email({ email, password })
       if (result.error) {
@@ -29,6 +32,38 @@ export function LoginPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setIsLoading(true)
+    try {
+      await fetch('/api/auth/forget-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: forgotEmail,
+          redirectTo: '/reset-password',
+        }),
+      })
+    } catch (_err) {
+      // Intentionally swallow — no user enumeration
+    } finally {
+      setIsLoading(false)
+      setStep('sent')
+    }
+  }
+
+  const goToForgot = () => {
+    setForgotEmail(email) // pre-fill if user already typed email
+    setError(null)
+    setStep('forgot')
+  }
+
+  const goToLogin = () => {
+    setError(null)
+    setStep('login')
   }
 
   return (
@@ -59,24 +94,88 @@ export function LoginPage() {
             <span className="text-base font-semibold text-text-primary tracking-tight">Zephyron</span>
           </Link>
 
-          <h1 className="text-xl font-semibold text-text-primary mb-1">Welcome back</h1>
-          <p className="text-sm text-text-muted mb-8">Sign in to continue listening</p>
+          {step === 'login' && (
+            <form onSubmit={handleSignIn} className="space-y-4">
+              <div>
+                <h1 className="text-xl font-semibold text-text-primary mb-1">Welcome back</h1>
+                <p className="text-sm text-text-muted mb-8">Sign in to continue listening</p>
+              </div>
+              <Input
+                label="Email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+              />
+              <div className="space-y-1">
+                <Input
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={goToForgot}
+                  className="text-xs text-accent hover:text-accent-hover float-right cursor-pointer bg-transparent border-none p-0"
+                >
+                  Forgot password?
+                </button>
+              </div>
+              {error && <p className="text-xs text-danger">{error}</p>}
+              <Button variant="primary" type="submit" disabled={isLoading} className="w-full !mt-8">
+                {isLoading ? 'Signing in...' : 'Sign In'}
+              </Button>
+              <p className="text-xs text-text-muted">
+                Don't have an account?{' '}
+                <Link to="/register" className="text-accent hover:text-accent-hover no-underline">Request access</Link>
+              </p>
+            </form>
+          )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
-            <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          {step === 'forgot' && (
+            <form onSubmit={handleForgot} className="space-y-4">
+              <div>
+                <h1 className="text-xl font-semibold text-text-primary mb-1">Reset your password</h1>
+                <p className="text-sm text-text-muted mb-8">Enter your email and we'll send a reset link.</p>
+              </div>
+              <Input
+                label="Email"
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+                autoFocus
+              />
+              {error && <p className="text-xs text-danger">{error}</p>}
+              <Button variant="primary" type="submit" disabled={isLoading} className="w-full">
+                {isLoading ? 'Sending...' : 'Send reset link'}
+              </Button>
+              <Button variant="ghost" type="button" onClick={goToLogin} className="w-full">
+                ← Back to sign in
+              </Button>
+            </form>
+          )}
 
-            {error && <p className="text-xs text-danger">{error}</p>}
-
-            <Button variant="primary" type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </Button>
-          </form>
-
-          <p className="text-xs text-text-muted mt-8">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-accent hover:text-accent-hover no-underline">Request access</Link>
-          </p>
+          {step === 'sent' && (
+            <div className="space-y-4 text-center">
+              <div className="text-4xl mb-4">✉️</div>
+              <h1 className="text-xl font-semibold text-text-primary">Check your email</h1>
+              <p className="text-sm text-text-muted">
+                If <strong className="text-text-secondary">{forgotEmail}</strong> is registered, you'll receive a password reset link shortly.
+              </p>
+              <button
+                type="button"
+                onClick={goToLogin}
+                className="text-sm text-accent hover:text-accent-hover cursor-pointer bg-transparent border-none p-0 mt-4"
+              >
+                ← Back to sign in
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
