@@ -4,6 +4,14 @@ import { createMimeMessage } from 'mimetext'
 const FROM = 'noreply@zephyron.app'
 const FROM_NAME = 'Zephyron'
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
 function buildMessage(to: string, subject: string, html: string, text: string): EmailMessage {
   const msg = createMimeMessage()
   msg.setSender({ name: FROM_NAME, addr: FROM })
@@ -83,9 +91,10 @@ export async function sendWelcomeEmail(
   to: string,
   name: string
 ): Promise<void> {
+  const safeName = escapeHtml(name)
   const html = emailWrapper(
     'Welcome to Zephyron',
-    `<p>Hey ${name},</p>
+    `<p>Hey ${safeName},</p>
 <p>Your account is live. Welcome to Zephyron — the home for DJ sets.</p>
 <p>Start exploring the latest sets, discover artists, and build your listening history.</p>
 <a class="btn" href="https://zephyron.app">Open Zephyron</a>`
