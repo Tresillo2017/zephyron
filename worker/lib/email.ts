@@ -112,12 +112,14 @@ export async function sendPasswordResetEmail(
   name: string,
   url: string
 ): Promise<void> {
+  const safeName = escapeHtml(name)
+  const safeUrl = escapeHtml(url)
   const html = emailWrapper(
     'Reset your password — Zephyron',
-    `<p>Hey ${name},</p>
+    `<p>Hey ${safeName},</p>
 <p>We received a request to reset your Zephyron password.</p>
-<a class="btn" href="${url}">Reset password</a>
-<p class="muted">Or paste this link into your browser:<br /><a style="color:#7c6fa0;word-break:break-all" href="${url}">${url}</a></p>
+<a class="btn" href="${safeUrl}">Reset password</a>
+<p class="muted">Or paste this link into your browser:<br /><a style="color:#7c6fa0;word-break:break-all" href="${safeUrl}">${safeUrl}</a></p>
 <p class="muted">This link expires in 1 hour. If you didn't request a reset, ignore this email — your password won't change.</p>`
   )
   const text = `Hey ${name},\n\nReset your Zephyron password:\n${url}\n\nThis link expires in 1 hour.`
@@ -130,12 +132,14 @@ export async function sendEmailChangeEmail(
   name: string,
   url: string
 ): Promise<void> {
+  const safeName = escapeHtml(name)
+  const safeUrl = escapeHtml(url)
   const html = emailWrapper(
     'Confirm your new email — Zephyron',
-    `<p>Hey ${name},</p>
+    `<p>Hey ${safeName},</p>
 <p>Confirm this address to complete the email change on your Zephyron account.</p>
-<a class="btn" href="${url}">Confirm new email</a>
-<p class="muted">Or paste this link:<br /><a style="color:#7c6fa0;word-break:break-all" href="${url}">${url}</a></p>
+<a class="btn" href="${safeUrl}">Confirm new email</a>
+<p class="muted">Or paste this link:<br /><a style="color:#7c6fa0;word-break:break-all" href="${safeUrl}">${safeUrl}</a></p>
 <p class="muted">Didn't request this? Your current email stays active — contact support if you're concerned.</p>`
   )
   const text = `Hey ${name},\n\nConfirm your new Zephyron email:\n${url}`
