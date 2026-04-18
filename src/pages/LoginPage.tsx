@@ -39,7 +39,7 @@ export function LoginPage() {
     setError(null)
     setIsLoading(true)
     try {
-      await fetch('/api/auth/forget-password', {
+      await fetch('/api/auth/request-password-reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -47,11 +47,13 @@ export function LoginPage() {
           redirectTo: '/reset-password',
         }),
       })
+      // Swallow API-level errors (e.g. unknown email) — no user enumeration
+      setStep('sent')
     } catch (_err) {
-      // Intentionally swallow — no user enumeration
+      // Only thrown on network failure — surface it
+      setError(_err instanceof Error ? _err.message : 'Something went wrong. Please try again.')
     } finally {
       setIsLoading(false)
-      setStep('sent')
     }
   }
 
