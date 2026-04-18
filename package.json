@@ -1,7 +1,7 @@
 {
   "name": "zephyron",
   "private": true,
-  "version": "0.4.2-alpha",
+  "version": "0.4.3-alpha",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -23,6 +23,7 @@
     "@opentelemetry/api": "^1.9.1",
     "better-auth": "^1.6.3",
     "kysely-d1": "^0.4.0",
+    "mimetext": "^3.0.28",
     "nanoid": "^5.1.7",
     "node-vibrant": "4.0.4",
     "number-flow": "^0.6.0",

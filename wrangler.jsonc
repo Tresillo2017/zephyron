@@ -82,10 +82,10 @@
   // Cron Triggers
   "triggers": {
     "crons": [
-      "0 * * * *",  // Hourly: session cleanup (top of every hour)
-      "0 5 1 * *",  // Monthly: stats aggregation (1st of month at 5am PT)
-      "0 5 2 1 *",  // Annual: Wrapped generation (Jan 2 at 5am PT)
-      "0 6 * * *"   // Daily: badge calculations (6am PT)
+      "0 * * * *", // Hourly: session cleanup (top of every hour)
+      "0 5 1 * *", // Monthly: stats aggregation (1st of month at 5am PT)
+      "0 5 2 1 *", // Annual: Wrapped generation (Jan 2 at 5am PT)
+      "0 6 * * *" // Daily: badge calculations (6am PT)
     ]
   },
   // Environment variables
@@ -96,6 +96,13 @@
     "BETTER_AUTH_URL": "https://zephyron.app",
     "INVIDIOUS_BASE_URL": "https://invidious.zephyron.app"
   },
+  // Email sending (Cloudflare Email Routing)
+  "send_email": [
+    {
+      "name": "EMAIL",
+      "allowed_sender_addresses": ["noreply@zephyron.app"]
+    }
+  ],
   // Durable Objects
   "durable_objects": {
     "bindings": [
