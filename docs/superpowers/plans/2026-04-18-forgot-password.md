@@ -14,7 +14,7 @@
 
 | File | Action | Responsibility |
 |------|--------|----------------|
-| `src/lib/auth-client.ts` | Modify | Export `authClient` so pages can call `forgetPassword` / `resetPassword` |
+| `src/lib/auth-client.ts` | Modify | Export `authClient` so pages can call `requestPasswordReset` / `resetPassword` |
 | `src/pages/LoginPage.tsx` | Modify | Add `step` state + forgot + sent views with cross-fade transition |
 | `src/pages/ResetPasswordPage.tsx` | Create | New-password form; validates token via Better Auth; handles expired/invalid |
 | `src/App.tsx` | Modify | Import `ResetPasswordPage`, add `/reset-password` public route |
@@ -40,7 +40,7 @@ export const {
 } = authClient
 ```
 
-Add `authClient` itself to the exports so pages can call `authClient.forgetPassword` and `authClient.resetPassword`. Replace the file content with:
+Add `authClient` itself to the exports so pages can call `authClient.requestPasswordReset` and `authClient.resetPassword`. Replace the file content with:
 
 ```ts
 import { createAuthClient } from 'better-auth/react'
@@ -82,7 +82,7 @@ Expected: no errors.
 
 ```bash
 git add src/lib/auth-client.ts
-git commit -m "feat: export authClient for forgetPassword/resetPassword"
+git commit -m "feat: export authClient for requestPasswordReset/resetPassword"
 ```
 
 ---
@@ -543,6 +543,6 @@ git commit -m "feat: forgot password flow complete"
 git push origin staging
 gh pr create \
   --title "feat: forgot password / reset password flow" \
-  --body "Adds inline forgot-password steps to LoginPage and a new /reset-password page using Better Auth's forgetPassword/resetPassword client methods." \
+  --body "Adds inline forgot-password steps to LoginPage and a new /reset-password page using Better Auth's requestPasswordReset/resetPassword client methods." \
   --base master
 ```

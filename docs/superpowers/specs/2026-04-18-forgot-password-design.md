@@ -7,7 +7,7 @@
 
 ## Overview
 
-Add a forgot-password flow using Better Auth's built-in `forgetPassword` / `resetPassword` methods. The request step lives inline on the existing login page (no new route). The password-reset step lives on a new `/reset-password` page reached from the emailed link.
+Add a forgot-password flow using Better Auth's built-in `requestPasswordReset` / `resetPassword` methods. The request step lives inline on the existing login page (no new route). The password-reset step lives on a new `/reset-password` page reached from the emailed link.
 
 ---
 
@@ -17,7 +17,7 @@ Add a forgot-password flow using Better Auth's built-in `forgetPassword` / `rese
 LoginPage (step: login)
   → click "Forgot password?"
 LoginPage (step: forgot)
-  → submit email → authClient.forgetPassword(...)
+  → submit email → authClient.requestPasswordReset(...)
 LoginPage (step: sent)
   → "Check your email" confirmation
 
@@ -33,7 +33,7 @@ Email link → /reset-password?token=...
 
 ### `src/lib/auth-client.ts`
 
-Export `authClient` directly so callers can use `authClient.forgetPassword` and `authClient.resetPassword`. No new imports needed — these are built into the Better Auth client.
+Export `authClient` directly so callers can use `authClient.requestPasswordReset` and `authClient.resetPassword`. No new imports needed — these are built into the Better Auth client.
 
 ### `src/pages/LoginPage.tsx`
 
@@ -44,7 +44,7 @@ The right-panel form renders one of three views based on `step`, cross-fading wi
 | Step | Content |
 |------|---------|
 | `login` | Existing email + password form. "Forgot password?" link below password field sets `step = 'forgot'`. |
-| `forgot` | Email input + "Send reset link" button + "← Back to sign in" ghost button. On submit calls `authClient.forgetPassword({ email, redirectTo: '/reset-password' })`. Always transitions to `sent` on success or known failure (no user enumeration). Network errors shown inline. |
+| `forgot` | Email input + "Send reset link" button + "← Back to sign in" ghost button. On submit calls `authClient.requestPasswordReset({ email, redirectTo: '/reset-password' })`. Always transitions to `sent` on success or known failure (no user enumeration). Network errors shown inline. |
 | `sent` | "Check your email" confirmation with the submitted email address shown. "← Back to sign in" link resets to `login` step. |
 
 ### `src/pages/ResetPasswordPage.tsx` (new)

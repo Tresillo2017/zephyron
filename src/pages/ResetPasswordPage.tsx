@@ -29,7 +29,7 @@ export function ResetPasswordPage() {
 
     setIsLoading(true)
     try {
-      const result = await authClient.resetPassword({ newPassword, token })
+      const result = await authClient.resetPassword({ newPassword, token: token! })
       if (result.error) {
         const msg = (result.error.message ?? '').toLowerCase()
         if (msg.includes('expired') || msg.includes('invalid') || msg.includes('not found')) {
