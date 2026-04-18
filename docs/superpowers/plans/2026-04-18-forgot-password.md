@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a forgot-password / reset-password flow to Zephyron using Better Auth's built-in `forgetPassword` and `resetPassword` client methods.
+**Goal:** Add a forgot-password / reset-password flow to Zephyron using Better Auth's built-in `requestPasswordReset` and `resetPassword` client methods.
 
 **Architecture:** The request step lives inline on the existing `LoginPage` (3 states: `login` → `forgot` → `sent`), cross-fading the form content in place. The actual password-reset form lives on a new `ResetPasswordPage` at `/reset-password`, reached only via the emailed token link.
 
-**Tech Stack:** React 19, React Router 7, Better Auth client (`authClient.forgetPassword` / `authClient.resetPassword`), Tailwind CSS 4, existing `Button` and `Input` UI primitives.
+**Tech Stack:** React 19, React Router 7, Better Auth client (`authClient.requestPasswordReset` / `authClient.resetPassword`), Tailwind CSS 4, existing `Button` and `Input` UI primitives.
 
 ---
 
@@ -138,7 +138,7 @@ export function LoginPage() {
     setError(null)
     setIsLoading(true)
     try {
-      await authClient.forgetPassword({
+      await authClient.requestPasswordReset({
         email: forgotEmail,
         redirectTo: '/reset-password',
       })

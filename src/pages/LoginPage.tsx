@@ -165,13 +165,9 @@ export function LoginPage() {
               <p className="text-sm text-text-muted">
                 If <strong className="text-text-secondary">{forgotEmail}</strong> is registered, you'll receive a password reset link shortly.
               </p>
-              <button
-                type="button"
-                onClick={goToLogin}
-                className="text-sm text-accent hover:text-accent-hover cursor-pointer bg-transparent border-none p-0 mt-4"
-              >
+              <Button variant="ghost" type="button" onClick={goToLogin} className="w-full">
                 ← Back to sign in
-              </button>
+              </Button>
             </div>
           )}
         </div>
