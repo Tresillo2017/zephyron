@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { signIn } from '../lib/auth-client'
+import { signIn, authClient } from '../lib/auth-client'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Logo } from '../components/ui/Logo'
@@ -39,13 +39,9 @@ export function LoginPage() {
     setError(null)
     setIsLoading(true)
     try {
-      await fetch('/api/auth/request-password-reset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: forgotEmail,
-          redirectTo: '/reset-password',
-        }),
+      await authClient.requestPasswordReset({
+        email: forgotEmail,
+        redirectTo: '/reset-password',
       })
       // Swallow API-level errors (e.g. unknown email) — no user enumeration
       setStep('sent')
