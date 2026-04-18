@@ -6,6 +6,12 @@ import { admin, twoFactor } from 'better-auth/plugins'
 import { apiKey } from '@better-auth/api-key'
 import { D1Dialect } from 'kysely-d1'
 import { Kysely } from 'kysely'
+import {
+  sendVerificationEmail,
+  sendWelcomeEmail,
+  sendPasswordResetEmail,
+  sendEmailChangeEmail,
+} from './email'
 
 /**
  * Create a Better Auth instance configured for the current request's env.
@@ -33,11 +39,23 @@ export function createAuth(env: Env) {
     ].filter(Boolean),
     emailAndPassword: {
       enabled: true,
-      // Password change is enabled by default via changePassword endpoint
+      sendResetPassword: async ({ user, url }) => {
+        await sendPasswordResetEmail(env, user.email, user.name, url)
+      },
+    },
+    emailVerification: {
+      sendOnSignUp: true,
+      autoSignInAfterVerification: true,
+      sendVerificationEmail: async ({ user, url }) => {
+        await sendVerificationEmail(env, user.email, user.name, url)
+      },
     },
     user: {
       changeEmail: {
         enabled: true,
+        sendChangeEmailVerification: async ({ user, newEmail, url }: { user: { name: string; email: string }; newEmail: string; url: string }) => {
+          await sendEmailChangeEmail(env, newEmail, user.name, url)
+        },
       },
       additionalFields: {
         reputation: {
@@ -168,7 +186,6 @@ export function createAuth(env: Env) {
             }
           },
           after: async (user) => {
-            // User was successfully created — now consume the invite code
             const inviteCode = (user as any).invite_code || (user as any).inviteCode
             if (inviteCode) {
               await env.DB.prepare(
@@ -176,6 +193,12 @@ export function createAuth(env: Env) {
               )
                 .bind(inviteCode)
                 .run()
+            }
+            // Send welcome email and await it so the Worker tracks the async work.
+            try {
+              await sendWelcomeEmail(env, user.email, user.name)
+            } catch (err) {
+              console.error('[email] Welcome email failed:', err)
             }
           },
         },

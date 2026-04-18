@@ -1,13 +1,13 @@
 {
   "name": "zephyron",
   "private": true,
-  "version": "0.4.2-alpha",
+  "version": "0.4.3-alpha",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
     "lint": "eslint .",
-    "test": "vitest",
     "preview": "bun run build && vite preview",
     "deploy": "bun run build && wrangler deploy",
     "cf-typegen": "wrangler types",
@@ -23,6 +23,7 @@
     "@opentelemetry/api": "^1.9.1",
     "better-auth": "^1.6.3",
     "kysely-d1": "^0.4.0",
+    "mimetext": "^3.0.28",
     "nanoid": "^5.1.7",
     "node-vibrant": "4.0.4",
     "number-flow": "^0.6.0",
@@ -53,7 +54,6 @@
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.58.2",
     "vite": "^8.0.8",
-    "vitest": "^4.1.4",
     "wrangler": "^4.82.2"
   },
   "trustedDependencies": [
