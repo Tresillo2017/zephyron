@@ -18,6 +18,7 @@ import { AboutPage } from './pages/AboutPage'
 import { PrivacyPage } from './pages/PrivacyPage'
 import { TermsPage } from './pages/TermsPage'
 import { TwoFactorPage } from './pages/TwoFactorPage'
+import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { DevicePage } from './pages/DevicePage'
 
@@ -129,6 +130,7 @@ function App() {
         <Route index element={<RedirectIfAuth><LandingPage /></RedirectIfAuth>} />
         <Route path="login" element={<RedirectIfAuth><LoginPage /></RedirectIfAuth>} />
         <Route path="register" element={<RedirectIfAuth><RegisterPage /></RedirectIfAuth>} />
+        <Route path="reset-password" element={<ResetPasswordPage />} />
         <Route path="2fa" element={<TwoFactorPage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="privacy" element={<PrivacyPage />} />

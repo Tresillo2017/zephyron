@@ -80,7 +80,7 @@ export function EventPage() {
   const navigate = useNavigate()
   const { data: session } = useSession()
   const isAdmin = session?.user?.role === 'admin'
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const [event, setEvent] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

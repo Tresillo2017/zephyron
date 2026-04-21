@@ -207,7 +207,7 @@ function SetsListTab({ editId }: { editId?: string }) {
       .finally(() => setIsLoading(false))
   }, [page, sort, debouncedSearch, genre, streamType, detectionStatus, hasSource])
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+   
   useEffect(() => { loadSets() }, [loadSets])
 
   // Auto-open edit modal when editId is provided via URL

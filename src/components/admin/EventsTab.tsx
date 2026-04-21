@@ -45,7 +45,7 @@ export function EventsTab({ editId }: { editId?: string } = {}) {
     setIsLoading(true)
     fetchEvents().then((r) => setEvents(r.data)).catch(() => {}).finally(() => setIsLoading(false))
   }
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+   
   useEffect(() => { loadEvents() }, [])
 
   // Auto-open edit modal when editId is provided via URL
@@ -585,9 +585,9 @@ function EventFormModal({ event, onClose, onSaved }: { event?: Event; onClose: (
 }
 
 function LinkSetModal({ eventId, onClose, onChanged }: { eventId: string; onClose: () => void; onChanged: () => void }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const [allSets, setAllSets] = useState<any[]>([])
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const [linkedSets, setLinkedSets] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [working, setWorking] = useState<string | null>(null)
@@ -604,7 +604,7 @@ function LinkSetModal({ eventId, onClose, onChanged }: { eventId: string; onClos
     }).catch(() => {}).finally(() => setIsLoading(false))
   }
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+   
   useEffect(() => { load() }, [eventId])
 
   const linkedIds = new Set(linkedSets.map((s: any) => s.id))

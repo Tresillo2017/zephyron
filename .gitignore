@@ -35,3 +35,7 @@ dist-ssr
 
 # Superpowers
 .superpowers
+.playwright-mcp/
+
+# Session artifacts
+.remember/tmp/
