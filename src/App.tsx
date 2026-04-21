@@ -20,6 +20,7 @@ import { TermsPage } from './pages/TermsPage'
 import { TwoFactorPage } from './pages/TwoFactorPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { DevicePage } from './pages/DevicePage'
 
 // App pages (authenticated)
 import { HomePage } from './pages/HomePage'
@@ -134,6 +135,7 @@ function App() {
         <Route path="about" element={<AboutPage />} />
         <Route path="privacy" element={<PrivacyPage />} />
         <Route path="terms" element={<TermsPage />} />
+        <Route path="device" element={<DevicePage />} />
 
         {/* Protected app routes */}
         <Route path="app" element={<RequireAuth />}>

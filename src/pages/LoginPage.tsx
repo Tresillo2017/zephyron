@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { signIn, authClient } from '../lib/auth-client'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
@@ -15,6 +15,7 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,7 +26,7 @@ export function LoginPage() {
       if (result.error) {
         setError(result.error.message || 'Sign in failed')
       } else {
-        navigate('/app')
+        navigate(searchParams.get('redirect') ?? '/app')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign in failed')
