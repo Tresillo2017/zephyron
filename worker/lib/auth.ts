@@ -2,7 +2,7 @@
 // Instantiated per-request because env.DB is only available in fetch()
 
 import { betterAuth } from 'better-auth'
-import { admin, twoFactor } from 'better-auth/plugins'
+import { admin, twoFactor, deviceAuthorization } from 'better-auth/plugins'
 import { apiKey } from '@better-auth/api-key'
 import { D1Dialect } from 'kysely-d1'
 import { Kysely } from 'kysely'
@@ -35,6 +35,7 @@ export function createAuth(env: Env) {
     trustedOrigins: [
       'http://localhost:5173',
       'http://localhost:4173',
+      'zephyron://',
       env.BETTER_AUTH_URL || '',
     ].filter(Boolean),
     emailAndPassword: {
@@ -146,6 +147,9 @@ export function createAuth(env: Env) {
           enabled: false,
         },
       }) as any,
+      deviceAuthorization({
+        verificationUri: '/device',
+      }),
     ],
     databaseHooks: {
       user: {
