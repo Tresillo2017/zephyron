@@ -35,7 +35,7 @@ export function createAuth(env: Env) {
     trustedOrigins: [
       'http://localhost:5173',
       'http://localhost:4173',
-      'zephyron://',
+      'zephyron://', // Android TV app scheme — Origin header is always overridden to https://zephyron.app by the app's OkHttp interceptor; this entry is a belt-and-suspenders fallback
       env.BETTER_AUTH_URL || '',
     ].filter(Boolean),
     emailAndPassword: {
