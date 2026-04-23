@@ -226,6 +226,25 @@ export async function requireAdmin(
   request: Request,
   env: Env
 ): Promise<{ user: { id: string; role: string; name: string; email: string } } | Response> {
+  // Allow extension/headless admin access via static API key
+  const apiKey = request.headers.get('X-Admin-API-Key')
+  if (apiKey) {
+    const validKey = (env as any).ADMIN_API_KEY as string | undefined
+    if (!validKey) {
+      return new Response(JSON.stringify({ error: 'ADMIN_API_KEY not configured', ok: false }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      })
+    }
+    if (apiKey !== validKey) {
+      return new Response(JSON.stringify({ error: 'Invalid API key', ok: false }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      })
+    }
+    return { user: { id: 'api-key', role: 'admin', name: 'API Key', email: '' } }
+  }
+
   try {
     const auth = createAuth(env)
     const session = await auth.api.getSession({ headers: request.headers })
