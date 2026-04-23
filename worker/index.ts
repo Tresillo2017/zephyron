@@ -11,6 +11,7 @@ import {
 import {
   triggerDetection, getDetectionStatus, mlStats,
   evolvePromptRoute, listJobs, redetectLowConfidence,
+  youtubeSearch,
 } from './routes/admin'
 import {
   generateInviteCode, listInviteCodes, revokeInviteCode,
@@ -230,6 +231,7 @@ router.post('/api/admin/sets/:id/redetect-low', withAdmin(redetectLowConfidence)
 router.get('/api/admin/ml/stats', withAdmin(mlStats))
 router.post('/api/admin/ml/evolve', withAdmin(evolvePromptRoute))
 router.get('/api/admin/jobs', withAdmin(listJobs))
+router.get('/api/admin/youtube-search', withAdmin(youtubeSearch))
 
 // Admin / Beta management
 router.post('/api/admin/invite-codes', withAdmin(generateInviteCode))

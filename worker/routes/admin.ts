@@ -3,6 +3,7 @@ import { json, errorResponse } from '../lib/router'
 import { getMLStats } from '../services/feedback-processor'
 import { evolvePrompt } from '../services/ml-prompts'
 import { runDetectionPipeline } from '../services/ml-detection'
+import { searchVideos } from '../services/invidious'
 
 // POST /api/admin/sets/:id/detect — Run ML detection synchronously
 export async function triggerDetection(
@@ -137,4 +138,23 @@ export async function redetectLowConfidence(
     data: { status: 'complete', detections: result.detections },
     ok: true,
   })
+}
+
+// GET /api/admin/youtube-search?q=<query> — proxy Invidious video search
+export async function youtubeSearch(
+  request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  _params: Record<string, string>
+): Promise<Response> {
+  const q = new URL(request.url).searchParams.get('q')?.trim()
+  if (!q) return errorResponse('q parameter required', 400)
+
+  try {
+    const results = await searchVideos(q, env)
+    return json({ data: results, ok: true })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Search failed'
+    return errorResponse(message, 500)
+  }
 }
