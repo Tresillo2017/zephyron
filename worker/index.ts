@@ -297,14 +297,22 @@ export default {
       return auth.handler(request)
     }
 
+    const requestOrigin = request.headers.get('Origin')
+    const fixCors = (res: Response): Response => {
+      const cors = corsHeaders(requestOrigin)
+      const headers = new Headers(res.headers)
+      cors.forEach((value, key) => headers.set(key, value))
+      return new Response(res.body, { status: res.status, headers })
+    }
+
     try {
       const response = await router.handle(request, env, ctx)
-      if (response) return response
-      return errorResponse('Not found', 404)
+      if (response) return fixCors(response)
+      return fixCors(errorResponse('Not found', 404))
     } catch (err) {
       console.error('API Error:', err)
       const message = err instanceof Error ? err.message : 'Internal server error'
-      return errorResponse(message, 500)
+      return fixCors(errorResponse(message, 500))
     }
   },
 
