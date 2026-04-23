@@ -106,6 +106,8 @@ export function corsHeaders(requestOrigin?: string | null): Headers {
     // Allow production domain and subdomains
     requestOrigin.endsWith('.zephyron.app') ||
     requestOrigin === 'https://zephyron.app' ||
+    // Allow Chrome extension origins
+    requestOrigin.startsWith('chrome-extension://') ||
     // Allow Cloudflare Workers preview URLs (only for development)
     (requestOrigin.endsWith('.workers.dev') && requestOrigin.includes('zephyron'))
   )

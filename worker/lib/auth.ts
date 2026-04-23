@@ -236,7 +236,19 @@ export async function requireAdmin(
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       })
     }
-    if (apiKey !== validKey) {
+    // Use timing-safe comparison to prevent key enumeration via response time
+    const encoder = new TextEncoder()
+    const [incomingBuf, validBuf] = await Promise.all([
+      crypto.subtle.digest('SHA-256', encoder.encode(apiKey)),
+      crypto.subtle.digest('SHA-256', encoder.encode(validKey)),
+    ])
+    const incoming = new Uint8Array(incomingBuf)
+    const valid = new Uint8Array(validBuf)
+    let match = incoming.length === valid.length
+    for (let i = 0; i < incoming.length; i++) {
+      match = match && (incoming[i] === valid[i])
+    }
+    if (!match) {
       return new Response(JSON.stringify({ error: 'Invalid API key', ok: false }), {
         status: 401,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
