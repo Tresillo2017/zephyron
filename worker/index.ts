@@ -1,6 +1,6 @@
 import { Router, corsHeaders, errorResponse, json } from './lib/router'
 import { createAuth, requireAdmin, requireAuth } from './lib/auth'
-import { listSets, getSet, streamSet, getStreamUrl, getStoryboard, debugStream, incrementPlayCount, listGenres, getSetCover, getSetVideo } from './routes/sets'
+import { listSets, getSet, streamSet, getStreamUrl, getStoryboard, debugStream, incrementPlayCount, listGenres, getSetCover, getSetVideo, getDepthInfo, streamDepthFile, uploadDepthFile } from './routes/sets'
 import { search } from './routes/search'
 import { getHistory, updateHistory } from './routes/history'
 import { getDetections, voteDetection, createAnnotation, getAnnotations } from './routes/detections'
@@ -104,6 +104,11 @@ router.post('/api/sets/:id/play', incrementPlayCount)
 router.get('/api/sets/:id/waveform', getSetWaveform)
 router.get('/api/sets/:id/cover', getSetCover)
 router.get('/api/sets/:id/video', getSetVideo)
+
+// Depth XR
+router.get('/api/sets/:id/depth', getDepthInfo)
+router.get('/api/sets/:id/depth/file', streamDepthFile)
+router.post('/api/sets/:id/depth/upload', withAdmin(uploadDepthFile))
 
 // Songs (public read)
 router.get('/api/songs/:id/cover', getSongCover)
