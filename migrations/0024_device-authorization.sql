@@ -15,5 +15,5 @@ CREATE TABLE IF NOT EXISTS device_code (
     updated_at INTEGER NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS device_code_device_code_idx ON device_code(device_code);
-CREATE INDEX IF NOT EXISTS device_code_user_code_idx ON device_code(user_code);
+-- UNIQUE constraints above already create implicit indexes in SQLite/D1;
+-- no separate explicit indexes needed.

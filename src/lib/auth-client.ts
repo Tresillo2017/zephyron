@@ -5,6 +5,13 @@ import { apiKeyClient, type ApiKeyClientPlugin } from '@better-auth/api-key/clie
 
 type ApiKeyActions = ApiKeyClientPlugin extends { getActions: (...args: any[]) => infer A } ? A : Record<string, (...args: any[]) => Promise<any>>
 
+type DeviceActions = {
+  device: {
+    approve: (data: { userCode: string }) => Promise<void>
+    deny: (data: { userCode: string }) => Promise<void>
+  }
+}
+
 const _authClient = createAuthClient({
   baseURL: window.location.origin,
   basePath: '/api/auth',
@@ -20,7 +27,7 @@ const _authClient = createAuthClient({
   ],
 })
 
-export const authClient = _authClient as typeof _authClient & { apiKey: ApiKeyActions }
+export const authClient = _authClient as typeof _authClient & { apiKey: ApiKeyActions } & DeviceActions
 
 export const {
   signIn,
