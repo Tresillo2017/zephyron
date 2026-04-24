@@ -106,6 +106,8 @@ export function corsHeaders(requestOrigin?: string | null): Headers {
     // Allow production domain and subdomains
     requestOrigin.endsWith('.zephyron.app') ||
     requestOrigin === 'https://zephyron.app' ||
+    // Allow Chrome extension origins
+    requestOrigin.startsWith('chrome-extension://') ||
     // Allow Cloudflare Workers preview URLs (only for development)
     (requestOrigin.endsWith('.workers.dev') && requestOrigin.includes('zephyron'))
   )
@@ -114,7 +116,7 @@ export function corsHeaders(requestOrigin?: string | null): Headers {
 
   headers.set('Access-Control-Allow-Origin', origin)
   headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
-  headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Anonymous-Id, Authorization, Range, x-api-key')
+  headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Anonymous-Id, Authorization, Range, x-api-key, X-Admin-API-Key')
   headers.set('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges')
   headers.set('Access-Control-Allow-Credentials', 'true')
   headers.set('Access-Control-Max-Age', '86400')

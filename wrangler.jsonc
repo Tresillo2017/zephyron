@@ -93,6 +93,8 @@
   // GITHUB_TOKEN, TURNSTILE_SECRET_KEY) must be set via `wrangler secret put`.
   // Do NOT define them here — vars override secrets on every deploy.
   "vars": {
+    // Secrets (set via: wrangler secret put ADMIN_API_KEY)
+    // ADMIN_API_KEY — static key for Chrome extension and headless admin access
     "BETTER_AUTH_URL": "https://zephyron.app",
     "INVIDIOUS_BASE_URL": "https://invidious.zephyron.app"
   },

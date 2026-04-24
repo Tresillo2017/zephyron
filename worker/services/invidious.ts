@@ -368,6 +368,43 @@ function filterTracklistComments(comments: string[]): string[] {
     .map((r) => r.comment)
 }
 
+export interface InvidiousSearchResult {
+  video_id: string
+  title: string
+  author: string
+  thumbnail: string
+  duration_seconds: number
+}
+
+export async function searchVideos(
+  q: string,
+  env: Env,
+  limit = 5
+): Promise<InvidiousSearchResult[]> {
+  const baseUrl = getBaseUrl(env)
+  const params = new URLSearchParams({ q, type: 'video', sort_by: 'relevance' })
+  const url = `${baseUrl}/api/v1/search?${params}`
+
+  const resp = await fetch(url, { signal: AbortSignal.timeout(10000) })
+  if (!resp.ok) {
+    throw new Error(`Invidious search failed: ${resp.status}`)
+  }
+
+  const results = await resp.json() as Array<Record<string, unknown>>
+
+  return results.slice(0, limit).map((item) => {
+    const thumbnails = (item.videoThumbnails as Array<{ url: string; quality: string }> | undefined) ?? []
+    const thumb = thumbnails.find((t) => t.quality === 'medium') ?? thumbnails[0]
+    return {
+      video_id: String(item.videoId ?? ''),
+      title: String(item.title ?? ''),
+      author: String(item.author ?? ''),
+      thumbnail: thumb?.url ?? '',
+      duration_seconds: Number(item.lengthSeconds) || 0,
+    }
+  }).filter((r) => r.video_id)
+}
+
 /**
  * Helper: fetch video data from a YouTube URL (extracts video ID first).
  */

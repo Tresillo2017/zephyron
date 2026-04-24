@@ -66,6 +66,11 @@ export async function listSets(
     conditions.push('youtube_video_id IS NULL AND source_url IS NULL')
   }
 
+  const depthOnly = url.searchParams.get('depth')
+  if (depthOnly === 'true') {
+    conditions.push('depth_scene_key IS NOT NULL')
+  }
+
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
 
   let orderClause: string
@@ -583,4 +588,108 @@ function parseRange(rangeHeader: string): { offset: number; length?: number } | 
   return end !== undefined
     ? { offset: start, length: end - start + 1 }
     : { offset: start }
+}
+
+// GET /api/sets/:id/depth — Returns the URL to download the .dsf depth scene file.
+// Public — no auth required. Returns 404 if set has no depth scene.
+export async function getDepthInfo(
+  _request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>
+): Promise<Response> {
+  const { id } = params
+
+  const set = await env.DB.prepare(
+    'SELECT depth_scene_key, depth_processed_at FROM sets WHERE id = ?'
+  ).bind(id).first<{ depth_scene_key: string | null; depth_processed_at: string | null }>()
+
+  if (!set) return errorResponse('Set not found', 404)
+  if (!set.depth_scene_key) return errorResponse('Depth scene not available for this set', 404)
+
+  return json({
+    url: `/api/sets/${id}/depth/file`,
+    processed_at: set.depth_processed_at,
+    ok: true,
+  })
+}
+
+// GET /api/sets/:id/depth/file — Streams the .dsf binary from R2.
+// Public — no auth required. Supports Range requests for large files.
+export async function streamDepthFile(
+  request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>
+): Promise<Response> {
+  const { id } = params
+
+  const set = await env.DB.prepare(
+    'SELECT depth_scene_key FROM sets WHERE id = ?'
+  ).bind(id).first<{ depth_scene_key: string | null }>()
+
+  if (!set?.depth_scene_key) return new Response(null, { status: 404 })
+
+  const range = request.headers.get('Range')
+  const options: R2GetOptions = range ? { range: parseRange(range) } : {}
+
+  const object = await env.AUDIO_BUCKET.get(set.depth_scene_key, options)
+  if (!object) return new Response(null, { status: 404 })
+
+  const headers = new Headers()
+  headers.set('Content-Type', 'application/octet-stream')
+  headers.set('Cache-Control', 'public, max-age=604800')
+  headers.set('Accept-Ranges', 'bytes')
+  headers.set('Access-Control-Allow-Origin', '*')
+
+  if (range && object.size !== undefined) {
+    const r2Range = (object as any).range as { offset: number; length: number } | undefined
+    if (r2Range) {
+      const start = r2Range.offset
+      const end = start + r2Range.length - 1
+      headers.set('Content-Range', `bytes ${start}-${end}/${object.size}`)
+      headers.set('Content-Length', String(r2Range.length))
+      return new Response(object.body, { status: 206, headers })
+    }
+  }
+
+  if (object.size !== undefined) {
+    headers.set('Content-Length', String(object.size))
+  }
+
+  return new Response(object.body, { status: 200, headers })
+}
+
+// POST /api/sets/:id/depth/upload — Upload a .dsf file for a set.
+// Admin only. Body must be the raw .dsf binary with Content-Type: application/octet-stream.
+// Stores in R2 at sets/{id}/depth.dsf and marks the set as Depth-enabled.
+export async function uploadDepthFile(
+  request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>
+): Promise<Response> {
+  const { id } = params
+
+  const setExists = await env.DB.prepare('SELECT id FROM sets WHERE id = ?').bind(id).first()
+  if (!setExists) return errorResponse('Set not found', 404)
+
+  if (!request.body) return errorResponse('Request body required', 400)
+
+  const r2Key = `sets/${id}/depth.dsf`
+  const buffer = await request.arrayBuffer()
+
+  const MAX_DSF_SIZE = 500 * 1024 * 1024 // 500 MB upper bound for .dsf files
+  if (buffer.byteLength < 64) return errorResponse('File too small to be a valid .dsf', 400)
+  if (buffer.byteLength > MAX_DSF_SIZE) return errorResponse('File exceeds maximum allowed size (500 MB)', 413)
+
+  await env.AUDIO_BUCKET.put(r2Key, buffer, {
+    httpMetadata: { contentType: 'application/octet-stream' },
+  })
+
+  await env.DB.prepare(
+    'UPDATE sets SET depth_scene_key = ?, depth_processed_at = ? WHERE id = ?'
+  ).bind(r2Key, new Date().toISOString(), id).run()
+
+  return json({ data: { r2_key: r2Key }, ok: true })
 }

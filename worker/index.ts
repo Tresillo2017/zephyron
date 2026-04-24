@@ -1,6 +1,6 @@
 import { Router, corsHeaders, errorResponse, json } from './lib/router'
 import { createAuth, requireAdmin, requireAuth } from './lib/auth'
-import { listSets, getSet, streamSet, getStreamUrl, getStoryboard, debugStream, incrementPlayCount, listGenres, getSetCover, getSetVideo } from './routes/sets'
+import { listSets, getSet, streamSet, getStreamUrl, getStoryboard, debugStream, incrementPlayCount, listGenres, getSetCover, getSetVideo, getDepthInfo, streamDepthFile, uploadDepthFile } from './routes/sets'
 import { search } from './routes/search'
 import { getHistory, updateHistory } from './routes/history'
 import { getDetections, voteDetection, createAnnotation, getAnnotations } from './routes/detections'
@@ -11,6 +11,7 @@ import {
 import {
   triggerDetection, getDetectionStatus, mlStats,
   evolvePromptRoute, listJobs, redetectLowConfidence,
+  youtubeSearch,
 } from './routes/admin'
 import {
   generateInviteCode, listInviteCodes, revokeInviteCode,
@@ -103,6 +104,11 @@ router.post('/api/sets/:id/play', incrementPlayCount)
 router.get('/api/sets/:id/waveform', getSetWaveform)
 router.get('/api/sets/:id/cover', getSetCover)
 router.get('/api/sets/:id/video', getSetVideo)
+
+// Depth XR
+router.get('/api/sets/:id/depth', getDepthInfo)
+router.get('/api/sets/:id/depth/file', streamDepthFile)
+router.post('/api/sets/:id/depth/upload', withAdmin(uploadDepthFile))
 
 // Songs (public read)
 router.get('/api/songs/:id/cover', getSongCover)
@@ -230,6 +236,7 @@ router.post('/api/admin/sets/:id/redetect-low', withAdmin(redetectLowConfidence)
 router.get('/api/admin/ml/stats', withAdmin(mlStats))
 router.post('/api/admin/ml/evolve', withAdmin(evolvePromptRoute))
 router.get('/api/admin/jobs', withAdmin(listJobs))
+router.get('/api/admin/youtube-search', withAdmin(youtubeSearch))
 
 // Admin / Beta management
 router.post('/api/admin/invite-codes', withAdmin(generateInviteCode))
@@ -295,14 +302,22 @@ export default {
       return auth.handler(request)
     }
 
+    const requestOrigin = request.headers.get('Origin')
+    const fixCors = (res: Response): Response => {
+      const cors = corsHeaders(requestOrigin)
+      const headers = new Headers(res.headers)
+      cors.forEach((value, key) => headers.set(key, value))
+      return new Response(res.body, { status: res.status, headers })
+    }
+
     try {
       const response = await router.handle(request, env, ctx)
-      if (response) return response
-      return errorResponse('Not found', 404)
+      if (response) return fixCors(response)
+      return fixCors(errorResponse('Not found', 404))
     } catch (err) {
       console.error('API Error:', err)
       const message = err instanceof Error ? err.message : 'Internal server error'
-      return errorResponse(message, 500)
+      return fixCors(errorResponse(message, 500))
     }
   },
 

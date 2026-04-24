@@ -22,6 +22,9 @@ function stubPlugin(moduleId: string) {
 }
 
 export default defineConfig({
+  server: {
+    cors: true,
+  },
   plugins: [
     react(),
     tailwindcss(),

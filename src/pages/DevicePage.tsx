@@ -10,6 +10,7 @@ export function DevicePage() {
 
   const normalizedCode = rawCode.toUpperCase().replace(/\s/g, '')
 
+
   async function handleApprove(e: React.FormEvent) {
     e.preventDefault()
     if (!session) return
