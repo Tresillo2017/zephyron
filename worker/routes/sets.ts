@@ -679,7 +679,9 @@ export async function uploadDepthFile(
   const r2Key = `sets/${id}/depth.dsf`
   const buffer = await request.arrayBuffer()
 
+  const MAX_DSF_SIZE = 500 * 1024 * 1024 // 500 MB upper bound for .dsf files
   if (buffer.byteLength < 64) return errorResponse('File too small to be a valid .dsf', 400)
+  if (buffer.byteLength > MAX_DSF_SIZE) return errorResponse('File exceeds maximum allowed size (500 MB)', 413)
 
   await env.AUDIO_BUCKET.put(r2Key, buffer, {
     httpMetadata: { contentType: 'application/octet-stream' },
