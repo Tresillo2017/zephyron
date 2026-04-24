@@ -40,6 +40,9 @@ export interface DjSet {
   youtube_video_stream_expires: number | null
   created_at: string
   updated_at: string
+  // Depth XR feature
+  depth_scene_key: string | null
+  depth_processed_at: string | null
 }
 
 export interface Song {
