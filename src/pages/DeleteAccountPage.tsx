@@ -56,7 +56,7 @@ export function DeleteAccountPage() {
       </header>
 
       {/* Content */}
-      <main className="flex-1 px-5 sm:px-8 py-12 max-w-3xl mx-auto w-full">
+      <main className="flex-1 px-5 sm:px-8 lg:px-16 py-12 max-w-3xl mx-auto w-full">
         {!session ? (
           <LoggedOutState />
         ) : (
@@ -72,12 +72,12 @@ export function DeleteAccountPage() {
       </main>
 
       {/* Footer */}
-      <footer className="px-5 sm:px-8 py-5" style={{ borderTop: '1px solid hsl(var(--b4) / 0.3)' }}>
+      <footer className="px-5 sm:px-8 py-5 border-t border-border">
         <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>&copy; {new Date().getFullYear()} Zephyron</p>
+          <p className="text-xs text-text-muted">&copy; {new Date().getFullYear()} Zephyron</p>
           <div className="flex items-center gap-4 text-xs">
-            <Link to="/privacy" className="no-underline transition-colors" style={{ color: 'hsl(var(--c3))' }}>Privacy</Link>
-            <Link to="/terms" className="no-underline transition-colors" style={{ color: 'hsl(var(--c3))' }}>Terms</Link>
+            <Link to="/privacy" className="text-text-muted hover:text-text-primary transition-colors no-underline">Privacy</Link>
+            <Link to="/terms" className="text-text-muted hover:text-text-primary transition-colors no-underline">Terms</Link>
           </div>
         </div>
       </footer>
@@ -178,6 +178,7 @@ function LoggedInState({
 
         <input
           type="text"
+          aria-label="Type DELETE to confirm account deletion"
           value={confirmText}
           onChange={(e) => onConfirmChange(e.target.value)}
           placeholder="Type DELETE to confirm"
@@ -198,6 +199,7 @@ function LoggedInState({
 
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={onDelete}
             disabled={!confirmed || loading}
             className="px-4 h-[var(--button-height)] rounded-[var(--button-radius)] text-sm font-[var(--font-weight-medium)] transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
