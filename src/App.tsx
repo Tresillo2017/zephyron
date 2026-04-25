@@ -16,6 +16,7 @@ import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { AboutPage } from './pages/AboutPage'
 import { PrivacyPage } from './pages/PrivacyPage'
+import { DeleteAccountPage } from './pages/DeleteAccountPage'
 import { TermsPage } from './pages/TermsPage'
 import { TwoFactorPage } from './pages/TwoFactorPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
@@ -134,6 +135,7 @@ function App() {
         <Route path="2fa" element={<TwoFactorPage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="privacy" element={<PrivacyPage />} />
+        <Route path="delete-account" element={<DeleteAccountPage />} />
         <Route path="terms" element={<TermsPage />} />
         <Route path="device" element={<DevicePage />} />
 
