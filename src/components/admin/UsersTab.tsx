@@ -263,6 +263,7 @@ export function UsersTab() {
   const [createPassword, setCreatePassword] = useState("");
   const [createRole, setCreateRole] = useState<"user" | "admin">("user");
   const [createError, setCreateError] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
   const pageSize = 20;
 
@@ -457,38 +458,44 @@ export function UsersTab() {
 
   const handleCreateUser = async () => {
     setCreateError("");
-    const res = await authClient.admin.createUser({
-      name: createName.trim(),
-      email: createEmail.trim(),
-      password: createPassword,
-      role: createRole,
-    });
-    if (res.error) {
-      setCreateError(res.error.message ?? "Failed to create user");
-      return;
+    setIsCreating(true);
+    try {
+      const res = await authClient.admin.createUser({
+        name: createName.trim(),
+        email: createEmail.trim(),
+        password: createPassword,
+        role: createRole,
+      });
+      if (res.error) {
+        setCreateError(res.error.message ?? "Failed to create user");
+        return;
+      }
+      if ((res.data as any)?.user) {
+        const newUser: User = {
+          id: (res.data as any).user.id,
+          name: (res.data as any).user.name,
+          email: (res.data as any).user.email,
+          role: (res.data as any).user.role ?? createRole,
+          banned: false,
+          banReason: null,
+          reputation: 0,
+          createdAt: (res.data as any).user.createdAt as unknown as string,
+        };
+        setUsers((prev) => [newUser, ...prev]);
+        setTotal((t) => t + 1);
+        setModal(null);
+        setCreateName("");
+        setCreateEmail("");
+        setCreatePassword("");
+        setCreateRole("user");
+        setCreateError("");
+        showToast("User created successfully");
+      } else {
+        setCreateError("User created but response was unexpected. Refresh to see changes.");
+      }
+    } finally {
+      setIsCreating(false);
     }
-    if ((res.data as any)?.user) {
-      const u = (res.data as any).user;
-      const newUser: User = {
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        role: u.role ?? createRole,
-        banned: false,
-        banReason: null,
-        reputation: 0,
-        createdAt: u.createdAt as unknown as string,
-      };
-      setUsers((prev) => [newUser, ...prev]);
-      setTotal((t) => t + 1);
-    }
-    setModal(null);
-    setCreateName("");
-    setCreateEmail("");
-    setCreatePassword("");
-    setCreateRole("user");
-    setCreateError("");
-    showToast("User created successfully");
   };
 
   const totalPages = Math.ceil(total / pageSize);
@@ -1029,11 +1036,12 @@ export function UsersTab() {
               disabled={
                 !createName.trim() ||
                 !createEmail.trim() ||
-                createPassword.length < 8
+                createPassword.length < 8 ||
+                isCreating
               }
               onClick={handleCreateUser}
             >
-              Create User
+              {isCreating ? "Creating…" : "Create User"}
             </Button>
           </div>
         </div>
