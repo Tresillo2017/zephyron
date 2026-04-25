@@ -157,27 +157,25 @@ export function createAuth(env: Env) {
           before: async (user) => {
             // Validate invite code during registration
             const inviteCode = (user as any).invite_code || (user as any).inviteCode
-            if (!inviteCode) {
-              throw new Error('Invite code is required')
-            }
+            if (inviteCode) {
+              // Check invite code validity (do NOT consume yet — wait for successful creation)
+              const code = await env.DB.prepare(
+                'SELECT id, max_uses, used_count, expires_at FROM invite_codes WHERE code = ?'
+              )
+                .bind(inviteCode)
+                .first<{ id: string; max_uses: number; used_count: number; expires_at: string | null }>()
 
-            // Check invite code validity (do NOT consume yet — wait for successful creation)
-            const code = await env.DB.prepare(
-              'SELECT id, max_uses, used_count, expires_at FROM invite_codes WHERE code = ?'
-            )
-              .bind(inviteCode)
-              .first<{ id: string; max_uses: number; used_count: number; expires_at: string | null }>()
+              if (!code) {
+                throw new Error('Invalid invite code')
+              }
 
-            if (!code) {
-              throw new Error('Invalid invite code')
-            }
+              if (code.max_uses > 0 && code.used_count >= code.max_uses) {
+                throw new Error('Invite code has been fully used')
+              }
 
-            if (code.max_uses > 0 && code.used_count >= code.max_uses) {
-              throw new Error('Invite code has been fully used')
-            }
-
-            if (code.expires_at && new Date(code.expires_at) < new Date()) {
-              throw new Error('Invite code has expired')
+              if (code.expires_at && new Date(code.expires_at) < new Date()) {
+                throw new Error('Invite code has expired')
+              }
             }
 
             return {
