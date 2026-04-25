@@ -906,11 +906,13 @@ function AccountTab() {
       <div className="bg-surface-raised border border-danger/20 rounded-xl p-5 space-y-3">
         <h3 className="text-sm font-semibold text-danger">Danger Zone</h3>
         <p className="text-xs text-text-muted">
-          Account deletion is not yet available. Contact support if you need to delete your account.
+          Permanently delete your account and all associated data. This action cannot be undone.
         </p>
-        <Button variant="danger" size="sm" disabled>
-          Delete Account
-        </Button>
+        <Link to="/delete-account" className="no-underline">
+          <Button variant="danger" size="sm">
+            Delete Account
+          </Button>
+        </Link>
       </div>
     </div>
   )
