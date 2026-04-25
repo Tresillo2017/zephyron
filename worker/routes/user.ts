@@ -58,3 +58,49 @@ export async function updateUsername(
 
   return json({ ok: true, username })
 }
+
+/**
+ * DELETE /api/user/me
+ * Deletes the authenticated user's account and all associated R2 assets.
+ */
+export async function deleteCurrentUser(
+  request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  _params: Record<string, string>
+): Promise<Response> {
+  const authResult = await requireAuth(request, env)
+  if (authResult instanceof Response) return authResult
+
+  const { user } = authResult
+
+  // Best-effort: delete R2 assets and orphaned user data before removing user record
+  const userId = user.id
+  await Promise.allSettled([
+    env.AVATARS.delete(`${userId}/avatar-small.webp`),
+    env.AVATARS.delete(`${userId}/avatar-large.webp`),
+    env.AVATARS.delete(`${userId}/banner.webp`),
+    env.DB.prepare('DELETE FROM listen_history WHERE user_id = ?').bind(userId).run(),
+    env.DB.prepare('DELETE FROM playlists WHERE user_id = ?').bind(userId).run(),
+    env.DB.prepare('DELETE FROM user_song_likes WHERE user_id = ?').bind(userId).run(),
+    env.DB.prepare('UPDATE annotations SET user_id = NULL WHERE user_id = ?').bind(userId).run(),
+    env.DB.prepare('UPDATE votes SET user_id = NULL WHERE user_id = ?').bind(userId).run(),
+  ])
+
+  const auth = createAuth(env)
+  // `auth.api` type does not expose admin-plugin endpoints without explicit widening.
+  // The admin plugin (registered in auth.ts) adds `removeUser` at runtime.
+  const adminApi = auth.api as typeof auth.api & {
+    removeUser: (opts: { body: { userId: string }; headers: Headers }) => Promise<{ success: boolean }>
+  }
+  const result = await adminApi.removeUser({
+    body: { userId: user.id },
+    headers: request.headers,
+  })
+
+  if (!result?.success) {
+    return errorResponse('Failed to delete account', 500)
+  }
+
+  return json({ ok: true })
+}

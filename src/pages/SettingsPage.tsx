@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSearchParams, Link } from 'react-router'
+import { useSearchParams, useNavigate, Link } from 'react-router'
 import { useSession, authClient, getSession } from '../lib/auth-client'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
@@ -851,6 +851,7 @@ function ApiKeysSection() {
 function AccountTab() {
   const { data: session } = useSession()
   const user = session?.user as any
+  const navigate = useNavigate()
   const [signingOut, setSigningOut] = useState(false)
 
   const handleSignOutAll = async () => {
@@ -906,9 +907,9 @@ function AccountTab() {
       <div className="bg-surface-raised border border-danger/20 rounded-xl p-5 space-y-3">
         <h3 className="text-sm font-semibold text-danger">Danger Zone</h3>
         <p className="text-xs text-text-muted">
-          Account deletion is not yet available. Contact support if you need to delete your account.
+          Permanently delete your account and all associated data. This action cannot be undone.
         </p>
-        <Button variant="danger" size="sm" disabled>
+        <Button variant="danger" size="sm" onClick={() => navigate('/delete-account')}>
           Delete Account
         </Button>
       </div>

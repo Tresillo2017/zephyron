@@ -33,7 +33,7 @@ import {
 import { submitSetRequest, listSetRequests, approveSetRequest, rejectSetRequest } from './routes/petitions'
 import { createSourceRequest, listSourceRequests, approveSourceRequest, rejectSourceRequest } from './routes/source-requests'
 import { getSong, getSongCover, likeSong, unlikeSong, getLikedSongs, getSongLikeStatus, listSongsAdmin, updateSongAdmin, deleteSongAdmin, cacheSongCoverAdmin, enrichSongAdmin } from './routes/songs'
-import { updateUsername } from './routes/user'
+import { updateUsername, deleteCurrentUser } from './routes/user'
 import { uploadAvatar, uploadBanner, deleteBanner, updateProfileSettings, getPublicProfile } from './routes/profile'
 import { getStats } from './routes/stats'
 import { getBadges } from './routes/badges'
@@ -186,6 +186,7 @@ router.post('/api/sets/:id/request-source', withAuth(createSourceRequest))
 
 // User profile
 router.patch('/api/user/username', updateUsername)
+router.delete('/api/user/me', deleteCurrentUser)
 
 // Profile routes
 router.post('/api/profile/avatar/upload', uploadAvatar)

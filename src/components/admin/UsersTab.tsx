@@ -26,7 +26,8 @@ type ActionModal =
   | { type: "ban"; user: User }
   | { type: "delete"; user: User }
   | { type: "revoke"; user: User }
-  | { type: "set-password"; user: User };
+  | { type: "set-password"; user: User }
+  | { type: "create" };
 
 const BAN_EXPIRY_OPTIONS = [
   { label: "Permanent", value: "" },
@@ -256,6 +257,13 @@ export function UsersTab() {
   const [banExpiry, setBanExpiry] = useState("");
   // Set password form state
   const [newPassword, setNewPassword] = useState("");
+  // Create user form state
+  const [createName, setCreateName] = useState("");
+  const [createEmail, setCreateEmail] = useState("");
+  const [createPassword, setCreatePassword] = useState("");
+  const [createRole, setCreateRole] = useState<"user" | "admin">("user");
+  const [createError, setCreateError] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
   const pageSize = 20;
 
@@ -448,6 +456,51 @@ export function UsersTab() {
     });
   };
 
+  const handleCreateUser = async () => {
+    setCreateError("");
+    setIsCreating(true);
+    try {
+      const res = await authClient.admin.createUser({
+        name: createName.trim(),
+        email: createEmail.trim(),
+        password: createPassword,
+        role: createRole,
+        data: { skip_invite_check: true },
+      });
+      if (res.error) {
+        setCreateError(res.error.message ?? "Failed to create user");
+        return;
+      }
+      if ((res.data as any)?.user) {
+        const newUser: User = {
+          id: (res.data as any).user.id,
+          name: (res.data as any).user.name,
+          email: (res.data as any).user.email,
+          role: (res.data as any).user.role ?? createRole,
+          banned: false,
+          banReason: null,
+          reputation: 0,
+          createdAt: (res.data as any).user.createdAt as unknown as string,
+        };
+        setUsers((prev) => [newUser, ...prev]);
+        setTotal((t) => t + 1);
+        setModal(null);
+        setCreateName("");
+        setCreateEmail("");
+        setCreatePassword("");
+        setCreateRole("user");
+        setCreateError("");
+        showToast("User created successfully");
+      } else {
+        setCreateError("User created but response was unexpected. Refresh to see changes.");
+      }
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : "Failed to create user");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   const totalPages = Math.ceil(total / pageSize);
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -489,8 +542,15 @@ export function UsersTab() {
             }}
           />
         </div>
+        <Button
+          size="sm"
+          variant="primary"
+          onClick={() => setModal({ type: "create" })}
+        >
+          Create User
+        </Button>
         <p
-          className="text-sm ml-auto shrink-0"
+          className="text-sm shrink-0"
           style={{ color: "hsl(var(--c3))" }}
         >
           {total} user{total !== 1 ? "s" : ""}
@@ -877,6 +937,114 @@ export function UsersTab() {
               }}
             >
               Set Password
+            </Button>
+          </div>
+        </div>
+      </Modal>
+      {/* ── Create user modal ─────────────────────────────────────────────── */}
+      <Modal
+        isOpen={modal?.type === "create"}
+        onClose={() => {
+          setModal(null);
+          setCreateName("");
+          setCreateEmail("");
+          setCreatePassword("");
+          setCreateRole("user");
+          setCreateError("");
+        }}
+        title="Create User"
+      >
+        <div className="flex flex-col gap-4">
+          <Input
+            label="Name"
+            placeholder="Full name"
+            value={createName}
+            onChange={(e) => setCreateName(e.target.value)}
+            autoComplete="off"
+          />
+          <Input
+            label="Email"
+            type="email"
+            placeholder="email@example.com"
+            value={createEmail}
+            onChange={(e) => setCreateEmail(e.target.value)}
+            autoComplete="off"
+          />
+          <Input
+            label="Password"
+            type="password"
+            placeholder="Min. 8 characters"
+            value={createPassword}
+            onChange={(e) => setCreatePassword(e.target.value)}
+            autoComplete="new-password"
+          />
+
+          <div className="flex flex-col gap-1.5">
+            <label
+              className="text-sm font-[var(--font-weight-medium)]"
+              style={{ color: "hsl(var(--c2))" }}
+            >
+              Role
+            </label>
+            <div className="flex gap-2">
+              {(["user", "admin"] as const).map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setCreateRole(r)}
+                  className="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer capitalize"
+                  style={{
+                    background:
+                      createRole === r
+                        ? "hsl(var(--h3) / 0.15)"
+                        : "hsl(var(--b4) / 0.4)",
+                    color:
+                      createRole === r
+                        ? "hsl(var(--h3))"
+                        : "hsl(var(--c2))",
+                    boxShadow:
+                      createRole === r
+                        ? "inset 0 0 0 1px hsl(var(--h3) / 0.4)"
+                        : "none",
+                  }}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {createError && (
+            <p className="text-xs" style={{ color: "hsl(0, 60%, 65%)" }}>
+              {createError}
+            </p>
+          )}
+
+          <div className="flex gap-2 justify-end pt-1">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setModal(null);
+                setCreateName("");
+                setCreateEmail("");
+                setCreatePassword("");
+                setCreateRole("user");
+                setCreateError("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              disabled={
+                !createName.trim() ||
+                !createEmail.trim() ||
+                createPassword.length < 8 ||
+                isCreating
+              }
+              onClick={handleCreateUser}
+            >
+              {isCreating ? "Creating…" : "Create User"}
             </Button>
           </div>
         </div>
