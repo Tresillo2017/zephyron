@@ -81,12 +81,17 @@ export async function deleteCurrentUser(
   ])
 
   const auth = createAuth(env)
-  const result = await (auth.api as any).removeUser({
+  // `auth.api` type does not expose admin-plugin endpoints without explicit widening.
+  // The admin plugin (registered in auth.ts) adds `removeUser` at runtime.
+  const adminApi = auth.api as typeof auth.api & {
+    removeUser: (opts: { body: { userId: string }; headers: Headers }) => Promise<{ success: boolean }>
+  }
+  const result = await adminApi.removeUser({
     body: { userId: user.id },
     headers: request.headers,
   })
 
-  if (!result) {
+  if (!result?.success) {
     return errorResponse('Failed to delete account', 500)
   }
 
