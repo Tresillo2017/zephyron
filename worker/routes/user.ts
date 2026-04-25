@@ -58,3 +58,37 @@ export async function updateUsername(
 
   return json({ ok: true, username })
 }
+
+/**
+ * DELETE /api/user/me
+ * Deletes the authenticated user's account and all associated R2 assets.
+ */
+export async function deleteCurrentUser(
+  request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  _params: Record<string, string>
+): Promise<Response> {
+  const authResult = await requireAuth(request, env)
+  if (authResult instanceof Response) return authResult
+
+  const { user } = authResult
+
+  // Best-effort: delete R2 assets before removing user record
+  await Promise.allSettled([
+    env.AVATARS.delete(`${user.id}/avatar.webp`),
+    env.AVATARS.delete(`${user.id}/banner.webp`),
+  ])
+
+  const auth = createAuth(env)
+  const result = await (auth.api as any).removeUser({
+    body: { userId: user.id },
+    headers: request.headers,
+  })
+
+  if (!result) {
+    return errorResponse('Failed to delete account', 500)
+  }
+
+  return json({ ok: true })
+}
