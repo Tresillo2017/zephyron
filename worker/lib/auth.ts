@@ -156,8 +156,16 @@ export function createAuth(env: Env) {
         create: {
           before: async (user) => {
             // Validate invite code during registration
+            // Admin-created users pass data.skip_invite_check to bypass this requirement.
+            // Self-registration must always supply an invite code.
+            const skipInviteCheck = (user as any).skip_invite_check === true
             const inviteCode = (user as any).invite_code || (user as any).inviteCode
-            if (inviteCode) {
+
+            if (!skipInviteCheck) {
+              if (!inviteCode) {
+                throw new Error('Invite code is required')
+              }
+
               // Check invite code validity (do NOT consume yet — wait for successful creation)
               const code = await env.DB.prepare(
                 'SELECT id, max_uses, used_count, expires_at FROM invite_codes WHERE code = ?'

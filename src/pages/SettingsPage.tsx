@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSearchParams, Link } from 'react-router'
+import { useSearchParams, useNavigate, Link } from 'react-router'
 import { useSession, authClient, getSession } from '../lib/auth-client'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
@@ -851,6 +851,7 @@ function ApiKeysSection() {
 function AccountTab() {
   const { data: session } = useSession()
   const user = session?.user as any
+  const navigate = useNavigate()
   const [signingOut, setSigningOut] = useState(false)
 
   const handleSignOutAll = async () => {
@@ -908,11 +909,9 @@ function AccountTab() {
         <p className="text-xs text-text-muted">
           Permanently delete your account and all associated data. This action cannot be undone.
         </p>
-        <Link to="/delete-account" className="no-underline">
-          <Button variant="danger" size="sm">
-            Delete Account
-          </Button>
-        </Link>
+        <Button variant="danger" size="sm" onClick={() => navigate('/delete-account')}>
+          Delete Account
+        </Button>
       </div>
     </div>
   )

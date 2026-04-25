@@ -151,10 +151,10 @@ function LoggedInState({
         <ul className="text-sm space-y-1.5 list-none p-0 m-0" style={{ color: 'hsl(var(--c2))' }}>
           {[
             'Your account and login credentials',
-            'Listening history and session data',
-            'Annotations and votes',
-            'Playlists',
+            'Listening history and playlists',
+            'Liked songs',
             'Profile picture and banner',
+            'Annotations and votes (anonymised, not removed)',
           ].map((item) => (
             <li key={item} className="flex items-center gap-2">
               <span style={{ color: 'hsl(0, 60%, 60%)' }}>×</span>

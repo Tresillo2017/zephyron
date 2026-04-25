@@ -74,10 +74,17 @@ export async function deleteCurrentUser(
 
   const { user } = authResult
 
-  // Best-effort: delete R2 assets before removing user record
+  // Best-effort: delete R2 assets and orphaned user data before removing user record
+  const userId = user.id
   await Promise.allSettled([
-    env.AVATARS.delete(`${user.id}/avatar.webp`),
-    env.AVATARS.delete(`${user.id}/banner.webp`),
+    env.AVATARS.delete(`${userId}/avatar-small.webp`),
+    env.AVATARS.delete(`${userId}/avatar-large.webp`),
+    env.AVATARS.delete(`${userId}/banner.webp`),
+    env.DB.prepare('DELETE FROM listen_history WHERE user_id = ?').bind(userId).run(),
+    env.DB.prepare('DELETE FROM playlists WHERE user_id = ?').bind(userId).run(),
+    env.DB.prepare('DELETE FROM user_song_likes WHERE user_id = ?').bind(userId).run(),
+    env.DB.prepare('UPDATE annotations SET user_id = NULL WHERE user_id = ?').bind(userId).run(),
+    env.DB.prepare('UPDATE votes SET user_id = NULL WHERE user_id = ?').bind(userId).run(),
   ])
 
   const auth = createAuth(env)

@@ -465,6 +465,7 @@ export function UsersTab() {
         email: createEmail.trim(),
         password: createPassword,
         role: createRole,
+        data: { skip_invite_check: true },
       });
       if (res.error) {
         setCreateError(res.error.message ?? "Failed to create user");
@@ -493,6 +494,8 @@ export function UsersTab() {
       } else {
         setCreateError("User created but response was unexpected. Refresh to see changes.");
       }
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : "Failed to create user");
     } finally {
       setIsCreating(false);
     }
