@@ -212,7 +212,6 @@ export interface ActivityPrivacySettings {
   playlist_updated: boolean
   annotation_approved: boolean
   milestone_reached: boolean
-  set_listened: boolean
 }
 
 export interface Annotation {
