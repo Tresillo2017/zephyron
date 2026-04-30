@@ -56,7 +56,6 @@ type LikedSong = Song & {
 
 export function ProfilePage() {
   const { data: session } = useSession();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get("tab") || "overview") as
     | "overview"
