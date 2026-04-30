@@ -14,7 +14,6 @@ import { Toaster } from 'sileo'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
-import { AboutPage } from './pages/AboutPage'
 import { PrivacyPage } from './pages/PrivacyPage'
 import { DeleteAccountPage } from './pages/DeleteAccountPage'
 import { TermsPage } from './pages/TermsPage'
@@ -133,7 +132,6 @@ function App() {
         <Route path="register" element={<RedirectIfAuth><RegisterPage /></RedirectIfAuth>} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
         <Route path="2fa" element={<TwoFactorPage />} />
-        <Route path="about" element={<AboutPage />} />
         <Route path="privacy" element={<PrivacyPage />} />
         <Route path="delete-account" element={<DeleteAccountPage />} />
         <Route path="terms" element={<TermsPage />} />

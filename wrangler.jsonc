@@ -89,9 +89,21 @@
     ]
   },
   // Environment variables
-  // IMPORTANT: Secrets (BETTER_AUTH_SECRET, LASTFM_API_KEY,
-  // GITHUB_TOKEN, TURNSTILE_SECRET_KEY) must be set via `wrangler secret put`.
-  // Do NOT define them here — vars override secrets on every deploy.
+  // IMPORTANT: Secrets must be set via `wrangler secret put`. Do NOT define
+  // them here — vars override secrets on every deploy.
+  //
+  // Required secrets:
+  //   BETTER_AUTH_SECRET       — Better Auth signing secret
+  //   LASTFM_API_KEY           — Last.fm API key
+  //   GITHUB_TOKEN             — GitHub API token
+  //   TURNSTILE_SECRET_KEY     — Cloudflare Turnstile
+  //   ADMIN_API_KEY            — Static key for depth-cli and admin tools
+  //
+  // depth-cli uploads .dsf files directly to R2 via the S3 API (bypasses
+  // the Worker to avoid the 100 MB request body limit). It uses its own R2
+  // API token — create one at: Cloudflare Dashboard → R2 → Manage API tokens
+  // (permission: Object Read & Write on zephyron-audio bucket).
+  // Configure in depth-cli with: depth-cli configure
   "vars": {
     // Secrets (set via: wrangler secret put ADMIN_API_KEY)
     // ADMIN_API_KEY — static key for Chrome extension and headless admin access

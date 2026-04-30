@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import {
   useSession,
-  signOut,
   getSession,
   authClient,
 } from "../lib/auth-client";
@@ -57,7 +56,6 @@ type LikedSong = Song & {
 
 export function ProfilePage() {
   const { data: session } = useSession();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get("tab") || "overview") as
     | "overview"
@@ -82,7 +80,7 @@ export function ProfilePage() {
     total_hours: number;
   } | null>(null);
   const [settingsExpanded, setSettingsExpanded] = useState(
-    ["privacy", "appearance", "security", "account"].includes(activeTab)
+    ["privacy", "appearance", "security", "account", "about"].includes(activeTab)
   );
 
   // Listen history state
@@ -204,11 +202,6 @@ export function ProfilePage() {
     if (user?.banner_url) setBannerUrl(user.banner_url);
   }, [user?.banner_url]);
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
-
   const handleResume = (item: ListenHistoryItem) => {
     if (item.title && item.duration_seconds) {
       play({
@@ -261,7 +254,7 @@ export function ProfilePage() {
     params.set("tab", tab);
     setSearchParams(params);
     // Expand settings dropdown if navigating to a settings tab
-    if (["privacy", "appearance", "security", "account"].includes(tab)) {
+    if (["privacy", "appearance", "security", "account", "about"].includes(tab)) {
       setSettingsExpanded(true);
     }
   };
@@ -312,11 +305,6 @@ export function ProfilePage() {
               label: "History",
               icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
             },
-            {
-              id: "about",
-              label: "About",
-              icon: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
-            },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -353,27 +341,15 @@ export function ProfilePage() {
             <button
               onClick={() => setSettingsExpanded(!settingsExpanded)}
               className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                ["privacy", "appearance", "security", "account"].includes(
-                  activeTab
-                )
+                ["privacy", "appearance", "security", "account", "about"].includes(activeTab)
                   ? "font-[var(--font-weight-medium)]"
                   : ""
               }`}
               style={{
-                color: [
-                  "privacy",
-                  "appearance",
-                  "security",
-                  "account",
-                ].includes(activeTab)
+                color: ["privacy", "appearance", "security", "account", "about"].includes(activeTab)
                   ? "hsl(var(--c1))"
                   : "hsl(var(--c2))",
-                background: [
-                  "privacy",
-                  "appearance",
-                  "security",
-                  "account",
-                ].includes(activeTab)
+                background: ["privacy", "appearance", "security", "account", "about"].includes(activeTab)
                   ? "hsl(var(--b4) / 0.5)"
                   : "transparent",
               }}
@@ -443,6 +419,11 @@ export function ProfilePage() {
                   {
                     id: "account",
                     label: "Account",
+                    icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z",
+                  },
+                  {
+                    id: "about",
+                    label: "About",
                     icon: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
                   },
                 ].map((subTab) => (
@@ -1113,197 +1094,7 @@ export function ProfilePage() {
           {activeTab === "appearance" && <AppearanceTab />}
           {activeTab === "security" && <SecurityTab />}
           {activeTab === "account" && <AccountTab />}
-
-          {activeTab === "about" && (
-            <div className="space-y-4">
-              {/* Account Information */}
-              <div className="card">
-                <h3
-                  className="text-sm font-[var(--font-weight-medium)] mb-4"
-                  style={{ color: "hsl(var(--c1))" }}
-                >
-                  Account Information
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span
-                      className="text-sm"
-                      style={{ color: "hsl(var(--c3))" }}
-                    >
-                      Username
-                    </span>
-                    <span
-                      className="text-sm font-[var(--font-weight-medium)]"
-                      style={{ color: "hsl(var(--c1))" }}
-                    >
-                      {user.name}
-                    </span>
-                  </div>
-                  {user.email && (
-                    <div className="flex justify-between items-center">
-                      <span
-                        className="text-sm"
-                        style={{ color: "hsl(var(--c3))" }}
-                      >
-                        Email
-                      </span>
-                      <span
-                        className="text-sm font-mono"
-                        style={{ color: "hsl(var(--c2))" }}
-                      >
-                        {user.email}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center">
-                    <span
-                      className="text-sm"
-                      style={{ color: "hsl(var(--c3))" }}
-                    >
-                      Role
-                    </span>
-                    <Badge variant="accent">{user.role || "user"}</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span
-                      className="text-sm"
-                      style={{ color: "hsl(var(--c3))" }}
-                    >
-                      Member since
-                    </span>
-                    <span
-                      className="text-sm"
-                      style={{ color: "hsl(var(--c2))" }}
-                    >
-                      {user.createdAt
-                        ? formatRelativeTime(user.createdAt)
-                        : "Unknown"}
-                    </span>
-                  </div>
-                  {user.id && (
-                    <div className="flex justify-between items-center">
-                      <span
-                        className="text-sm"
-                        style={{ color: "hsl(var(--c3))" }}
-                      >
-                        User ID
-                      </span>
-                      <button
-                        onClick={() => navigator.clipboard.writeText(user.id)}
-                        className="text-[11px] font-mono px-2 py-1 rounded transition-colors"
-                        style={{
-                          color: "hsl(var(--c3))",
-                          background: "hsl(var(--b4) / 0.3)",
-                        }}
-                        title="Click to copy"
-                      >
-                        {user.id.slice(0, 8)}...
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Activity Summary */}
-              <div className="card">
-                <h3
-                  className="text-sm font-[var(--font-weight-medium)] mb-4"
-                  style={{ color: "hsl(var(--c1))" }}
-                >
-                  Activity Summary
-                </h3>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <p
-                      className="text-2xl font-[var(--font-weight-bold)]"
-                      style={{ color: "hsl(var(--c1))" }}
-                    >
-                      {playlistCount}
-                    </p>
-                    <p
-                      className="text-[11px] mt-0.5"
-                      style={{ color: "hsl(var(--c3))" }}
-                    >
-                      Playlists
-                    </p>
-                  </div>
-                  <div>
-                    <p
-                      className="text-2xl font-[var(--font-weight-bold)]"
-                      style={{ color: "hsl(var(--c1))" }}
-                    >
-                      {likedSongsTotal}
-                    </p>
-                    <p
-                      className="text-[11px] mt-0.5"
-                      style={{ color: "hsl(var(--c3))" }}
-                    >
-                      Liked Songs
-                    </p>
-                  </div>
-                  <div>
-                    <p
-                      className="text-2xl font-[var(--font-weight-bold)]"
-                      style={{ color: "hsl(var(--c1))" }}
-                    >
-                      {recentCount}
-                    </p>
-                    <p
-                      className="text-[11px] mt-0.5"
-                      style={{ color: "hsl(var(--c3))" }}
-                    >
-                      Sets Played
-                    </p>
-                  </div>
-                </div>
-                {currentMonthStats && (
-                  <div
-                    className="mt-4 pt-4"
-                    style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)" }}
-                  >
-                    <div className="flex items-end gap-2">
-                      <p
-                        className="text-3xl font-[var(--font-weight-bold)]"
-                        style={{ color: "hsl(var(--h3))" }}
-                      >
-                        {Math.round(currentMonthStats.total_hours * 10) / 10}
-                      </p>
-                      <p
-                        className="text-sm mb-1"
-                        style={{ color: "hsl(var(--c2))" }}
-                      >
-                        hours listened this month
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Sign Out */}
-              <div className="card">
-                <Button
-                  variant="danger"
-                  onClick={handleSignOut}
-                  className="w-full justify-center"
-                >
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                    />
-                  </svg>
-                  Sign out
-                </Button>
-              </div>
-            </div>
-          )}
+          {activeTab === "about" && <AboutTab />}
         </div>
       </main>
 
@@ -1909,7 +1700,7 @@ function ApiKeysSection() {
     } catch { setError("Failed to load API keys"); } finally { setLoading(false); }
   };
 
-  useState(() => { loadKeys(); });
+  useEffect(() => { loadKeys(); }, []);
 
   const handleCreate = async () => {
     setCreating(true); setError("");
@@ -2023,8 +1814,8 @@ function ApiKeysSection() {
 function AccountTab() {
   const { data: session } = useSession();
   const user = session?.user as any;
+  const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
-  const [copiedId, setCopiedId] = useState(false);
 
   const handleSignOutAll = async () => {
     setSigningOut(true);
@@ -2036,54 +1827,30 @@ function AccountTab() {
     }
   };
 
-  const copyUserId = () => {
-    navigator.clipboard.writeText(user?.id || "");
-    setCopiedId(true);
-    setTimeout(() => setCopiedId(false), 2000);
-  };
-
-  const InfoRow = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div className="flex items-center justify-between py-2.5" style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)" }}>
-      <span className="text-sm" style={{ color: "hsl(var(--c3))" }}>{label}</span>
-      <div className="text-sm" style={{ color: "hsl(var(--c2))" }}>{children}</div>
-    </div>
-  );
-
   return (
     <div className="space-y-4">
-      <SettingSection title="Account information" description="Details about your Zephyron account.">
-        <InfoRow label="Display name">
-          <span className="font-[var(--font-weight-medium)]" style={{ color: "hsl(var(--c1))" }}>{user?.name}</span>
-        </InfoRow>
-        {user?.email && (
-          <InfoRow label="Email">
-            <span className="font-mono text-xs">{user.email}</span>
-          </InfoRow>
-        )}
-        <InfoRow label="Role">
-          <Badge variant="accent">{user?.role || "user"}</Badge>
-        </InfoRow>
-        <InfoRow label="Member since">
-          {user?.createdAt ? new Date(user.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "Unknown"}
-        </InfoRow>
-        <InfoRow label="User ID">
-          <button
-            onClick={copyUserId}
-            className="flex items-center gap-1.5 font-mono text-xs px-2 py-1 rounded transition-colors"
-            style={{ background: "hsl(var(--b4) / 0.4)", color: copiedId ? "hsl(var(--h3))" : "hsl(var(--c3))" }}
-            title="Click to copy"
-          >
-            {copiedId ? "Copied!" : `${user?.id?.slice(0, 10)}…`}
-          </button>
-        </InfoRow>
-        <InfoRow label="App version">
-          <Link to="/app/changelog" className="font-mono text-xs hover:underline no-underline" style={{ color: "hsl(var(--h3))" }}>
-            v{__APP_VERSION__}
-          </Link>
-        </InfoRow>
+      <SettingSection title="Account Information" description="Details about your Zephyron account.">
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between items-center py-1">
+            <span className="text-sm" style={{ color: "hsl(var(--c3))" }}>Role</span>
+            <Badge variant="accent">{user?.role || "user"}</Badge>
+          </div>
+          <div className="flex justify-between items-center py-1">
+            <span className="text-sm" style={{ color: "hsl(var(--c3))" }}>Member since</span>
+            <span className="text-sm" style={{ color: "hsl(var(--c2))" }}>
+              {user?.createdAt ? new Date(user.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "Unknown"}
+            </span>
+          </div>
+          <div className="flex justify-between items-center py-1">
+            <span className="text-sm" style={{ color: "hsl(var(--c3))" }}>App version</span>
+            <Link to="/app/changelog" className="font-mono text-xs hover:underline no-underline" style={{ color: "hsl(var(--h3))" }}>
+              v{__APP_VERSION__}
+            </Link>
+          </div>
+        </div>
       </SettingSection>
 
-      <SettingSection title="Sessions" description="Manage your active login sessions.">
+      <SettingSection title="Active Sessions" description="Sign out of all other sessions across all devices.">
         <Button variant="secondary" size="sm" onClick={handleSignOutAll} disabled={signingOut}>
           {signingOut ? "Signing out…" : "Sign out all devices"}
         </Button>
@@ -2091,15 +1858,94 @@ function AccountTab() {
 
       <div className="card" style={{ border: "1px solid hsl(0 60% 40% / 0.2)" }}>
         <h3 className="text-sm font-[var(--font-weight-medium)] mb-1" style={{ color: "hsl(0 60% 55%)" }}>
-          Danger zone
+          Danger Zone
         </h3>
         <p className="text-xs mb-4" style={{ color: "hsl(var(--c3))" }}>
-          Account deletion is not yet available. Contact support if you need to delete your account.
+          Permanently delete your account and all associated data. This action cannot be undone.
         </p>
-        <Button variant="danger" size="sm" disabled>
-          Delete account
+        <Button variant="danger" size="sm" onClick={() => navigate("/delete-account")}>
+          Delete Account
         </Button>
       </div>
+    </div>
+  );
+}
+
+function AboutTab() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <div className="flex items-center gap-3 mb-3">
+          <h2 className="text-xl font-bold" style={{ color: "hsl(var(--c1))" }}>
+            The platform built for <span style={{ color: "hsl(var(--h3))" }}>DJ sets</span>
+          </h2>
+          <Link to="/app/changelog" className="px-2 py-0.5 rounded-md text-[10px] font-mono no-underline hover:opacity-80 transition-opacity" style={{ background: "hsl(var(--b4) / 0.5)", color: "hsl(var(--c3))", border: "1px solid hsl(var(--b4))" }}>
+            v{__APP_VERSION__}
+          </Link>
+        </div>
+        <div className="space-y-3 text-sm leading-relaxed" style={{ color: "hsl(var(--c2))" }}>
+          <p>
+            Zephyron exists because DJ sets deserve better. Festival mixes, club recordings,
+            and radio shows are some of the most exciting music experiences out there, yet
+            finding out what tracks are playing has always been a pain.
+          </p>
+          <p>
+            We're building a curated streaming platform where every set comes with an intelligent,
+            community-refined tracklist. No more Shazam-ing mid-set. No more digging through
+            YouTube comments. Just press play and know what you're hearing.
+          </p>
+        </div>
+      </div>
+
+      <SettingSection title="How It Works" description="">
+        <div className="grid sm:grid-cols-3 gap-3">
+          {[
+            { title: "AI Detection", desc: "Our AI analyzes YouTube descriptions, comments, and metadata to identify tracks with timestamps, then enriches them via Last.fm." },
+            { title: "Community Corrections", desc: "Users vote on detections and submit corrections. The community's collective knowledge fills in what AI misses." },
+            { title: "Self-Improving ML", desc: "Every correction feeds back into our detection prompts. The system gets smarter with every listen and every vote." },
+          ].map((item) => (
+            <div key={item.title} className="card p-3">
+              <h4 className="text-xs font-[var(--font-weight-medium)] mb-1" style={{ color: "hsl(var(--c1))" }}>{item.title}</h4>
+              <p className="text-xs leading-relaxed" style={{ color: "hsl(var(--c3))" }}>{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </SettingSection>
+
+      <SettingSection title="Built With" description="">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: "Frontend", value: "React 19 + Vite 7" },
+            { label: "Styling", value: "Tailwind CSS 4" },
+            { label: "Backend", value: "Cloudflare Workers" },
+            { label: "Database", value: "Cloudflare D1" },
+            { label: "Storage", value: "Cloudflare R2" },
+            { label: "AI", value: "Workers AI" },
+            { label: "Search", value: "Vectorize" },
+            { label: "Auth", value: "Better Auth" },
+          ].map((item) => (
+            <div key={item.label}>
+              <p className="text-xs" style={{ color: "hsl(var(--c3))" }}>{item.label}</p>
+              <p className="text-xs font-[var(--font-weight-medium)]" style={{ color: "hsl(var(--c1))" }}>{item.value}</p>
+            </div>
+          ))}
+        </div>
+      </SettingSection>
+
+      <SettingSection title="Creator" description="Zephyron is built by a solo developer passionate about electronic music and the intersection of AI and community curation.">
+        <a
+          href="https://github.com/tresillo2017/zephyron/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs no-underline transition-colors"
+          style={{ background: "hsl(var(--b4) / 0.5)", color: "hsl(var(--c1))", border: "1px solid hsl(var(--b4))" }}
+        >
+          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+          </svg>
+          Open an Issue on GitHub
+        </a>
+      </SettingSection>
     </div>
   );
 }

@@ -46,9 +46,9 @@ export function DeleteAccountPage() {
           <span className="text-lg font-semibold text-text-primary tracking-tight">Zephyron</span>
         </Link>
         <div className="flex items-center gap-4">
-          <Link to="/about" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">About</Link>
+          <Link to="/app/profile?tab=about" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">About</Link>
           {session ? (
-            <Link to="/app/settings?tab=account" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">Settings</Link>
+            <Link to="/app/profile?tab=account" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">Settings</Link>
           ) : (
             <Link to="/login?redirect=/delete-account" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">Sign In</Link>
           )}
@@ -211,7 +211,7 @@ function LoggedInState({
             {loading ? 'Deleting…' : 'Delete My Account'}
           </button>
           <Link
-            to="/app/settings?tab=account"
+            to="/app/profile?tab=account"
             className="text-sm no-underline transition-colors"
             style={{ color: 'hsl(var(--c3))' }}
           >

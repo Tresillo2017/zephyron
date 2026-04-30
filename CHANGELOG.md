@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Here's the full rewritten changelog for Zephyron. I made every entry shorter, used simple everyday words, and focused on what it means for you as a user — like faster listening or easier navigation. [keepachangelog](https://keepachangelog.com/en/1.1.0/)
 
+## [0.4.7-alpha] - 2026-04-30
+
+### Fixed
+- Listening history was always empty — the history page was reading from the old `listen_history` table that nothing was writing to. It now reads from `listening_sessions`, showing one entry per set (most recent qualifying session) with the correct play count.
+- Activity feed was always empty — finishing a set never wrote an activity item. Sessions that reach ≥15% completion now create a `set_listened` activity event with the set title and artist.
+- API keys not loading on the Security page — `useState` was used where `useEffect` was needed, so the key list was never fetched on mount.
+
+### Changed
+- About and Account pages merged into the Settings submenu under your profile — no more separate standalone pages. About and Account are now tabs alongside Privacy, Appearance, and Security.
+- Removed the separate `/app/settings` route; all settings now live at `/app/profile` under the Settings dropdown.
+- Loading spinner in the fullscreen player video mode updated to the dot-matrix style.
+
+## [0.4.6-alpha] - 2026-04-25
+
+### New
+- Admin panel can now create user accounts directly — no invite code needed for admin-provisioned users.
+- Delete Account page at `/delete-account` — type DELETE to confirm permanent removal of your account and all associated data.
+- Depth XR set type — sets can now carry a depth scene for extended reality features, with a dedicated upload endpoint and 500 MB file cap.
+- Admin YouTube search via Invidious proxy — search YouTube from the admin panel without hitting API quotas.
+
+### Fixed
+- CORS headers now applied correctly to all API responses from the Cloudflare Worker fetch handler.
+- API key authentication now uses timing-safe comparison and accepts Chrome extension origins.
+- Admin API key header (`X-Admin-API-Key`) properly allowed in CORS preflight requests.
+- Delete Account flow correctly signs the user out and redirects after deletion.
+
+## [0.4.5-alpha] - 2026-04-21
+
+### New
+- TV / Android device login — open `/device` on any browser, enter the code shown on your TV, and the TV session is instantly authorised without typing a password.
+- Transactional emails redesigned — verification, welcome, password reset, and email change emails now use a consistent branded layout with better deliverability.
+
 ## [0.4.4-alpha] - 2026-04-18
 
 ### New

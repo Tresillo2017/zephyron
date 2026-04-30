@@ -1,6 +1,7 @@
 import { json, errorResponse } from '../lib/router'
 import { generateId } from '../lib/id'
 import { getSessionDate } from '../lib/timezone'
+import { createActivityItem } from '../lib/activity'
 
 /**
  * POST /api/sessions/start
@@ -188,12 +189,12 @@ export async function endSession(
   }
 
   try {
-    // Get session from DB
+    // Get session from DB — only if not already ended (idempotency guard)
     const session = await env.DB.prepare(
-      'SELECT id, user_id, set_id, duration_seconds FROM listening_sessions WHERE id = ?'
+      'SELECT id, user_id, set_id, duration_seconds, ended_at, qualifies FROM listening_sessions WHERE id = ?'
     )
       .bind(sessionId)
-      .first<{ id: string; user_id: string; set_id: string; duration_seconds: number }>()
+      .first<{ id: string; user_id: string; set_id: string; duration_seconds: number; ended_at: string | null; qualifies: number }>()
 
     if (!session) {
       return errorResponse('Session not found', 404)
@@ -204,10 +205,15 @@ export async function endSession(
       return errorResponse('Unauthorized', 403)
     }
 
-    // Get set duration
-    const set = await env.DB.prepare('SELECT duration_seconds FROM sets WHERE id = ?')
+    // Already ended — return stored result without creating duplicate activity
+    if (session.ended_at !== null) {
+      return json({ ok: true, qualifies: session.qualifies === 1 })
+    }
+
+    // Get set info
+    const set = await env.DB.prepare('SELECT duration_seconds, title, artist FROM sets WHERE id = ?')
       .bind(session.set_id)
-      .first<{ duration_seconds: number }>()
+      .first<{ duration_seconds: number; title: string; artist: string }>()
 
     if (!set) {
       return errorResponse('Set not found', 404)
@@ -219,14 +225,22 @@ export async function endSession(
     // Calculate qualifies: >= 15% completion
     const qualifies = percentageCompleted >= 15 ? 1 : 0
 
-    // Update session: set ended_at, last_position_seconds, percentage_completed, qualifies
+    // Update session only if still open (WHERE ended_at IS NULL prevents races)
     const endedAt = new Date().toISOString()
 
-    await env.DB.prepare(
-      'UPDATE listening_sessions SET ended_at = ?, last_position_seconds = ?, percentage_completed = ?, qualifies = ? WHERE id = ?'
+    const result = await env.DB.prepare(
+      'UPDATE listening_sessions SET ended_at = ?, last_position_seconds = ?, percentage_completed = ?, qualifies = ? WHERE id = ? AND ended_at IS NULL'
     )
       .bind(endedAt, positionSeconds, percentageCompleted, qualifies, sessionId)
       .run()
+
+    if (qualifies === 1 && result.meta.changes > 0) {
+      await createActivityItem(env, session.user_id, 'set_listened', {
+        set_id: session.set_id,
+        title: set.title,
+        artist: set.artist,
+      })
+    }
 
     return json({ ok: true, qualifies: qualifies === 1 })
   } catch (error) {

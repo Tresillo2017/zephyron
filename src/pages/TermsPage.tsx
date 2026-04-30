@@ -11,7 +11,7 @@ export function TermsPage() {
           <span className="text-lg font-semibold text-text-primary tracking-tight">Zephyron</span>
         </Link>
         <div className="flex items-center gap-4">
-          <Link to="/about" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">About</Link>
+          <Link to="/app/profile?tab=about" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">About</Link>
           <Link to="/login" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">Sign In</Link>
         </div>
       </header>
@@ -86,7 +86,7 @@ export function TermsPage() {
         <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-text-muted">&copy; {new Date().getFullYear()} Zephyron</p>
           <div className="flex items-center gap-4 text-xs">
-            <Link to="/about" className="text-text-muted hover:text-text-primary transition-colors no-underline">About</Link>
+            <Link to="/app/profile?tab=about" className="text-text-muted hover:text-text-primary transition-colors no-underline">About</Link>
             <Link to="/privacy" className="text-text-muted hover:text-text-primary transition-colors no-underline">Privacy</Link>
           </div>
         </div>

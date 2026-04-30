@@ -9,20 +9,33 @@ export async function getHistory(
   _ctx: ExecutionContext,
   _params: Record<string, string>
 ): Promise<Response> {
-  const anonymousId = getAnonymousId(request)
-  if (!anonymousId) {
+  const userId = (request as any).session?.session?.userId
+  if (!userId) {
     return json({ data: [], ok: true })
   }
 
+  // Return the most recent qualifying session per set, with per-set listen count
   const result = await env.DB.prepare(
-    `SELECT h.*, s.title, s.artist, s.genre, s.duration_seconds, s.cover_image_r2_key
-     FROM listen_history h
-     JOIN sets s ON h.set_id = s.id
-     WHERE h.anonymous_id = ?
-     ORDER BY h.last_listened_at DESC
+    `WITH ranked AS (
+       SELECT
+         id, user_id, set_id, last_position_seconds, ended_at,
+         ROW_NUMBER() OVER (PARTITION BY set_id ORDER BY ended_at DESC) AS rn,
+         COUNT(*) OVER (PARTITION BY set_id) AS listen_count
+       FROM listening_sessions
+       WHERE user_id = ? AND qualifies = 1 AND ended_at IS NOT NULL
+     )
+     SELECT
+       r.id, r.user_id, NULL AS anonymous_id, r.set_id,
+       r.last_position_seconds, r.listen_count,
+       r.ended_at AS last_listened_at,
+       s.title, s.artist, s.genre, s.duration_seconds, s.cover_image_r2_key
+     FROM ranked r
+     JOIN sets s ON r.set_id = s.id
+     WHERE r.rn = 1
+     ORDER BY r.ended_at DESC
      LIMIT 50`
   )
-    .bind(anonymousId)
+    .bind(userId)
     .all()
 
   return json({ data: result.results, ok: true })
