@@ -660,6 +660,40 @@ export async function streamDepthFile(
   return new Response(object.body, { status: 200, headers })
 }
 
+// POST /api/sets/:id/depth/confirm — Called by depth-cli after uploading directly to R2 via S3 API.
+// Admin only. Verifies the R2 object exists, then marks the set as depth-processed in the DB.
+export async function confirmDepthUpload(
+  request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>
+): Promise<Response> {
+  const { id } = params
+
+  const setExists = await env.DB.prepare('SELECT id FROM sets WHERE id = ?').bind(id).first()
+  if (!setExists) return errorResponse('Set not found', 404)
+
+  let body: { r2_key?: string }
+  try {
+    body = await request.json()
+  } catch {
+    return errorResponse('Invalid JSON body', 400)
+  }
+
+  const r2Key = body.r2_key
+  if (!r2Key || typeof r2Key !== 'string') return errorResponse('r2_key is required', 400)
+
+  // Verify the object actually landed in R2 before updating the DB
+  const head = await env.AUDIO_BUCKET.head(r2Key)
+  if (!head) return errorResponse('R2 object not found — upload may have failed', 404)
+
+  await env.DB.prepare(
+    'UPDATE sets SET depth_scene_key = ?, depth_processed_at = ? WHERE id = ?'
+  ).bind(r2Key, new Date().toISOString(), id).run()
+
+  return json({ data: { r2_key: r2Key, size: head.size }, ok: true })
+}
+
 // POST /api/sets/:id/depth/upload — Upload a .dsf file for a set.
 // Admin only. Body must be the raw .dsf binary with Content-Type: application/octet-stream.
 // Stores in R2 at sets/{id}/depth.dsf and marks the set as Depth-enabled.
