@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import {
   useSession,
-  signOut,
   getSession,
   authClient,
 } from "../lib/auth-client";
@@ -203,11 +202,6 @@ export function ProfilePage() {
   useEffect(() => {
     if (user?.banner_url) setBannerUrl(user.banner_url);
   }, [user?.banner_url]);
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
 
   const handleResume = (item: ListenHistoryItem) => {
     if (item.title && item.duration_seconds) {
