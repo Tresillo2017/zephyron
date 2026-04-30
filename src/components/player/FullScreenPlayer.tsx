@@ -86,6 +86,7 @@ export function FullScreenPlayer() {
   const [animState, setAnimState] = useState<AnimState>("hidden");
   const [showTracklist, setShowTracklist] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const [isVideoBuffering, setIsVideoBuffering] = useState(false);
   const [upNextDetection, setUpNextDetection] = useState<Detection | null>(
     null
   );
@@ -181,10 +182,11 @@ export function FullScreenPlayer() {
     }
   }, [isVideoMode, videoStreamUrl, isLoadingVideo, loadVideoStream]);
 
-  // Set video src when stream URL is resolved — wait for loadeddata before syncing time
+  // Set video src when stream URL is resolved — wait for canplay before syncing time
   useEffect(() => {
     if (isVideoMode && videoStreamUrl && videoRef.current) {
       const video = videoRef.current;
+      setIsVideoBuffering(true);
 
       const onReady = () => {
         const audio = usePlayerStore.getState().audioElement;
@@ -194,14 +196,27 @@ export function FullScreenPlayer() {
         if (usePlayerStore.getState().isPlaying) {
           video.play().catch(() => {});
         }
-        video.removeEventListener("loadeddata", onReady);
+        setIsVideoBuffering(false);
+        video.removeEventListener("canplay", onReady);
       };
 
-      video.addEventListener("loadeddata", onReady);
+      const onError = () => {
+        setIsVideoBuffering(false);
+        // Clear cached URL so next attempt re-fetches a fresh signed URL
+        usePlayerStore.setState({ videoStreamUrl: null, isLoadingVideo: false });
+        video.removeEventListener("canplay", onReady);
+        video.removeEventListener("error", onError);
+      };
+
+      video.addEventListener("canplay", onReady);
+      video.addEventListener("error", onError);
       video.src = videoStreamUrl;
       video.load();
 
-      return () => video.removeEventListener("loadeddata", onReady);
+      return () => {
+        video.removeEventListener("canplay", onReady);
+        video.removeEventListener("error", onError);
+      };
     }
   }, [videoStreamUrl, isVideoMode]);
 
@@ -849,8 +864,12 @@ export function FullScreenPlayer() {
                     className="w-full h-full object-contain"
                     playsInline
                     muted
+                    onWaiting={() => setIsVideoBuffering(true)}
+                    onStalled={() => setIsVideoBuffering(true)}
+                    onPlaying={() => setIsVideoBuffering(false)}
+                    onCanPlay={() => setIsVideoBuffering(false)}
                   />
-                  {isLoadingVideo && (
+                  {(isLoadingVideo || isVideoBuffering) && (
                     <div
                       className="absolute inset-0 flex items-center justify-center"
                       style={{ background: "rgba(0,0,0,0.6)" }}
