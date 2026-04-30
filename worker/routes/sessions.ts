@@ -1,6 +1,7 @@
 import { json, errorResponse } from '../lib/router'
 import { generateId } from '../lib/id'
 import { getSessionDate } from '../lib/timezone'
+import { createActivityItem } from '../lib/activity'
 
 /**
  * POST /api/sessions/start
@@ -204,10 +205,10 @@ export async function endSession(
       return errorResponse('Unauthorized', 403)
     }
 
-    // Get set duration
-    const set = await env.DB.prepare('SELECT duration_seconds FROM sets WHERE id = ?')
+    // Get set info
+    const set = await env.DB.prepare('SELECT duration_seconds, title, artist FROM sets WHERE id = ?')
       .bind(session.set_id)
-      .first<{ duration_seconds: number }>()
+      .first<{ duration_seconds: number; title: string; artist: string }>()
 
     if (!set) {
       return errorResponse('Set not found', 404)
@@ -227,6 +228,14 @@ export async function endSession(
     )
       .bind(endedAt, positionSeconds, percentageCompleted, qualifies, sessionId)
       .run()
+
+    if (qualifies === 1) {
+      await createActivityItem(env, session.user_id, 'set_listened', {
+        set_id: session.set_id,
+        title: set.title,
+        artist: set.artist,
+      })
+    }
 
     return json({ ok: true, qualifies: qualifies === 1 })
   } catch (error) {

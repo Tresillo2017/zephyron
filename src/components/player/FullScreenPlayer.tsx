@@ -8,6 +8,7 @@ import { LikeButton } from '../ui/LikeButton'
 import { formatTime } from '../../lib/formatTime'
 import { getSongCoverUrl, fetchStoryboard, type StoryboardData } from '../../lib/api'
 import { getAvailableServices, ServiceIconLink } from '../../lib/services'
+import { DotmSquare18 } from '../ui/loading-sqaure'
 import type { Detection } from '../../lib/types'
 
 type AnimState = 'hidden' | 'entering' | 'visible' | 'exiting'
@@ -627,7 +628,7 @@ export function FullScreenPlayer() {
                   />
                   {isLoadingVideo && (
                     <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
-                      <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'rgba(255,255,255,0.2)', borderTopColor: 'hsl(var(--h3))' }} />
+                      <DotmSquare18 size={48} animated />
                     </div>
                   )}
                 </div>

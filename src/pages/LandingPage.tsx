@@ -11,7 +11,7 @@ export function LandingPage() {
           <span className="text-lg font-semibold text-text-primary tracking-tight">Zephyron</span>
         </div>
         <nav className="flex items-center gap-5">
-          <Link to="/about" className="text-sm text-text-muted hover:text-text-primary transition-colors no-underline hidden sm:block">
+          <Link to="/app/profile?tab=about" className="text-sm text-text-muted hover:text-text-primary transition-colors no-underline hidden sm:block">
             About
           </Link>
           <Link to="/login" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">
@@ -348,7 +348,7 @@ export function LandingPage() {
             &copy; {new Date().getFullYear()} Zephyron &mdash; By invitation only
           </p>
           <div className="flex items-center gap-5 text-xs">
-            <Link to="/about" className="text-text-muted hover:text-text-primary transition-colors no-underline">About</Link>
+            <Link to="/app/profile?tab=about" className="text-text-muted hover:text-text-primary transition-colors no-underline">About</Link>
             <Link to="/privacy" className="text-text-muted hover:text-text-primary transition-colors no-underline">Privacy</Link>
             <Link to="/terms" className="text-text-muted hover:text-text-primary transition-colors no-underline">Terms</Link>
             <a href="https://github.com/tresillo2017/zephyron" target="_blank" rel="noopener noreferrer" className="text-text-muted hover:text-text-primary transition-colors no-underline">

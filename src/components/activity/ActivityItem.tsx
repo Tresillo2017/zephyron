@@ -14,6 +14,7 @@ export function ActivityItem({ item, showUser = false }: ActivityItemProps) {
       case 'playlist_updated': return '📁'
       case 'annotation_approved': return '✅'
       case 'milestone_reached': return '🎉'
+      case 'set_listened': return '🎧'
       default: return '•'
     }
   }
@@ -71,6 +72,14 @@ export function ActivityItem({ item, showUser = false }: ActivityItemProps) {
             <span className="font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--h3))' }}>
               {metadata.milestone}
             </span>
+          </>
+        )
+      case 'set_listened':
+        return (
+          <>
+            <span className="font-[var(--font-weight-medium)]">{userName}</span> listened to{' '}
+            <span className="font-[var(--font-weight-medium)]">{metadata.title}</span>
+            {metadata.artist && ` by ${metadata.artist}`}
           </>
         )
       default:

@@ -199,7 +199,7 @@ export interface ActivityItem {
   user_name?: string
   user_avatar_url?: string
   activity_type: 'badge_earned' | 'song_liked' | 'playlist_created' |
-    'playlist_updated' | 'annotation_approved' | 'milestone_reached'
+    'playlist_updated' | 'annotation_approved' | 'milestone_reached' | 'set_listened'
   metadata: Record<string, any>
   is_public: boolean
   created_at: string
@@ -212,6 +212,7 @@ export interface ActivityPrivacySettings {
   playlist_updated: boolean
   annotation_approved: boolean
   milestone_reached: boolean
+  set_listened: boolean
 }
 
 export interface Annotation {
