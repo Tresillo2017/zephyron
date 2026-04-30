@@ -191,10 +191,10 @@ export async function endSession(
   try {
     // Get session from DB — only if not already ended (idempotency guard)
     const session = await env.DB.prepare(
-      'SELECT id, user_id, set_id, duration_seconds, ended_at FROM listening_sessions WHERE id = ?'
+      'SELECT id, user_id, set_id, duration_seconds, ended_at, qualifies FROM listening_sessions WHERE id = ?'
     )
       .bind(sessionId)
-      .first<{ id: string; user_id: string; set_id: string; duration_seconds: number; ended_at: string | null }>()
+      .first<{ id: string; user_id: string; set_id: string; duration_seconds: number; ended_at: string | null; qualifies: number }>()
 
     if (!session) {
       return errorResponse('Session not found', 404)
@@ -205,9 +205,9 @@ export async function endSession(
       return errorResponse('Unauthorized', 403)
     }
 
-    // Already ended — return success without creating duplicate activity
+    // Already ended — return stored result without creating duplicate activity
     if (session.ended_at !== null) {
-      return json({ ok: true, qualifies: false })
+      return json({ ok: true, qualifies: session.qualifies === 1 })
     }
 
     // Get set info

@@ -1700,7 +1700,7 @@ function ApiKeysSection() {
     } catch { setError("Failed to load API keys"); } finally { setLoading(false); }
   };
 
-  useState(() => { loadKeys(); });
+  useEffect(() => { loadKeys(); }, []);
 
   const handleCreate = async () => {
     setCreating(true); setError("");
