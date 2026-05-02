@@ -18,6 +18,7 @@ interface PlayerState {
   isVideoMode: boolean
   videoElement: HTMLVideoElement | null
   videoStreamUrl: string | null
+  videoStreamExpiresAt: number | null
   isLoadingVideo: boolean
 
   // Queue
@@ -94,6 +95,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   isVideoMode: false,
   videoElement: null,
   videoStreamUrl: null,
+  videoStreamExpiresAt: null,
   isLoadingVideo: false,
   queue: [],
   queueIndex: -1,
@@ -143,6 +145,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       currentDetections: [],
       isVideoMode: false,
       videoStreamUrl: null,
+      videoStreamExpiresAt: null,
     })
 
     // If no detections were passed (e.g. played from a card), fetch them in parallel
@@ -406,17 +409,21 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   loadVideoStream: async () => {
-    const { currentSet, videoStreamUrl } = get()
+    const { currentSet, videoStreamUrl, videoStreamExpiresAt } = get()
     if (!currentSet?.youtube_video_id) return
 
-    // Check if we already have a valid URL
-    if (videoStreamUrl) return
+    // Reuse cached URL only if it won't expire in the next 60 seconds
+    if (videoStreamUrl && videoStreamExpiresAt && videoStreamExpiresAt - Date.now() > 60_000) return
 
     set({ isLoadingVideo: true })
     try {
       const res = await fetchVideoStreamUrl(currentSet.id)
       if (res.data?.url) {
-        set({ videoStreamUrl: res.data.url, isLoadingVideo: false })
+        set({
+          videoStreamUrl: res.data.url,
+          videoStreamExpiresAt: res.data.expires_at * 1000,
+          isLoadingVideo: false,
+        })
       } else {
         set({ isLoadingVideo: false })
       }
