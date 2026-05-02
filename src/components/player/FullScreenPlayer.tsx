@@ -68,6 +68,7 @@ export function FullScreenPlayer() {
     isFullScreen,
     isVideoMode,
     videoStreamUrl,
+    videoStreamExpiresAt,
     isLoadingVideo,
     isTheaterMode,
     setTheaterMode,
@@ -177,10 +178,11 @@ export function FullScreenPlayer() {
 
   // Load video stream when entering video mode
   useEffect(() => {
-    if (isVideoMode && !videoStreamUrl && !isLoadingVideo) {
+    const isExpiringSoon = videoStreamExpiresAt !== null && videoStreamExpiresAt - Date.now() < 60_000;
+    if (isVideoMode && (!videoStreamUrl || isExpiringSoon) && !isLoadingVideo) {
       loadVideoStream();
     }
-  }, [isVideoMode, videoStreamUrl, isLoadingVideo, loadVideoStream]);
+  }, [isVideoMode, videoStreamUrl, videoStreamExpiresAt, isLoadingVideo, loadVideoStream]);
 
   // Set video src when stream URL is resolved — wait for canplay before syncing time
   useEffect(() => {
@@ -203,7 +205,7 @@ export function FullScreenPlayer() {
       const onError = () => {
         setIsVideoBuffering(false);
         // Clear cached URL so next attempt re-fetches a fresh signed URL
-        usePlayerStore.setState({ videoStreamUrl: null, isLoadingVideo: false });
+        usePlayerStore.setState({ videoStreamUrl: null, videoStreamExpiresAt: null, isLoadingVideo: false });
         video.removeEventListener("canplay", onReady);
         video.removeEventListener("error", onError);
       };

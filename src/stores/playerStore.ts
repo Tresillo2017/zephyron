@@ -421,7 +421,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       if (res.data?.url) {
         set({
           videoStreamUrl: res.data.url,
-          videoStreamExpiresAt: res.data.expires_at,
+          videoStreamExpiresAt: res.data.expires_at * 1000,
           isLoadingVideo: false,
         })
       } else {
