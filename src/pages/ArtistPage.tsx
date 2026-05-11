@@ -6,6 +6,7 @@ import { getPlaceholder } from '../lib/placeholders'
 import { ArtistBannerSkeleton } from '../components/ui/Skeleton'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
+import { FollowButton } from '../components/artists/FollowButton'
 import { TabBar } from '../components/ui/TabBar'
 import { SetGrid } from '../components/sets/SetGrid'
 import { SocialLinks, countSocialLinks } from '../components/ui/SocialLinks'
@@ -125,6 +126,11 @@ export function ArtistPage() {
                   {tags.slice(0, 4).map((tag: string) => <Badge key={tag} variant="tag">{tag}</Badge>)}
                 </div>
               )}
+            </div>
+
+            {/* Follow button */}
+            <div className="pb-2">
+              <FollowButton artistId={artist.id} />
             </div>
 
             {/* Admin edit button */}
