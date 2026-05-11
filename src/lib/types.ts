@@ -276,9 +276,21 @@ export interface ListenHistoryItem {
   cover_image_r2_key?: string | null
 }
 
+export interface TopResult {
+  type: 'set' | 'artist' | 'event' | 'track'
+  id: string
+  title: string
+  subtitle: string
+  link: string
+  image_r2_key: string | null
+  tags: string[]
+}
+
 export interface SearchResults {
+  top_result: TopResult | null
   sets: DjSet[]
   tracks: (Detection & { set_title: string; set_artist: string })[]
+  artists: { id: string; name: string; image_url: string | null; set_count: number }[]
   events: (EventInfo & { set_count: number })[]
 }
 
