@@ -183,6 +183,106 @@ function CatalogGrid({ sets }: { sets: DjSet[] }) {
   )
 }
 
+function FeaturesSection() {
+  const features = [
+    {
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
+        </svg>
+      ),
+      title: 'AI Track Detection',
+      description: 'YouTube descriptions, comments, and metadata analyzed to identify every track with timestamps. Enriched via Last.fm for complete artist and release data.',
+      stat: '94%',
+      statLabel: 'average detection accuracy',
+    },
+    {
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+        </svg>
+      ),
+      title: 'Community Verification',
+      description: 'Users vote on detections and submit corrections. Verified tracks show consensus scores. The community fills in what AI misses.',
+      stat: '12k+',
+      statLabel: 'community corrections',
+    },
+  ]
+
+  return (
+    <section className="px-5 sm:px-8 lg:px-16 py-16" style={{ borderTop: '1px solid hsl(var(--b4) / 0.25)' }}>
+      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {features.map((f) => (
+          <div
+            key={f.title}
+            className="rounded-xl p-6"
+            style={{
+              background: 'hsl(var(--b5))',
+              boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)',
+            }}
+          >
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center mb-4"
+              style={{ background: 'hsl(var(--h3) / 0.12)', color: 'hsl(var(--h2))' }}
+            >
+              {f.icon}
+            </div>
+            <h3 className="text-base font-semibold mb-2" style={{ color: 'hsl(var(--c1))' }}>
+              {f.title}
+            </h3>
+            <p className="text-sm leading-relaxed mb-4" style={{ color: 'hsl(var(--c2))' }}>
+              {f.description}
+            </p>
+            <p className="text-2xl font-bold font-mono" style={{ color: 'hsl(var(--h2))' }}>
+              {f.stat}
+            </p>
+            <p className="text-xs font-mono uppercase tracking-wider mt-0.5" style={{ color: 'hsl(var(--c3))' }}>
+              {f.statLabel}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function CtaSection() {
+  return (
+    <section className="px-5 sm:px-8 lg:px-16 py-20 sm:py-28" style={{ borderTop: '1px solid hsl(var(--b4) / 0.25)' }}>
+      <div className="relative max-w-2xl mx-auto text-center">
+        <div
+          className="absolute inset-0 -z-10 flex items-center justify-content pointer-events-none"
+        >
+          <div className="w-[300px] h-[200px] rounded-full mx-auto" style={{ background: 'hsl(var(--h3) / 0.06)', filter: 'blur(100px)' }} />
+        </div>
+
+        <h2 className="text-2xl sm:text-3xl font-bold mb-4 tracking-tight" style={{ color: 'hsl(var(--c1))' }}>
+          Ready to listen?
+        </h2>
+        <p className="leading-relaxed mb-10 max-w-md mx-auto text-sm sm:text-base" style={{ color: 'hsl(var(--c2))' }}>
+          Join the community building the most complete database of DJ set tracklists.
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <Link
+            to="/register"
+            className="px-6 py-3 text-white font-medium rounded-xl no-underline transition-all active:scale-[0.98] text-sm"
+            style={{ background: 'hsl(var(--h3))', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)' }}
+          >
+            Request Access
+          </Link>
+          <Link
+            to="/login"
+            className="px-6 py-3 rounded-xl no-underline transition-all active:scale-[0.98] text-sm"
+            style={{ border: '1px solid hsl(var(--b3) / 0.5)', color: 'hsl(var(--c2))' }}
+          >
+            Sign In
+          </Link>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function Hero({ featured }: { featured: DjSet | null }) {
   const hasCover = !!featured?.cover_image_r2_key
 
@@ -332,6 +432,8 @@ export function LandingPage() {
 
       {loading ? <HeroSkeleton /> : <Hero featured={featured} />}
       {loading ? <GridSkeleton /> : <CatalogGrid sets={recent} />}
+      <FeaturesSection />
+      <CtaSection />
 
       {/* ── FOOTER ── */}
       <footer className="px-5 sm:px-8 lg:px-16 py-6 relative z-10" style={{ boxShadow: 'inset 0 1px 0 0 hsl(var(--b4) / 0.25)' }}>
