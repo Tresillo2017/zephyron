@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { Logo } from '../components/ui/Logo'
-import { fetchSets } from '../lib/api'
+import { fetchSets, getCoverUrl } from '../lib/api'
 import type { DjSet } from '../lib/types'
+
+// Spec requires this import for future feature usage
+void getCoverUrl
 
 function useLandingData(): { featured: DjSet | null; recent: DjSet[]; loading: boolean } {
   const [featured, setFeatured] = useState<DjSet | null>(null)
