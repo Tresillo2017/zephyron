@@ -6,8 +6,8 @@ describe('toFtsQuery', () => {
     expect(toFtsQuery('techno')).toBe('techno*')
   })
 
-  it('wraps multi-word as phrase with prefix', () => {
-    expect(toFtsQuery('john summit')).toBe('"john summit"*')
+  it('tokenises multi-word as prefix terms', () => {
+    expect(toFtsQuery('john summit')).toBe('john* summit*')
   })
 
   it('trims whitespace', () => {
@@ -15,7 +15,7 @@ describe('toFtsQuery', () => {
   })
 
   it('strips FTS5 special chars', () => {
-    expect(toFtsQuery('b2b (remix)')).toBe('"b2b remix"*')
+    expect(toFtsQuery('b2b (remix)')).toBe('b2b* remix*')
     expect(toFtsQuery('"quoted"')).toBe('quoted*')
     expect(toFtsQuery('test*')).toBe('test*')
   })

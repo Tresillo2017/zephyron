@@ -1,4 +1,5 @@
 export function toFtsQuery(q: string): string {
   const trimmed = q.trim().replace(/["()*]/g, '')
-  return trimmed.includes(' ') ? `"${trimmed}"*` : `${trimmed}*`
+  const tokens = trimmed.split(/\s+/).filter(Boolean)
+  return tokens.map(t => `${t}*`).join(' ')
 }

@@ -35,7 +35,7 @@ export async function search(
       WHERE sets_fts MATCH ? ORDER BY rank LIMIT 10
     `).bind(ftsQ).all(),
     env.DB.prepare(`
-      SELECT a.id, a.name, a.image_url,
+      SELECT a.id, a.name, a.image_url, a.tags,
              (SELECT COUNT(*) FROM set_artists sa WHERE sa.artist_id = a.id) as set_count
       FROM artists_fts f JOIN artists a ON f.id = a.id
       WHERE artists_fts MATCH ? ORDER BY rank LIMIT 10
