@@ -251,7 +251,7 @@ function CtaSection() {
     <section className="px-5 sm:px-8 lg:px-16 py-20 sm:py-28" style={{ borderTop: '1px solid hsl(var(--b4) / 0.25)' }}>
       <div className="relative max-w-2xl mx-auto text-center">
         <div
-          className="absolute inset-0 -z-10 flex items-center justify-content pointer-events-none"
+          className="absolute inset-0 -z-10 flex items-center justify-center pointer-events-none"
         >
           <div className="w-[300px] h-[200px] rounded-full mx-auto" style={{ background: 'hsl(var(--h3) / 0.06)', filter: 'blur(100px)' }} />
         </div>
