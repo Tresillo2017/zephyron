@@ -4,8 +4,18 @@ import { Logo } from '../components/ui/Logo'
 import { fetchSets, getCoverUrl } from '../lib/api'
 import type { DjSet } from '../lib/types'
 
-// Spec requires this import for future feature usage
-void getCoverUrl
+const COVER_GRADIENTS = [
+  'linear-gradient(135deg, #2a1060, #5a20a0)',
+  'linear-gradient(135deg, #0a1a50, #1a4090)',
+  'linear-gradient(135deg, #0a2820, #1a6050)',
+  'linear-gradient(135deg, #301020, #701040)',
+  'linear-gradient(135deg, #1a1808, #504010)',
+  'linear-gradient(135deg, #280a28, #681068)',
+]
+
+function idToGradient(id: string): string {
+  return COVER_GRADIENTS[id.charCodeAt(0) % COVER_GRADIENTS.length]
+}
 
 function useLandingData(): { featured: DjSet | null; recent: DjSet[]; loading: boolean } {
   const [featured, setFeatured] = useState<DjSet | null>(null)
@@ -28,12 +38,163 @@ function useLandingData(): { featured: DjSet | null; recent: DjSet[]; loading: b
   return { featured, recent, loading }
 }
 
+function WaveformDecoration() {
+  return (
+    <div className="absolute bottom-28 right-0 w-1/2 h-14 flex items-center gap-0.5 opacity-20 pointer-events-none px-10">
+      {Array.from({ length: 80 }, (_, i) => (
+        <div
+          key={i}
+          className="flex-1 rounded-sm"
+          style={{
+            height: `${12 + Math.abs(Math.sin(i * 0.4) * 32)}px`,
+            background: 'hsl(var(--h3))',
+            opacity: 0.4 + Math.abs(Math.sin(i * 0.3)) * 0.6,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+function HeroSkeleton() {
+  return (
+    <section className="relative h-[560px] sm:h-[600px] overflow-hidden flex items-end">
+      <div className="absolute inset-0 animate-pulse" style={{ background: 'hsl(var(--b5))' }} />
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, hsl(var(--b6)) 0%, hsl(var(--b6) / 0.7) 30%, transparent 100%)' }} />
+      <div className="relative z-10 px-5 sm:px-8 lg:px-16 pb-12 w-full flex items-end justify-between gap-8">
+        <div className="max-w-xl space-y-4">
+          <div className="h-3 w-32 rounded-full animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
+          <div className="h-10 w-80 rounded-xl animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
+          <div className="h-10 w-64 rounded-xl animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
+          <div className="h-5 w-96 rounded-lg animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
+          <div className="flex gap-3 pt-2">
+            <div className="h-11 w-36 rounded-xl animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
+            <div className="h-11 w-24 rounded-xl animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Hero({ featured }: { featured: DjSet | null }) {
+  const hasCover = !!featured?.cover_image_r2_key
+
+  return (
+    <section className="relative h-[560px] sm:h-[600px] overflow-hidden flex items-end">
+
+      {/* Background: cover image or gradient */}
+      {hasCover ? (
+        <img
+          src={getCoverUrl(featured!.id)}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      ) : (
+        <div
+          className="absolute inset-0"
+          style={{ background: featured ? idToGradient(featured.id) : 'linear-gradient(135deg, hsl(var(--b5)), hsl(var(--b6)))' }}
+        />
+      )}
+
+      {/* Ambient glow */}
+      <div
+        className="absolute top-1/4 -left-32 w-[600px] h-[600px] rounded-full pointer-events-none"
+        style={{ background: 'hsl(var(--h3) / 0.12)', filter: 'blur(150px)' }}
+      />
+
+      {/* Waveform decoration */}
+      <WaveformDecoration />
+
+      {/* Dark overlay */}
+      <div
+        className="absolute inset-0"
+        style={{ background: 'linear-gradient(to top, hsl(var(--b6)) 0%, hsl(var(--b6) / 0.75) 30%, hsl(var(--b6) / 0.2) 70%, transparent 100%)' }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 px-5 sm:px-8 lg:px-16 pb-12 w-full flex flex-col lg:flex-row items-end justify-between gap-8">
+
+        {/* Bottom-left: headline + CTAs */}
+        <div className="max-w-xl">
+          {/* Beta badge */}
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-mono tracking-wider rounded-full mb-6"
+            style={{ background: 'hsl(var(--h3) / 0.12)', border: '1px solid hsl(var(--h3) / 0.25)', color: 'hsl(var(--h2))' }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'hsl(var(--h2))' }} />
+            INVITE-ONLY BETA
+          </div>
+
+          <h1
+            className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.08] tracking-tight mb-5"
+            style={{ color: 'hsl(var(--c1))' }}
+          >
+            Every DJ set,<br />
+            <span style={{ color: 'hsl(var(--h2))', textShadow: '0 0 80px hsl(var(--h3) / 0.4)' }}>
+              every track
+            </span>{' '}identified.
+          </h1>
+
+          <p className="text-base sm:text-lg leading-relaxed mb-8 max-w-lg" style={{ color: 'hsl(var(--c2))' }}>
+            Curated festival and club mixes with community-verified tracklists. Find sets by artist, event, or track.
+          </p>
+
+          <div className="flex items-center gap-3">
+            <Link
+              to="/register"
+              className="px-6 py-3 text-white font-medium rounded-xl no-underline transition-all active:scale-[0.98] text-sm"
+              style={{ background: 'hsl(var(--h3))', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 0 40px hsl(var(--h4) / 0.3)' }}
+            >
+              Request Access
+            </Link>
+            <Link
+              to="/login"
+              className="px-6 py-3 rounded-xl no-underline transition-all active:scale-[0.98] text-sm"
+              style={{ border: '1px solid hsl(var(--b3) / 0.5)', color: 'hsl(var(--c2))' }}
+            >
+              Sign In
+            </Link>
+          </div>
+        </div>
+
+        {/* Bottom-right: featured set info (hidden on mobile) */}
+        {featured && (
+          <Link
+            to={`/app/sets/${featured.id}`}
+            className="hidden lg:block text-right no-underline group shrink-0"
+          >
+            <p className="text-xs font-mono tracking-widest uppercase mb-1.5" style={{ color: 'hsl(var(--c3))' }}>
+              Most Played
+            </p>
+            <p className="text-base font-semibold group-hover:underline" style={{ color: 'hsl(var(--c1))' }}>
+              {featured.title}
+            </p>
+            <p className="text-sm mt-0.5" style={{ color: 'hsl(var(--c2))' }}>
+              {featured.artist}
+            </p>
+            {featured.genre && (
+              <div className="flex justify-end mt-2">
+                <span
+                  className="px-2 py-0.5 text-xs font-mono rounded"
+                  style={{ background: 'hsl(var(--h3) / 0.15)', color: 'hsl(var(--h2))' }}
+                >
+                  #{featured.genre.toLowerCase()}
+                </span>
+              </div>
+            )}
+          </Link>
+        )}
+      </div>
+    </section>
+  )
+}
+
 export function LandingPage() {
   const { featured, recent, loading } = useLandingData()
   // Variables used in later tasks
-  void featured
   void recent
-  void loading
 
   return (
     <div className="min-h-screen flex flex-col overflow-hidden" style={{ background: 'hsl(var(--b6))' }}>
@@ -65,7 +226,7 @@ export function LandingPage() {
         </nav>
       </header>
 
-      {/* sections go here */}
+      {loading ? <HeroSkeleton /> : <Hero featured={featured} />}
 
       {/* ── FOOTER ── */}
       <footer className="px-5 sm:px-8 lg:px-16 py-6 relative z-10" style={{ boxShadow: 'inset 0 1px 0 0 hsl(var(--b4) / 0.25)' }}>
