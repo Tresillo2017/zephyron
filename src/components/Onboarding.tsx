@@ -69,6 +69,7 @@ export function Onboarding() {
       </div>
 
       <button
+        type="button"
         onClick={handleDismiss}
         className="w-full h-[var(--button-height)] rounded-[var(--button-radius)] text-sm font-[var(--font-weight-medium)] cursor-pointer transition-all"
         style={{
