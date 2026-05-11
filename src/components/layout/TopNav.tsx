@@ -9,8 +9,11 @@ import {
   getCoverUrl,
   getEventCoverUrl,
   getSongCoverUrl,
+  getNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
 } from "../../lib/api";
-import type { SearchResults } from "../../lib/types";
+import type { SearchResults, Notification } from "../../lib/types";
 
 export function TopNav() {
   const { data: session } = useSession();
@@ -28,6 +31,11 @@ export function TopNav() {
   const [isSearching, setIsSearching] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [showNotifMenu, setShowNotifMenu] = useState(false)
+  const [notifExiting, setNotifExiting] = useState(false)
+  const notifRef = useRef<HTMLDivElement>(null)
 
   const closeMenu = () => {
     if (menuExitTimer.current) clearTimeout(menuExitTimer.current)
@@ -87,6 +95,34 @@ export function TopNav() {
     setScrolled(container.scrollTop > 10);
     return () => container.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Fetch notifications on mount and poll every 60s
+  useEffect(() => {
+    if (!session) return
+    const fetchNotifs = () => {
+      getNotifications()
+        .then((res) => {
+          setNotifications(res.data.notifications)
+          setUnreadCount(res.data.unread_count)
+        })
+        .catch(() => {})
+    }
+    fetchNotifs()
+    const interval = setInterval(fetchNotifs, 60_000)
+    return () => clearInterval(interval)
+  }, [session])
+
+  useEffect(() => {
+    if (!showNotifMenu) return
+    const handler = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifExiting(true)
+        setTimeout(() => { setShowNotifMenu(false); setNotifExiting(false) }, 150)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showNotifMenu])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -629,6 +665,108 @@ export function TopNav() {
               />
             </svg>
           </Link>
+        )}
+
+        {/* Notification bell */}
+        {session?.user && (
+          <div className="relative" ref={notifRef}>
+            <button
+              type="button"
+              onClick={() => {
+                if (showNotifMenu) {
+                  setNotifExiting(true)
+                  setTimeout(() => { setShowNotifMenu(false); setNotifExiting(false) }, 150)
+                } else {
+                  setShowNotifMenu(true)
+                  if (unreadCount > 0) {
+                    markAllNotificationsRead()
+                      .then(() => setUnreadCount(0))
+                      .catch(() => {})
+                  }
+                }
+              }}
+              className="relative flex items-center justify-center w-9 h-9 rounded-full transition-colors"
+              style={{ color: 'hsl(var(--c2))' }}
+              aria-label="Notifications"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+              </svg>
+              {unreadCount > 0 && (
+                <span
+                  className="absolute top-0.5 right-0.5 min-w-[16px] h-4 flex items-center justify-center rounded-full text-[10px] font-bold text-white px-1"
+                  style={{ background: 'hsl(0 70% 55%)' }}
+                >
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notification dropdown */}
+            {(showNotifMenu || notifExiting) && (
+              <div
+                className="absolute right-0 top-full mt-2 w-[320px] z-50 rounded-[var(--card-radius)] overflow-hidden"
+                style={{
+                  background: 'hsl(var(--b5) / 0.97)',
+                  backdropFilter: 'blur(24px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 0 0 1px hsl(var(--b4) / 0.3)',
+                  animation: notifExiting
+                    ? 'solarium-out 0.15s ease-in forwards'
+                    : 'solarium 0.2s var(--ease-out-custom)',
+                }}
+              >
+                <div className="px-3 py-2.5" style={{ borderBottom: '1px solid hsl(var(--b4) / 0.3)' }}>
+                  <p className="text-xs font-mono uppercase tracking-wider" style={{ color: 'hsl(var(--c3))' }}>
+                    Notifications
+                  </p>
+                </div>
+
+                {notifications.length === 0 ? (
+                  <div className="px-3 py-6 text-center">
+                    <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>No notifications yet</p>
+                  </div>
+                ) : (
+                  <div className="max-h-[360px] overflow-y-auto">
+                    {notifications.slice(0, 10).map((n) => (
+                      <Link
+                        key={n.id}
+                        to={n.link ?? '/app'}
+                        onClick={() => {
+                          markNotificationRead(n.id).catch(() => {})
+                          setNotifExiting(true)
+                          setTimeout(() => { setShowNotifMenu(false); setNotifExiting(false) }, 150)
+                        }}
+                        className="flex items-start gap-3 px-3 py-2.5 no-underline transition-colors"
+                        style={{
+                          background: n.is_read === 0 ? 'hsl(var(--h3) / 0.06)' : 'transparent',
+                          borderBottom: '1px solid hsl(var(--b4) / 0.15)',
+                        }}
+                      >
+                        <span className="text-base mt-0.5 shrink-0">
+                          {n.type === 'new_set' ? '🎧' : n.type === 'annotation_approved' ? '✅' : '✗'}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium truncate" style={{ color: 'hsl(var(--c1))' }}>
+                            {n.title}
+                          </p>
+                          <p className="text-xs truncate mt-0.5" style={{ color: 'hsl(var(--c2))' }}>
+                            {n.body}
+                          </p>
+                          <p className="text-[10px] mt-1 font-mono" style={{ color: 'hsl(var(--c3))' }}>
+                            {new Date(n.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        {n.is_read === 0 && (
+                          <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: 'hsl(var(--h3))' }} />
+                        )}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {/* User dropdown */}
