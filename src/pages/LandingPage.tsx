@@ -57,7 +57,7 @@ export function LandingPage() {
             className="px-4 py-2 text-white text-sm font-medium rounded-xl no-underline transition-all active:scale-[0.98]"
             style={{
               background: 'hsl(var(--h3))',
-              boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.1)',
+              boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.1), 0 0 20px hsl(var(--h3) / 0.35)',
             }}
           >
             Get Access
@@ -68,7 +68,7 @@ export function LandingPage() {
       {/* sections go here */}
 
       {/* ── FOOTER ── */}
-      <footer className="px-5 sm:px-8 lg:px-16 py-6 relative z-10" style={{ borderTop: '1px solid hsl(var(--b4) / 0.3)' }}>
+      <footer className="px-5 sm:px-8 lg:px-16 py-6 relative z-10" style={{ boxShadow: 'inset 0 1px 0 0 hsl(var(--b4) / 0.25)' }}>
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
             &copy; {new Date().getFullYear()} Zephyron
