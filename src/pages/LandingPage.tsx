@@ -1,7 +1,37 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { Logo } from '../components/ui/Logo'
+import { fetchSets } from '../lib/api'
+import type { DjSet } from '../lib/types'
+
+function useLandingData(): { featured: DjSet | null; recent: DjSet[]; loading: boolean } {
+  const [featured, setFeatured] = useState<DjSet | null>(null)
+  const [recent, setRecent] = useState<DjSet[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    Promise.all([
+      fetchSets({ sort: 'popular', pageSize: 1 }),
+      fetchSets({ sort: 'newest', pageSize: 6 }),
+    ])
+      .then(([pop, rec]) => {
+        setFeatured(pop.data[0] ?? null)
+        setRecent(rec.data)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  return { featured, recent, loading }
+}
 
 export function LandingPage() {
+  const { featured, recent, loading } = useLandingData()
+  // Variables used in later tasks
+  void featured
+  void recent
+  void loading
+
   return (
     <div className="min-h-screen bg-surface flex flex-col overflow-hidden">
       {/* ── Header ── */}
