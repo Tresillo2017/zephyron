@@ -106,7 +106,7 @@ function LandingSetCard({ set }: { set: DjSet }) {
         )}
         {/* Hover overlay */}
         <div
-          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
+          className="absolute inset-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
           style={{ background: 'hsl(var(--b6) / 0.5)' }}
         >
           <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -130,7 +130,7 @@ function LandingSetCard({ set }: { set: DjSet }) {
             className="self-start px-1.5 py-0.5 text-xs font-mono rounded mt-0.5"
             style={{ background: 'hsl(var(--h3) / 0.1)', color: 'hsl(var(--h2) / 0.8)' }}
           >
-            #{set.genre.toLowerCase()}
+            #{set.genre.toLowerCase().replace(/[\s/&]+/g, '-')}
           </span>
         )}
       </div>
@@ -286,7 +286,7 @@ function Hero({ featured }: { featured: DjSet | null }) {
                   className="px-2 py-0.5 text-xs font-mono rounded"
                   style={{ background: 'hsl(var(--h3) / 0.15)', color: 'hsl(var(--h2))' }}
                 >
-                  #{featured.genre.toLowerCase()}
+                  #{featured.genre.toLowerCase().replace(/[\s/&]+/g, '-')}
                 </span>
               </div>
             )}
