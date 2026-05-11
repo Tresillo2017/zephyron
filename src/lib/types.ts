@@ -312,3 +312,13 @@ export interface PublicUser {
   role: string
   created_at: string
 }
+
+export interface Notification {
+  id: string
+  type: 'new_set' | 'annotation_approved' | 'annotation_rejected'
+  title: string
+  body: string
+  link: string | null
+  is_read: number
+  created_at: string
+}
