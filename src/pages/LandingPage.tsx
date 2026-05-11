@@ -77,6 +77,112 @@ function HeroSkeleton() {
   )
 }
 
+function LandingSetCard({ set }: { set: DjSet }) {
+  const durationMin = Math.round(set.duration_seconds / 60)
+
+  return (
+    <Link
+      to={`/app/sets/${set.id}`}
+      className="group flex flex-col no-underline rounded-xl overflow-hidden transition-all duration-200"
+      style={{
+        background: 'hsl(var(--b5))',
+        boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)',
+      }}
+    >
+      {/* Cover */}
+      <div className="relative aspect-video overflow-hidden">
+        {set.cover_image_r2_key ? (
+          <img
+            src={getCoverUrl(set.id)}
+            alt={set.title}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: idToGradient(set.id) }}
+          />
+        )}
+        {/* Hover overlay */}
+        <div
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
+          style={{ background: 'hsl(var(--b6) / 0.5)' }}
+        >
+          <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="p-3.5 flex flex-col gap-1.5">
+        <p className="text-sm font-semibold truncate" style={{ color: 'hsl(var(--c1))' }}>
+          {set.title}
+        </p>
+        <div className="flex items-center gap-2 text-xs" style={{ color: 'hsl(var(--c3))' }}>
+          <span className="truncate">{set.artist}</span>
+          <span>·</span>
+          <span className="shrink-0">{durationMin}m</span>
+        </div>
+        {set.genre && (
+          <span
+            className="self-start px-1.5 py-0.5 text-xs font-mono rounded mt-0.5"
+            style={{ background: 'hsl(var(--h3) / 0.1)', color: 'hsl(var(--h2) / 0.8)' }}
+          >
+            #{set.genre.toLowerCase()}
+          </span>
+        )}
+      </div>
+    </Link>
+  )
+}
+
+function GridSkeleton() {
+  return (
+    <section className="px-5 sm:px-8 lg:px-16 py-16">
+      <div className="max-w-6xl mx-auto">
+        <div className="h-3 w-32 rounded-full mb-6 animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="rounded-xl overflow-hidden animate-pulse" style={{ background: 'hsl(var(--b5))' }}>
+              <div className="aspect-video" style={{ background: 'hsl(var(--b4))' }} />
+              <div className="p-3.5 space-y-2">
+                <div className="h-3 rounded-full w-3/4" style={{ background: 'hsl(var(--b4))' }} />
+                <div className="h-3 rounded-full w-1/2" style={{ background: 'hsl(var(--b4))' }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function CatalogGrid({ sets }: { sets: DjSet[] }) {
+  if (sets.length === 0) return null
+
+  return (
+    <section className="px-5 sm:px-8 lg:px-16 py-16">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <span className="text-xs font-mono tracking-widest uppercase" style={{ color: 'hsl(var(--c3))' }}>
+            Recently Added
+          </span>
+          <Link to="/register" className="text-xs no-underline transition-colors" style={{ color: 'hsl(var(--h2))' }}>
+            Browse all →
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {sets.map((set) => (
+            <LandingSetCard key={set.id} set={set} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function Hero({ featured }: { featured: DjSet | null }) {
   const hasCover = !!featured?.cover_image_r2_key
 
@@ -193,8 +299,6 @@ function Hero({ featured }: { featured: DjSet | null }) {
 
 export function LandingPage() {
   const { featured, recent, loading } = useLandingData()
-  // Variables used in later tasks
-  void recent
 
   return (
     <div className="min-h-screen flex flex-col overflow-hidden" style={{ background: 'hsl(var(--b6))' }}>
@@ -227,6 +331,7 @@ export function LandingPage() {
       </header>
 
       {loading ? <HeroSkeleton /> : <Hero featured={featured} />}
+      {loading ? <GridSkeleton /> : <CatalogGrid sets={recent} />}
 
       {/* ── FOOTER ── */}
       <footer className="px-5 sm:px-8 lg:px-16 py-6 relative z-10" style={{ boxShadow: 'inset 0 1px 0 0 hsl(var(--b4) / 0.25)' }}>
