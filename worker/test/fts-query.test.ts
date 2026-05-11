@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest'
-
-function toFtsQuery(q: string): string {
-  const trimmed = q.trim().replace(/["()*]/g, '')
-  return trimmed.includes(' ') ? `"${trimmed}"*` : `${trimmed}*`
-}
+import { toFtsQuery } from '../lib/fts'
 
 describe('toFtsQuery', () => {
   it('appends * for single word', () => {

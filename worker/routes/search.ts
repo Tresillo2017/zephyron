@@ -1,9 +1,5 @@
 import { json } from '../lib/router'
-
-function toFtsQuery(q: string): string {
-  const trimmed = q.trim().replace(/["()*]/g, '')
-  return trimmed.includes(' ') ? `"${trimmed}"*` : `${trimmed}*`
-}
+import { toFtsQuery } from '../lib/fts'
 
 interface TopResult {
   type: 'set' | 'artist' | 'event' | 'track'
