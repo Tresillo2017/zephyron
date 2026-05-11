@@ -678,9 +678,14 @@ export function TopNav() {
                   setTimeout(() => { setShowNotifMenu(false); setNotifExiting(false) }, 150)
                 } else {
                   setShowNotifMenu(true)
+                  // Close user menu if open
+                  if (showUserMenu) closeMenu()
                   if (unreadCount > 0) {
                     markAllNotificationsRead()
-                      .then(() => setUnreadCount(0))
+                      .then(() => {
+                        setUnreadCount(0)
+                        setNotifications(prev => prev.map(x => ({ ...x, is_read: 1 })))
+                      })
                       .catch(() => {})
                   }
                 }
@@ -734,6 +739,7 @@ export function TopNav() {
                         to={n.link ?? '/app'}
                         onClick={() => {
                           markNotificationRead(n.id).catch(() => {})
+                          setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: 1 } : x))
                           setNotifExiting(true)
                           setTimeout(() => { setShowNotifMenu(false); setNotifExiting(false) }, 150)
                         }}
@@ -773,7 +779,18 @@ export function TopNav() {
         {session?.user ? (
           <div className="relative" ref={menuRef}>
             <button
-              onClick={() => showUserMenu ? closeMenu() : setShowUserMenu(true)}
+              onClick={() => {
+                if (showUserMenu) {
+                  closeMenu()
+                } else {
+                  setShowUserMenu(true)
+                  // Close notif menu if open
+                  if (showNotifMenu) {
+                    setNotifExiting(true)
+                    setTimeout(() => { setShowNotifMenu(false); setNotifExiting(false) }, 150)
+                  }
+                }
+              }}
               className="flex items-center gap-2 pl-2 pr-3 py-1 rounded-full transition-all"
               style={{
                 background: showUserMenu
