@@ -7,6 +7,7 @@ import { PlayerBar } from './components/layout/PlayerBar'
 import { PageTransition } from './components/layout/PageTransition'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { WhatsNew } from './components/WhatsNew'
+import { Onboarding } from './components/Onboarding'
 import { CookieConsent } from './components/CookieConsent'
 import { Toaster } from 'sileo'
 
@@ -53,6 +54,7 @@ function AppLayout() {
       </div>
       <PlayerBar />
       <WhatsNew />
+      <Onboarding />
     </div>
   )
 }
