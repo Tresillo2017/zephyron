@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, memo } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router'
 import { searchSets, getCoverUrl, getArtistImageUrl, getEventCoverUrl } from '../lib/api'
 import { SetGrid } from '../components/sets/SetGrid'
@@ -20,7 +20,7 @@ function idToGradient(id: string) {
   return COVER_GRADIENTS[id.charCodeAt(0) % COVER_GRADIENTS.length]
 }
 
-function TopResultCard({ result }: { result: TopResult }) {
+const TopResultCard = memo(function TopResultCard({ result }: { result: TopResult }) {
   const coverUrl = result.type === 'set' && result.image_r2_key
     ? getCoverUrl(result.id)
     : result.type === 'artist' && result.image_r2_key
@@ -81,7 +81,7 @@ function TopResultCard({ result }: { result: TopResult }) {
       </svg>
     </Link>
   )
-}
+})
 
 export function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams()
