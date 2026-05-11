@@ -288,7 +288,7 @@ export async function streamSet(
 
     if (!upstream.ok && upstream.status !== 206) {
       console.error(`[streamSet] Upstream fetch failed: ${upstream.status} ${upstream.statusText}`)
-      return new Response('Audio stream unavailable', { status: 502 })
+      return new Response('This set is temporarily unavailable. Please try again later.', { status: 503 })
     }
 
     // Build response headers
@@ -310,8 +310,10 @@ export async function streamSet(
       headers,
     })
   } catch (err) {
+    // Single point of failure: if the self-hosted Invidious instance is down or
+    // YouTube blocks it, this set becomes unplayable. No fallback exists.
     console.error(`[streamSet] Invidious proxy error for ${id} (video=${videoId}):`, err)
-    return new Response('Stream error', { status: 502 })
+    return new Response('This set is temporarily unavailable. Please try again later.', { status: 503 })
   }
 }
 

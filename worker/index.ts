@@ -297,11 +297,12 @@ export default {
       return new Response(null, { status: 404 })
     }
 
-    // Rate limiting — applied to all API routes, keyed by IP
-    // Authenticated requests (cookies/API keys) share the same IP bucket.
-    // 60 req/min is generous for normal use; prevents scraping and voting abuse.
+    // Rate limiting — applied to all API routes except static image/binary endpoints.
+    // Image endpoints (/cover, /image, /logo, /video, /waveform) are exempt because
+    // a single page load fires many of them and they carry no abuse risk.
+    const isImageEndpoint = /\/api\/(sets|artists|events|songs)\/[^/]+(\/cover|\/image|\/logo|\/video|\/waveform)$/.test(url.pathname)
     const clientIp = request.headers.get('CF-Connecting-IP') ?? 'unknown'
-    if (env.RATE_LIMITER) {
+    if (env.RATE_LIMITER && !isImageEndpoint) {
       const { success } = await env.RATE_LIMITER.limit({ key: clientIp })
       if (!success) {
         return new Response(JSON.stringify({ error: 'Too many requests', ok: false }), {

@@ -49,9 +49,13 @@ export async function search(
     `).bind(ftsQ).all(),
     env.DB.prepare(`
       SELECT d.id, d.set_id, d.track_title, d.track_artist,
-             d.start_time_seconds, d.confidence,
-             s.title as set_title, s.artist as set_artist
-      FROM tracks_fts f JOIN detections d ON f.id = d.id JOIN sets s ON d.set_id = s.id
+             d.start_time_seconds, d.confidence, d.song_id,
+             s.title as set_title, s.artist as set_artist,
+             sg.cover_art_r2_key as song_cover_r2_key
+      FROM tracks_fts f
+        JOIN detections d ON f.id = d.id
+        JOIN sets s ON d.set_id = s.id
+        LEFT JOIN songs sg ON d.song_id = sg.id
       WHERE tracks_fts MATCH ? ORDER BY rank LIMIT 10
     `).bind(ftsQ).all(),
   ])

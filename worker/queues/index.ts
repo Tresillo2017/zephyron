@@ -1,23 +1,11 @@
 // Queue consumer handlers for ML pipeline + cover art + enrichment
 import { runDetectionPipeline } from '../services/ml-detection'
-import { processFeedbackBatch } from '../services/feedback-processor'
 import { cacheSongCoverArt, enrichSongWithLastfm } from '../services/songs'
 
 interface DetectionMessage {
   type: 'detect_tracks'
   set_id: string
   job_id: string
-}
-
-interface FeedbackMessage {
-  type: 'annotation_created'
-  annotation_id: string
-  set_id: string
-  detection_id: string | null
-  annotation_type: 'correction' | 'new_track' | 'delete'
-  track_title: string
-  track_artist: string | null
-  start_time_seconds: number
 }
 
 interface CoverArtMessage {
@@ -59,26 +47,6 @@ export async function handleDetectionQueue(
       console.error('[queue] Detection error:', error)
       msg.retry({ delaySeconds: 60 })
     }
-  }
-}
-
-/**
- * Handle messages from the feedback-queue.
- */
-export async function handleFeedbackQueue(
-  batch: MessageBatch<FeedbackMessage>,
-  env: Env
-): Promise<void> {
-  try {
-    const messages = batch.messages.map((msg) => ({
-      body: msg.body,
-      id: msg.id,
-    }))
-    await processFeedbackBatch(messages, env)
-    batch.ackAll()
-  } catch (error) {
-    console.error('Feedback queue error:', error)
-    batch.retryAll({ delaySeconds: 60 })
   }
 }
 

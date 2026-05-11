@@ -1,7 +1,5 @@
 // Admin routes for ML pipeline management
 import { json, errorResponse } from '../lib/router'
-import { getMLStats } from '../services/feedback-processor'
-import { evolvePrompt } from '../services/ml-prompts'
 import { runDetectionPipeline } from '../services/ml-detection'
 import { searchVideos } from '../services/invidious'
 
@@ -71,33 +69,6 @@ export async function getDetectionStatus(
   }
 
   return json({ data: job, ok: true })
-}
-
-// GET /api/admin/ml/stats — Get ML accuracy statistics
-export async function mlStats(
-  _request: Request,
-  env: Env,
-  _ctx: ExecutionContext,
-  _params: Record<string, string>
-): Promise<Response> {
-  const stats = await getMLStats(env)
-  return json({ data: stats, ok: true })
-}
-
-// POST /api/admin/ml/evolve — Manually trigger prompt evolution
-export async function evolvePromptRoute(
-  _request: Request,
-  env: Env,
-  _ctx: ExecutionContext,
-  _params: Record<string, string>
-): Promise<Response> {
-  const newVersion = await evolvePrompt(env)
-
-  if (newVersion === 0) {
-    return json({ data: { evolved: false, reason: 'Not enough feedback (need at least 5 corrections)' }, ok: true })
-  }
-
-  return json({ data: { evolved: true, new_version: newVersion }, ok: true })
 }
 
 // GET /api/admin/jobs — List recent detection jobs

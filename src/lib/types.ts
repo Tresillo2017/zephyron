@@ -289,7 +289,7 @@ export interface TopResult {
 export interface SearchResults {
   top_result: TopResult | null
   sets: DjSet[]
-  tracks: (Detection & { set_title: string; set_artist: string })[]
+  tracks: (Detection & { set_title: string; set_artist: string; song_id: string | null; song_cover_r2_key: string | null })[]
   artists: { id: string; name: string; image_url: string | null; set_count: number }[]
   events: (EventInfo & { set_count: number })[]
 }
