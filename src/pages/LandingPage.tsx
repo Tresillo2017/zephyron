@@ -31,7 +31,7 @@ function useLandingData(): { featured: DjSet | null; recent: DjSet[]; loading: b
         setFeatured(pop.data[0] ?? null)
         setRecent(rec.data)
       })
-      .catch(() => {})
+      .catch((err) => { console.error('[LandingPage] API error', err) })
       .finally(() => setLoading(false))
   }, [])
 
@@ -123,7 +123,7 @@ function LandingSetCard({ set }: { set: DjSet }) {
         <div className="flex items-center gap-2 text-xs" style={{ color: 'hsl(var(--c3))' }}>
           <span className="truncate">{set.artist}</span>
           <span>·</span>
-          <span className="shrink-0">{durationMin}m</span>
+          {durationMin > 0 && <span className="shrink-0">{durationMin}m</span>}
         </div>
         {set.genre && (
           <span
