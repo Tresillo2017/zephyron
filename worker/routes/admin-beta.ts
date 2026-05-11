@@ -386,6 +386,9 @@ export async function createSet(
         'SELECT artist_id FROM set_artists WHERE set_id = ?'
       ).bind(id).all<{ artist_id: string }>()
 
+      const setTitle = await env.DB.prepare('SELECT title FROM sets WHERE id = ?')
+        .bind(id).first<{ title: string }>()
+
       for (const { artist_id } of setArtistRows.results) {
         const artist = await env.DB.prepare('SELECT name FROM artists WHERE id = ?')
           .bind(artist_id).first<{ name: string }>()
@@ -396,9 +399,6 @@ export async function createSet(
         ).bind(artist_id).all<{ user_id: string }>()
 
         if (followers.results.length === 0) continue
-
-        const setTitle = await env.DB.prepare('SELECT title FROM sets WHERE id = ?')
-          .bind(id).first<{ title: string }>()
 
         const inserts = followers.results.map(({ user_id }) =>
           env.DB.prepare(
@@ -787,13 +787,14 @@ export async function moderateAnnotation(
 
   // Notify the annotator (non-blocking, skip if anonymous)
   if (annotation.user_id) {
+    const annotatorId = annotation.user_id
     ctx.waitUntil((async () => {
       try {
         await env.DB.prepare(
           'INSERT INTO notifications (id, user_id, type, title, body, link) VALUES (?, ?, ?, ?, ?, ?)'
         ).bind(
           nanoid(),
-          annotation.user_id,
+          annotatorId,
           body.action === 'approve' ? 'annotation_approved' : 'annotation_rejected',
           body.action === 'approve' ? 'Your annotation was approved' : 'Your annotation was rejected',
           annotation.track_title,
