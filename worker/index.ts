@@ -9,8 +9,7 @@ import {
   deletePlaylist, addPlaylistItem, removePlaylistItem,
 } from './routes/playlists'
 import {
-  triggerDetection, getDetectionStatus, mlStats,
-  evolvePromptRoute, listJobs, redetectLowConfidence,
+  triggerDetection, getDetectionStatus, listJobs, redetectLowConfidence,
   youtubeSearch,
 } from './routes/admin'
 import {
@@ -42,8 +41,10 @@ import { updatePrivacySettings, getPrivacySettings } from './routes/privacy'
 import * as sessions from './routes/sessions'
 import { getAnnualWrapped, downloadWrappedImage, getMonthlyWrapped } from './routes/wrapped'
 import { getTrendingSets, getRandomSet, testDiscordWebhook } from './routes/discord'
-import { handleDetectionQueue, handleFeedbackQueue, handleCoverArtQueue } from './queues/index'
+import { handleDetectionQueue, handleCoverArtQueue } from './queues/index'
 import { handleScheduled } from './cron'
+import { followArtist, unfollowArtist, getFollowStatus } from './routes/follows'
+import { getNotifications, markAllNotificationsRead, markNotificationRead } from './routes/notifications'
 
 // Re-export Durable Object class for Cloudflare runtime
 export { AudioSessionDO } from './durable-objects/audio-session'
@@ -120,6 +121,16 @@ router.post('/api/songs/:id/like', withAuth(likeSong))
 router.delete('/api/songs/:id/like', withAuth(unlikeSong))
 router.get('/api/songs/:id/like-status', withAuth(getSongLikeStatus))
 router.get('/api/users/me/liked-songs', withAuth(getLikedSongs))
+
+// Artist follows (authenticated)
+router.post('/api/artists/:id/follow', withAuth(followArtist))
+router.delete('/api/artists/:id/follow', withAuth(unfollowArtist))
+router.get('/api/artists/:id/follow', withAuth(getFollowStatus))
+
+// Notifications (authenticated)
+router.get('/api/notifications', withAuth(getNotifications))
+router.post('/api/notifications/read-all', withAuth(markAllNotificationsRead))
+router.post('/api/notifications/:id/read', withAuth(markNotificationRead))
 
 // Admin: Songs
 router.get('/api/admin/songs', withAdmin(listSongsAdmin))
@@ -235,8 +246,6 @@ router.post('/api/admin/events/:id/fetch-1001tl-sets', withAdmin(fetchEventSets)
 router.post('/api/admin/sets/:id/detect', withAdmin(triggerDetection))
 router.get('/api/admin/sets/:id/detect/status', withAdmin(getDetectionStatus))
 router.post('/api/admin/sets/:id/redetect-low', withAdmin(redetectLowConfidence))
-router.get('/api/admin/ml/stats', withAdmin(mlStats))
-router.post('/api/admin/ml/evolve', withAdmin(evolvePromptRoute))
 router.get('/api/admin/jobs', withAdmin(listJobs))
 router.get('/api/admin/youtube-search', withAdmin(youtubeSearch))
 
@@ -288,6 +297,20 @@ export default {
       return new Response(null, { status: 404 })
     }
 
+    // Rate limiting — applied to all API routes, keyed by IP
+    // Authenticated requests (cookies/API keys) share the same IP bucket.
+    // 60 req/min is generous for normal use; prevents scraping and voting abuse.
+    const clientIp = request.headers.get('CF-Connecting-IP') ?? 'unknown'
+    if (env.RATE_LIMITER) {
+      const { success } = await env.RATE_LIMITER.limit({ key: clientIp })
+      if (!success) {
+        return new Response(JSON.stringify({ error: 'Too many requests', ok: false }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
+        })
+      }
+    }
+
     // Better Auth handles /api/auth/* routes
     if (url.pathname.startsWith('/api/auth')) {
       // Restrict API key management to admin users only
@@ -327,9 +350,6 @@ export default {
     switch (batch.queue) {
       case 'ml-detection-queue':
         await handleDetectionQueue(batch as MessageBatch<any>, env)
-        break
-      case 'feedback-queue':
-        await handleFeedbackQueue(batch as MessageBatch<any>, env)
         break
       case 'cover-art-queue':
         await handleCoverArtQueue(batch as MessageBatch<any>, env)

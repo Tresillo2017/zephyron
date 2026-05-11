@@ -379,6 +379,44 @@ export async function createSet(
     } catch (err) {
       console.error('[createSet] Discord notification failed (non-blocking):', err)
     }
+
+    // Notify followers of all artists linked to this set
+    try {
+      const setArtistRows = await env.DB.prepare(
+        'SELECT artist_id FROM set_artists WHERE set_id = ?'
+      ).bind(id).all<{ artist_id: string }>()
+
+      for (const { artist_id } of setArtistRows.results) {
+        const artist = await env.DB.prepare('SELECT name FROM artists WHERE id = ?')
+          .bind(artist_id).first<{ name: string }>()
+        if (!artist) continue
+
+        const followers = await env.DB.prepare(
+          'SELECT user_id FROM artist_follows WHERE artist_id = ?'
+        ).bind(artist_id).all<{ user_id: string }>()
+
+        if (followers.results.length === 0) continue
+
+        const setTitle = await env.DB.prepare('SELECT title FROM sets WHERE id = ?')
+          .bind(id).first<{ title: string }>()
+
+        const inserts = followers.results.map(({ user_id }) =>
+          env.DB.prepare(
+            'INSERT INTO notifications (id, user_id, type, title, body, link) VALUES (?, ?, ?, ?, ?, ?)'
+          ).bind(
+            nanoid(),
+            user_id,
+            'new_set',
+            `${artist.name} added a new set`,
+            setTitle?.title ?? 'New set',
+            `/app/sets/${id}`
+          )
+        )
+        await env.DB.batch(inserts)
+      }
+    } catch (err) {
+      console.error('[createSet] Follower notifications failed (non-blocking):', err)
+    }
   })())
 
   return json({ data: { id }, ok: true }, 201)
@@ -676,7 +714,7 @@ export async function listPendingAnnotations(
 export async function moderateAnnotation(
   request: Request,
   env: Env,
-  _ctx: ExecutionContext,
+  ctx: ExecutionContext,
   params: Record<string, string>
 ): Promise<Response> {
   const { id } = params
@@ -728,22 +766,6 @@ export async function moderateAnnotation(
     .run()
 
   if (body.action === 'approve') {
-    // Send to feedback queue for ML processing
-    try {
-      await env.FEEDBACK_QUEUE.send({
-        type: 'annotation_created',
-        annotation_id: annotation.id,
-        set_id: annotation.set_id,
-        detection_id: annotation.detection_id,
-        annotation_type: annotation.annotation_type,
-        track_title: annotation.track_title,
-        track_artist: annotation.track_artist,
-        start_time_seconds: annotation.start_time_seconds,
-      })
-    } catch {
-      console.error('Failed to send approved annotation to feedback queue')
-    }
-
     // Award reputation to annotator
     if (annotation.user_id) {
       await env.DB.prepare(
@@ -761,6 +783,26 @@ export async function moderateAnnotation(
         .bind(annotation.user_id)
         .run()
     }
+  }
+
+  // Notify the annotator (non-blocking, skip if anonymous)
+  if (annotation.user_id) {
+    ctx.waitUntil((async () => {
+      try {
+        await env.DB.prepare(
+          'INSERT INTO notifications (id, user_id, type, title, body, link) VALUES (?, ?, ?, ?, ?, ?)'
+        ).bind(
+          nanoid(),
+          annotation.user_id,
+          body.action === 'approve' ? 'annotation_approved' : 'annotation_rejected',
+          body.action === 'approve' ? 'Your annotation was approved' : 'Your annotation was rejected',
+          annotation.track_title,
+          `/app/sets/${annotation.set_id}`
+        ).run()
+      } catch (err) {
+        console.error('[moderateAnnotation] Notification failed (non-blocking):', err)
+      }
+    })())
   }
 
   return json({ ok: true, action: newStatus })
