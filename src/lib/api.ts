@@ -982,3 +982,31 @@ export async function fetchMonthlyWrapped(year: number, month: number): Promise<
 
   return res.json()
 }
+
+// ── Artist follows ──────────────────────────────────────────────────────────
+
+export async function followArtist(artistId: string): Promise<{ data: { following: boolean }; ok: boolean }> {
+  return fetchApi(`/artists/${artistId}/follow`, { method: 'POST' })
+}
+
+export async function unfollowArtist(artistId: string): Promise<{ data: { following: boolean }; ok: boolean }> {
+  return fetchApi(`/artists/${artistId}/follow`, { method: 'DELETE' })
+}
+
+export async function getFollowStatus(artistId: string): Promise<{ data: { following: boolean }; ok: boolean }> {
+  return fetchApi(`/artists/${artistId}/follow`)
+}
+
+// ── Notifications ────────────────────────────────────────────────────────────
+
+export async function getNotifications(): Promise<{ data: { notifications: import('./types').Notification[]; unread_count: number }; ok: boolean }> {
+  return fetchApi('/notifications')
+}
+
+export async function markAllNotificationsRead(): Promise<{ ok: boolean }> {
+  return fetchApi('/notifications/read-all', { method: 'POST' })
+}
+
+export async function markNotificationRead(id: string): Promise<{ ok: boolean }> {
+  return fetchApi(`/notifications/${id}/read`, { method: 'POST' })
+}

@@ -5,12 +5,11 @@ import { UserAvatar } from "../ui/UserAvatar";
 import { Logo } from "../ui/Logo";
 import { openChangelog } from "../WhatsNew";
 import {
-  searchSets,
-  getCoverUrl,
-  getEventCoverUrl,
-  getSongCoverUrl,
+  getNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
 } from "../../lib/api";
-import type { SearchResults } from "../../lib/types";
+import type { Notification } from "../../lib/types";
 
 export function TopNav() {
   const { data: session } = useSession();
@@ -21,13 +20,12 @@ export function TopNav() {
   const [menuExiting, setMenuExiting] = useState(false);
   const menuExitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scrolled, setScrolled] = useState(false);
-  const [showSearchPreview, setShowSearchPreview] = useState(false);
-  const [searchResults, setSearchResults] = useState<SearchResults | null>(
-    null
-  );
-  const [isSearching, setIsSearching] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const searchRef = useRef<HTMLDivElement>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [showNotifMenu, setShowNotifMenu] = useState(false)
+  const [notifExiting, setNotifExiting] = useState(false)
+  const notifRef = useRef<HTMLDivElement>(null)
 
   const closeMenu = () => {
     if (menuExitTimer.current) clearTimeout(menuExitTimer.current)
@@ -44,39 +42,12 @@ export function TopNav() {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         closeMenu();
       }
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setShowSearchPreview(false);
-      }
     };
-    if (showUserMenu || showSearchPreview) {
+    if (showUserMenu) {
       document.addEventListener("mousedown", handler);
     }
     return () => document.removeEventListener("mousedown", handler);
-  }, [showUserMenu, showSearchPreview]);
-
-  // Debounced search
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults(null);
-      setShowSearchPreview(false);
-      return;
-    }
-
-    setIsSearching(true);
-    const timer = setTimeout(async () => {
-      try {
-        const { data } = await searchSets(searchQuery.trim());
-        setSearchResults(data);
-        setShowSearchPreview(true);
-      } catch {
-        setSearchResults(null);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [showUserMenu]);
 
   // Scroll-driven blur — listen to the actual scroll container, not window
   useEffect(() => {
@@ -87,6 +58,34 @@ export function TopNav() {
     setScrolled(container.scrollTop > 10);
     return () => container.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Fetch notifications on mount and poll every 60s
+  useEffect(() => {
+    if (!session) return
+    const fetchNotifs = () => {
+      getNotifications()
+        .then((res) => {
+          setNotifications(res.data.notifications)
+          setUnreadCount(res.data.unread_count)
+        })
+        .catch(() => {})
+    }
+    fetchNotifs()
+    const interval = setInterval(fetchNotifs, 60_000)
+    return () => clearInterval(interval)
+  }, [session])
+
+  useEffect(() => {
+    if (!showNotifMenu) return
+    const handler = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifExiting(true)
+        setTimeout(() => { setShowNotifMenu(false); setNotifExiting(false) }, 150)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showNotifMenu])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -196,7 +195,7 @@ export function TopNav() {
         onSubmit={handleSearch}
         className="flex-1 max-w-lg mx-auto hidden sm:block"
       >
-        <div className="relative" ref={searchRef}>
+        <div className="relative">
           <svg
             className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
             style={{ color: "hsl(var(--c3) / 0.6)" }}
@@ -215,7 +214,6 @@ export function TopNav() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => searchQuery && setShowSearchPreview(true)}
             placeholder="Search sets, artists, events..."
             className="w-full pl-9 pr-4 py-1.5 rounded-lg text-sm focus:outline-none transition-all"
             style={{
@@ -226,356 +224,6 @@ export function TopNav() {
                 : "1px solid transparent",
             }}
           />
-
-          {/* Search preview dropdown */}
-          {showSearchPreview && searchQuery && (
-            <div
-              className="absolute top-full left-0 right-0 mt-2 max-h-[480px] overflow-y-auto rounded-[var(--card-radius)] p-2"
-              style={{
-                background: "hsl(var(--b5) / 0.97)",
-                backdropFilter: "blur(24px) saturate(180%)",
-                WebkitBackdropFilter: "blur(24px) saturate(180%)",
-                boxShadow:
-                  "0 8px 32px rgba(0,0,0,0.4), inset 0 0 0 1px hsl(var(--b4) / 0.3)",
-              }}
-            >
-              {isSearching ? (
-                <div className="px-3 py-8 text-center">
-                  <p className="text-sm" style={{ color: "hsl(var(--c3))" }}>
-                    Searching...
-                  </p>
-                </div>
-              ) : searchResults ? (
-                <>
-                  {/* Sets */}
-                  {searchResults.sets.length > 0 && (
-                    <div className="mb-3">
-                      <p
-                        className="text-xs font-mono tracking-wider uppercase px-3 py-2"
-                        style={{ color: "hsl(var(--c3))" }}
-                      >
-                        Sets
-                      </p>
-                      <div className="space-y-1">
-                        {searchResults.sets.slice(0, 5).map((set) => (
-                          <Link
-                            key={set.id}
-                            to={`/app/sets/${set.id}`}
-                            onClick={() => {
-                              setShowSearchPreview(false);
-                              setSearchQuery("");
-                            }}
-                            className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all no-underline"
-                            style={{ color: "hsl(var(--c2))" }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background =
-                                "hsl(var(--b4) / 0.4)";
-                              e.currentTarget.style.color = "hsl(var(--c1))";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = "transparent";
-                              e.currentTarget.style.color = "hsl(var(--c2))";
-                            }}
-                          >
-                            {/* Set cover thumbnail */}
-                            <div
-                              className="w-10 h-10 rounded-lg overflow-hidden shrink-0"
-                              style={{
-                                background: "hsl(var(--b4) / 0.3)",
-                                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                              }}
-                            >
-                              {set.cover_image_r2_key ? (
-                                <img
-                                  src={getCoverUrl(set.id)}
-                                  alt=""
-                                  className="w-full h-full object-cover"
-                                  loading="lazy"
-                                />
-                              ) : (
-                                <div
-                                  className="w-full h-full flex items-center justify-center"
-                                  style={{
-                                    background:
-                                      "linear-gradient(135deg, hsl(var(--h3) / 0.15), hsl(var(--b4) / 0.3))",
-                                  }}
-                                >
-                                  <svg
-                                    className="w-4 h-4"
-                                    style={{ color: "hsl(var(--c3) / 0.3)" }}
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth={1.5}
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z"
-                                    />
-                                  </svg>
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm truncate">{set.title}</p>
-                              <p
-                                className="text-xs truncate"
-                                style={{ color: "hsl(var(--c3))" }}
-                              >
-                                {set.artist}
-                              </p>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Events */}
-                  {searchResults.events.length > 0 && (
-                    <div className="mb-3">
-                      <p
-                        className="text-xs font-mono tracking-wider uppercase px-3 py-2"
-                        style={{ color: "hsl(var(--c3))" }}
-                      >
-                        Events
-                      </p>
-                      <div className="space-y-1">
-                        {searchResults.events.slice(0, 3).map((event) => (
-                          <Link
-                            key={event.id}
-                            to={`/app/events/${event.slug || event.id}`}
-                            onClick={() => {
-                              setShowSearchPreview(false);
-                              setSearchQuery("");
-                            }}
-                            className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all no-underline"
-                            style={{ color: "hsl(var(--c2))" }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background =
-                                "hsl(var(--b4) / 0.4)";
-                              e.currentTarget.style.color = "hsl(var(--c1))";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = "transparent";
-                              e.currentTarget.style.color = "hsl(var(--c2))";
-                            }}
-                          >
-                            {/* Event cover thumbnail */}
-                            <div
-                              className="w-10 h-10 rounded-lg overflow-hidden shrink-0"
-                              style={{
-                                background: "hsl(var(--b4) / 0.3)",
-                                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                              }}
-                            >
-                              {event.cover_image_r2_key ? (
-                                <img
-                                  src={getEventCoverUrl(event.id)}
-                                  alt=""
-                                  className="w-full h-full object-cover"
-                                  loading="lazy"
-                                />
-                              ) : (
-                                <div
-                                  className="w-full h-full flex items-center justify-center"
-                                  style={{
-                                    background:
-                                      "linear-gradient(135deg, hsl(var(--h3) / 0.15), hsl(var(--b4) / 0.3))",
-                                  }}
-                                >
-                                  <svg
-                                    className="w-4 h-4"
-                                    style={{ color: "hsl(var(--c3) / 0.3)" }}
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth={1.5}
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
-                                    />
-                                  </svg>
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm truncate">{event.name}</p>
-                              <p
-                                className="text-xs"
-                                style={{ color: "hsl(var(--c3))" }}
-                              >
-                                {event.set_count}{" "}
-                                {event.set_count === 1 ? "set" : "sets"}
-                              </p>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Tracks */}
-                  {searchResults.tracks.length > 0 && (
-                    <div>
-                      <p
-                        className="text-xs font-mono tracking-wider uppercase px-3 py-2"
-                        style={{ color: "hsl(var(--c3))" }}
-                      >
-                        Tracks
-                      </p>
-                      <div className="space-y-1">
-                        {searchResults.tracks.slice(0, 5).map((track) => {
-                          const coverUrl = track.song?.cover_art_r2_key
-                            ? getSongCoverUrl(track.song.id)
-                            : track.song?.cover_art_url ||
-                              track.song?.lastfm_album_art ||
-                              null;
-
-                          return (
-                            <Link
-                              key={track.id}
-                              to={`/app/sets/${track.set_id}`}
-                              onClick={() => {
-                                setShowSearchPreview(false);
-                                setSearchQuery("");
-                              }}
-                              className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all no-underline"
-                              style={{ color: "hsl(var(--c2))" }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.background =
-                                  "hsl(var(--b4) / 0.4)";
-                                e.currentTarget.style.color = "hsl(var(--c1))";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.background =
-                                  "transparent";
-                                e.currentTarget.style.color = "hsl(var(--c2))";
-                              }}
-                            >
-                              {/* Track cover thumbnail */}
-                              <div
-                                className="w-10 h-10 rounded-lg overflow-hidden shrink-0"
-                                style={{
-                                  background: "hsl(var(--b4) / 0.3)",
-                                  boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                                }}
-                              >
-                                {coverUrl ? (
-                                  <img
-                                    src={coverUrl}
-                                    alt=""
-                                    className="w-full h-full object-cover"
-                                    loading="lazy"
-                                  />
-                                ) : (
-                                  <div
-                                    className="w-full h-full flex items-center justify-center"
-                                    style={{
-                                      background:
-                                        "linear-gradient(135deg, hsl(var(--h3) / 0.15), hsl(var(--b4) / 0.3))",
-                                    }}
-                                  >
-                                    <svg
-                                      className="w-4 h-4"
-                                      style={{ color: "hsl(var(--c3) / 0.3)" }}
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
-                                      strokeWidth={1.5}
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z"
-                                      />
-                                    </svg>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm truncate">
-                                  {track.track_title}
-                                </p>
-                                <p
-                                  className="text-xs truncate"
-                                  style={{ color: "hsl(var(--c3))" }}
-                                >
-                                  {track.track_artist} · {track.set_artist}
-                                </p>
-                              </div>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* No results */}
-                  {searchResults.sets.length === 0 &&
-                    searchResults.events.length === 0 &&
-                    searchResults.tracks.length === 0 && (
-                      <div className="px-3 py-8 text-center">
-                        <p
-                          className="text-sm"
-                          style={{ color: "hsl(var(--c3))" }}
-                        >
-                          No results found for "{searchQuery}"
-                        </p>
-                      </div>
-                    )}
-
-                  {/* View all results link */}
-                  {(searchResults.sets.length > 0 ||
-                    searchResults.events.length > 0 ||
-                    searchResults.tracks.length > 0) && (
-                    <>
-                      <div
-                        className="h-px my-2"
-                        style={{ background: "hsl(var(--b4) / 0.3)" }}
-                      />
-                      <Link
-                        to={`/app/search?q=${encodeURIComponent(searchQuery)}`}
-                        onClick={() => {
-                          setShowSearchPreview(false);
-                          setSearchQuery("");
-                        }}
-                        className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-all no-underline"
-                        style={{ color: "hsl(var(--h3))" }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background =
-                            "hsl(var(--b4) / 0.4)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "transparent";
-                        }}
-                      >
-                        <span className="text-sm font-[var(--font-weight-medium)]">
-                          View all results
-                        </span>
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M13 7l5 5m0 0l-5 5m5-5H6"
-                          />
-                        </svg>
-                      </Link>
-                    </>
-                  )}
-                </>
-              ) : null}
-            </div>
-          )}
         </div>
       </form>
 
@@ -631,11 +279,130 @@ export function TopNav() {
           </Link>
         )}
 
+        {/* Notification bell */}
+        {session?.user && (
+          <div className="relative" ref={notifRef}>
+            <button
+              type="button"
+              onClick={() => {
+                if (showNotifMenu) {
+                  setNotifExiting(true)
+                  setTimeout(() => { setShowNotifMenu(false); setNotifExiting(false) }, 150)
+                } else {
+                  setShowNotifMenu(true)
+                  // Close user menu if open
+                  if (showUserMenu) closeMenu()
+                  if (unreadCount > 0) {
+                    markAllNotificationsRead()
+                      .then(() => {
+                        setUnreadCount(0)
+                        setNotifications(prev => prev.map(x => ({ ...x, is_read: 1 })))
+                      })
+                      .catch(() => {})
+                  }
+                }
+              }}
+              className="relative flex items-center justify-center w-9 h-9 rounded-full transition-colors"
+              style={{ color: 'hsl(var(--c2))' }}
+              aria-label="Notifications"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+              </svg>
+              {unreadCount > 0 && (
+                <span
+                  className="absolute top-0.5 right-0.5 min-w-[16px] h-4 flex items-center justify-center rounded-full text-[10px] font-bold text-white px-1"
+                  style={{ background: 'hsl(0 70% 55%)' }}
+                >
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notification dropdown */}
+            {(showNotifMenu || notifExiting) && (
+              <div
+                className="absolute right-0 top-full mt-2 w-[320px] z-50 rounded-[var(--card-radius)] overflow-hidden"
+                style={{
+                  background: 'hsl(var(--b5) / 0.97)',
+                  backdropFilter: 'blur(24px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 0 0 1px hsl(var(--b4) / 0.3)',
+                  animation: notifExiting
+                    ? 'solarium-out 0.15s ease-in forwards'
+                    : 'solarium 0.2s var(--ease-out-custom)',
+                }}
+              >
+                <div className="px-3 py-2.5" style={{ borderBottom: '1px solid hsl(var(--b4) / 0.3)' }}>
+                  <p className="text-xs font-mono uppercase tracking-wider" style={{ color: 'hsl(var(--c3))' }}>
+                    Notifications
+                  </p>
+                </div>
+
+                {notifications.length === 0 ? (
+                  <div className="px-3 py-6 text-center">
+                    <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>No notifications yet</p>
+                  </div>
+                ) : (
+                  <div className="max-h-[360px] overflow-y-auto">
+                    {notifications.slice(0, 10).map((n) => (
+                      <Link
+                        key={n.id}
+                        to={n.link ?? '/app'}
+                        onClick={() => {
+                          markNotificationRead(n.id).catch(() => {})
+                          setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: 1 } : x))
+                          setNotifExiting(true)
+                          setTimeout(() => { setShowNotifMenu(false); setNotifExiting(false) }, 150)
+                        }}
+                        className="flex items-start gap-3 px-3 py-2.5 no-underline transition-colors"
+                        style={{
+                          background: n.is_read === 0 ? 'hsl(var(--h3) / 0.06)' : 'transparent',
+                          borderBottom: '1px solid hsl(var(--b4) / 0.15)',
+                        }}
+                      >
+                        <span className="text-base mt-0.5 shrink-0">
+                          {n.type === 'new_set' ? '🎧' : n.type === 'annotation_approved' ? '✅' : '✗'}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium truncate" style={{ color: 'hsl(var(--c1))' }}>
+                            {n.title}
+                          </p>
+                          <p className="text-xs truncate mt-0.5" style={{ color: 'hsl(var(--c2))' }}>
+                            {n.body}
+                          </p>
+                          <p className="text-[10px] mt-1 font-mono" style={{ color: 'hsl(var(--c3))' }}>
+                            {new Date(n.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        {n.is_read === 0 && (
+                          <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: 'hsl(var(--h3))' }} />
+                        )}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* User dropdown */}
         {session?.user ? (
           <div className="relative" ref={menuRef}>
             <button
-              onClick={() => showUserMenu ? closeMenu() : setShowUserMenu(true)}
+              onClick={() => {
+                if (showUserMenu) {
+                  closeMenu()
+                } else {
+                  setShowUserMenu(true)
+                  // Close notif menu if open
+                  if (showNotifMenu) {
+                    setNotifExiting(true)
+                    setTimeout(() => { setShowNotifMenu(false); setNotifExiting(false) }, 150)
+                  }
+                }
+              }}
               className="flex items-center gap-2 pl-2 pr-3 py-1 rounded-full transition-all"
               style={{
                 background: showUserMenu

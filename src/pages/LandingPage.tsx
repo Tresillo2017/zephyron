@@ -1,362 +1,455 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { Logo } from '../components/ui/Logo'
+import { fetchSets, getCoverUrl } from '../lib/api'
+import type { DjSet } from '../lib/types'
+
+const COVER_GRADIENTS = [
+  'linear-gradient(135deg, #2a1060, #5a20a0)',
+  'linear-gradient(135deg, #0a1a50, #1a4090)',
+  'linear-gradient(135deg, #0a2820, #1a6050)',
+  'linear-gradient(135deg, #301020, #701040)',
+  'linear-gradient(135deg, #1a1808, #504010)',
+  'linear-gradient(135deg, #280a28, #681068)',
+]
+
+function idToGradient(id: string): string {
+  return COVER_GRADIENTS[id.charCodeAt(0) % COVER_GRADIENTS.length]
+}
+
+function useLandingData(): { featured: DjSet | null; recent: DjSet[]; loading: boolean } {
+  const [featured, setFeatured] = useState<DjSet | null>(null)
+  const [recent, setRecent] = useState<DjSet[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    Promise.all([
+      fetchSets({ sort: 'popular', pageSize: 1 }),
+      fetchSets({ sort: 'newest', pageSize: 6 }),
+    ])
+      .then(([pop, rec]) => {
+        setFeatured(pop.data[0] ?? null)
+        setRecent(rec.data)
+      })
+      .catch((err) => { console.error('[LandingPage] API error', err) })
+      .finally(() => setLoading(false))
+  }, [])
+
+  return { featured, recent, loading }
+}
+
+function WaveformDecoration() {
+  return (
+    <div className="absolute bottom-28 right-0 w-1/2 h-14 flex items-center gap-0.5 opacity-20 pointer-events-none px-10">
+      {Array.from({ length: 80 }, (_, i) => (
+        <div
+          key={i}
+          className="flex-1 rounded-sm"
+          style={{
+            height: `${12 + Math.abs(Math.sin(i * 0.4) * 32)}px`,
+            background: 'hsl(var(--h3))',
+            opacity: 0.4 + Math.abs(Math.sin(i * 0.3)) * 0.6,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+function HeroSkeleton() {
+  return (
+    <section className="relative h-[560px] sm:h-[600px] overflow-hidden flex items-end">
+      <div className="absolute inset-0 animate-pulse" style={{ background: 'hsl(var(--b5))' }} />
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, hsl(var(--b6)) 0%, hsl(var(--b6) / 0.7) 30%, transparent 100%)' }} />
+      <div className="relative z-10 px-5 sm:px-8 lg:px-16 pb-12 w-full flex items-end justify-between gap-8">
+        <div className="max-w-xl space-y-4">
+          <div className="h-3 w-32 rounded-full animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
+          <div className="h-10 w-80 rounded-xl animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
+          <div className="h-10 w-64 rounded-xl animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
+          <div className="h-5 w-96 rounded-lg animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
+          <div className="flex gap-3 pt-2">
+            <div className="h-11 w-36 rounded-xl animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
+            <div className="h-11 w-24 rounded-xl animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function LandingSetCard({ set }: { set: DjSet }) {
+  const durationMin = Math.round(set.duration_seconds / 60)
+
+  return (
+    <Link
+      to={`/app/sets/${set.id}`}
+      className="group flex flex-col no-underline rounded-xl overflow-hidden transition-all duration-200"
+      style={{
+        background: 'hsl(var(--b5))',
+        boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)',
+      }}
+    >
+      {/* Cover */}
+      <div className="relative aspect-video overflow-hidden">
+        {set.cover_image_r2_key ? (
+          <img
+            src={getCoverUrl(set.id)}
+            alt={set.title}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: idToGradient(set.id) }}
+          />
+        )}
+        {/* Hover overlay */}
+        <div
+          className="absolute inset-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
+          style={{ background: 'hsl(var(--b6) / 0.5)' }}
+        >
+          <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="p-3.5 flex flex-col gap-1.5">
+        <p className="text-sm font-semibold truncate" style={{ color: 'hsl(var(--c1))' }}>
+          {set.title}
+        </p>
+        <div className="flex items-center gap-2 text-xs" style={{ color: 'hsl(var(--c3))' }}>
+          <span className="truncate">{set.artist}</span>
+          <span>·</span>
+          {durationMin > 0 && <span className="shrink-0">{durationMin}m</span>}
+        </div>
+        {set.genre && (
+          <span
+            className="self-start px-1.5 py-0.5 text-xs font-mono rounded mt-0.5"
+            style={{ background: 'hsl(var(--h3) / 0.1)', color: 'hsl(var(--h2) / 0.8)' }}
+          >
+            #{set.genre.toLowerCase().replace(/[\s/&]+/g, '-')}
+          </span>
+        )}
+      </div>
+    </Link>
+  )
+}
+
+function GridSkeleton() {
+  return (
+    <section className="px-5 sm:px-8 lg:px-16 py-16">
+      <div className="max-w-6xl mx-auto">
+        <div className="h-3 w-32 rounded-full mb-6 animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="rounded-xl overflow-hidden animate-pulse" style={{ background: 'hsl(var(--b5))' }}>
+              <div className="aspect-video" style={{ background: 'hsl(var(--b4))' }} />
+              <div className="p-3.5 space-y-2">
+                <div className="h-3 rounded-full w-3/4" style={{ background: 'hsl(var(--b4))' }} />
+                <div className="h-3 rounded-full w-1/2" style={{ background: 'hsl(var(--b4))' }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function CatalogGrid({ sets }: { sets: DjSet[] }) {
+  if (sets.length === 0) return null
+
+  return (
+    <section className="px-5 sm:px-8 lg:px-16 py-16">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <span className="text-xs font-mono tracking-widest uppercase" style={{ color: 'hsl(var(--c3))' }}>
+            Recently Added
+          </span>
+          <Link to="/register" className="text-xs no-underline transition-colors" style={{ color: 'hsl(var(--h2))' }}>
+            Browse all →
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {sets.map((set) => (
+            <LandingSetCard key={set.id} set={set} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function FeaturesSection() {
+  const features = [
+    {
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
+        </svg>
+      ),
+      title: 'AI Track Detection',
+      description: 'YouTube descriptions, comments, and metadata analyzed to identify every track with timestamps. Enriched via Last.fm for complete artist and release data.',
+      stat: '94%',
+      statLabel: 'average detection accuracy',
+    },
+    {
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+        </svg>
+      ),
+      title: 'Community Verification',
+      description: 'Users vote on detections and submit corrections. Verified tracks show consensus scores. The community fills in what AI misses.',
+      stat: '12k+',
+      statLabel: 'community corrections',
+    },
+  ]
+
+  return (
+    <section className="px-5 sm:px-8 lg:px-16 py-16" style={{ borderTop: '1px solid hsl(var(--b4) / 0.25)' }}>
+      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {features.map((f) => (
+          <div
+            key={f.title}
+            className="rounded-xl p-6"
+            style={{
+              background: 'hsl(var(--b5))',
+              boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)',
+            }}
+          >
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center mb-4"
+              style={{ background: 'hsl(var(--h3) / 0.12)', color: 'hsl(var(--h2))' }}
+            >
+              {f.icon}
+            </div>
+            <h3 className="text-base font-semibold mb-2" style={{ color: 'hsl(var(--c1))' }}>
+              {f.title}
+            </h3>
+            <p className="text-sm leading-relaxed mb-4" style={{ color: 'hsl(var(--c2))' }}>
+              {f.description}
+            </p>
+            <p className="text-2xl font-bold font-mono" style={{ color: 'hsl(var(--h2))' }}>
+              {f.stat}
+            </p>
+            <p className="text-xs font-mono uppercase tracking-wider mt-0.5" style={{ color: 'hsl(var(--c3))' }}>
+              {f.statLabel}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function CtaSection() {
+  return (
+    <section className="px-5 sm:px-8 lg:px-16 py-20 sm:py-28" style={{ borderTop: '1px solid hsl(var(--b4) / 0.25)' }}>
+      <div className="relative max-w-2xl mx-auto text-center">
+        <div
+          className="absolute inset-0 -z-10 flex items-center justify-center pointer-events-none"
+        >
+          <div className="w-[300px] h-[200px] rounded-full mx-auto" style={{ background: 'hsl(var(--h3) / 0.06)', filter: 'blur(100px)' }} />
+        </div>
+
+        <h2 className="text-2xl sm:text-3xl font-bold mb-4 tracking-tight" style={{ color: 'hsl(var(--c1))' }}>
+          Ready to listen?
+        </h2>
+        <p className="leading-relaxed mb-10 max-w-md mx-auto text-sm sm:text-base" style={{ color: 'hsl(var(--c2))' }}>
+          Join the community building the most complete database of DJ set tracklists.
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <Link
+            to="/register"
+            className="px-6 py-3 text-white font-medium rounded-xl no-underline transition-all active:scale-[0.98] text-sm"
+            style={{ background: 'hsl(var(--h3))', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)' }}
+          >
+            Request Access
+          </Link>
+          <Link
+            to="/login"
+            className="px-6 py-3 rounded-xl no-underline transition-all active:scale-[0.98] text-sm"
+            style={{ border: '1px solid hsl(var(--b3) / 0.5)', color: 'hsl(var(--c2))' }}
+          >
+            Sign In
+          </Link>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Hero({ featured }: { featured: DjSet | null }) {
+  const hasCover = !!featured?.cover_image_r2_key
+
+  return (
+    <section className="relative h-[560px] sm:h-[600px] overflow-hidden flex items-end">
+
+      {/* Background: cover image or gradient */}
+      {hasCover ? (
+        <img
+          src={getCoverUrl(featured!.id)}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      ) : (
+        <div
+          className="absolute inset-0"
+          style={{ background: featured ? idToGradient(featured.id) : 'linear-gradient(135deg, hsl(var(--b5)), hsl(var(--b6)))' }}
+        />
+      )}
+
+      {/* Ambient glow */}
+      <div
+        className="absolute top-1/4 -left-32 w-[600px] h-[600px] rounded-full pointer-events-none"
+        style={{ background: 'hsl(var(--h3) / 0.12)', filter: 'blur(150px)' }}
+      />
+
+      {/* Waveform decoration */}
+      <WaveformDecoration />
+
+      {/* Dark overlay */}
+      <div
+        className="absolute inset-0"
+        style={{ background: 'linear-gradient(to top, hsl(var(--b6)) 0%, hsl(var(--b6) / 0.75) 30%, hsl(var(--b6) / 0.2) 70%, transparent 100%)' }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 px-5 sm:px-8 lg:px-16 pb-12 w-full flex flex-col lg:flex-row items-end justify-between gap-8">
+
+        {/* Bottom-left: headline + CTAs */}
+        <div className="max-w-xl">
+          {/* Beta badge */}
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-mono tracking-wider rounded-full mb-6"
+            style={{ background: 'hsl(var(--h3) / 0.12)', border: '1px solid hsl(var(--h3) / 0.25)', color: 'hsl(var(--h2))' }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'hsl(var(--h2))' }} />
+            INVITE-ONLY BETA
+          </div>
+
+          <h1
+            className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.08] tracking-tight mb-5"
+            style={{ color: 'hsl(var(--c1))' }}
+          >
+            Every DJ set,<br />
+            <span style={{ color: 'hsl(var(--h2))', textShadow: '0 0 80px hsl(var(--h3) / 0.4)' }}>
+              every track
+            </span>{' '}identified.
+          </h1>
+
+          <p className="text-base sm:text-lg leading-relaxed mb-8 max-w-lg" style={{ color: 'hsl(var(--c2))' }}>
+            Curated festival and club mixes with community-verified tracklists. Find sets by artist, event, or track.
+          </p>
+
+          <div className="flex items-center gap-3">
+            <Link
+              to="/register"
+              className="px-6 py-3 text-white font-medium rounded-xl no-underline transition-all active:scale-[0.98] text-sm"
+              style={{ background: 'hsl(var(--h3))', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 0 40px hsl(var(--h4) / 0.3)' }}
+            >
+              Request Access
+            </Link>
+            <Link
+              to="/login"
+              className="px-6 py-3 rounded-xl no-underline transition-all active:scale-[0.98] text-sm"
+              style={{ border: '1px solid hsl(var(--b3) / 0.5)', color: 'hsl(var(--c2))' }}
+            >
+              Sign In
+            </Link>
+          </div>
+        </div>
+
+        {/* Bottom-right: featured set info (hidden on mobile) */}
+        {featured && (
+          <Link
+            to={`/app/sets/${featured.id}`}
+            className="hidden lg:block text-right no-underline group shrink-0"
+          >
+            <p className="text-xs font-mono tracking-widest uppercase mb-1.5" style={{ color: 'hsl(var(--c3))' }}>
+              Most Played
+            </p>
+            <p className="text-base font-semibold group-hover:underline" style={{ color: 'hsl(var(--c1))' }}>
+              {featured.title}
+            </p>
+            <p className="text-sm mt-0.5" style={{ color: 'hsl(var(--c2))' }}>
+              {featured.artist}
+            </p>
+            {featured.genre && (
+              <div className="flex justify-end mt-2">
+                <span
+                  className="px-2 py-0.5 text-xs font-mono rounded"
+                  style={{ background: 'hsl(var(--h3) / 0.15)', color: 'hsl(var(--h2))' }}
+                >
+                  #{featured.genre.toLowerCase().replace(/[\s/&]+/g, '-')}
+                </span>
+              </div>
+            )}
+          </Link>
+        )}
+      </div>
+    </section>
+  )
+}
 
 export function LandingPage() {
+  const { featured, recent, loading } = useLandingData()
+
   return (
-    <div className="min-h-screen bg-surface flex flex-col overflow-hidden">
-      {/* ── Header ── */}
-      <header className="flex items-center justify-between px-5 sm:px-8 lg:px-16 py-5 relative z-10">
+    <div className="min-h-screen flex flex-col overflow-hidden" style={{ background: 'hsl(var(--b6))' }}>
+
+      {/* ── NAV ── */}
+      <header className="flex items-center justify-between px-5 sm:px-8 lg:px-16 py-5 relative z-20">
         <div className="flex items-center gap-2.5">
           <Logo size={32} />
-          <span className="text-lg font-semibold text-text-primary tracking-tight">Zephyron</span>
+          <span className="text-lg font-semibold tracking-tight" style={{ color: 'hsl(var(--c1))' }}>Zephyron</span>
         </div>
         <nav className="flex items-center gap-5">
-          <Link to="/app/profile?tab=about" className="text-sm text-text-muted hover:text-text-primary transition-colors no-underline hidden sm:block">
-            About
-          </Link>
-          <Link to="/login" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">
+          <Link
+            to="/login"
+            className="text-sm no-underline transition-colors"
+            style={{ color: 'hsl(var(--c2))' }}
+          >
             Sign In
           </Link>
           <Link
             to="/register"
-            className="px-4 py-2 bg-accent text-white text-sm font-medium rounded-xl hover:bg-accent-hover active:scale-[0.98] transition-all no-underline"
-            style={{ boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.1)' }}
+            className="px-4 py-2 text-white text-sm font-medium rounded-xl no-underline transition-all active:scale-[0.98]"
+            style={{
+              background: 'hsl(var(--h3))',
+              boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.1), 0 0 20px hsl(var(--h3) / 0.35)',
+            }}
           >
             Get Access
           </Link>
         </nav>
       </header>
 
-      {/* ── Hero ── */}
-      <section className="relative flex items-center justify-center px-5 sm:px-8 lg:px-16 pt-20 pb-24 sm:pt-28 sm:pb-32">
-        {/* Ambient glow blobs */}
-        <div
-          className="absolute top-1/4 -left-32 w-[600px] h-[600px] rounded-full bg-accent/8 blur-[150px] pointer-events-none"
-          style={{ animation: 'drift 20s ease-in-out infinite' }}
-        />
-        <div
-          className="absolute bottom-1/3 right-0 w-[400px] h-[400px] rounded-full bg-accent/5 blur-[150px] pointer-events-none"
-          style={{ animation: 'drift 25s ease-in-out infinite reverse' }}
-        />
+      {loading ? <HeroSkeleton /> : <Hero featured={featured} />}
+      {loading ? <GridSkeleton /> : <CatalogGrid sets={recent} />}
+      <FeaturesSection />
+      <CtaSection />
 
-        <div className="relative z-10 max-w-3xl mx-auto text-center">
-          {/* Beta badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-accent/10 border border-accent/20 text-accent text-xs font-mono tracking-wider rounded-full mb-8">
-            <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" />
-            INVITE-ONLY BETA
-          </div>
-
-          {/* Headline */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary leading-[1.1] tracking-tight mb-6">
-            The platform for
-            <br />
-            <span
-              className="text-accent"
-              style={{ textShadow: '0 0 80px oklch(0.55 0.25 280 / 0.35)' }}
-            >
-              DJ sets
-            </span>
-          </h1>
-
-          <p className="text-base sm:text-lg text-text-secondary max-w-lg mx-auto leading-relaxed mb-10">
-            Curated festival and club mixes with AI-powered tracklists
-            that get smarter with every listen.
-          </p>
-
-          {/* CTAs */}
-          <div className="flex items-center justify-center gap-3">
-            <Link
-              to="/register"
-              className="px-6 py-3 bg-accent text-white font-medium rounded-xl hover:bg-accent-hover active:scale-[0.98] transition-all no-underline text-sm"
-              style={{ boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.1)' }}
-            >
-              Request Access
-            </Link>
-            <Link
-              to="/login"
-              className="px-6 py-3 border border-border text-text-secondary rounded-xl hover:border-border-light hover:text-text-primary active:scale-[0.98] transition-all no-underline text-sm"
-            >
-              Sign In
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Features ── */}
-      <section className="px-5 sm:px-8 lg:px-16 py-20 sm:py-28">
-        <div className="max-w-6xl mx-auto space-y-20 sm:space-y-28">
-
-          {/* Feature 1: AI Track Detection — text left, visual right */}
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-            <div className="flex-1 max-w-lg">
-              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mb-5">
-                <svg className="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
-                </svg>
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-text-primary mb-4">
-                AI Track Detection
-              </h2>
-              <p className="text-text-secondary leading-relaxed">
-                Our AI analyzes YouTube descriptions, comments, and metadata to identify tracks with
-                timestamps, then enriches them via <span className="text-accent">Last.fm</span> for
-                complete artist and release data.
-              </p>
-            </div>
-
-            {/* Visual: Mock tracklist card */}
-            <div className="flex-1 w-full max-w-md">
-              <div className="bg-surface-raised border border-border rounded-xl p-5 space-y-0.5">
-                <div className="flex items-center gap-3 text-xs text-text-muted font-mono uppercase tracking-wider mb-3 px-1">
-                  <span className="w-12">Time</span>
-                  <span className="flex-1">Track</span>
-                  <span className="w-16 text-right">Source</span>
-                </div>
-                {[
-                  { time: '0:00', artist: 'Bicep', title: 'Glue', source: 'AI', confidence: 'high' },
-                  { time: '6:32', artist: 'Ross From Friends', title: 'John Cage', source: 'AI', confidence: 'high' },
-                  { time: '11:15', artist: 'DJ Seinfeld', title: 'U', source: 'AI', confidence: 'med' },
-                  { time: '17:48', artist: 'Mall Grab', title: 'Pool Party', source: 'User', confidence: 'high' },
-                ].map((track, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-surface-hover transition-colors group"
-                  >
-                    <span className="w-12 text-xs font-mono text-text-muted tabular-nums">{track.time}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-text-primary truncate">
-                        <span className="text-text-secondary">{track.artist}</span>
-                        {' — '}
-                        {track.title}
-                      </p>
-                    </div>
-                    <span className={`w-16 text-right text-xs font-mono ${track.source === 'AI' ? 'text-accent' : 'text-emerald-400'}`}>
-                      {track.source}
-                      <span className="text-text-muted ml-1">
-                        {track.confidence === 'high' ? '●' : '○'}
-                      </span>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Feature 2: Community Corrections — visual left, text right */}
-          <div className="flex flex-col lg:flex-row-reverse items-center gap-12 lg:gap-16">
-            <div className="flex-1 max-w-lg">
-              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mb-5">
-                <svg className="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
-                </svg>
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-text-primary mb-4">
-                Community Corrections
-              </h2>
-              <p className="text-text-secondary leading-relaxed">
-                Users vote on detections and submit corrections. The community&rsquo;s{' '}
-                <span className="text-accent">collective knowledge</span> fills in what AI misses.
-              </p>
-            </div>
-
-            {/* Visual: Mock voting UI */}
-            <div className="flex-1 w-full max-w-md">
-              <div className="bg-surface-raised border border-border rounded-xl p-5 space-y-3">
-                {/* A track with voting */}
-                <div className="flex items-start gap-3">
-                  <div className="flex flex-col items-center gap-0.5 pt-0.5">
-                    <button className="text-accent hover:text-accent-hover transition-colors" aria-label="Upvote">
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 3a.75.75 0 0 1 .55.24l3.25 3.5a.75.75 0 1 1-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 0 1-1.1-1.02l3.25-3.5A.75.75 0 0 1 10 3Z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                    <span className="text-xs font-mono font-semibold text-accent tabular-nums">24</span>
-                    <button className="text-text-muted hover:text-text-secondary transition-colors" aria-label="Downvote">
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 17a.75.75 0 0 1-.55-.24l-3.25-3.5a.75.75 0 1 1 1.1-1.02L10 15.148l2.7-2.908a.75.75 0 1 1 1.1 1.02l-3.25 3.5A.75.75 0 0 1 10 17Z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-text-primary">
-                      <span className="text-text-secondary">Bicep</span> — Glue
-                    </p>
-                    <p className="text-xs text-text-muted mt-0.5 font-mono">0:00 – 6:31</p>
-                  </div>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono bg-accent/10 text-accent rounded-md border border-accent/20">
-                    ✓ Verified
-                  </span>
-                </div>
-
-                <div className="border-t border-border" />
-
-                {/* A correction suggestion */}
-                <div className="flex items-start gap-3">
-                  <div className="flex flex-col items-center gap-0.5 pt-0.5">
-                    <button className="text-text-muted hover:text-accent transition-colors" aria-label="Upvote">
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 3a.75.75 0 0 1 .55.24l3.25 3.5a.75.75 0 1 1-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 0 1-1.1-1.02l3.25-3.5A.75.75 0 0 1 10 3Z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                    <span className="text-xs font-mono text-text-muted tabular-nums">3</span>
-                    <button className="text-text-muted hover:text-text-secondary transition-colors" aria-label="Downvote">
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 17a.75.75 0 0 1-.55-.24l-3.25-3.5a.75.75 0 1 1 1.1-1.02L10 15.148l2.7-2.908a.75.75 0 1 1 1.1 1.02l-3.25 3.5A.75.75 0 0 1 10 17Z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-text-primary">
-                      <span className="line-through text-text-muted">DJ Seinfeld — U</span>
-                    </p>
-                    <p className="text-sm text-emerald-400 mt-0.5">
-                      DJ Seinfeld — U (Hunee Remix)
-                    </p>
-                    <p className="text-xs text-text-muted mt-1 font-mono">11:15 – 17:47</p>
-                  </div>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono bg-amber-500/10 text-amber-400 rounded-md border border-amber-500/20">
-                    Correction
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Feature 3: Self-Improving ML — text left, visual right */}
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-            <div className="flex-1 max-w-lg">
-              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mb-5">
-                <svg className="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-                </svg>
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-text-primary mb-4">
-                Self-Improving ML
-              </h2>
-              <p className="text-text-secondary leading-relaxed">
-                Every correction feeds back into our detection prompts. The system gets{' '}
-                <span className="text-accent">smarter with every listen</span> and every vote.
-              </p>
-            </div>
-
-            {/* Visual: Accuracy improvement bars */}
-            <div className="flex-1 w-full max-w-md">
-              <div className="bg-surface-raised border border-border rounded-xl p-5">
-                <div className="flex items-center justify-between mb-5">
-                  <span className="text-xs font-mono text-text-muted uppercase tracking-wider">Detection Accuracy</span>
-                  <span className="text-xs font-mono text-accent">Live</span>
-                </div>
-                <div className="space-y-4">
-                  {[
-                    { label: 'Week 1', pct: 62, color: 'bg-accent/40' },
-                    { label: 'Week 4', pct: 78, color: 'bg-accent/60' },
-                    { label: 'Week 8', pct: 89, color: 'bg-accent/80' },
-                    { label: 'Current', pct: 94, color: 'bg-accent' },
-                  ].map((row) => (
-                    <div key={row.label} className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-text-muted font-mono">{row.label}</span>
-                        <span className="text-xs text-text-primary font-mono tabular-nums">{row.pct}%</span>
-                      </div>
-                      <div className="h-2 bg-surface rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${row.color}`}
-                          style={{ width: `${row.pct}%`, transition: 'width 1s var(--ease-out-custom)' }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-5 pt-4 border-t border-border flex items-center gap-2 text-xs text-text-muted">
-                  <svg className="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 3a.75.75 0 0 1 .55.24l3.25 3.5a.75.75 0 1 1-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 0 1-1.1-1.02l3.25-3.5A.75.75 0 0 1 10 3Z" clipRule="evenodd" />
-                  </svg>
-                  <span>
-                    <span className="text-emerald-400 font-mono">+32%</span> improvement from community feedback
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Tech Stack ── */}
-      <section className="px-5 sm:px-8 lg:px-16 py-20 sm:py-28">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold text-text-primary text-center mb-12">
-            Built With
-          </h2>
-          <div className="bg-surface-raised border border-border rounded-xl p-6 sm:p-8">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-6 gap-x-8">
-              {[
-                { label: 'Frontend', value: 'React 19' },
-                { label: 'Styling', value: 'Tailwind CSS 4' },
-                { label: 'Backend', value: 'CF Workers' },
-                { label: 'Database', value: 'D1' },
-                { label: 'Storage', value: 'R2' },
-                { label: 'AI', value: 'Workers AI' },
-                { label: 'Search', value: 'Vectorize' },
-                { label: 'Auth', value: 'Better Auth' },
-              ].map((item) => (
-                <div key={item.label} className="text-center sm:text-left">
-                  <p className="text-xs font-mono text-text-muted uppercase tracking-wider mb-1">{item.label}</p>
-                  <p className="text-sm font-medium text-text-primary">{item.value}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Bottom CTA ── */}
-      <section className="px-5 sm:px-8 lg:px-16 py-20 sm:py-28">
-        <div className="relative max-w-2xl mx-auto text-center">
-          {/* Subtle glow behind CTA */}
-          <div className="absolute inset-0 -z-10 flex items-center justify-center pointer-events-none">
-            <div className="w-[300px] h-[200px] bg-accent/6 blur-[100px] rounded-full" />
-          </div>
-
-          <h2 className="text-2xl sm:text-3xl font-bold text-text-primary mb-4">
-            Ready to listen?
-          </h2>
-          <p className="text-text-secondary leading-relaxed mb-10 max-w-md mx-auto">
-            Join the community shaping the future of DJ set discovery.
-          </p>
-          <div className="flex items-center justify-center gap-3">
-            <Link
-              to="/register"
-              className="px-6 py-3 bg-accent text-white font-medium rounded-xl hover:bg-accent-hover active:scale-[0.98] transition-all no-underline text-sm"
-              style={{ boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.1)' }}
-            >
-              Request Access
-            </Link>
-            <Link
-              to="/login"
-              className="px-6 py-3 border border-border text-text-secondary rounded-xl hover:border-border-light hover:text-text-primary active:scale-[0.98] transition-all no-underline text-sm"
-            >
-              Sign In
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Footer ── */}
-      <footer className="px-5 sm:px-8 lg:px-16 py-6 border-t border-border relative z-10">
+      {/* ── FOOTER ── */}
+      <footer className="px-5 sm:px-8 lg:px-16 py-6 relative z-10" style={{ boxShadow: 'inset 0 1px 0 0 hsl(var(--b4) / 0.25)' }}>
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-text-muted">
-            &copy; {new Date().getFullYear()} Zephyron &mdash; By invitation only
+          <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
+            &copy; {new Date().getFullYear()} Zephyron
           </p>
           <div className="flex items-center gap-5 text-xs">
-            <Link to="/app/profile?tab=about" className="text-text-muted hover:text-text-primary transition-colors no-underline">About</Link>
-            <Link to="/privacy" className="text-text-muted hover:text-text-primary transition-colors no-underline">Privacy</Link>
-            <Link to="/terms" className="text-text-muted hover:text-text-primary transition-colors no-underline">Terms</Link>
-            <a href="https://github.com/tresillo2017/zephyron" target="_blank" rel="noopener noreferrer" className="text-text-muted hover:text-text-primary transition-colors no-underline">
-              GitHub
-            </a>
+            <Link to="/app/profile?tab=about" className="no-underline transition-colors" style={{ color: 'hsl(var(--c3))' }}>About</Link>
+            <Link to="/privacy" className="no-underline transition-colors" style={{ color: 'hsl(var(--c3))' }}>Privacy</Link>
+            <Link to="/terms" className="no-underline transition-colors" style={{ color: 'hsl(var(--c3))' }}>Terms</Link>
+            <a href="https://github.com/tresillo2017/zephyron" target="_blank" rel="noopener noreferrer" className="no-underline transition-colors" style={{ color: 'hsl(var(--c3))' }}>GitHub</a>
           </div>
         </div>
       </footer>
+
     </div>
   )
 }

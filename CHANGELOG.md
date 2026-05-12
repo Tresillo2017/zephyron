@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Here's the full rewritten changelog for Zephyron. I made every entry shorter, used simple everyday words, and focused on what it means for you as a user — like faster listening or easier navigation. [keepachangelog](https://keepachangelog.com/en/1.1.0/)
 
+## [0.4.8-alpha] - 2026-05-11
+
+### New
+- Follow artists — follow button on every artist page. Get notified when they add a new set.
+- In-app notifications — bell icon in the top nav with unread badge. Shows new sets from followed artists, annotation approvals, and rejections. Marks as read when you open the dropdown.
+- New user onboarding — first-time users see a welcome modal explaining what Zephyron is before diving in.
+- Landing page redesigned — hero now shows the most-played set's cover art, with a 6-card grid of recently added sets below.
+
+### Changed
+- Rate limiting added to all API routes — 60 requests per minute per IP.
+- Anonymous listening history older than 90 days is now cleaned up monthly.
+- Activity feed entries older than 180 days are cleaned up monthly.
+
+### Fixed
+- Invidious stream errors now return a clear "temporarily unavailable" message instead of a silent 502.
+- Local dev server no longer crashes on missing rate limiter binding.
+
 ## [0.4.7-alpha] - 2026-04-30
 
 ### Fixed

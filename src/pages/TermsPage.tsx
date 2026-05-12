@@ -50,8 +50,19 @@ export function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">5. Content & Copyright</h2>
-            <p>DJ sets hosted on Zephyron are uploaded by authorized curators. If you believe content infringes your copyright, please contact us through our GitHub repository to request removal.</p>
+            <h2 className="text-lg font-semibold text-text-primary mb-3">5. Content & Copyright (DMCA)</h2>
+            <p>DJ sets hosted on Zephyron are uploaded by authorized curators. Zephyron respects intellectual property rights and complies with the Digital Millennium Copyright Act (DMCA).</p>
+            <p className="mt-2">If you believe content on Zephyron infringes your copyright, please send a written notice containing:</p>
+            <ul className="list-disc list-inside mt-2 space-y-1 text-text-secondary">
+              <li>Your name, address, telephone number, and email address</li>
+              <li>A description of the copyrighted work you claim has been infringed</li>
+              <li>The URL or specific location of the infringing material</li>
+              <li>A statement that you have a good faith belief the use is not authorized by the copyright owner</li>
+              <li>A statement, under penalty of perjury, that the information in your notice is accurate and that you are the copyright owner or authorized to act on their behalf</li>
+              <li>Your physical or electronic signature</li>
+            </ul>
+            <p className="mt-2">Send DMCA notices to: <strong>dmca@zephyron.app</strong></p>
+            <p className="mt-2 text-text-secondary text-sm">Counter-notifications and repeat infringer policy are handled in accordance with 17 U.S.C. §512.</p>
           </section>
 
           <section>

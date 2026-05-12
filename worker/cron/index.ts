@@ -2,6 +2,7 @@ import { cleanupOrphanedSessions } from './cleanup-sessions'
 import { generateMonthlyStats } from './monthly-stats'
 import { generateAnnualStats } from './annual-stats'
 import { processBadgesForAllUsers } from '../lib/badge-engine'
+import { cleanupOldData } from './cleanup-old-data'
 import type { Env } from '../types'
 
 /**
@@ -29,7 +30,7 @@ export async function handleScheduled(
       }
       break
 
-    case '0 5 1 * *': // Monthly: stats aggregation (1st of month at 5am PT / 12pm UTC or 1pm UTC PDT)
+    case '0 5 1 * *': // Monthly: stats aggregation + data retention (1st of month at 5am PT / 12pm UTC or 1pm UTC PDT)
       try {
         const now = new Date()
         // Get the previous month and year
@@ -50,6 +51,12 @@ export async function handleScheduled(
         console.error('Monthly stats aggregation failed:', error)
         controller.noRetry()
         throw error
+      }
+      try {
+        const retention = await cleanupOldData(env)
+        console.log(`Data retention cleanup: ${retention.anonymousHistoryDeleted} anon history rows, ${retention.activityItemsDeleted} activity items deleted`)
+      } catch (error) {
+        console.error('Data retention cleanup failed:', error)
       }
       break
 

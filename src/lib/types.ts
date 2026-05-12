@@ -276,9 +276,21 @@ export interface ListenHistoryItem {
   cover_image_r2_key?: string | null
 }
 
+export interface TopResult {
+  type: 'set' | 'artist' | 'event' | 'track'
+  id: string
+  title: string
+  subtitle: string
+  link: string
+  image_r2_key: string | null
+  tags: string[]
+}
+
 export interface SearchResults {
+  top_result: TopResult | null
   sets: DjSet[]
-  tracks: (Detection & { set_title: string; set_artist: string })[]
+  tracks: (Detection & { set_title: string; set_artist: string; song_id: string | null; song_cover_r2_key: string | null })[]
+  artists: { id: string; name: string; image_url: string | null; set_count: number }[]
   events: (EventInfo & { set_count: number })[]
 }
 
@@ -310,5 +322,15 @@ export interface PublicUser {
   avatar_url: string | null
   bio: string | null
   role: string
+  created_at: string
+}
+
+export interface Notification {
+  id: string
+  type: 'new_set' | 'annotation_approved' | 'annotation_rejected'
+  title: string
+  body: string
+  link: string | null
+  is_read: number
   created_at: string
 }
