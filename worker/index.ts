@@ -297,12 +297,13 @@ export default {
       return new Response(null, { status: 404 })
     }
 
-    // Rate limiting — applied to all API routes except static image/binary endpoints.
-    // Image endpoints (/cover, /image, /logo, /video, /waveform) are exempt because
-    // a single page load fires many of them and they carry no abuse risk.
+    // Rate limiting — 300 req/min per IP, applied to all /api routes except image/binary
+    // endpoints (/cover, /image, /logo, /video, /waveform) which are exempt because a single
+    // page load fires many of them and they carry no abuse risk.
+    // Skipped when CF-Connecting-IP is absent (local dev, proxies without the header).
     const isImageEndpoint = /\/api\/(sets|artists|events|songs)\/[^/]+(\/cover|\/image|\/logo|\/video|\/waveform)$/.test(url.pathname)
-    const clientIp = request.headers.get('CF-Connecting-IP') ?? 'unknown'
-    if (env.RATE_LIMITER && !isImageEndpoint) {
+    const clientIp = request.headers.get('CF-Connecting-IP')
+    if (env.RATE_LIMITER && clientIp && !isImageEndpoint) {
       const { success } = await env.RATE_LIMITER.limit({ key: clientIp })
       if (!success) {
         return new Response(JSON.stringify({ error: 'Too many requests', ok: false }), {

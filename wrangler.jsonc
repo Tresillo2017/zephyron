@@ -41,7 +41,7 @@
       "remote": true
     }
   ],
-  // Rate Limiting — 60 requests per minute per IP for unauthenticated API routes
+  // Rate Limiting — 300 requests per minute per IP for all API routes (image endpoints exempt)
   // Docs: https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/
   "ratelimits": [
     {

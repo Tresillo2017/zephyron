@@ -26,6 +26,12 @@ export async function search(
 
   const ftsQ = toFtsQuery(q)
 
+  // Guard: if the query consisted entirely of special chars (e.g. "()"), ftsQ is empty.
+  // Passing an empty string to FTS MATCH throws a SQLite syntax error.
+  if (!ftsQ) {
+    return json({ data: { top_result: null, sets: [], artists: [], events: [], tracks: [] }, ok: true })
+  }
+
   const [setsRows, artistsRows, eventsRows, tracksRows] = await Promise.all([
     env.DB.prepare(`
       SELECT s.id, s.title, s.artist, s.genre, s.duration_seconds,

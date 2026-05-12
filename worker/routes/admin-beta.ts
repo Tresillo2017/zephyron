@@ -412,7 +412,10 @@ export async function createSet(
             `/app/sets/${id}`
           )
         )
-        await env.DB.batch(inserts)
+        // D1 batch is capped at 100 statements — chunk to avoid hitting the limit
+        for (let i = 0; i < inserts.length; i += 100) {
+          await env.DB.batch(inserts.slice(i, i + 100))
+        }
       }
     } catch (err) {
       console.error('[createSet] Follower notifications failed (non-blocking):', err)
