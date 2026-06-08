@@ -156,6 +156,12 @@
       "sourceType": "github",
       "computedHash": "12a83281065df7cecc24c17fdf9a126a13f664140ed6939c8230eb3f447d1aa3"
     },
+    "premortem": {
+      "source": "parcadei/continuous-claude-v3",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/premortem/SKILL.md",
+      "computedHash": "b8ae1b3213e429b266fe0ff2666fed47018e7445c7a01f7d895754d43d6da5ed"
+    },
     "pricing-strategy": {
       "source": "coreyhaines31/marketingskills",
       "sourceType": "github",

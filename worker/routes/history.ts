@@ -14,25 +14,30 @@ export async function getHistory(
     return json({ data: [], ok: true })
   }
 
-  // Return the most recent qualifying session per set, with per-set listen count
+  // Return the most recent session per set (qualified completed sessions, or in-progress with
+  // actual position — covers tab-close/page-refresh cases where ended_at is never written)
   const result = await env.DB.prepare(
     `WITH ranked AS (
        SELECT
-         id, user_id, set_id, last_position_seconds, ended_at,
-         ROW_NUMBER() OVER (PARTITION BY set_id ORDER BY ended_at DESC) AS rn,
+         id, user_id, set_id, last_position_seconds, started_at, ended_at,
+         ROW_NUMBER() OVER (PARTITION BY set_id ORDER BY COALESCE(ended_at, started_at) DESC) AS rn,
          COUNT(*) OVER (PARTITION BY set_id) AS listen_count
        FROM listening_sessions
-       WHERE user_id = ? AND qualifies = 1 AND ended_at IS NOT NULL
+       WHERE user_id = ?
+         AND (
+           (qualifies = 1 AND ended_at IS NOT NULL)
+           OR (ended_at IS NULL AND last_position_seconds > 0)
+         )
      )
      SELECT
        r.id, r.user_id, NULL AS anonymous_id, r.set_id,
        r.last_position_seconds, r.listen_count,
-       r.ended_at AS last_listened_at,
+       COALESCE(r.ended_at, r.started_at) AS last_listened_at,
        s.title, s.artist, s.genre, s.duration_seconds, s.cover_image_r2_key
      FROM ranked r
      JOIN sets s ON r.set_id = s.id
      WHERE r.rn = 1
-     ORDER BY r.ended_at DESC
+     ORDER BY COALESCE(r.ended_at, r.started_at) DESC
      LIMIT 50`
   )
     .bind(userId)
