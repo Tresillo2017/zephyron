@@ -749,14 +749,21 @@ function ImportSetsModal({ event, onClose, onImported }: { event: Event; onClose
   const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null)
   const abortRef = useRef(false)
 
-  // Show manual paste immediately — event source pages are Turnstile-protected
-  // so auto-fetch is attempted as a bonus, not the primary path
-  useEffect(() => {
-    setShowManual(true)
-    if (event.source_1001_id) {
-      autoFetch()
+  const parseHtml = useCallback((html: string) => {
+    try {
+      const parsed = parse1001EventSetsHtml(html)
+      if (parsed.length === 0) {
+        setFetchError('No set entries found in the HTML. Make sure you pasted the full event source page.')
+        setStatus('idle')
+        return
+      }
+      setEntries(parsed.map((e) => ({ ...e, selected: true, importState: 'pending' as SetImportState })))
+      setStatus('parsed')
+      setFetchError(null)
+    } catch (err) {
+      setFetchError(`Parse failed: ${err instanceof Error ? err.message : String(err)}`)
+      setStatus('idle')
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const autoFetch = useCallback(async () => {
@@ -775,23 +782,16 @@ function ImportSetsModal({ event, onClose, onImported }: { event: Event; onClose
       setFetchError(`Auto-fetch blocked: ${err instanceof Error ? err.message : String(err)}`)
       setStatus('idle')
     }
-  }, [event.id])
+  }, [event.id, parseHtml])
 
-  const parseHtml = useCallback((html: string) => {
-    try {
-      const parsed = parse1001EventSetsHtml(html)
-      if (parsed.length === 0) {
-        setFetchError('No set entries found in the HTML. Make sure you pasted the full event source page.')
-        setStatus('idle')
-        return
-      }
-      setEntries(parsed.map((e) => ({ ...e, selected: true, importState: 'pending' as SetImportState })))
-      setStatus('parsed')
-      setFetchError(null)
-    } catch (err) {
-      setFetchError(`Parse failed: ${err instanceof Error ? err.message : String(err)}`)
-      setStatus('idle')
+  // Show manual paste immediately — event source pages are Turnstile-protected
+  // so auto-fetch is attempted as a bonus, not the primary path
+  useEffect(() => {
+    setShowManual(true)
+    if (event.source_1001_id) {
+      autoFetch()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleManualParse = () => {

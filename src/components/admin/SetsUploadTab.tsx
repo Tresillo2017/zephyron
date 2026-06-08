@@ -107,6 +107,108 @@ export function SetsUploadTab({
     []
   );
 
+  async function doCreate(resolvedArtistId: string | null) {
+    setIsCreating(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const durationSeconds = (parseInt(durationMinutes) || 60) * 60;
+
+      // Build artist_ids list
+      const artistIds: string[] = [];
+      if (resolvedArtistId) artistIds.push(resolvedArtistId);
+      additionalArtists.forEach((a) => {
+        if (!artistIds.includes(a.id)) artistIds.push(a.id);
+      });
+
+      // Build artist display string (for the sets.artist text field)
+      const allArtistNames = [
+        artist.trim(),
+        ...additionalArtists.map((a) => a.name),
+      ].filter(Boolean);
+      const artistDisplayName =
+        allArtistNames.length > 1 ? allArtistNames.join(" & ") : artist.trim();
+
+      setSuccess("Creating set...");
+      const res = await adminCreateSet({
+        title: title.trim(),
+        artist: artistDisplayName,
+        description: description.trim() || undefined,
+        genre: genre || undefined,
+        subgenre: subgenre.trim() || undefined,
+        venue: venue.trim() || undefined,
+        event: event.trim() || undefined,
+        recorded_date: recordedDate || undefined,
+        duration_seconds: durationSeconds,
+        thumbnail_url: thumbnailUrl || undefined,
+        // Source type
+        stream_type: streamSource === "none" ? undefined : streamSource,
+        source_url:
+          streamSource === "soundcloud" || streamSource === "hearthis"
+            ? sourceUrl.trim()
+            : undefined,
+        // YouTube specific
+        youtube_video_id:
+          streamSource === "youtube" && videoId ? videoId : undefined,
+        tracklist_1001_url: tracklistUrl.trim() || undefined,
+        // Artist IDs
+        artist_id: resolvedArtistId || undefined,
+        artist_ids: artistIds.length > 0 ? artistIds : undefined,
+        event_id: eventId || undefined,
+      });
+
+      const id = res.data.id;
+
+      if (parsedTracks.length > 0) {
+        setSuccess(`Set created. Importing ${parsedTracks.length} tracks...`);
+        try {
+          const importRes = await import1001Tracklists(id, parsedTracks);
+          setSuccess(
+            `Set created. Imported ${importRes.data.imported} tracks from 1001Tracklists.`
+          );
+          setParsedTracks([]);
+          setTracklistHtml("");
+        } catch {
+          setSuccess(
+            `Set created (${id}), but track import failed. You can re-import from the Edit panel.`
+          );
+        }
+      } else {
+        setSuccess(
+          `Set created (${id}). You can add a tracklist via Edit or trigger ML detection.`
+        );
+      }
+
+      // Reset form
+      setTitle("");
+      setArtist("");
+      setDescription("");
+      setGenre("");
+      setSubgenre("");
+      setVenue("");
+      setEvent("");
+      setRecordedDate("");
+      setDurationMinutes("");
+      setThumbnailUrl("");
+      setVideoId("");
+      setTracklistUrl("");
+      setTracklistHtml("");
+      setArtistId(null);
+      setEventId(null);
+      setStreamSource("youtube");
+      setSourceUrl("");
+      setAdditionalArtists([]);
+      setCoArtistValue("");
+      setCoArtistId(null);
+      onSetCreated?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create set");
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
   const handleCreateArtist = useCallback((_name: string) => {
     setShowArtistModal(true);
   }, []);
@@ -225,108 +327,6 @@ export function SetsUploadTab({
     }
 
     await doCreate(artistId);
-  };
-
-  const doCreate = async (resolvedArtistId: string | null) => {
-    setIsCreating(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const durationSeconds = (parseInt(durationMinutes) || 60) * 60;
-
-      // Build artist_ids list
-      const artistIds: string[] = [];
-      if (resolvedArtistId) artistIds.push(resolvedArtistId);
-      additionalArtists.forEach((a) => {
-        if (!artistIds.includes(a.id)) artistIds.push(a.id);
-      });
-
-      // Build artist display string (for the sets.artist text field)
-      const allArtistNames = [
-        artist.trim(),
-        ...additionalArtists.map((a) => a.name),
-      ].filter(Boolean);
-      const artistDisplayName =
-        allArtistNames.length > 1 ? allArtistNames.join(" & ") : artist.trim();
-
-      setSuccess("Creating set...");
-      const res = await adminCreateSet({
-        title: title.trim(),
-        artist: artistDisplayName,
-        description: description.trim() || undefined,
-        genre: genre || undefined,
-        subgenre: subgenre.trim() || undefined,
-        venue: venue.trim() || undefined,
-        event: event.trim() || undefined,
-        recorded_date: recordedDate || undefined,
-        duration_seconds: durationSeconds,
-        thumbnail_url: thumbnailUrl || undefined,
-        // Source type
-        stream_type: streamSource === "none" ? undefined : streamSource,
-        source_url:
-          streamSource === "soundcloud" || streamSource === "hearthis"
-            ? sourceUrl.trim()
-            : undefined,
-        // YouTube specific
-        youtube_video_id:
-          streamSource === "youtube" && videoId ? videoId : undefined,
-        tracklist_1001_url: tracklistUrl.trim() || undefined,
-        // Artist IDs
-        artist_id: resolvedArtistId || undefined,
-        artist_ids: artistIds.length > 0 ? artistIds : undefined,
-        event_id: eventId || undefined,
-      });
-
-      const id = res.data.id;
-
-      if (parsedTracks.length > 0) {
-        setSuccess(`Set created. Importing ${parsedTracks.length} tracks...`);
-        try {
-          const importRes = await import1001Tracklists(id, parsedTracks);
-          setSuccess(
-            `Set created. Imported ${importRes.data.imported} tracks from 1001Tracklists.`
-          );
-          setParsedTracks([]);
-          setTracklistHtml("");
-        } catch {
-          setSuccess(
-            `Set created (${id}), but track import failed. You can re-import from the Edit panel.`
-          );
-        }
-      } else {
-        setSuccess(
-          `Set created (${id}). You can add a tracklist via Edit or trigger ML detection.`
-        );
-      }
-
-      // Reset form
-      setTitle("");
-      setArtist("");
-      setDescription("");
-      setGenre("");
-      setSubgenre("");
-      setVenue("");
-      setEvent("");
-      setRecordedDate("");
-      setDurationMinutes("");
-      setThumbnailUrl("");
-      setVideoId("");
-      setTracklistUrl("");
-      setTracklistHtml("");
-      setArtistId(null);
-      setEventId(null);
-      setStreamSource("youtube");
-      setSourceUrl("");
-      setAdditionalArtists([]);
-      setCoArtistValue("");
-      setCoArtistId(null);
-      onSetCreated?.();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create set");
-    } finally {
-      setIsCreating(false);
-    }
   };
 
   const inputClass =
