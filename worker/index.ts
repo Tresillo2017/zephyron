@@ -128,6 +128,7 @@ router.delete('/api/sets/:id/like', withAuth(unlikeSet))
 router.get('/api/sets/:id/like-status', withAuth(getSetLikeStatus))
 router.get('/api/users/me/liked-sets', withAuth(getLikedSets))
 
+
 // Artist follows (authenticated)
 router.post('/api/artists/:id/follow', withAuth(followArtist))
 router.delete('/api/artists/:id/follow', withAuth(unfollowArtist))

@@ -232,9 +232,8 @@ export async function requireAdmin(
   request: Request,
   env: Env
 ): Promise<{ user: { id: string; role: string; name: string; email: string } } | Response> {
-  // Allow extension/headless admin access via static API key
-  const apiKey = request.headers.get('X-Admin-API-Key')
-  if (apiKey) {
+  const staticKey = request.headers.get('x-api-key')
+  if (staticKey) {
     const validKey = (env as any).ADMIN_API_KEY as string | undefined
     if (!validKey) {
       return new Response(JSON.stringify({ error: 'ADMIN_API_KEY not configured', ok: false }), {
@@ -242,18 +241,15 @@ export async function requireAdmin(
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       })
     }
-    // Use timing-safe comparison to prevent key enumeration via response time
     const encoder = new TextEncoder()
     const [incomingBuf, validBuf] = await Promise.all([
-      crypto.subtle.digest('SHA-256', encoder.encode(apiKey)),
+      crypto.subtle.digest('SHA-256', encoder.encode(staticKey)),
       crypto.subtle.digest('SHA-256', encoder.encode(validKey)),
     ])
     const incoming = new Uint8Array(incomingBuf)
     const valid = new Uint8Array(validBuf)
     let match = incoming.length === valid.length
-    for (let i = 0; i < incoming.length; i++) {
-      match = match && (incoming[i] === valid[i])
-    }
+    for (let i = 0; i < incoming.length; i++) match = match && (incoming[i] === valid[i])
     if (!match) {
       return new Response(JSON.stringify({ error: 'Invalid API key', ok: false }), {
         status: 401,
