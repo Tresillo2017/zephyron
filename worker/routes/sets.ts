@@ -75,6 +75,9 @@ export async function listSets(
 
   let orderClause: string
   switch (sort) {
+    case 'trending':
+      orderClause = "ORDER BY (play_count * 1.0 / (1 + (julianday('now') - julianday(created_at)))) DESC"
+      break
     case 'popular':
       orderClause = 'ORDER BY play_count DESC'
       break
@@ -728,4 +731,99 @@ export async function uploadDepthFile(
   ).bind(r2Key, new Date().toISOString(), id).run()
 
   return json({ data: { r2_key: r2Key }, ok: true })
+}
+
+// ═══════════════════════════════════════════
+// User set likes (authenticated)
+// ═══════════════════════════════════════════
+
+// POST /api/sets/:id/like
+export async function likeSet(
+  _request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>,
+  user: { id: string }
+): Promise<Response> {
+  const { id: setId } = params
+
+  const set = await env.DB.prepare('SELECT id FROM sets WHERE id = ?').bind(setId).first()
+  if (!set) return errorResponse('Set not found', 404)
+
+  await env.DB.prepare(
+    'INSERT OR IGNORE INTO user_set_likes (user_id, set_id) VALUES (?, ?)'
+  ).bind(user.id, setId).run()
+
+  return json({ ok: true, liked: true })
+}
+
+// DELETE /api/sets/:id/like
+export async function unlikeSet(
+  _request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>,
+  user: { id: string }
+): Promise<Response> {
+  const { id: setId } = params
+
+  await env.DB.prepare(
+    'DELETE FROM user_set_likes WHERE user_id = ? AND set_id = ?'
+  ).bind(user.id, setId).run()
+
+  return json({ ok: true, liked: false })
+}
+
+// GET /api/sets/:id/like-status
+export async function getSetLikeStatus(
+  _request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  params: Record<string, string>,
+  user: { id: string }
+): Promise<Response> {
+  const { id: setId } = params
+
+  const row = await env.DB.prepare(
+    'SELECT 1 FROM user_set_likes WHERE user_id = ? AND set_id = ?'
+  ).bind(user.id, setId).first()
+
+  return json({ ok: true, liked: !!row })
+}
+
+// GET /api/users/me/liked-sets
+export async function getLikedSets(
+  request: Request,
+  env: Env,
+  _ctx: ExecutionContext,
+  _params: Record<string, string>,
+  user: { id: string }
+): Promise<Response> {
+  const url = new URL(request.url)
+  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'))
+  const pageSize = Math.min(50, Math.max(1, parseInt(url.searchParams.get('pageSize') || '20')))
+  const offset = (page - 1) * pageSize
+
+  const [countResult, setsResult] = await Promise.all([
+    env.DB.prepare(
+      'SELECT COUNT(*) as total FROM user_set_likes WHERE user_id = ?'
+    ).bind(user.id).first<{ total: number }>(),
+
+    env.DB.prepare(`
+      SELECT s.*, usl.liked_at
+      FROM user_set_likes usl
+      JOIN sets s ON s.id = usl.set_id
+      WHERE usl.user_id = ?
+      ORDER BY usl.liked_at DESC
+      LIMIT ? OFFSET ?
+    `).bind(user.id, pageSize, offset).all(),
+  ])
+
+  return json({
+    data: setsResult.results,
+    total: countResult?.total || 0,
+    page,
+    pageSize,
+    ok: true,
+  })
 }

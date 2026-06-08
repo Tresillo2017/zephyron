@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Here's the full rewritten changelog for Zephyron. I made every entry shorter, used simple everyday words, and focused on what it means for you as a user — like faster listening or easier navigation. [keepachangelog](https://keepachangelog.com/en/1.1.0/)
 
+## [0.4.9-alpha] - 2026-06-08
+
+### Fixed
+- Listening history was empty for users who closed the tab or refreshed mid-listen. Sessions without a clean pause (no `ended_at`) are now included in history as long as a playback position was recorded.
+
+### Changed
+- All dependencies updated to latest versions.
+
 ## [0.4.8-alpha] - 2026-05-11
 
 ### New

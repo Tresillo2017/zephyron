@@ -122,6 +122,46 @@ export function PlayerBar() {
     }
   }, [currentSet?.id])
 
+  // Browser tab title + Media Session API metadata
+  useEffect(() => {
+    if (!currentSet) {
+      document.title = 'Zephyron'
+      if ('mediaSession' in navigator) navigator.mediaSession.metadata = null
+      return
+    }
+    document.title = `${currentSet.title} — ${currentSet.artist} · Zephyron`
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentSet.title,
+        artist: currentSet.artist,
+        artwork: currentSet.cover_image_r2_key
+          ? [{ src: getCoverUrl(currentSet.id), sizes: '512x512', type: 'image/jpeg' }]
+          : [],
+      })
+    }
+  }, [currentSet?.id, currentSet?.title, currentSet?.artist, currentSet?.cover_image_r2_key])
+
+  // Media Session playback state
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return
+    navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused'
+  }, [isPlaying])
+
+  // Media Session action handlers
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return
+    navigator.mediaSession.setActionHandler('play', () => togglePlay())
+    navigator.mediaSession.setActionHandler('pause', () => togglePlay())
+    navigator.mediaSession.setActionHandler('previoustrack', () => playPrevious())
+    navigator.mediaSession.setActionHandler('nexttrack', () => playNext())
+    return () => {
+      navigator.mediaSession.setActionHandler('play', null)
+      navigator.mediaSession.setActionHandler('pause', null)
+      navigator.mediaSession.setActionHandler('previoustrack', null)
+      navigator.mediaSession.setActionHandler('nexttrack', null)
+    }
+  }, [togglePlay, playPrevious, playNext])
+
   const handleTimeUpdate = useCallback(() => {
     if (audioRef.current) setCurrentTime(audioRef.current.currentTime)
   }, [setCurrentTime])

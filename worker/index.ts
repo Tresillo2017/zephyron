@@ -1,6 +1,6 @@
 import { Router, corsHeaders, errorResponse, json } from './lib/router'
 import { createAuth, requireAdmin, requireAuth } from './lib/auth'
-import { listSets, getSet, streamSet, getStreamUrl, getStoryboard, debugStream, incrementPlayCount, listGenres, getSetCover, getSetVideo, getDepthInfo, streamDepthFile, uploadDepthFile, confirmDepthUpload } from './routes/sets'
+import { listSets, getSet, streamSet, getStreamUrl, getStoryboard, debugStream, incrementPlayCount, listGenres, getSetCover, getSetVideo, getDepthInfo, streamDepthFile, uploadDepthFile, confirmDepthUpload, likeSet, unlikeSet, getSetLikeStatus, getLikedSets } from './routes/sets'
 import { search } from './routes/search'
 import { getHistory, updateHistory } from './routes/history'
 import { getDetections, voteDetection, createAnnotation, getAnnotations } from './routes/detections'
@@ -121,6 +121,13 @@ router.post('/api/songs/:id/like', withAuth(likeSong))
 router.delete('/api/songs/:id/like', withAuth(unlikeSong))
 router.get('/api/songs/:id/like-status', withAuth(getSongLikeStatus))
 router.get('/api/users/me/liked-songs', withAuth(getLikedSongs))
+
+// Sets: User likes (authenticated)
+router.post('/api/sets/:id/like', withAuth(likeSet))
+router.delete('/api/sets/:id/like', withAuth(unlikeSet))
+router.get('/api/sets/:id/like-status', withAuth(getSetLikeStatus))
+router.get('/api/users/me/liked-sets', withAuth(getLikedSets))
+
 
 // Artist follows (authenticated)
 router.post('/api/artists/:id/follow', withAuth(followArtist))
