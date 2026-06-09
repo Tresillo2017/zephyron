@@ -322,12 +322,12 @@ export default {
 
     // Better Auth handles /api/auth/* routes
     if (url.pathname.startsWith('/api/auth')) {
-      // Restrict API key management to admin users only
+      // API key management — requires any authenticated session
       if (url.pathname.startsWith('/api/auth/api-key')) {
         const auth = createAuth(env)
         const session = await auth.api.getSession({ headers: request.headers })
-        if (!session?.user || session.user.role !== 'admin') {
-          return errorResponse('Admin access required for API key management', 403)
+        if (!session?.user) {
+          return errorResponse('Authentication required', 401)
         }
         return auth.handler(request)
       }
