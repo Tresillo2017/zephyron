@@ -232,8 +232,37 @@ export async function requireAdmin(
   request: Request,
   env: Env
 ): Promise<{ user: { id: string; role: string; name: string; email: string } } | Response> {
-  const staticKey = request.headers.get('x-api-key')
-  if (staticKey) {
+  const incomingKey = request.headers.get('x-api-key')
+
+  // Better Auth user key (zeph_ prefix) — validate via getSession (enableSessionForAPIKeys)
+  if (incomingKey && incomingKey.startsWith('zeph_')) {
+    try {
+      const auth = createAuth(env)
+      const session = await auth.api.getSession({ headers: request.headers })
+      if (!session?.user) {
+        return new Response(JSON.stringify({ error: 'Invalid API key', ok: false }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        })
+      }
+      if (session.user.role !== 'admin') {
+        return new Response(JSON.stringify({ error: 'Admin access required', ok: false }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        })
+      }
+      return { user: session.user as any }
+    } catch (err) {
+      console.error('[auth] API key admin check failed:', err)
+      return new Response(JSON.stringify({ error: 'Authentication failed', ok: false }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      })
+    }
+  }
+
+  // Static ADMIN_API_KEY — for CI/scripts that use the raw env key
+  if (incomingKey) {
     const validKey = (env as any).ADMIN_API_KEY as string | undefined
     if (!validKey) {
       return new Response(JSON.stringify({ error: 'ADMIN_API_KEY not configured', ok: false }), {
@@ -243,13 +272,13 @@ export async function requireAdmin(
     }
     const encoder = new TextEncoder()
     const [incomingBuf, validBuf] = await Promise.all([
-      crypto.subtle.digest('SHA-256', encoder.encode(staticKey)),
+      crypto.subtle.digest('SHA-256', encoder.encode(incomingKey)),
       crypto.subtle.digest('SHA-256', encoder.encode(validKey)),
     ])
-    const incoming = new Uint8Array(incomingBuf)
-    const valid = new Uint8Array(validBuf)
-    let match = incoming.length === valid.length
-    for (let i = 0; i < incoming.length; i++) match = match && (incoming[i] === valid[i])
+    const inc = new Uint8Array(incomingBuf)
+    const val = new Uint8Array(validBuf)
+    let match = inc.length === val.length
+    for (let i = 0; i < inc.length; i++) match = match && (inc[i] === val[i])
     if (!match) {
       return new Response(JSON.stringify({ error: 'Invalid API key', ok: false }), {
         status: 401,
@@ -259,6 +288,7 @@ export async function requireAdmin(
     return { user: { id: 'api-key', role: 'admin', name: 'API Key', email: '' } }
   }
 
+  // Session cookie path
   try {
     const auth = createAuth(env)
     const session = await auth.api.getSession({ headers: request.headers })
