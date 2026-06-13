@@ -1,15 +1,25 @@
-import React, { useState } from 'react'
-import { Link } from 'react-router'
+import React, { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router'
 import { authClient } from '../lib/auth-client'
 
 export function DevicePage() {
-  const [rawCode, setRawCode] = useState('')
+  const [searchParams] = useSearchParams()
+  const codeFromUrl = searchParams.get('user_code')?.toUpperCase().replace(/[\s-]/g, '') ?? ''
+
+  const [rawCode, setRawCode] = useState(codeFromUrl)
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [error, setError] = useState('')
   const { data: session } = authClient.useSession()
 
-  const normalizedCode = rawCode.toUpperCase().replace(/\s/g, '')
+  const normalizedCode = rawCode.toUpperCase().replace(/[\s-]/g, '')
 
+  // Claim the device code when the page loads with a user_code param and user is logged in
+  useEffect(() => {
+    if (!session || !codeFromUrl) return
+    fetch(`/api/auth/device?user_code=${encodeURIComponent(codeFromUrl)}`, {
+      credentials: 'include',
+    }).catch(() => {})
+  }, [session, codeFromUrl])
 
   async function handleApprove(e: React.FormEvent) {
     e.preventDefault()
@@ -17,6 +27,10 @@ export function DevicePage() {
     setStatus('loading')
     setError('')
     try {
+      // Ensure the device code is claimed before approving
+      await fetch(`/api/auth/device?user_code=${encodeURIComponent(normalizedCode)}`, {
+        credentials: 'include',
+      })
       await authClient.device.approve({ userCode: normalizedCode })
       setStatus('success')
     } catch (err: any) {
