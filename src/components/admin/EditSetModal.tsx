@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import {
   fetchArtists,
   fetchEvents,
@@ -10,17 +10,39 @@ import {
   import1001Tracklists,
   type Track1001Preview,
 } from '../../lib/api'
-import { Button } from '../ui/Button'
-import { Modal } from '../ui/Modal'
-import { Input } from '../ui/Input'
 import { AutocompleteInput, type AutocompleteOption } from '../ui/AutocompleteInput'
+import { Input, Kbd, Select, Spinner, Tabs, Textarea, type SelectOption, type TabItem } from '../bleh'
+import { AdminBadge, AdminButton, AdminModal } from './adminUi'
 import { parse1001TracklistFromHtml } from '../../lib/parse-1001tracklists'
 import { GENRES } from '../../lib/constants'
 import type { DjSet } from '../../lib/types'
 
+type EditTab = 'metadata' | 'tracklist' | 'danger'
+
+const TABS: TabItem<EditTab>[] = [
+  { key: 'metadata', label: 'Metadata' },
+  { key: 'tracklist', label: 'Tracklist' },
+  { key: 'danger', label: 'Danger Zone' },
+]
+
+const GENRE_OPTIONS: SelectOption[] = [{ value: '', label: 'None' }, ...GENRES.map((g) => ({ value: g, label: g }))]
+
+/** Field caption above a control (same typography as bleh Input labels). */
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <span className="ui-field-label">{label}</span>
+      {children}
+    </div>
+  )
+}
+
+/** Muted panel used for the tracklist and danger sections. */
+const PANEL = 'rounded-card bg-surface-raised/50 p-4 shadow-[var(--item-inset)]'
+
 /** Modal for editing set metadata */
 export function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClose: () => void; onSaved: () => void; onDeleted: (id: string) => void }) {
-  const [tab, setTab] = useState<'metadata' | 'tracklist' | 'danger'>('metadata')
+  const [tab, setTab] = useState<EditTab>('metadata')
 
   // Metadata fields
   const [title, setTitle] = useState(set.title)
@@ -105,8 +127,6 @@ export function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet;
 
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-
-  const inputClass = 'w-full px-3 py-2 bg-[oklch(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none'
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -231,39 +251,17 @@ export function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet;
     finally { setIsDeleting(false) }
   }
 
-  const tabs = [
-    { id: 'metadata' as const, label: 'Metadata' },
-    { id: 'tracklist' as const, label: 'Tracklist' },
-    { id: 'danger' as const, label: 'Danger Zone' },
-  ]
-
   return (
-    <Modal isOpen onClose={onClose} title={`Edit: ${set.title}`}>
-      <div className="min-w-0" style={{ maxHeight: '75vh', overflow: 'auto' }}>
-        {/* Tabs */}
-        <div className="flex gap-1 mb-4 p-1 rounded-lg" style={{ background: 'oklch(var(--b5) / 0.5)' }}>
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className="flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all"
-              style={{
-                background: tab === t.id ? 'oklch(var(--h3) / 0.15)' : 'transparent',
-                color: tab === t.id ? 'oklch(var(--h3))' : 'oklch(var(--c3))',
-              }}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+    <AdminModal isOpen onClose={onClose} title={`Edit: ${set.title}`} size="lg">
+      <div className="max-h-[75vh] min-w-0 overflow-auto">
+        <Tabs variant="segmented" aria-label="Edit set sections" tabs={TABS} active={tab} onChange={setTab} className="mb-4" />
 
         {/* ═══ METADATA TAB ═══ */}
         {tab === 'metadata' && (
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'oklch(var(--c2))' }}>Artist / DJ</label>
+            <div className="grid grid-cols-2 items-start gap-3">
+              <Field label="Artist / DJ">
                 <AutocompleteInput
                   value={artist} onChange={setArtist}
                   onSelect={(opt) => setArtistId(opt.id)}
@@ -274,19 +272,18 @@ export function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet;
                 />
                 {/* Co-artist chips */}
                 {additionalArtists.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-1.5">
+                  <div className="flex flex-wrap gap-1">
                     {additionalArtists.map(a => (
-                      <span key={a.id} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs"
-                        style={{ background: 'oklch(var(--h3) / 0.12)', color: 'oklch(var(--h3))' }}>
+                      <AdminBadge key={a.id} variant="accent" className="gap-1">
                         {a.name}
-                        <button onClick={() => handleRemoveCoArtist(a.id)} className="opacity-60 hover:opacity-100 ml-0.5 leading-none cursor-pointer">×</button>
-                      </span>
+                        <button type="button" onClick={() => handleRemoveCoArtist(a.id)} aria-label={`Remove ${a.name}`} className="ml-0.5 cursor-pointer leading-none opacity-60 hover:opacity-100">×</button>
+                      </AdminBadge>
                     ))}
                   </div>
                 )}
                 {/* Co-artist picker */}
-                <div className="flex gap-1.5 mt-1.5">
-                  <div className="flex-1">
+                <div className="flex items-start gap-1.5">
+                  <div className="min-w-0 flex-1">
                     <AutocompleteInput
                       value={coArtistValue}
                       onChange={setCoArtistValue}
@@ -297,13 +294,12 @@ export function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet;
                       placeholder="Add co-artist..."
                     />
                   </div>
-                  <Button size="sm" variant="secondary" onClick={handleAddCoArtist} disabled={!coArtistId}>
+                  <AdminButton variant="secondary" size="sm" onClick={handleAddCoArtist} disabled={!coArtistId}>
                     Add
-                  </Button>
+                  </AdminButton>
                 </div>
-              </div>
-              <div>
-                <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'oklch(var(--c2))' }}>Event</label>
+              </Field>
+              <Field label="Event">
                 <AutocompleteInput
                   value={event} onChange={setEvent}
                   onSelect={(opt) => setEventId(opt.id)}
@@ -312,126 +308,116 @@ export function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet;
                   fetchOptions={fetchEventOptions}
                   placeholder="Boiler Room Berlin"
                 />
-              </div>
+              </Field>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <Input label="Venue" value={venue} onChange={(e) => setVenue(e.target.value)} />
               <Input label="Subgenre" value={subgenre} onChange={(e) => setSubgenre(e.target.value)} placeholder="e.g. Dark Techno" />
             </div>
-            <div>
-              <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'oklch(var(--c2))' }}>Genre</label>
-              <select value={genre} onChange={(e) => setGenre(e.target.value)} className={inputClass}>
-                <option value="">None</option>
-                {GENRES.map((g) => <option key={g} value={g}>{g}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'oklch(var(--c2))' }}>1001Tracklists URL</label>
-              <input value={tracklistUrl} onChange={(e) => setTracklistUrl(e.target.value)} placeholder="https://www.1001tracklists.com/tracklist/..." className={inputClass} />
-            </div>
-            <div>
-              <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'oklch(var(--c2))' }}>Description</label>
-              <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className={`${inputClass} resize-none`} />
-            </div>
-            {error && <p className="text-xs" style={{ color: 'hsl(0, 60%, 55%)' }}>{error}</p>}
-            {success && <p className="text-xs" style={{ color: 'oklch(var(--h3))' }}>{success}</p>}
+            <Field label="Genre">
+              <Select label="Genre" value={genre} onChange={setGenre} options={GENRE_OPTIONS} width={400} className="w-full" />
+            </Field>
+            <Input label="1001Tracklists URL" value={tracklistUrl} onChange={(e) => setTracklistUrl(e.target.value)} placeholder="https://www.1001tracklists.com/tracklist/..." />
+            <Textarea label="Description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="resize-none" />
+            {error && <p className="text-xs text-danger">{error}</p>}
+            {success && <p className="text-xs text-success">{success}</p>}
             <div className="flex gap-3 pt-2">
-              <Button variant="secondary" onClick={onClose} className="flex-1">Cancel</Button>
-              <Button variant="primary" onClick={handleSave} disabled={isSaving || !title.trim() || !artist.trim()} className="flex-1">
+              <AdminButton variant="secondary" onClick={onClose} className="flex-1">Cancel</AdminButton>
+              <AdminButton variant="primary" onClick={handleSave} disabled={isSaving || !title.trim() || !artist.trim()} className="flex-1">
                 {isSaving ? 'Saving...' : 'Save Changes'}
-              </Button>
+              </AdminButton>
             </div>
           </div>
         )}
 
         {/* ═══ TRACKLIST TAB ═══ */}
         {tab === 'tracklist' && (
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             {/* Auto-detect section */}
-            <div className="rounded-xl p-4" style={{ background: 'oklch(var(--b5) / 0.5)', boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.3)' }}>
-              <p className="text-xs font-medium mb-2" style={{ color: 'oklch(var(--c1))' }}>Auto-detect from YouTube</p>
-              <p className="text-[10px] mb-3" style={{ color: 'oklch(var(--c3))' }}>
+            <div className={PANEL}>
+              <p className="mb-2 text-xs font-medium text-text-primary">Auto-detect from YouTube</p>
+              <p className="mb-3 text-[10px] text-text-text-muted">
                 Parses the YouTube description and comments via Invidious + AI. Falls back if no 1001tracklists data is available.
               </p>
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleDetect} disabled={isDetecting}>
+                <AdminButton variant="primary" size="sm" onClick={handleDetect} disabled={isDetecting}>
                   {isDetecting ? 'Detecting...' : 'Run Detection'}
-                </Button>
-                <Button variant="ghost" size="sm" onClick={handleRedetect} disabled={isDetecting}>
+                </AdminButton>
+                <AdminButton variant="ghost" size="sm" onClick={handleRedetect} disabled={isDetecting}>
                   Re-detect Low Confidence
-                </Button>
+                </AdminButton>
               </div>
               {detectMsg && (
-                <p className="text-[10px] mt-2" style={{ color: detectMsg.includes('Failed') || detectMsg.includes('failed') ? 'hsl(0, 60%, 55%)' : 'oklch(var(--h3))' }}>
+                <p className={`mt-2 text-[10px] ${detectMsg.includes('Failed') || detectMsg.includes('failed') ? 'text-danger' : 'text-accent'}`}>
                   {detectMsg}
                 </p>
               )}
             </div>
 
             {/* Manual 1001tracklists paste */}
-            <div className="rounded-xl p-4" style={{ background: 'oklch(var(--b5) / 0.5)', boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.3)' }}>
-              <p className="text-xs font-medium mb-1" style={{ color: 'oklch(var(--c1))' }}>Import from 1001Tracklists</p>
-              <p className="text-[10px] mb-3" style={{ color: 'oklch(var(--c3))' }}>
-                Open the 1001tracklists page → <kbd className="px-1 py-0.5 rounded text-[10px] font-mono" style={{ background: 'oklch(var(--b3))', color: 'oklch(var(--c2))' }}>Ctrl+U</kbd> → <kbd className="px-1 py-0.5 rounded text-[10px] font-mono" style={{ background: 'oklch(var(--b3))', color: 'oklch(var(--c2))' }}>Ctrl+A</kbd> → copy → paste below. This replaces all existing detections.
+            <div className={PANEL}>
+              <p className="mb-1 text-xs font-medium text-text-primary">Import from 1001Tracklists</p>
+              <p className="mb-3 text-[10px] text-text-text-muted">
+                Open the 1001tracklists page → <Kbd>Ctrl+U</Kbd> → <Kbd>Ctrl+A</Kbd> → copy → paste below. This replaces all existing detections.
               </p>
-              <textarea
+              <Textarea
+                aria-label="1001Tracklists page source"
                 value={tracklistHtml}
                 onChange={(e) => setTracklistHtml(e.target.value)}
                 placeholder="Paste full page source HTML..."
                 rows={4}
-                className="w-full px-3 py-2 rounded-lg text-xs font-mono placeholder:text-text-muted focus:outline-none resize-none"
-                style={{ background: 'oklch(var(--b6))', color: 'oklch(var(--c2))', boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.25)' }}
+                className="font-mono text-xs"
               />
-              <div className="flex items-center gap-2 mt-2">
-                <Button size="sm" onClick={handleParse} disabled={isParsing || !tracklistHtml.trim()}>
+              <div className="mt-2 flex items-center gap-2">
+                <AdminButton variant="primary" size="sm" onClick={handleParse} disabled={isParsing || !tracklistHtml.trim()}>
                   {isParsing ? 'Parsing...' : 'Parse'}
-                </Button>
+                </AdminButton>
                 {parsedTracks.length > 0 && (
-                  <Button variant="primary" size="sm" onClick={handleImport} disabled={isImporting}>
+                  <AdminButton variant="primary" size="sm" onClick={handleImport} disabled={isImporting}>
                     {isImporting ? 'Importing...' : `Import ${parsedTracks.length} tracks`}
-                  </Button>
+                  </AdminButton>
                 )}
                 {tracklistHtml.trim() && (
-                  <span className="text-[10px] font-mono ml-auto" style={{ color: 'oklch(var(--c3))' }}>
+                  <span className="ml-auto font-mono text-[10px] text-text-text-muted">
                     {(tracklistHtml.length / 1024).toFixed(0)} KB
                   </span>
                 )}
               </div>
               {tracklistMsg && (
-                <p className="text-[10px] mt-2" style={{ color: tracklistMsg.type === 'error' ? 'hsl(0, 60%, 55%)' : 'oklch(var(--h3))' }}>
+                <p className={`mt-2 text-[10px] ${tracklistMsg.type === 'error' ? 'text-danger' : 'text-accent'}`}>
                   {tracklistMsg.text}
                 </p>
               )}
               {isImporting && importProgress && (
-                <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'oklch(var(--h3) / 0.06)' }}>
-                  <div className="w-3.5 h-3.5 border-2 rounded-full animate-spin shrink-0" style={{ borderColor: 'oklch(var(--h3) / 0.3)', borderTopColor: 'oklch(var(--h3))' }} />
-                  <span className="text-[11px]" style={{ color: 'oklch(var(--h3))' }}>{importProgress}</span>
+                <div className="mt-3 flex items-center gap-2 rounded-ctl bg-accent/5 px-3 py-2 text-accent">
+                  <Spinner size={14} />
+                  <span className="text-[11px]">{importProgress}</span>
                 </div>
               )}
             </div>
 
             {/* Parsed tracks preview */}
             {parsedTracks.length > 0 && (
-              <div className="rounded-xl overflow-hidden" style={{ boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.25)' }}>
-                <div className="px-3 py-2 flex items-center justify-between" style={{ background: 'oklch(var(--b5) / 0.5)' }}>
-                  <span className="text-xs font-medium" style={{ color: 'oklch(var(--h3))' }}>{parsedTracks.length} tracks</span>
-                  <button className="text-[10px]" style={{ color: 'oklch(var(--c3))' }} onClick={() => { setParsedTracks([]); setTracklistHtml('') }}>Clear</button>
+              <div className="overflow-hidden rounded-card shadow-[var(--item-inset)]">
+                <div className="flex items-center justify-between bg-surface-raised/50 px-3 py-2">
+                  <span className="text-xs font-medium text-accent">{parsedTracks.length} tracks</span>
+                  <button type="button" className="text-[10px] text-text-text-muted" onClick={() => { setParsedTracks([]); setTracklistHtml('') }}>Clear</button>
                 </div>
                 <div className="max-h-52 overflow-y-auto">
                   {parsedTracks.map((t, i) => (
-                    <div key={i} className="flex items-center gap-2 px-3 py-1.5 text-[11px]" style={{ borderTop: i > 0 ? '1px solid oklch(var(--b4) / 0.1)' : undefined }}>
+                    <div key={i} className={`flex items-center gap-2 px-3 py-1.5 text-[11px] ${i > 0 ? 'border-t border-[oklch(var(--b4)/0.1)]' : ''}`}>
                       {t.artwork_url ? (
-                        <img src={t.artwork_url} alt="" className="w-7 h-7 rounded object-cover shrink-0" />
+                        <img src={t.artwork_url} alt="" className="h-7 w-7 shrink-0 rounded object-cover" />
                       ) : (
-                        <div className="w-7 h-7 rounded shrink-0" style={{ background: 'oklch(var(--b4) / 0.4)' }} />
+                        <div className="h-7 w-7 shrink-0 rounded bg-surface-overlay/40" />
                       )}
-                      <span className="w-8 text-right font-mono shrink-0" style={{ color: t.is_continuation ? 'oklch(var(--h3) / 0.5)' : 'oklch(var(--c3))' }}>
+                      <span className={`w-8 shrink-0 text-right font-mono ${t.is_continuation ? 'text-accent/50' : 'text-text-text-muted'}`}>
                         {t.is_continuation ? 'w/' : t.cue_time || String(t.position).padStart(2, '0')}
                       </span>
-                      <span className="truncate flex-1" style={{ color: 'oklch(var(--c1))' }}>
+                      <span className="flex-1 truncate text-text-primary">
                         {t.artist} - {t.title}
                       </span>
-                      {t.label && <span className="shrink-0 truncate max-w-20" style={{ color: 'oklch(var(--c3))' }}>[{t.label}]</span>}
+                      {t.label && <span className="max-w-20 shrink-0 truncate text-text-text-muted">[{t.label}]</span>}
                     </div>
                   ))}
                 </div>
@@ -442,33 +428,35 @@ export function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet;
 
         {/* ═══ DANGER ZONE ═══ */}
         {tab === 'danger' && (
-          <div className="space-y-4">
-            <div className="rounded-xl p-4" style={{ background: 'hsl(0, 50%, 15% / 0.3)', boxShadow: 'inset 0 0 0 1px hsl(0, 50%, 30% / 0.3)' }}>
-              <p className="text-xs font-medium mb-1" style={{ color: 'hsl(0, 60%, 65%)' }}>Delete this set</p>
-              <p className="text-[10px] mb-3" style={{ color: 'oklch(var(--c3))' }}>
+          <div className="flex flex-col gap-4">
+            <div className="rounded-card bg-danger/10 p-4 shadow-[var(--item-inset)]">
+              <p className="mb-1 text-xs font-medium text-danger">Delete this set</p>
+              <p className="mb-3 text-[10px] text-text-text-muted">
                 Permanently removes this set, all detections, annotations, votes, and audio. This cannot be undone.
               </p>
               <div className="flex items-center gap-2">
-                <input
-                  value={confirmDeleteText}
-                  onChange={(e) => setConfirmDeleteText(e.target.value)}
-                  placeholder={`Type "${set.id.slice(0, 6)}" to confirm`}
-                  className="flex-1 px-3 py-1.5 rounded-lg text-xs font-mono focus:outline-none"
-                  style={{ background: 'oklch(var(--b6))', color: 'oklch(var(--c2))', boxShadow: 'inset 0 0 0 1px hsl(0, 50%, 30% / 0.3)' }}
-                />
-                <Button
+                <div className="min-w-0 flex-1">
+                  <Input
+                    aria-label="Confirm set ID"
+                    value={confirmDeleteText}
+                    onChange={(e) => setConfirmDeleteText(e.target.value)}
+                    placeholder={`Type "${set.id.slice(0, 6)}" to confirm`}
+                    className="font-mono text-xs"
+                  />
+                </div>
+                <AdminButton
                   variant="danger"
                   size="sm"
                   onClick={handleDelete}
                   disabled={isDeleting || confirmDeleteText !== set.id.slice(0, 6)}
                 >
                   {isDeleting ? 'Deleting...' : 'Delete Set'}
-                </Button>
+                </AdminButton>
               </div>
             </div>
           </div>
         )}
       </div>
-    </Modal>
+    </AdminModal>
   )
 }
