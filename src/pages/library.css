@@ -304,6 +304,8 @@ a.zl-round { text-decoration: none; }
 @media (max-width: 600px) {
   .zl-form-row { grid-template-columns: minmax(0, 1fr); }
   .zl-hide-sm { display: none; }
+  .zl-toolbar-meta { display: none; }
+  .zl-toolbar-search { width: 170px; }
 }
 
 /* ── pager ─────────────────────────────────────────────────── */
