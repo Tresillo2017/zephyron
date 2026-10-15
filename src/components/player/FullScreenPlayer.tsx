@@ -13,6 +13,13 @@ import {
 } from "../../lib/api";
 import { getAvailableServices, ServiceIconLink } from "../../lib/services";
 import { DotmSquare18 } from "../ui/loading-square";
+import {
+  PlayFilled,
+  PauseFilled,
+  SkipPreviousFilled,
+  SkipForwardFilled,
+} from "@mingcute/react/core-filled";
+import "./FullScreenPlayer.css";
 import type { Detection } from "../../lib/types";
 
 type AnimState = "hidden" | "entering" | "visible" | "exiting";
@@ -499,9 +506,9 @@ export function FullScreenPlayer() {
   return (
     <div
       ref={fullscreenTargetRef}
-      className="fixed inset-0 z-50 flex flex-col"
+      className="fsp-root fixed inset-0 z-50 flex flex-col"
       style={{
-        background: "#050507",
+        background: "oklch(var(--b6))",
         transform: isEntering ? "translateY(0)" : "translateY(100%)",
         transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
         willChange: "transform",
@@ -559,54 +566,21 @@ export function FullScreenPlayer() {
       >
         {/* Top bar — toggle + close */}
         <div
-          className="flex items-center justify-between px-6 h-12 shrink-0"
-          style={
-            isTheaterMode
-              ? {
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  zIndex: 30,
-                  opacity: showControls ? 1 : 0,
-                  transform: showControls
-                    ? "translateY(0)"
-                    : "translateY(-100%)",
-                  transition: "opacity 0.4s ease, transform 0.4s ease",
-                  pointerEvents: showControls ? "auto" : "none",
-                  background:
-                    "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%)",
-                }
-              : undefined
-          }
+          className="fsp-topbar flex items-center justify-between px-6 h-12 shrink-0"
+          data-theater={isTheaterMode ? "" : undefined}
+          data-visible={showControls ? "" : undefined}
         >
-          <span
-            className="text-[10px] font-mono tracking-widest"
-            style={{ color: "rgba(255,255,255,0.3)" }}
-          >
+          <span className="fsp-kicker text-[10px] font-mono tracking-widest">
             NOW PLAYING
           </span>
           <div className="flex items-center gap-3">
             {/* Audio / Video pill toggle */}
             {hasVideo && (
-              <div
-                className="flex items-center rounded-[var(--button-radius)] overflow-hidden"
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08)",
-                }}
-              >
+              <div className="fsp-pill flex items-center rounded-[var(--button-radius)] overflow-hidden">
                 <button
                   onClick={() => handleToggleVideoMode(false)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono tracking-wide transition-all"
-                  style={{
-                    background: !isVideoMode
-                      ? "hsl(var(--h3) / 0.2)"
-                      : "transparent",
-                    color: !isVideoMode
-                      ? "hsl(var(--h3))"
-                      : "rgba(255,255,255,0.4)",
-                  }}
+                  className="fsp-pill-btn flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono tracking-wide transition-all"
+                  data-active={!isVideoMode ? "" : undefined}
                 >
                   <svg
                     className="w-3 h-3"
@@ -619,15 +593,8 @@ export function FullScreenPlayer() {
                 </button>
                 <button
                   onClick={() => handleToggleVideoMode(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono tracking-wide transition-all"
-                  style={{
-                    background: isVideoMode
-                      ? "hsl(var(--h3) / 0.2)"
-                      : "transparent",
-                    color: isVideoMode
-                      ? "hsl(var(--h3))"
-                      : "rgba(255,255,255,0.4)",
-                  }}
+                  className="fsp-pill-btn flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono tracking-wide transition-all"
+                  data-active={isVideoMode ? "" : undefined}
                 >
                   <svg
                     className="w-3 h-3"
@@ -643,14 +610,7 @@ export function FullScreenPlayer() {
 
             {/* Experimental video warning */}
             {hasVideo && isVideoMode && (
-              <div
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono tracking-wide"
-                style={{
-                  background: "rgba(251, 191, 36, 0.08)",
-                  border: "1px solid rgba(251, 191, 36, 0.2)",
-                  color: "rgba(251, 191, 36, 0.8)",
-                }}
-              >
+              <div className="fsp-warning flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono tracking-wide">
                 <svg
                   className="w-3 h-3 shrink-0"
                   fill="none"
@@ -672,30 +632,8 @@ export function FullScreenPlayer() {
             {hasVideo && isVideoMode && (
               <button
                 onClick={handleToggleTheater}
-                className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-                style={{
-                  color: isTheaterMode
-                    ? "hsl(var(--h3))"
-                    : "rgba(255,255,255,0.4)",
-                  background: isTheaterMode
-                    ? "hsl(var(--h3) / 0.12)"
-                    : "transparent",
-                  boxShadow: isTheaterMode
-                    ? "inset 0 0 0 1px hsl(var(--h3) / 0.3)"
-                    : "none",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isTheaterMode) {
-                    e.currentTarget.style.color = "rgba(255,255,255,0.9)";
-                    e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isTheaterMode) {
-                    e.currentTarget.style.color = "rgba(255,255,255,0.4)";
-                    e.currentTarget.style.background = "";
-                  }
-                }}
+                className="fsp-icon-btn w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                data-active={isTheaterMode ? "" : undefined}
                 title={isTheaterMode ? "Exit Theater Mode" : "Theater Mode"}
               >
                 {isTheaterMode ? (
@@ -733,16 +671,7 @@ export function FullScreenPlayer() {
             {/* Close */}
             <button
               onClick={toggleFullScreen}
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-              style={{ color: "rgba(255,255,255,0.4)" }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "rgba(255,255,255,0.9)";
-                e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "rgba(255,255,255,0.4)";
-                e.currentTarget.style.background = "";
-              }}
+              className="fsp-icon-btn w-8 h-8 rounded-full flex items-center justify-center transition-all"
               title="Close (Esc)"
             >
               <svg
@@ -905,14 +834,14 @@ export function FullScreenPlayer() {
                       width: showTracklist ? 300 : 0,
                       opacity: showTracklist ? 1 : 0,
                       maxHeight: isTheaterMode ? "100%" : undefined,
-                      background: "rgba(0, 0, 0, 0.5)",
+                      background: "oklch(var(--b6) / 60%)",
                       backdropFilter: "blur(24px)",
                       WebkitBackdropFilter: "blur(24px)",
                       borderRadius: isTheaterMode
                         ? "12px 0 0 12px"
                         : "0 12px 12px 0",
                       boxShadow: showTracklist
-                        ? "inset 0 0 0 1px rgba(255,255,255,0.06)"
+                        ? "var(--card-border)"
                         : "none",
                       transition:
                         "width 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -930,7 +859,7 @@ export function FullScreenPlayer() {
                         <div className="flex items-center justify-between">
                           <p
                             className="text-[11px] font-mono tracking-wider"
-                            style={{ color: "rgba(255,255,255,0.35)" }}
+                            style={{ color: "oklch(var(--c3))" }}
                           >
                             TRACKLIST
                           </p>
@@ -938,9 +867,9 @@ export function FullScreenPlayer() {
                             <span
                               className="text-[9px] font-mono tracking-wider px-1.5 py-0.5 rounded"
                               style={{
-                                background: "hsl(var(--h3) / 0.15)",
-                                color: "hsl(var(--h3))",
-                                border: "1px solid hsl(var(--h3) / 0.25)",
+                                background: "oklch(var(--h3) / 0.15)",
+                                color: "oklch(var(--h3))",
+                                border: "1px solid oklch(var(--h3) / 0.25)",
                               }}
                             >
                               {currentDetections.length} PLAYING
@@ -949,7 +878,7 @@ export function FullScreenPlayer() {
                         </div>
                         <p
                           className="text-[10px] font-mono"
-                          style={{ color: "rgba(255,255,255,0.2)" }}
+                          style={{ color: "oklch(var(--c3) / 70%)" }}
                         >
                           {detections.length} tracks
                         </p>
@@ -990,21 +919,21 @@ export function FullScreenPlayer() {
                                   gap: 10,
                                   borderRadius: "8px",
                                   background: isPrimaryPlaying
-                                    ? "hsl(var(--h3) / 0.12)"
+                                    ? "oklch(var(--h3) / 0.12)"
                                     : isPrimaryActive
-                                    ? "hsl(var(--h3) / 0.07)"
+                                    ? "oklch(var(--h3) / 0.07)"
                                     : "transparent",
                                   boxShadow: isPrimaryPlaying
-                                    ? "inset 1px 1px 0 hsl(var(--h3) / 0.25), inset -1px 0 0 hsl(var(--h3) / 0.25), inset 0 -1px 0 hsl(var(--h3) / 0.1)"
+                                    ? "inset 1px 1px 0 oklch(var(--h3) / 0.25), inset -1px 0 0 oklch(var(--h3) / 0.25), inset 0 -1px 0 oklch(var(--h3) / 0.1)"
                                     : isPrimaryActive
-                                    ? "inset 0 0 0 1px hsl(var(--h3) / 0.15)"
+                                    ? "inset 0 0 0 1px oklch(var(--h3) / 0.15)"
                                     : "none",
                                   transition: "background 0.2s ease",
                                 }}
                                 onMouseEnter={(e) => {
                                   if (!isPrimaryActive)
                                     e.currentTarget.style.background =
-                                      "rgba(255,255,255,0.04)";
+                                      "var(--tracklist-hover)";
                                 }}
                                 onMouseLeave={(e) => {
                                   if (!isPrimaryActive)
@@ -1018,7 +947,7 @@ export function FullScreenPlayer() {
                                     className="absolute left-0 top-1 bottom-1 rounded-full"
                                     style={{
                                       width: 2,
-                                      background: "hsl(var(--h3))",
+                                      background: "oklch(var(--h3))",
                                     }}
                                   />
                                 )}
@@ -1028,7 +957,7 @@ export function FullScreenPlayer() {
                                   className="text-[10px] font-mono tabular-nums w-9 text-center shrink-0 pl-1"
                                   style={{
                                     color: isPrimaryActive
-                                      ? "hsl(var(--h3))"
+                                      ? "oklch(var(--h3))"
                                       : "rgba(255,255,255,0.3)",
                                   }}
                                 >
@@ -1038,7 +967,7 @@ export function FullScreenPlayer() {
                                         <span
                                           className="w-[2px] rounded-sm"
                                           style={{
-                                            background: "hsl(var(--h3))",
+                                            background: "oklch(var(--h3))",
                                             animation:
                                               "eq-bar-1 0.8s ease-in-out infinite",
                                           }}
@@ -1046,7 +975,7 @@ export function FullScreenPlayer() {
                                         <span
                                           className="w-[2px] rounded-sm"
                                           style={{
-                                            background: "hsl(var(--h3))",
+                                            background: "oklch(var(--h3))",
                                             animation:
                                               "eq-bar-2 0.6s ease-in-out infinite",
                                           }}
@@ -1054,7 +983,7 @@ export function FullScreenPlayer() {
                                         <span
                                           className="w-[2px] rounded-sm"
                                           style={{
-                                            background: "hsl(var(--h3))",
+                                            background: "oklch(var(--h3))",
                                             animation:
                                               "eq-bar-3 0.7s ease-in-out infinite",
                                           }}
@@ -1076,7 +1005,7 @@ export function FullScreenPlayer() {
                                     className="w-8 h-8 rounded object-cover shrink-0"
                                     style={{
                                       boxShadow: isPrimaryPlaying
-                                        ? "0 0 0 1.5px hsl(var(--h3) / 0.6)"
+                                        ? "0 0 0 1.5px oklch(var(--h3) / 0.6)"
                                         : "none",
                                       opacity: isPrimaryActive ? 1 : 0.7,
                                       transition:
@@ -1088,10 +1017,10 @@ export function FullScreenPlayer() {
                                     className="w-8 h-8 rounded shrink-0"
                                     style={{
                                       background: isPrimaryActive
-                                        ? "hsl(var(--h3) / 0.1)"
-                                        : "rgba(255,255,255,0.04)",
+                                        ? "oklch(var(--h3) / 0.1)"
+                                        : "var(--tracklist-hover)",
                                       boxShadow: isPrimaryPlaying
-                                        ? "inset 0 0 0 1px hsl(var(--h3) / 0.4)"
+                                        ? "inset 0 0 0 1px oklch(var(--h3) / 0.4)"
                                         : "none",
                                     }}
                                   />
@@ -1103,7 +1032,7 @@ export function FullScreenPlayer() {
                                     className="text-[11px] truncate leading-tight"
                                     style={{
                                       color: isPrimaryActive
-                                        ? "hsl(var(--h3))"
+                                        ? "oklch(var(--h3))"
                                         : "rgba(255,255,255,0.75)",
                                     }}
                                   >
@@ -1114,7 +1043,7 @@ export function FullScreenPlayer() {
                                       className="text-[9px] truncate"
                                       style={{
                                         color: isPrimaryActive
-                                          ? "hsl(var(--h3) / 0.6)"
+                                          ? "oklch(var(--h3) / 0.6)"
                                           : "rgba(255,255,255,0.3)",
                                       }}
                                     >
@@ -1169,18 +1098,18 @@ export function FullScreenPlayer() {
                                           padding: "4px 6px",
                                           gap: 8,
                                           background: isSecActive
-                                            ? "hsl(var(--h3) / 0.06)"
+                                            ? "oklch(var(--h3) / 0.06)"
                                             : "transparent",
                                         }}
                                         onMouseEnter={(e) => {
                                           if (!isSecActive)
                                             e.currentTarget.style.background =
-                                              "rgba(255,255,255,0.04)";
+                                              "var(--tracklist-hover)";
                                         }}
                                         onMouseLeave={(e) => {
                                           e.currentTarget.style.background =
                                             isSecActive
-                                              ? "hsl(var(--h3) / 0.06)"
+                                              ? "oklch(var(--h3) / 0.06)"
                                               : "transparent";
                                         }}
                                       >
@@ -1189,7 +1118,7 @@ export function FullScreenPlayer() {
                                           className="text-[8px] font-mono shrink-0 w-5 text-center"
                                           style={{
                                             color: isSecActive
-                                              ? "hsl(var(--h3) / 0.5)"
+                                              ? "oklch(var(--h3) / 0.5)"
                                               : "rgba(255,255,255,0.2)",
                                           }}
                                         >
@@ -1216,7 +1145,7 @@ export function FullScreenPlayer() {
                                               width: 24,
                                               height: 24,
                                               background: isSecActive
-                                                ? "hsl(var(--h3) / 0.08)"
+                                                ? "oklch(var(--h3) / 0.08)"
                                                 : "rgba(255,255,255,0.03)",
                                             }}
                                           >
@@ -1239,7 +1168,7 @@ export function FullScreenPlayer() {
                                             className="text-[10px] truncate leading-tight"
                                             style={{
                                               color: isSecActive
-                                                ? "hsl(var(--h3) / 0.8)"
+                                                ? "oklch(var(--h3) / 0.8)"
                                                 : "rgba(255,255,255,0.45)",
                                             }}
                                           >
@@ -1250,7 +1179,7 @@ export function FullScreenPlayer() {
                                               className="text-[8px] truncate"
                                               style={{
                                                 color: isSecActive
-                                                  ? "hsl(var(--h3) / 0.45)"
+                                                  ? "oklch(var(--h3) / 0.45)"
                                                   : "rgba(255,255,255,0.2)",
                                               }}
                                             >
@@ -1347,67 +1276,24 @@ export function FullScreenPlayer() {
           {/* Now Playing card — slides up when controls hide, Up Next expands below */}
           {isTheaterMode && (
             <div
-              style={{
-                position: "absolute",
-                // when controls are hidden, slide up to top-right corner (16px from edge)
-                top: showControls ? 68 : 16,
-                right: 16,
-                zIndex: 110,
-                backdropFilter: "blur(24px) saturate(180%)",
-                WebkitBackdropFilter: "blur(24px) saturate(180%)",
-                background: "rgba(0,0,0,0.6)",
-                boxShadow: nowPlayingFlash
-                  ? "inset 0 0 0 1.5px hsl(var(--h3) / 0.6), 0 8px 32px hsl(var(--h4) / 0.4)"
-                  : "inset 0 0 0 1px rgba(255,255,255,0.1), 0 12px 40px rgba(0,0,0,0.5)",
-                borderRadius: 14,
-                overflow: "hidden",
-                width: 260,
-                transition:
-                  "top 0.65s cubic-bezier(0.34, 1.4, 0.64, 1), right 0.65s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.4s ease",
-                animation: nowPlayingFlash
-                  ? "nowPlayingFlash 1.1s cubic-bezier(0.16, 1, 0.3, 1)"
-                  : undefined,
-              }}
+              className="fsp-np"
+              data-controls={showControls ? "" : undefined}
+              data-flash={nowPlayingFlash ? "" : undefined}
             >
               {/* Now Playing row */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 10,
-                  padding: "10px 12px",
-                }}
-              >
-                <div
-                  className="relative shrink-0 rounded-lg overflow-hidden"
-                  style={{
-                    width: 40,
-                    height: 40,
-                    boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.12)",
-                    animation: nowPlayingFlash
-                      ? "coverPromote 0.7s cubic-bezier(0.16, 1, 0.3, 1)"
-                      : undefined,
-                  }}
-                >
+              <div className="fsp-np-row">
+                <div className="fsp-np-cover relative shrink-0 rounded-lg overflow-hidden">
                   {songCover ? (
                     <img
                       key={songCover}
                       src={songCover}
                       alt=""
-                      className="absolute inset-0 w-full h-full object-cover"
-                      style={{
-                        animation:
-                          "coverFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
-                      }}
+                      className="fsp-np-cover-img absolute inset-0 w-full h-full object-cover"
                     />
                   ) : (
-                    <div
-                      className="absolute inset-0 flex items-center justify-center"
-                      style={{ background: "rgba(255,255,255,0.06)" }}
-                    >
+                    <div className="fsp-np-empty absolute inset-0 flex items-center justify-center">
                       <svg
-                        className="w-4 h-4"
-                        style={{ color: "rgba(255,255,255,0.2)" }}
+                        className="fsp-np-empty-icon w-4 h-4"
                         fill="currentColor"
                         viewBox="0 0 24 24"
                       >
@@ -1417,46 +1303,12 @@ export function FullScreenPlayer() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p
-                    style={{
-                      fontSize: 9,
-                      fontFamily: "var(--font-mono, monospace)",
-                      letterSpacing: "0.1em",
-                      color: "hsl(var(--h3) / 0.7)",
-                      marginBottom: 2,
-                      animation: nowPlayingFlash
-                        ? "labelFlash 0.8s cubic-bezier(0.16, 1, 0.3, 1)"
-                        : undefined,
-                    }}
-                  >
-                    NOW PLAYING
-                  </p>
-                  <p
-                    key={currentDetection?.id}
-                    style={{
-                      fontSize: 11,
-                      color: "rgba(255,255,255,0.92)",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      lineHeight: 1.3,
-                      animation: nowPlayingFlash
-                        ? "nowPlayingTextPop 0.5s cubic-bezier(0.16, 1, 0.3, 1)"
-                        : "titleSlideIn 0.3s ease-out",
-                    }}
-                  >
+                  <p className="fsp-np-kicker">NOW PLAYING</p>
+                  <p key={currentDetection?.id} className="fsp-np-title">
                     {currentDetection?.track_title || currentSet.title}
                   </p>
                   {(currentDetection?.track_artist || currentSet.artist) && (
-                    <p
-                      style={{
-                        fontSize: 10,
-                        color: "rgba(255,255,255,0.4)",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                    <p className="fsp-np-artist">
                       {currentDetection?.track_artist || currentSet.artist}
                     </p>
                   )}
@@ -1467,40 +1319,18 @@ export function FullScreenPlayer() {
                       ? getSongCoverUrl(dSong.id)
                       : dSong?.cover_art_url || dSong?.lastfm_album_art || null;
                     return (
-                      <div
-                        key={d.id}
-                        style={{
-                          marginTop: 6,
-                          paddingLeft: 8,
-                          borderLeft: "1.5px solid rgba(255,255,255,0.1)",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                        }}
-                      >
-                        <div
-                          className="relative shrink-0 rounded overflow-hidden"
-                          style={{
-                            width: 26,
-                            height: 26,
-                            boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08)",
-                          }}
-                        >
+                      <div key={d.id} className="fsp-np-concurrent">
+                        <div className="fsp-np-mini relative shrink-0 rounded overflow-hidden">
                           {dCover ? (
                             <img
                               src={dCover}
                               alt=""
-                              className="absolute inset-0 w-full h-full object-cover"
-                              style={{ opacity: 0.8 }}
+                              className="fsp-np-mini-img absolute inset-0 w-full h-full object-cover"
                             />
                           ) : (
-                            <div
-                              className="absolute inset-0 flex items-center justify-center"
-                              style={{ background: "rgba(255,255,255,0.04)" }}
-                            >
+                            <div className="fsp-np-empty absolute inset-0 flex items-center justify-center">
                               <svg
-                                className="w-3 h-3"
-                                style={{ color: "rgba(255,255,255,0.15)" }}
+                                className="fsp-np-empty-icon w-3 h-3"
                                 fill="currentColor"
                                 viewBox="0 0 24 24"
                               >
@@ -1510,46 +1340,15 @@ export function FullScreenPlayer() {
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p
-                            style={{
-                              fontSize: 8,
-                              fontFamily: "var(--font-mono, monospace)",
-                              letterSpacing: "0.08em",
-                              color: "hsl(var(--h3) / 0.5)",
-                              marginBottom: 1,
-                            }}
-                          >
-                            w/
-                          </p>
-                          <p
-                            style={{
-                              fontSize: 10,
-                              color: "rgba(255,255,255,0.72)",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              lineHeight: 1.3,
-                            }}
-                          >
-                            {d.track_title}
-                          </p>
+                          <p className="fsp-np-wlabel">w/</p>
+                          <p className="fsp-np-ctitle">{d.track_title}</p>
                           {d.track_artist && (
-                            <p
-                              style={{
-                                fontSize: 9,
-                                color: "rgba(255,255,255,0.35)",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              {d.track_artist}
-                            </p>
+                            <p className="fsp-np-cartist">{d.track_artist}</p>
                           )}
                         </div>
                         {/* Like button for concurrent track */}
                         {dSong && (
-                          <div style={{ flexShrink: 0 }}>
+                          <div className="shrink-0">
                             <LikeButton songId={dSong.id} size={10} />
                           </div>
                         )}
@@ -1559,7 +1358,7 @@ export function FullScreenPlayer() {
                 </div>
                 {/* Like button for main track */}
                 {song && (
-                  <div style={{ flexShrink: 0, paddingTop: 8 }}>
+                  <div className="shrink-0 pt-2">
                     <LikeButton songId={song.id} size={14} />
                   </div>
                 )}
@@ -1568,50 +1367,19 @@ export function FullScreenPlayer() {
               {/* Up Next — slides down inside the same card */}
               {upNextDetection && (
                 <div
-                  style={{
-                    maxHeight: showUpNext
-                      ? upNextConcurrent.length > 0
-                        ? 72
-                        : 56
-                      : 0,
-                    overflow: "hidden",
-                    transition: "max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
-                  }}
+                  className="fsp-np-upnext"
+                  data-open={showUpNext ? "" : undefined}
+                  data-concurrent={upNextConcurrent.length > 0 ? "" : undefined}
                 >
                   {/* Divider — fades in with the row */}
+                  <div className="fsp-np-divider" />
                   <div
-                    style={{
-                      height: 1,
-                      background: "rgba(255,255,255,0.07)",
-                      margin: "0 12px",
-                      opacity: showUpNext ? 1 : 0,
-                      transition: "opacity 0.2s ease 0.15s",
-                    }}
-                  />
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      padding: "7px 12px 9px 20px",
-                      animation: upNextExiting
-                        ? "upNextExit 0.28s cubic-bezier(0.4, 0, 1, 1) forwards"
-                        : showUpNext
-                        ? "upNextEntry 0.55s cubic-bezier(0.34, 1.3, 0.64, 1)"
-                        : undefined,
-                      opacity: showUpNext && !upNextExiting ? 1 : undefined,
-                    }}
+                    className="fsp-np-upnext-row"
+                    data-open={showUpNext && !upNextExiting ? "" : undefined}
+                    data-exiting={upNextExiting ? "" : undefined}
                   >
                     {/* Small connector dot */}
-                    <div
-                      style={{
-                        width: 4,
-                        height: 4,
-                        borderRadius: "50%",
-                        background: "rgba(255,255,255,0.2)",
-                        flexShrink: 0,
-                      }}
-                    />
+                    <div className="fsp-np-dot" />
                     {/* Cover stack — main cover + offset thumbnail if concurrent */}
                     {(() => {
                       const upNextSong = upNextDetection.song;
@@ -1633,27 +1401,12 @@ export function FullScreenPlayer() {
                           : null;
                       return (
                         <div
-                          style={{
-                            position: "relative",
-                            width: 26 + (upNextConcurrent.length > 0 ? 8 : 0),
-                            height: 26,
-                            flexShrink: 0,
-                          }}
+                          className="fsp-np-stack"
+                          data-concurrent={upNextConcurrent.length > 0 ? "" : undefined}
                         >
                           {/* Offset secondary cover behind */}
                           {secondaryCover && (
-                            <div
-                              className="absolute rounded overflow-hidden"
-                              style={{
-                                width: 22,
-                                height: 22,
-                                top: 2,
-                                left: 8,
-                                opacity: 0.45,
-                                boxShadow:
-                                  "inset 0 0 0 1px rgba(255,255,255,0.08)",
-                              }}
-                            >
+                            <div className="fsp-np-cover-2 absolute rounded overflow-hidden">
                               <img
                                 src={secondaryCover}
                                 alt=""
@@ -1662,18 +1415,7 @@ export function FullScreenPlayer() {
                             </div>
                           )}
                           {/* Primary cover on top */}
-                          <div
-                            className="absolute rounded overflow-hidden"
-                            style={{
-                              width: 26,
-                              height: 26,
-                              left: 0,
-                              top: 0,
-                              opacity: 0.7,
-                              boxShadow:
-                                "inset 0 0 0 1px rgba(255,255,255,0.1)",
-                            }}
-                          >
+                          <div className="fsp-np-cover-1 absolute rounded overflow-hidden">
                             {upNextCover ? (
                               <img
                                 src={upNextCover}
@@ -1681,13 +1423,9 @@ export function FullScreenPlayer() {
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <div
-                                className="w-full h-full flex items-center justify-center"
-                                style={{ background: "rgba(255,255,255,0.04)" }}
-                              >
+                              <div className="fsp-np-empty w-full h-full flex items-center justify-center">
                                 <svg
-                                  className="w-3 h-3"
-                                  style={{ color: "rgba(255,255,255,0.15)" }}
+                                  className="fsp-np-empty-icon w-3 h-3"
                                   fill="currentColor"
                                   viewBox="0 0 24 24"
                                 >
@@ -1700,63 +1438,19 @@ export function FullScreenPlayer() {
                       );
                     })()}
                     <div className="min-w-0 flex-1">
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 4,
-                          marginBottom: 1,
-                        }}
-                      >
-                        <p
-                          style={{
-                            fontSize: 8,
-                            fontFamily: "var(--font-mono, monospace)",
-                            letterSpacing: "0.08em",
-                            color: "rgba(255,255,255,0.28)",
-                          }}
-                        >
-                          UP NEXT
-                        </p>
+                      <div className="fsp-np-meta">
+                        <p className="fsp-np-upkicker">UP NEXT</p>
                         {upNextConcurrent.length > 0 && (
-                          <span
-                            style={{
-                              fontSize: 7,
-                              fontFamily: "var(--font-mono, monospace)",
-                              letterSpacing: "0.06em",
-                              color: "hsl(var(--h3) / 0.6)",
-                              background: "hsl(var(--h3) / 0.12)",
-                              padding: "1px 4px",
-                              borderRadius: 4,
-                            }}
-                          >
+                          <span className="fsp-np-count">
                             +{upNextConcurrent.length}
                           </span>
                         )}
                       </div>
-                      <p
-                        style={{
-                          fontSize: 10,
-                          color: "rgba(255,255,255,0.55)",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          lineHeight: 1.3,
-                        }}
-                      >
+                      <p className="fsp-np-uptitle">
                         {upNextDetection.track_title}
                       </p>
                       {upNextConcurrent.length > 0 && (
-                        <p
-                          style={{
-                            fontSize: 9,
-                            color: "rgba(255,255,255,0.28)",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            lineHeight: 1.3,
-                          }}
-                        >
+                        <p className="fsp-np-upw">
                           w/{" "}
                           {upNextConcurrent
                             .map((d) => d.track_title)
@@ -1766,17 +1460,7 @@ export function FullScreenPlayer() {
                     </div>
                     <button
                       onClick={() => setShowUpNext(false)}
-                      style={{
-                        color: "rgba(255,255,255,0.2)",
-                        flexShrink: 0,
-                        padding: 2,
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.color = "rgba(255,255,255,0.6)")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.color = "rgba(255,255,255,0.2)")
-                      }
+                      className="fsp-np-dismiss shrink-0"
                     >
                       <svg
                         className="w-3 h-3"
@@ -1801,31 +1485,13 @@ export function FullScreenPlayer() {
           {/* Theater controls overlay — hover to reveal, 3s inactivity timeout */}
           {isTheaterMode && (
             <div
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                zIndex: 100,
-                opacity: showControls ? 1 : 0,
-                transform: showControls ? "translateY(0)" : "translateY(10px)",
-                transition:
-                  "opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-                pointerEvents: showControls ? "auto" : "none",
-                background:
-                  "linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.32) 60%, transparent 100%)",
-                filter: "drop-shadow(0 -8px 40px rgba(0,0,0,0.6))",
-                padding: "36px 48px 18px",
-              }}
+              className="fsp-theater"
+              data-controls={showControls ? "" : undefined}
             >
-              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+              <div className="fsp-theater-col">
                 {/* Progress bar — full width with hover + storyboard */}
                 <div
-                  className="relative h-[5px] rounded-full cursor-pointer group"
-                  style={{
-                    background: "rgba(255,255,255,0.15)",
-                    marginBottom: 5,
-                  }}
+                  className="fsp-seekbar relative h-[5px] rounded-full cursor-pointer group"
                   onClick={handleSeek}
                   onMouseMove={handleProgressMouseMove}
                   onMouseLeave={handleProgressMouseLeave}
@@ -1837,56 +1503,35 @@ export function FullScreenPlayer() {
                     return (
                       <div
                         key={d.id}
-                        className="absolute top-0 h-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                        style={{
-                          left: `${pos}%`,
-                          width: 1.5,
-                          background: "rgba(255,255,255,0.35)",
-                        }}
+                        className="fsp-marker absolute top-0 h-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                        style={{ left: `${pos}%` }}
                       />
                     );
                   })}
                   {/* Fill */}
                   <div
-                    className="absolute top-0 left-0 h-full rounded-full pointer-events-none"
-                    style={{
-                      width: `${progress}%`,
-                      background: "hsl(var(--h3))",
-                      transition: "width 0.1s linear",
-                    }}
+                    className="fsp-fill absolute top-0 left-0 h-full rounded-full pointer-events-none"
+                    style={{ width: `${progress}%` }}
                   />
                   {/* Hover thumb */}
                   {hoverTime !== null && (
                     <div
-                      className="absolute pointer-events-none"
-                      style={{
-                        left: `${(hoverTime / duration) * 100}%`,
-                        top: "50%",
-                        transform: "translate(-50%, -50%)",
-                        width: 13,
-                        height: 13,
-                        borderRadius: "50%",
-                        background: "white",
-                        boxShadow: "0 1px 5px rgba(0,0,0,0.4)",
-                      }}
+                      className="fsp-thumb absolute pointer-events-none"
+                      style={{ left: `${(hoverTime / duration) * 100}%` }}
                     />
                   )}
                   {/* Hover time line */}
                   {hoverTime !== null && (
                     <div
-                      className="absolute top-0 bottom-0 w-px pointer-events-none opacity-40"
-                      style={{
-                        left: `${(hoverTime / duration) * 100}%`,
-                        background: "rgba(255,255,255,0.8)",
-                      }}
+                      className="fsp-timeline absolute top-0 bottom-0 w-px pointer-events-none opacity-40"
+                      style={{ left: `${(hoverTime / duration) * 100}%` }}
                     />
                   )}
                   {/* Storyboard thumbnail popup */}
                   {hoverTime !== null && thumbnailInfo && (
                     <div
-                      className="absolute pointer-events-none z-20"
+                      className="fsp-thumb-pop absolute pointer-events-none z-20"
                       style={{
-                        bottom: "100%",
                         left: Math.max(
                           0,
                           Math.min(
@@ -1894,19 +1539,17 @@ export function FullScreenPlayer() {
                             hoverX - thumbnailInfo.thumbWidth / 2
                           )
                         ),
-                        marginBottom: 12,
                       }}
                     >
                       <div
-                        className="overflow-hidden rounded-lg"
+                        className="fsp-thumb-frame overflow-hidden rounded-lg"
                         style={{
                           width: thumbnailInfo.thumbWidth,
                           height: thumbnailInfo.thumbHeight,
-                          boxShadow: "0 8px 25px rgba(0,0,0,0.55)",
-                          border: "1px solid rgba(255,255,255,0.1)",
                         }}
                       >
                         <div
+                          className="fsp-sprite"
                           style={{
                             width: thumbnailInfo.thumbWidth,
                             height: thumbnailInfo.thumbHeight,
@@ -1921,82 +1564,35 @@ export function FullScreenPlayer() {
                                   thumbnailInfo.thumbHeight
                                 }px`
                               : undefined,
-                            backgroundRepeat: "no-repeat",
                           }}
                         />
                       </div>
-                      <p
-                        className="mt-1 text-center text-[10px] font-mono tabular-nums"
-                        style={{ color: "rgba(255,255,255,0.5)" }}
-                      >
+                      <p className="fsp-thumb-time mt-1 text-center text-[10px] font-mono tabular-nums">
                         {formatTime(hoverTime)}
                       </p>
                     </div>
                   )}
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginBottom: 10,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontFamily: "var(--font-mono, monospace)",
-                      color: "rgba(255,255,255,0.45)",
-                    }}
-                  >
-                    {formatTime(currentTime)}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontFamily: "var(--font-mono, monospace)",
-                      color: "rgba(255,255,255,0.45)",
-                    }}
-                  >
-                    {formatTime(duration)}
-                  </span>
+                <div className="fsp-times">
+                  <span className="fsp-time-label">{formatTime(currentTime)}</span>
+                  <span className="fsp-time-label">{formatTime(duration)}</span>
                 </div>
 
                 {/* Transport row */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
+                <div className="fsp-transport">
                   {/* Left: volume */}
-                  <div style={{ flex: "0 0 200px" }}>
+                  <div className="fsp-side">
                     <VolumeSlider
                       volume={volume}
                       isMuted={isMuted}
                       onVolumeChange={setVolume}
                       onToggleMute={toggleMute}
-                      variant="fullscreen"
-                    />
+                          />
                   </div>
 
                   {/* Center: prev / play / next */}
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 28 }}
-                  >
-                    <button
-                      onClick={playPrevious}
-                      style={{
-                        color: "rgba(255,255,255,0.55)",
-                        transition: "color 0.15s",
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.color = "#fff")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.color = "rgba(255,255,255,0.55)")
-                      }
-                    >
+                  <div className="fsp-center">
+                    <button onClick={playPrevious} className="fsp-skip">
                       <svg
                         className="w-5 h-5"
                         fill="currentColor"
@@ -2007,17 +1603,7 @@ export function FullScreenPlayer() {
                     </button>
                     <button
                       onClick={togglePlay}
-                      className="hover:scale-105 active:scale-95 transition-all"
-                      style={{
-                        width: 46,
-                        height: 46,
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        background: "hsl(var(--h3))",
-                        boxShadow: "0 4px 20px hsl(var(--h4) / 0.45)",
-                      }}
+                      className="fsp-theater-play hover:scale-105 active:scale-95 transition-all"
                     >
                       {isPlaying ? (
                         <svg
@@ -2029,8 +1615,7 @@ export function FullScreenPlayer() {
                         </svg>
                       ) : (
                         <svg
-                          className="w-5 h-5 text-white"
-                          style={{ marginLeft: 2 }}
+                          className="fsp-play-nudge w-5 h-5 text-white"
                           fill="currentColor"
                           viewBox="0 0 24 24"
                         >
@@ -2038,19 +1623,7 @@ export function FullScreenPlayer() {
                         </svg>
                       )}
                     </button>
-                    <button
-                      onClick={playNext}
-                      style={{
-                        color: "rgba(255,255,255,0.55)",
-                        transition: "color 0.15s",
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.color = "#fff")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.color = "rgba(255,255,255,0.55)")
-                      }
-                    >
+                    <button onClick={playNext} className="fsp-skip">
                       <svg
                         className="w-5 h-5"
                         fill="currentColor"
@@ -2062,7 +1635,7 @@ export function FullScreenPlayer() {
                   </div>
 
                   {/* Right: balance spacer */}
-                  <div style={{ flex: "0 0 200px" }} />
+                  <div className="fsp-side" />
                 </div>
               </div>
             </div>
@@ -2166,8 +1739,7 @@ export function FullScreenPlayer() {
 
             {/* Progress bar with hover + storyboard */}
             <div
-              className="relative h-[5px] rounded-full cursor-pointer group"
-              style={{ background: "rgba(255,255,255,0.15)" }}
+              className="fsp-progress group"
               onClick={handleSeek}
               onMouseMove={handleProgressMouseMove}
               onMouseLeave={handleProgressMouseLeave}
@@ -2179,37 +1751,25 @@ export function FullScreenPlayer() {
                 return (
                   <div
                     key={d.id}
-                    className="absolute top-0 h-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                    style={{
-                      left: `${pos}%`,
-                      width: 1.5,
-                      background: "rgba(255,255,255,0.35)",
-                    }}
+                    className="fsp-progress__tick"
+                    style={{ left: `${pos}%` }}
                   />
                 );
               })}
               {/* Fill */}
               <div
-                className="absolute top-0 left-0 h-full rounded-full pointer-events-none"
+                className="fsp-progress__fill"
                 style={{
                   width: `${progress}%`,
-                  background: "hsl(var(--h3))",
                   transition: "width 0.1s linear",
                 }}
               />
               {/* Hover thumb */}
               {hoverTime !== null && (
                 <div
-                  className="absolute pointer-events-none"
+                  className="fsp-progress__nub"
                   style={{
                     left: `${(hoverTime / duration) * 100}%`,
-                    top: "50%",
-                    transform: "translate(-50%, -50%)",
-                    width: 13,
-                    height: 13,
-                    borderRadius: "50%",
-                    background: "white",
-                    boxShadow: "0 1px 5px rgba(0,0,0,0.4)",
                   }}
                 />
               )}
@@ -2244,8 +1804,7 @@ export function FullScreenPlayer() {
                     style={{
                       width: thumbnailInfo.thumbWidth,
                       height: thumbnailInfo.thumbHeight,
-                      boxShadow: "0 8px 25px rgba(0,0,0,0.55)",
-                      border: "1px solid rgba(255,255,255,0.1)",
+                      boxShadow: "0 8px 25px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.1)",
                     }}
                   >
                     <div
@@ -2268,8 +1827,7 @@ export function FullScreenPlayer() {
                     />
                   </div>
                   <p
-                    className="mt-1 text-center text-[10px] font-mono tabular-nums"
-                    style={{ color: "rgba(255,255,255,0.5)" }}
+                    className="mt-1 text-center text-[10px] font-mono tabular-nums fsp-time"
                   >
                     {formatTime(hoverTime)}
                   </p>
@@ -2279,16 +1837,10 @@ export function FullScreenPlayer() {
 
             {/* Time */}
             <div className="flex justify-between mt-1.5">
-              <span
-                className="text-[10px] font-mono tabular-nums"
-                style={{ color: "rgba(255,255,255,0.4)" }}
-              >
+              <span className="text-[10px] font-mono tabular-nums fsp-time">
                 {formatTime(currentTime)}
               </span>
-              <span
-                className="text-[10px] font-mono tabular-nums"
-                style={{ color: "rgba(255,255,255,0.4)" }}
-              >
+              <span className="text-[10px] font-mono tabular-nums fsp-time">
                 {formatTime(duration)}
               </span>
             </div>
@@ -2302,69 +1854,30 @@ export function FullScreenPlayer() {
               <div className="flex items-center gap-6">
                 <button
                   onClick={playPrevious}
-                  className="transition-all"
-                  style={{ color: "rgba(255,255,255,0.5)" }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.color = "rgba(255,255,255,0.9)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.color = "rgba(255,255,255,0.5)")
-                  }
+                  className="fsp-ghost"
+                  aria-label="Previous track"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
-                  </svg>
+                  <SkipPreviousFilled size={22} />
                 </button>
 
                 <button
                   onClick={togglePlay}
-                  className="w-12 h-12 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
-                  style={{
-                    background: "hsl(var(--h3))",
-                    boxShadow: "0 4px 20px hsl(var(--h4) / 0.35)",
-                  }}
+                  className="fsp-play"
+                  aria-label={isPlaying ? "Pause" : "Play"}
                 >
                   {isPlaying ? (
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                    </svg>
+                    <PauseFilled size={22} />
                   ) : (
-                    <svg
-                      className="w-5 h-5 text-white ml-0.5"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
+                    <PlayFilled size={22} style={{ marginLeft: 2 }} />
                   )}
                 </button>
 
                 <button
                   onClick={playNext}
-                  className="transition-all"
-                  style={{ color: "rgba(255,255,255,0.5)" }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.color = "rgba(255,255,255,0.9)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.color = "rgba(255,255,255,0.5)")
-                  }
+                  className="fsp-ghost"
+                  aria-label="Next track"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
-                  </svg>
+                  <SkipForwardFilled size={22} />
                 </button>
               </div>
 
@@ -2374,7 +1887,6 @@ export function FullScreenPlayer() {
                 isMuted={isMuted}
                 onVolumeChange={setVolume}
                 onToggleMute={toggleMute}
-                variant="fullscreen"
               />
             </div>
           </div>
@@ -2413,12 +1925,12 @@ export function FullScreenPlayer() {
         }
         @keyframes nowPlayingFlash {
           0%   { background: rgba(0,0,0,0.6); transform: scale(1); }
-          20%  { background: hsl(var(--h3) / 0.25); transform: scale(1.026); }
+          20%  { background: oklch(var(--h3) / 0.25); transform: scale(1.026); }
           100% { background: rgba(0,0,0,0.6); transform: scale(1); }
         }
         @keyframes nowPlayingTextPop {
-          0%   { opacity: 0; transform: translateY(6px); filter: blur(3px); color: hsl(var(--h3)); }
-          55%  { opacity: 1; transform: translateY(-1px); filter: blur(0); color: hsl(var(--h3)); }
+          0%   { opacity: 0; transform: translateY(6px); filter: blur(3px); color: oklch(var(--h3)); }
+          55%  { opacity: 1; transform: translateY(-1px); filter: blur(0); color: oklch(var(--h3)); }
           100% { opacity: 1; transform: translateY(0); filter: blur(0); color: rgba(255,255,255,0.92); }
         }
         @keyframes coverPromote {
@@ -2427,9 +1939,9 @@ export function FullScreenPlayer() {
           100% { transform: scale(1);    filter: brightness(1) saturate(1); }
         }
         @keyframes labelFlash {
-          0%   { color: hsl(var(--h3) / 0.7); letter-spacing: 0.1em; }
-          30%  { color: hsl(var(--h3));        letter-spacing: 0.14em; }
-          100% { color: hsl(var(--h3) / 0.7); letter-spacing: 0.1em; }
+          0%   { color: oklch(var(--h3) / 0.7); letter-spacing: 0.1em; }
+          30%  { color: oklch(var(--h3));        letter-spacing: 0.14em; }
+          100% { color: oklch(var(--h3) / 0.7); letter-spacing: 0.1em; }
         }
         @keyframes upNextEntry {
           from { opacity: 0; transform: translateY(10px) scale(0.95); filter: blur(3px); }

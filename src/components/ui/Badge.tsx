@@ -1,25 +1,28 @@
+import type { ReactNode } from 'react'
+import { Badge as BlehBadge, type BadgeTone } from '../bleh/ui/Badge'
+import { cn } from '../../lib/cn'
+
 interface BadgeProps {
-  children: React.ReactNode
+  children: ReactNode
   variant?: 'default' | 'accent' | 'muted' | 'tag'
   className?: string
 }
 
-const variantClasses: Record<string, string> = {
-  default: 'bg-surface-overlay text-text-secondary',
-  accent: 'bg-accent/15 text-accent',
-  muted: 'bg-surface-raised text-text-muted',
-  tag: 'tag',
+const TONE: Record<NonNullable<BadgeProps['variant']>, BadgeTone> = {
+  default: 'neutral',
+  accent: 'accent',
+  muted: 'neutral',
+  tag: 'neutral',
 }
 
-export function Badge({ children, variant = 'default', className = '' }: BadgeProps) {
+/** Legacy Zephyron badge. `tag` keeps the `#label` form; everything else uses the bleh badge tones. */
+export function Badge({ children, variant = 'default', className }: BadgeProps) {
   if (variant === 'tag') {
-    return <span className={`tag ${className}`}>#{children}</span>
+    return <span className={cn('tag', className)}>#{children}</span>
   }
   return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium ${variantClasses[variant]} ${className}`}
-    >
+    <BlehBadge tone={TONE[variant]} className={className}>
       {children}
-    </span>
+    </BlehBadge>
   )
 }

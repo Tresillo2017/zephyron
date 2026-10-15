@@ -1,0 +1,14 @@
+/* add-to-playlist dialog body. zl- prefix, library port. */
+
+.zl-add-create { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 12px; }
+.zl-add-create > div:first-child { flex: 1; min-width: 0; }
+
+.zl-add-list { display: flex; flex-direction: column; gap: 2px; max-height: 300px; margin-top: 12px; overflow-y: auto; }
+.zl-add-row { gap: 10px; }
+.zl-add-row:disabled { cursor: default; }
+.zl-add-row[data-added] { color: var(--accent); }
+.zl-add-icon { flex: none; width: 18px; height: 18px; color: var(--text-muted); }
+.zl-add-row[data-added] .zl-add-icon { color: var(--accent); }
+.zl-add-row > .zl-row-main { flex: 1; }
+
+.zl-add-empty { margin: 12px 0 0; text-align: center; font-size: 13px; line-height: 17px; color: var(--text-muted); }

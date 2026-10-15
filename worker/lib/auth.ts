@@ -218,6 +218,9 @@ export function createAuth(env: Env) {
       crossSubDomainCookies: {
         enabled: false,
       },
+      // 1.7 fails every request when the D1 schema differs from its expected tables/columns.
+      // The schema here is hand-managed in migrations/ (e.g. device_code vs deviceCode), so don't gate on it.
+      database: { validateSchema: false },
     },
   })
 }

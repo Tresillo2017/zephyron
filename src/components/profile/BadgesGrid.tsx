@@ -29,7 +29,7 @@ export function BadgesGrid({ userId }: BadgesGridProps) {
   if (badgesError) {
     return (
       <div className="card p-8 text-center">
-        <div className="text-sm" style={{ color: 'hsl(var(--c2))' }}>
+        <div className="text-sm" style={{ color: 'oklch(var(--c2))' }}>
           Badges unavailable
         </div>
       </div>
@@ -54,7 +54,7 @@ export function BadgesGrid({ userId }: BadgesGridProps) {
       <div className="flex items-center justify-between mb-4">
         <h2
           className="text-2xl font-[var(--font-weight-bold)]"
-          style={{ color: 'hsl(var(--c1))' }}
+          style={{ color: 'oklch(var(--c1))' }}
         >
           Achievement Badges
         </h2>
@@ -64,8 +64,8 @@ export function BadgesGrid({ userId }: BadgesGridProps) {
           onChange={(e) => setFilter(e.target.value)}
           className="px-3 py-1 rounded text-sm"
           style={{
-            backgroundColor: 'hsl(var(--b4))',
-            color: 'hsl(var(--c1))',
+            backgroundColor: 'oklch(var(--b4))',
+            color: 'oklch(var(--c1))',
             border: 'none'
           }}
         >
@@ -81,10 +81,10 @@ export function BadgesGrid({ userId }: BadgesGridProps) {
       {earnedBadges.length === 0 && (
         <div className="card p-8 text-center mb-6">
           <div className="text-4xl mb-4">🏆</div>
-          <div className="text-lg font-[var(--font-weight-medium)] mb-2" style={{ color: 'hsl(var(--c1))' }}>
+          <div className="text-lg font-[var(--font-weight-medium)] mb-2" style={{ color: 'oklch(var(--c1))' }}>
             No badges yet
           </div>
-          <div className="text-sm" style={{ color: 'hsl(var(--c2))' }}>
+          <div className="text-sm" style={{ color: 'oklch(var(--c2))' }}>
             Keep listening to earn achievements!
           </div>
         </div>
@@ -94,7 +94,7 @@ export function BadgesGrid({ userId }: BadgesGridProps) {
         <div className="mb-6">
           <h3
             className="text-sm font-[var(--font-weight-bold)] mb-3"
-            style={{ color: 'hsl(var(--c2))' }}
+            style={{ color: 'oklch(var(--c2))' }}
           >
             Earned ({filteredEarned.length}/{ALL_BADGES.length})
           </h3>
@@ -110,7 +110,7 @@ export function BadgesGrid({ userId }: BadgesGridProps) {
         <div>
           <h3
             className="text-sm font-[var(--font-weight-bold)] mb-3"
-            style={{ color: 'hsl(var(--c2))' }}
+            style={{ color: 'oklch(var(--c2))' }}
           >
             Locked ({filteredLocked.length})
           </h3>

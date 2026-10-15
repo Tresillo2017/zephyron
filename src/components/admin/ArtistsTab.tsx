@@ -1,41 +1,20 @@
 import { useState, useEffect, useMemo } from 'react'
-import { fetchArtists, syncArtistAdmin, updateArtistAdmin, deleteArtistAdmin, createArtistAdmin, uploadArtistImageAdmin, getArtistImageUrl } from '../../lib/api'
-import { Button } from '../ui/Button'
-import { Badge } from '../ui/Badge'
-import { Modal } from '../ui/Modal'
-import { Input } from '../ui/Input'
-import { Skeleton } from '../ui/Skeleton'
-import { formatPlayCount, formatRelativeTime } from '../../lib/formatTime'
-import { parseArtistSourceHtml, type Artist1001Parsed } from '../../lib/parse-1001tracklists-source'
+import { fetchArtists, syncArtistAdmin, deleteArtistAdmin } from '../../lib/api'
+import { IconButton, Skeleton } from '../bleh'
+import { inputClass } from '../bleh/ui/inputClass'
+import { LayoutGridFilled, ListCheckFilled, Search2Filled } from '@mingcute/react/core-filled'
+import { AdminButton, AdminModal } from './adminUi'
+import { ArtistGrid, ArtistListTable } from './ArtistViews'
+import { EditArtistModal } from './EditArtistModal'
+import { ImportArtistModal } from './ImportArtistModal'
+import { parseArtistTags, type Artist, type ArtistViewMode } from './artistTypes'
 
-interface Artist {
-  id: string
-  name: string
-  slug: string
-  image_url: string | null
-  bio_summary: string | null
-  tags: string | null
-  listeners: number
-  playcount: number
-  lastfm_url: string | null
-  last_synced_at: string | null
-  set_count: number
-  created_at: string
-  source_1001_id?: string | null
-  spotify_url?: string | null
-  soundcloud_url?: string | null
-  beatport_url?: string | null
-  traxsource_url?: string | null
-  youtube_url?: string | null
-  facebook_url?: string | null
-  instagram_url?: string | null
-  x_url?: string | null
-}
+export { ImportArtistModal }
 
 export function ArtistsTab({ editId }: { editId?: string } = {}) {
   const [artists, setArtists] = useState<Artist[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+  const [viewMode, setViewMode] = useState<ArtistViewMode>('list')
   const [syncing, setSyncing] = useState<string | null>(null)
   const [editingArtist, setEditingArtist] = useState<Artist | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
@@ -64,7 +43,7 @@ export function ArtistsTab({ editId }: { editId?: string } = {}) {
     if (!search.trim()) return artists
     const q = search.toLowerCase()
     return artists.filter((a) => {
-      const tags = (() => { try { return JSON.parse(a.tags || '[]').join(' ') } catch { return '' } })()
+      const tags = parseArtistTags(a.tags).join(' ')
       return a.name.toLowerCase().includes(q) || a.slug.includes(q) || tags.toLowerCase().includes(q)
     })
   }, [artists, search])
@@ -86,214 +65,78 @@ export function ArtistsTab({ editId }: { editId?: string } = {}) {
     } catch { /* silent */ }
   }
 
-  if (isLoading) return <Skeleton className="h-64 w-full rounded-xl" />
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} height={40} />
+        ))}
+      </div>
+    )
+  }
+
+  const viewProps = {
+    artists: filtered,
+    syncing,
+    onSync: handleSync,
+    onEdit: (artist: Artist) => setEditingArtist(artist),
+    onDelete: (id: string) => setConfirmDelete(id),
+  }
 
   return (
-    <>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5 gap-4">
-        <p className="text-sm shrink-0" style={{ color: 'hsl(var(--c3))' }}>{filtered.length} artist{filtered.length !== 1 ? 's' : ''}</p>
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search artists..."
-          className="flex-1 max-w-xs px-3 py-1.5 rounded-lg text-sm placeholder:text-text-muted focus:outline-none transition-all duration-200"
-          style={{
-            background: 'hsl(var(--b4) / 0.4)',
-            color: 'hsl(var(--c1))',
-          }}
-          onFocus={(e) => { e.currentTarget.style.boxShadow = 'inset 0 0 0 1px hsl(var(--h3) / 0.5)' }}
-          onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
-        />
-        {/* View toggle */}
-        <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid hsl(var(--b4) / 0.4)' }}>
-          <button
-            onClick={() => setViewMode('list')}
-            className="px-2.5 py-1.5 transition-all"
-            style={{
-              background: viewMode === 'list' ? 'hsl(var(--h3) / 0.15)' : 'transparent',
-              color: viewMode === 'list' ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
-            }}
-            title="List view"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
-            </svg>
-          </button>
-          <button
-            onClick={() => setViewMode('grid')}
-            className="px-2.5 py-1.5 transition-all"
-            style={{
-              background: viewMode === 'grid' ? 'hsl(var(--h3) / 0.15)' : 'transparent',
-              color: viewMode === 'grid' ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
-            }}
-            title="Grid view"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-            </svg>
-          </button>
+    <div className="flex flex-col gap-4">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative w-full max-w-xs flex-1">
+          <Search2Filled size={14} className="pointer-events-none absolute left-3 top-1/2 z-[1] -translate-y-1/2 text-muted" aria-hidden="true" />
+          <input
+            type="search"
+            aria-label="Search artists"
+            placeholder="Search artists…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={inputClass + ' pl-9'}
+          />
         </div>
-        <Button variant="primary" size="sm" onClick={() => setShowImport(true)}>
+        <div className="flex items-center gap-1" role="group" aria-label="View mode">
+          <IconButton
+            label="List view"
+            size="sm"
+            variant={viewMode === 'list' ? 'filled' : 'subtle'}
+            aria-pressed={viewMode === 'list'}
+            onClick={() => setViewMode('list')}
+          >
+            <ListCheckFilled />
+          </IconButton>
+          <IconButton
+            label="Grid view"
+            size="sm"
+            variant={viewMode === 'grid' ? 'filled' : 'subtle'}
+            aria-pressed={viewMode === 'grid'}
+            onClick={() => setViewMode('grid')}
+          >
+            <LayoutGridFilled />
+          </IconButton>
+        </div>
+        <AdminButton size="sm" variant="primary" onClick={() => setShowImport(true)}>
           Import from 1001TL
-        </Button>
+        </AdminButton>
+        <p className="shrink-0 text-[13px] tabular-nums text-muted">
+          {filtered.length} artist{filtered.length !== 1 ? 's' : ''}
+        </p>
       </div>
 
       {/* List/Grid */}
       {filtered.length === 0 ? (
-        <div className="card text-center py-12">
-          <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
-            {search ? 'No artists match your search.' : 'No artists yet. Artists are created when you run detection on sets, or use "Import from 1001TL" above.'}
-          </p>
-        </div>
+        <p className="py-8 text-center text-[13px] text-muted">
+          {search ? 'No artists match your search.' : 'No artists yet. Artists are created when you run detection on sets, or use "Import from 1001TL" above.'}
+        </p>
       ) : viewMode === 'list' ? (
-        <div className="space-y-2">
-          {filtered.map((artist) => {
-            const tags = (() => { try { return JSON.parse(artist.tags || '[]') } catch { return [] } })()
-            return (
-              <div key={artist.id} className="card !p-4 flex items-center gap-4">
-                {/* Avatar */}
-                <div
-                  className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center"
-                  style={{ background: 'hsl(var(--b4) / 0.6)' }}
-                >
-                  {artist.id ? (
-                    <img src={getArtistImageUrl(artist.id)} alt={artist.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-sm font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c3))' }}>
-                      {artist.name.charAt(0)}
-                    </span>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-[var(--font-weight-medium)] truncate" style={{ color: 'hsl(var(--c1))' }}>{artist.name}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {tags.slice(0, 3).map((tag: string) => (
-                      <Badge key={tag} variant="muted">{tag}</Badge>
-                    ))}
-                    {artist.listeners > 0 && (
-                      <span className="text-xs" style={{ color: 'hsl(var(--c3))' }}>{formatPlayCount(artist.listeners)} listeners</span>
-                    )}
-                    {artist.source_1001_id && (
-                      <span className="text-xs font-mono" style={{ color: 'hsl(var(--h3) / 0.7)' }}>1001TL:{artist.source_1001_id}</span>
-                    )}
-                    {artist.last_synced_at && (
-                      <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>synced {formatRelativeTime(artist.last_synced_at)}</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Set count */}
-                <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>
-                  {artist.set_count} set{artist.set_count !== 1 ? 's' : ''}
-                </span>
-
-                {/* Actions */}
-                <div className="flex gap-1.5 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSync(artist.id)}
-                    disabled={syncing === artist.id}
-                  >
-                    {syncing === artist.id ? '...' : 'Sync'}
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setEditingArtist(artist)}>Edit</Button>
-                  <Button variant="danger" size="sm" onClick={() => setConfirmDelete(artist.id)}>Delete</Button>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        <ArtistListTable {...viewProps} />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filtered.map((artist) => {
-            const tags = (() => { try { return JSON.parse(artist.tags || '[]') } catch { return [] } })()
-            return (
-              <div key={artist.id} className="card !p-4">
-                {/* Artist image */}
-                <div
-                  className="aspect-square rounded-lg overflow-hidden mb-3 flex items-center justify-center"
-                  style={{ background: 'hsl(var(--b4) / 0.6)' }}
-                >
-                  {artist.id ? (
-                    <img src={getArtistImageUrl(artist.id)} alt={artist.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-4xl font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c3))' }}>
-                      {artist.name.charAt(0)}
-                    </span>
-                  )}
-                </div>
-
-                {/* Name */}
-                <h3 className="text-sm font-[var(--font-weight-medium)] truncate mb-2" style={{ color: 'hsl(var(--c1))' }}>
-                  {artist.name}
-                </h3>
-
-                {/* Bio summary */}
-                {artist.bio_summary && (
-                  <p className="text-xs mb-2 line-clamp-2" style={{ color: 'hsl(var(--c3))' }}>
-                    {artist.bio_summary}
-                  </p>
-                )}
-
-                {/* Tags */}
-                {tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {tags.slice(0, 3).map((tag: string) => (
-                      <Badge key={tag} variant="muted">{tag}</Badge>
-                    ))}
-                  </div>
-                )}
-
-                {/* Stats */}
-                <div className="flex items-center gap-2 mb-3 text-xs" style={{ color: 'hsl(var(--c3))' }}>
-                  {artist.listeners > 0 && (
-                    <span>{formatPlayCount(artist.listeners)} listeners</span>
-                  )}
-                  {artist.playcount > 0 && (
-                    <span>{formatPlayCount(artist.playcount)} plays</span>
-                  )}
-                  <span className="font-mono">{artist.set_count} set{artist.set_count !== 1 ? 's' : ''}</span>
-                </div>
-
-                {/* Source & sync info */}
-                <div className="flex items-center gap-2 mb-3 text-xs">
-                  {artist.source_1001_id && (
-                    <span className="font-mono" style={{ color: 'hsl(var(--h3) / 0.7)' }}>1001TL:{artist.source_1001_id}</span>
-                  )}
-                  {artist.last_synced_at && (
-                    <span className="font-mono" style={{ color: 'hsl(var(--c3))' }}>synced {formatRelativeTime(artist.last_synced_at)}</span>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-1.5">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleSync(artist.id)}
-                    disabled={syncing === artist.id}
-                    className="flex-1"
-                  >
-                    {syncing === artist.id ? '...' : 'Sync'}
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setEditingArtist(artist)} className="flex-1">
-                    Edit
-                  </Button>
-                  <Button variant="danger" size="sm" onClick={() => setConfirmDelete(artist.id)} className="flex-1">
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        <ArtistGrid {...viewProps} />
       )}
 
-      {/* Edit modal */}
       {editingArtist && (
         <EditArtistModal
           artist={editingArtist}
@@ -302,7 +145,6 @@ export function ArtistsTab({ editId }: { editId?: string } = {}) {
         />
       )}
 
-      {/* Import modal */}
       {showImport && (
         <ImportArtistModal
           onClose={() => setShowImport(false)}
@@ -311,370 +153,22 @@ export function ArtistsTab({ editId }: { editId?: string } = {}) {
       )}
 
       {/* Delete confirmation */}
-      <Modal isOpen={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Delete Artist">
-        <p className="text-sm mb-4" style={{ color: 'hsl(var(--c2))' }}>
+      <AdminModal
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        title="Delete Artist"
+        size="sm"
+        footer={
+          <>
+            <AdminButton variant="ghost" onClick={() => setConfirmDelete(null)}>Cancel</AdminButton>
+            <AdminButton variant="danger" onClick={() => confirmDelete && handleDelete(confirmDelete)}>Delete</AdminButton>
+          </>
+        }
+      >
+        <p className="text-[13px] text-text">
           This will delete the artist record. Their sets will remain but will be unlinked. This cannot be undone.
         </p>
-        <div className="flex gap-3">
-          <Button variant="secondary" onClick={() => setConfirmDelete(null)} className="flex-1">Cancel</Button>
-          <Button variant="danger" onClick={() => confirmDelete && handleDelete(confirmDelete)} className="flex-1">Delete</Button>
-        </div>
-      </Modal>
-    </>
-  )
-}
-
-export function ImportArtistModal({ onClose, onImported, onCreated }: { onClose: () => void; onImported?: () => void; onCreated?: (id: string, name: string) => void }) {
-  const [html, setHtml] = useState('')
-  const [parsed, setParsed] = useState<Artist1001Parsed | null>(null)
-  const [parseError, setParseError] = useState<string | null>(null)
-  const [isImporting, setIsImporting] = useState(false)
-  const [importError, setImportError] = useState<string | null>(null)
-
-  const handleParse = () => {
-    setParseError(null)
-    setParsed(null)
-    if (!html.trim()) { setParseError('Paste the DJ page HTML first.'); return }
-    try {
-      const result = parseArtistSourceHtml(html)
-      if (!result.name || result.name === 'Unknown Artist') {
-        setParseError('Could not find artist name. Make sure you pasted the full DJ page HTML.')
-        return
-      }
-      setParsed(result)
-    } catch (err) {
-      setParseError(err instanceof Error ? err.message : 'Parse failed')
-    }
-  }
-
-  const handleImport = async () => {
-    if (!parsed) return
-    setIsImporting(true)
-    setImportError(null)
-    try {
-      const res = await createArtistAdmin({
-        name: parsed.name,
-        country: parsed.country || null,
-        spotify_url: parsed.spotify_url || null,
-        soundcloud_url: parsed.soundcloud_url || null,
-        beatport_url: parsed.beatport_url || null,
-        apple_music_url: parsed.apple_music_url || null,
-        traxsource_url: parsed.traxsource_url || null,
-        youtube_url: parsed.youtube_url || null,
-        facebook_url: parsed.facebook_url || null,
-        instagram_url: parsed.instagram_url || null,
-        x_url: parsed.x_url || null,
-        source_1001_id: parsed.dj_id || null,
-      })
-
-      // Upload profile image to R2 if found
-      if (parsed.image_url) {
-        try {
-          await uploadArtistImageAdmin(res.data.id, parsed.image_url)
-        } catch (imgErr) {
-          console.warn('Failed to upload profile image:', imgErr)
-          // Don't fail the whole import if image upload fails
-        }
-      }
-
-      onCreated?.(res.data.id, parsed.name)
-      onImported?.()
-    } catch (err) {
-      setImportError(err instanceof Error ? err.message : 'Import failed')
-    } finally {
-      setIsImporting(false)
-    }
-  }
-
-  const serviceCount = parsed ? [
-    parsed.spotify_url, parsed.soundcloud_url, parsed.beatport_url,
-    parsed.apple_music_url, parsed.traxsource_url, parsed.youtube_url,
-  ].filter(Boolean).length : 0
-
-  return (
-    <Modal isOpen onClose={onClose} title="Import Artist from 1001Tracklists">
-      <div className="space-y-4">
-        <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
-          Go to any artist page on 1001tracklists.com (e.g. <code className="font-mono text-xs">/dj/johnsummit/</code>),
-          right-click &rarr; "View Page Source", select all, and paste below.
-        </p>
-
-        {/* HTML paste area */}
-        <div>
-          <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>
-            Page HTML
-          </label>
-          <textarea
-            value={html}
-            onChange={(e) => { setHtml(e.target.value); setParsed(null); setParseError(null) }}
-            rows={6}
-            placeholder="Paste the full DJ page HTML here..."
-            className="w-full px-3 py-2 rounded-lg text-xs font-mono resize-none focus:outline-none"
-            style={{ background: 'hsl(var(--b4) / 0.4)', color: 'hsl(var(--c1))' }}
-          />
-        </div>
-
-        <Button variant="secondary" onClick={handleParse} disabled={!html.trim()} className="w-full">
-          Parse
-        </Button>
-
-        {parseError && (
-          <p className="text-xs" style={{ color: 'hsl(0, 60%, 55%)' }}>{parseError}</p>
-        )}
-
-        {/* Parsed preview */}
-        {parsed && (
-          <div className="rounded-lg p-4 space-y-3" style={{ background: 'hsl(var(--b5) / 0.6)', boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.3)' }}>
-            <div className="flex items-center gap-3">
-              {parsed.image_url && (
-                <img
-                  src={parsed.image_url}
-                  alt={parsed.name}
-                  className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                />
-              )}
-              <div>
-                <p className="font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c1))' }}>{parsed.name}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  {parsed.country && <span className="text-xs" style={{ color: 'hsl(var(--c3))' }}>{parsed.country}</span>}
-                  {parsed.tracklist_count && (
-                    <span className="text-xs" style={{ color: 'hsl(var(--c3))' }}>{parsed.tracklist_count.toLocaleString()} tracklists</span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Service links summary */}
-            <div className="text-xs space-y-1" style={{ color: 'hsl(var(--c2))' }}>
-              {parsed.image_url && <div>Photo: found</div>}
-              {serviceCount > 0 && <div>{serviceCount} service link{serviceCount !== 1 ? 's' : ''} found (Spotify, SoundCloud, Beatport, etc.)</div>}
-              {parsed.facebook_url && <div>Facebook: found</div>}
-              {parsed.instagram_url && <div>Instagram: found</div>}
-              {parsed.youtube_url && <div>YouTube: found</div>}
-              <div className="text-xs mt-1" style={{ color: 'hsl(var(--c3))' }}>
-                Last.fm bio and listener counts will be fetched automatically after import.
-              </div>
-            </div>
-          </div>
-        )}
-
-        {importError && (
-          <p className="text-xs" style={{ color: 'hsl(0, 60%, 55%)' }}>{importError}</p>
-        )}
-
-        <div className="flex gap-3 pt-1">
-          <Button variant="secondary" onClick={onClose} className="flex-1">Cancel</Button>
-          <Button
-            variant="primary"
-            onClick={handleImport}
-            disabled={!parsed || isImporting}
-            className="flex-1"
-          >
-            {isImporting ? 'Importing...' : 'Import Artist'}
-          </Button>
-        </div>
-      </div>
-    </Modal>
-  )
-}
-
-function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose: () => void; onSaved: () => void }) {
-  const [name, setName] = useState(artist.name)
-  const [bioSummary, setBioSummary] = useState(artist.bio_summary || '')
-  const [tagsStr, setTagsStr] = useState(
-    (() => { try { return JSON.parse(artist.tags || '[]').join(', ') } catch { return '' } })()
-  )
-  const [source1001Id, setSource1001Id] = useState(artist.source_1001_id || '')
-  const [spotifyUrl, setSpotifyUrl] = useState(artist.spotify_url || '')
-  const [soundcloudUrl, setSoundcloudUrl] = useState(artist.soundcloud_url || '')
-  const [beatportUrl, setBeatportUrl] = useState(artist.beatport_url || '')
-  const [traxsourceUrl, setTraxsourceUrl] = useState(artist.traxsource_url || '')
-  const [youtubeUrl, setYoutubeUrl] = useState(artist.youtube_url || '')
-  const [facebookUrl, setFacebookUrl] = useState(artist.facebook_url || '')
-  const [instagramUrl, setInstagramUrl] = useState(artist.instagram_url || '')
-  const [xUrl, setXUrl] = useState(artist.x_url || '')
-  const [isSaving, setIsSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  // 1001TL enrichment
-  const [showEnrich, setShowEnrich] = useState(false)
-  const [enrichHtml, setEnrichHtml] = useState('')
-  const [enrichError, setEnrichError] = useState<string | null>(null)
-  const [enrichSuccess, setEnrichSuccess] = useState(false)
-  const [isEnriching, setIsEnriching] = useState(false)
-
-  const handleEnrich = async () => {
-    setEnrichError(null)
-    setEnrichSuccess(false)
-    setIsEnriching(true)
-
-    if (!enrichHtml.trim()) {
-      setEnrichError('Paste the DJ page HTML first.')
-      setIsEnriching(false)
-      return
-    }
-
-    try {
-      const result = parseArtistSourceHtml(enrichHtml)
-      if (!result.name || result.name === 'Unknown Artist') {
-        setEnrichError('Could not parse artist data. Make sure you pasted the full DJ page HTML.')
-        setIsEnriching(false)
-        return
-      }
-
-      // Fill only empty/missing fields — don't overwrite existing data
-      if (!source1001Id && result.dj_id) setSource1001Id(result.dj_id)
-      if (!spotifyUrl && result.spotify_url) setSpotifyUrl(result.spotify_url)
-      if (!soundcloudUrl && result.soundcloud_url) setSoundcloudUrl(result.soundcloud_url)
-      if (!beatportUrl && result.beatport_url) setBeatportUrl(result.beatport_url)
-      if (!traxsourceUrl && result.traxsource_url) setTraxsourceUrl(result.traxsource_url)
-      if (!youtubeUrl && result.youtube_url) setYoutubeUrl(result.youtube_url)
-      if (!facebookUrl && result.facebook_url) setFacebookUrl(result.facebook_url)
-      if (!instagramUrl && result.instagram_url) setInstagramUrl(result.instagram_url)
-      if (!xUrl && result.x_url) setXUrl(result.x_url)
-
-      // Upload profile image if found
-      if (result.image_url) {
-        try {
-          await uploadArtistImageAdmin(artist.id, result.image_url)
-        } catch (imgErr) {
-          console.warn('Failed to upload profile image:', imgErr)
-          // Don't fail the whole enrichment if image upload fails
-        }
-      }
-
-      setEnrichSuccess(true)
-      setEnrichHtml('')
-    } catch (err) {
-      setEnrichError(err instanceof Error ? err.message : 'Parse failed')
-    } finally {
-      setIsEnriching(false)
-    }
-  }
-
-  const handleSave = async () => {
-    setIsSaving(true)
-    setError(null)
-    try {
-      const tags = tagsStr.split(',').map((t: string) => t.trim()).filter(Boolean)
-      await updateArtistAdmin(artist.id, {
-        name: name.trim(),
-        bio_summary: bioSummary.trim() || null,
-        tags,
-        source_1001_id: source1001Id.trim() || null,
-        spotify_url: spotifyUrl.trim() || null,
-        soundcloud_url: soundcloudUrl.trim() || null,
-        beatport_url: beatportUrl.trim() || null,
-        traxsource_url: traxsourceUrl.trim() || null,
-        youtube_url: youtubeUrl.trim() || null,
-        facebook_url: facebookUrl.trim() || null,
-        instagram_url: instagramUrl.trim() || null,
-        x_url: xUrl.trim() || null,
-      })
-      onSaved()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save')
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  return (
-    <Modal isOpen onClose={onClose} title={`Edit: ${artist.name}`}>
-      <div className="space-y-3">
-        {/* 1001TL Enrichment section */}
-        <div className="rounded-lg overflow-hidden" style={{ boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.2)' }}>
-          <button
-            onClick={() => setShowEnrich(!showEnrich)}
-            className="w-full flex items-center justify-between px-3 py-2 text-left cursor-pointer"
-            style={{ background: 'hsl(var(--b5) / 0.4)' }}
-          >
-            <span className="text-xs font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c2))' }}>
-              Enrich from 1001Tracklists
-            </span>
-            <svg
-              className="w-3.5 h-3.5 transition-transform"
-              style={{ color: 'hsl(var(--c3))', transform: showEnrich ? 'rotate(180deg)' : 'rotate(0deg)' }}
-              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-            </svg>
-          </button>
-          {showEnrich && (
-            <div className="px-3 pb-3 pt-2 space-y-2" style={{ background: 'hsl(var(--b5) / 0.2)' }}>
-              <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
-                Paste the DJ page HTML to fill in missing social links, profile image, and source ID. Existing values are preserved.
-              </p>
-              <textarea
-                value={enrichHtml}
-                onChange={(e) => { setEnrichHtml(e.target.value); setEnrichError(null); setEnrichSuccess(false) }}
-                rows={3}
-                placeholder="Paste /dj/... page HTML here..."
-                className="w-full px-3 py-2 rounded-lg text-xs font-mono resize-none focus:outline-none"
-                style={{ background: 'hsl(var(--b4) / 0.4)', color: 'hsl(var(--c1))' }}
-                disabled={isEnriching}
-              />
-              <Button variant="secondary" size="sm" onClick={handleEnrich} disabled={!enrichHtml.trim() || isEnriching}>
-                {isEnriching ? 'Processing...' : 'Parse & Fill Missing'}
-              </Button>
-              {enrichError && <p className="text-xs" style={{ color: 'hsl(0, 60%, 55%)' }}>{enrichError}</p>}
-              {enrichSuccess && <p className="text-xs" style={{ color: 'hsl(140, 60%, 45%)' }}>Fields and profile image updated from 1001Tracklists data. Review below and save.</p>}
-            </div>
-          )}
-        </div>
-
-        <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} />
-        <div>
-          <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>Bio</label>
-          <textarea
-            value={bioSummary}
-            onChange={(e) => setBioSummary(e.target.value)}
-            rows={4}
-            className="w-full px-3 py-2 rounded-lg text-sm resize-none focus:outline-none"
-            style={{ background: 'hsl(var(--b4) / 0.4)', color: 'hsl(var(--c1))' }}
-          />
-        </div>
-        <Input
-          label="Tags (comma-separated)"
-          value={tagsStr}
-          onChange={(e) => setTagsStr(e.target.value)}
-          placeholder="techno, house, electronic"
-        />
-        <Input
-          label="1001Tracklists DJ ID"
-          value={source1001Id}
-          onChange={(e) => setSource1001Id(e.target.value)}
-          placeholder="e.g. johnsummit (from /dj/johnsummit/)"
-        />
-
-        {/* Service links */}
-        <div className="grid grid-cols-2 gap-3">
-          <Input label="Spotify" value={spotifyUrl} onChange={(e) => setSpotifyUrl(e.target.value)} placeholder="https://open.spotify.com/..." />
-          <Input label="SoundCloud" value={soundcloudUrl} onChange={(e) => setSoundcloudUrl(e.target.value)} placeholder="https://soundcloud.com/..." />
-          <Input label="Beatport" value={beatportUrl} onChange={(e) => setBeatportUrl(e.target.value)} placeholder="https://beatport.com/..." />
-          <Input label="Traxsource" value={traxsourceUrl} onChange={(e) => setTraxsourceUrl(e.target.value)} placeholder="https://traxsource.com/..." />
-          <Input label="YouTube" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder="https://youtube.com/..." />
-          <Input label="Facebook" value={facebookUrl} onChange={(e) => setFacebookUrl(e.target.value)} placeholder="https://facebook.com/..." />
-          <Input label="Instagram" value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} placeholder="https://instagram.com/..." />
-          <Input label="X (Twitter)" value={xUrl} onChange={(e) => setXUrl(e.target.value)} placeholder="https://x.com/..." />
-        </div>
-
-        {artist.lastfm_url && (
-          <a href={artist.lastfm_url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline no-underline block">
-            View on Last.fm &rarr;
-          </a>
-        )}
-
-        {error && <p className="text-xs" style={{ color: 'hsl(0, 60%, 55%)' }}>{error}</p>}
-
-        <div className="flex gap-3 pt-2">
-          <Button variant="secondary" onClick={onClose} className="flex-1">Cancel</Button>
-          <Button variant="primary" onClick={handleSave} disabled={isSaving || !name.trim()} className="flex-1">
-            {isSaving ? 'Saving...' : 'Save'}
-          </Button>
-        </div>
-      </div>
-    </Modal>
+      </AdminModal>
+    </div>
   )
 }

@@ -3,34 +3,43 @@
 // bare icons with brand color, opacity hover, no background containers.
 /* eslint-disable react-refresh/only-export-components */
 
-import { SiSpotify, SiApplemusic, SiSoundcloud, SiBeatport, SiYoutube, SiBandcamp, SiFacebook, SiInstagram } from 'react-icons/si'
-import { FaMusic, FaRecordVinyl } from 'react-icons/fa'
-import { RiTwitterXFill } from 'react-icons/ri'
-import type { IconType } from 'react-icons'
+import type { ComponentType } from 'react'
+import {
+  FacebookFilled,
+  InstagramFilled,
+  MusicFilled,
+  SocialXFilled,
+  SpotifyFilled,
+  YoutubeFilled,
+} from '@mingcute/react/core-filled'
+
+type IconComponent = ComponentType<{ size?: number }>
 
 interface LinkDef {
   key: string
   label: string
   color: string
-  Icon: IconType
+  Icon: IconComponent
   category: 'music' | 'social'
 }
 
+/** Brand colours stay per service; mingcute has no glyph for these, so they use the generic music mark. */
+
 const LINK_DEFS: LinkDef[] = [
   // Music services
-  { key: 'spotify_url', label: 'Spotify', color: '#1DB954', Icon: SiSpotify, category: 'music' },
-  { key: 'apple_music_url', label: 'Apple Music', color: '#FA243C', Icon: SiApplemusic, category: 'music' },
-  { key: 'soundcloud_url', label: 'SoundCloud', color: '#FF6100', Icon: SiSoundcloud, category: 'music' },
-  { key: 'beatport_url', label: 'Beatport', color: '#94D500', Icon: SiBeatport, category: 'music' },
-  { key: 'youtube_url', label: 'YouTube', color: '#FF0000', Icon: SiYoutube, category: 'music' },
-  { key: 'deezer_url', label: 'Deezer', color: '#A238FF', Icon: FaMusic, category: 'music' },
-  { key: 'bandcamp_url', label: 'Bandcamp', color: '#1DA0C3', Icon: SiBandcamp, category: 'music' },
-  { key: 'traxsource_url', label: 'Traxsource', color: '#00D4FF', Icon: FaRecordVinyl, category: 'music' },
-  { key: 'lastfm_url', label: 'Last.fm', color: '#D51007', Icon: FaMusic, category: 'music' },
+  { key: 'spotify_url', label: 'Spotify', color: '#1DB954', Icon: SpotifyFilled, category: 'music' },
+  { key: 'apple_music_url', label: 'Apple Music', color: '#FA243C', Icon: MusicFilled, category: 'music' },
+  { key: 'soundcloud_url', label: 'SoundCloud', color: '#FF6100', Icon: MusicFilled, category: 'music' },
+  { key: 'beatport_url', label: 'Beatport', color: '#94D500', Icon: MusicFilled, category: 'music' },
+  { key: 'youtube_url', label: 'YouTube', color: '#FF0000', Icon: YoutubeFilled, category: 'music' },
+  { key: 'deezer_url', label: 'Deezer', color: '#A238FF', Icon: MusicFilled, category: 'music' },
+  { key: 'bandcamp_url', label: 'Bandcamp', color: '#1DA0C3', Icon: MusicFilled, category: 'music' },
+  { key: 'traxsource_url', label: 'Traxsource', color: '#00D4FF', Icon: MusicFilled, category: 'music' },
+  { key: 'lastfm_url', label: 'Last.fm', color: '#D51007', Icon: MusicFilled, category: 'music' },
   // Social links
-  { key: 'facebook_url', label: 'Facebook', color: '#1877F2', Icon: SiFacebook, category: 'social' },
-  { key: 'instagram_url', label: 'Instagram', color: '#E4405F', Icon: SiInstagram, category: 'social' },
-  { key: 'x_url', label: 'X', color: 'hsl(var(--c2))', Icon: RiTwitterXFill, category: 'social' },
+  { key: 'facebook_url', label: 'Facebook', color: '#1877F2', Icon: FacebookFilled, category: 'social' },
+  { key: 'instagram_url', label: 'Instagram', color: '#E4405F', Icon: InstagramFilled, category: 'social' },
+  { key: 'x_url', label: 'X', color: 'oklch(var(--c2))', Icon: SocialXFilled, category: 'social' },
 ]
 
 function getFilteredLinks(data: Record<string, unknown>, categories?: ('music' | 'social')[]) {
@@ -64,7 +73,7 @@ export function SocialLinks({ data, categories, size = 16, heading }: SocialLink
   return (
     <div>
       {heading && (
-        <h3 className="text-[10px] font-mono tracking-wider mb-3" style={{ color: 'hsl(var(--c3))' }}>
+        <h3 className="text-[10px] font-mono tracking-wider mb-3" style={{ color: 'oklch(var(--c3))' }}>
           {heading}
         </h3>
       )}
@@ -81,12 +90,12 @@ export function SocialLinks({ data, categories, size = 16, heading }: SocialLink
               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs no-underline transition-all hover:brightness-125"
               style={{
                 color: def.color,
-                background: 'hsl(var(--b4) / 0.5)',
-                boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)',
+                background: 'oklch(var(--b4) / 0.5)',
+                boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.25)',
               }}
             >
               <def.Icon size={size} />
-              <span style={{ color: 'hsl(var(--c2))' }}>{def.label}</span>
+              <span style={{ color: 'oklch(var(--c2))' }}>{def.label}</span>
             </a>
           )
         })}

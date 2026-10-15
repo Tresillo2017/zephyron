@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
+import { Key1Filled, ShieldFilled } from '@mingcute/react/core-filled'
 import { authClient } from '../lib/auth-client'
-import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
+import { Button, Input } from '../components/bleh'
+import { AuthShell } from '../components/auth/AuthShell'
+import { AuthBadge, AuthHeading, AuthLink } from '../components/auth/AuthParts'
 
 type Method = 'totp' | 'backup'
 
@@ -48,82 +50,72 @@ export function TwoFactorPage() {
     }
   }
 
+  const switchMethod = (next: Method) => {
+    setMethod(next)
+    setCode('')
+    setError('')
+  }
+
+  const isTotp = method === 'totp'
+
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-12 h-12 bg-accent/15 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-            </svg>
-          </div>
-          <h1 className="text-xl font-bold text-text-primary">Two-Factor Authentication</h1>
-          <p className="text-sm text-text-secondary mt-1">
-            {method === 'totp'
-              ? 'Enter the 6-digit code from your authenticator app'
-              : 'Enter one of your backup codes'}
-          </p>
+    <AuthShell width={420} eyebrow="Two-step verification">
+      <div key={method} className="animate-item">
+        <div className="mb-5">
+          <AuthBadge>{isTotp ? <ShieldFilled /> : <Key1Filled />}</AuthBadge>
         </div>
+        <AuthHeading
+          title="Two-factor authentication"
+          subtitle={isTotp ? 'Enter the 6-digit code from your authenticator app' : 'Enter one of your backup codes'}
+        />
 
-        {/* Form */}
-        <form onSubmit={handleVerify} className="space-y-4">
-          <div className="bg-surface-raised border border-border rounded-lg p-5 space-y-4">
-            {method === 'totp' ? (
-              <Input
-                label="Authentication Code"
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="000000"
-                className="font-mono text-center tracking-[0.3em] text-lg"
-                maxLength={6}
-                autoComplete="one-time-code"
-                autoFocus
-              />
-            ) : (
-              <Input
-                label="Backup Code"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="Enter backup code"
-                className="font-mono"
-                autoFocus
-              />
-            )}
+        <form onSubmit={handleVerify} className="flex flex-col gap-3">
+          {isTotp ? (
+            <Input
+              label="Authentication code"
+              name="code"
+              inputMode="numeric"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="000000"
+              className="text-center font-mono text-lg tracking-[0.3em]"
+              maxLength={6}
+              autoComplete="one-time-code"
+              autoFocus
+            />
+          ) : (
+            <Input
+              label="Backup code"
+              name="backupCode"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="Enter backup code"
+              className="font-mono"
+              autoComplete="off"
+              autoFocus
+            />
+          )}
 
-            {error && <p className="text-xs text-danger">{error}</p>}
+          {error && <p role="alert" className="ui-field-msg" data-error>{error}</p>}
 
-            <Button
-              type="submit"
-              variant="primary"
-              size="md"
-              className="w-full"
-              disabled={loading || (method === 'totp' ? code.length !== 6 : !code.trim())}
-            >
-              {loading ? 'Verifying...' : 'Verify'}
-            </Button>
-          </div>
+          <Button
+            appearance="primary"
+            label={loading ? 'Verifying...' : 'Verify'}
+            htmlButtonType="submit"
+            loading={loading}
+            disabled={loading || (isTotp ? code.length !== 6 : !code.trim())}
+            className="mt-1 w-full"
+          />
         </form>
 
-        {/* Toggle method */}
-        <div className="text-center mt-4">
-          {method === 'totp' ? (
-            <button
-              onClick={() => { setMethod('backup'); setCode(''); setError('') }}
-              className="text-xs text-text-muted hover:text-accent transition-colors cursor-pointer"
-            >
-              Use a backup code instead
-            </button>
+        <div className="as-foot">
+          {isTotp ? (
+            <AuthLink onClick={() => switchMethod('backup')}>Use a backup code instead</AuthLink>
           ) : (
-            <button
-              onClick={() => { setMethod('totp'); setCode(''); setError('') }}
-              className="text-xs text-text-muted hover:text-accent transition-colors cursor-pointer"
-            >
-              Use authenticator app instead
-            </button>
+            <AuthLink onClick={() => switchMethod('totp')}>Use authenticator app instead</AuthLink>
           )}
         </div>
       </div>
-    </div>
+    </AuthShell>
   )
 }

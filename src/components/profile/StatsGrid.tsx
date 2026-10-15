@@ -11,13 +11,13 @@ function StatCard({ value, label, unit, accent = false }: StatCardProps) {
     <div className="card flex flex-col items-center justify-center p-6">
       <div
         className="text-4xl font-[var(--font-weight-bold)] mb-2"
-        style={{ color: accent ? 'hsl(var(--h3))' : 'hsl(var(--c1))' }}
+        style={{ color: accent ? 'oklch(var(--h3))' : 'oklch(var(--c1))' }}
       >
         {value.toLocaleString()}{unit ? ` ${unit}` : ''}
       </div>
       <div
         className="text-sm font-[var(--font-weight-medium)]"
-        style={{ color: 'hsl(var(--c2))' }}
+        style={{ color: 'oklch(var(--c2))' }}
       >
         {label}
       </div>

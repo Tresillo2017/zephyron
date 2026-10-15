@@ -1,0 +1,138 @@
+/* Buttons and every button-like control. Variants only reassign the --i-* variables. */
+@keyframes ui-spin { to { rotate: 360deg; } }
+
+@layer components {
+  .ui-btn {
+    --i-bg: oklch(var(--b3));
+    --i-hov: color-mix(in oklch, oklch(var(--b6)), oklch(var(--b3)) 90%);
+    --i-atv: color-mix(in oklch, oklch(var(--b6)), oklch(var(--b3)) 80%);
+    --i-col: oklch(var(--c2));
+    --i-icon: color-mix(in oklch, oklch(var(--c2)), oklch(var(--c3)) 50%);
+    --i-shadow: var(--interact-shadow);
+    --i-radius: var(--button-radius, 9px);
+    --i-weight: var(--fw-regular, 400);
+
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: var(--button-height, 28px);
+    padding: 0 9px;
+    border: 0;
+    border-radius: var(--i-radius);
+    background: var(--i-bg);
+    color: var(--i-col);
+    box-shadow: var(--i-shadow);
+    font: inherit;
+    font-size: 14px;
+    line-height: 18px;
+    font-weight: var(--i-weight);
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      background-color var(--trans, 0.2s) var(--trans-function),
+      color var(--trans, 0.2s) var(--trans-function),
+      box-shadow var(--trans, 0.2s) var(--trans-function),
+      opacity var(--trans, 0.2s) var(--trans-function),
+      transform var(--trans, 0.2s) var(--trans-function);
+  }
+  /* instant in, eased out: the hover colour snaps on and fades on leave */
+  .ui-btn:hover,
+  .ui-btn[aria-expanded="true"] {
+    background: var(--i-hov);
+    text-decoration: none;
+    transition-property: transform, filter, padding;
+  }
+  .ui-btn:active { background: var(--i-atv); transform: scale(0.98); }
+  .ui-btn:disabled,
+  .ui-btn[data-disabled="true"],
+  .ui-btn[data-loading="true"] {
+    --i-col: oklch(var(--c3));
+    --i-icon: oklch(var(--c3));
+    opacity: 0.65;
+    cursor: default;
+    background: var(--i-bg);
+    transform: none;
+  }
+  .ui-btn > :where(svg) { width: 16px; height: 16px; flex: none; color: var(--i-icon); }
+
+  .ui-btn[data-size="sm"] { height: 24px; padding: 0 8px; font-size: 13px; line-height: 16px; }
+  .ui-btn[data-icon] { width: var(--button-height, 28px); padding: 0; }
+  .ui-btn[data-icon][data-size="sm"] { width: 24px; }
+  .ui-btn[data-icon][data-size="lg"] { width: 32px; height: 32px; }
+
+  .ui-btn[data-appearance="primary"],
+  .ui-btn[data-appearance="danger-primary"],
+  .ui-btn[data-appearance="sponsor"] {
+    --i-bg: oklch(var(--h3));
+    --i-hov: color-mix(in oklch, oklch(var(--h4)), oklch(var(--h3)) 80%);
+    --i-atv: color-mix(in oklch, oklch(var(--h4)), oklch(var(--h3)) 60%);
+    --i-col: oklch(var(--b7));
+    --i-icon: oklch(var(--b7) / 80%);
+    --i-weight: var(--fw-bold, 600);
+    --i-shadow: var(--primary-shadow), 0 3px 12px oklch(var(--h4) / 32%), var(--interact-shadow);
+  }
+  .ui-btn[data-appearance="danger"] { --i-col: oklch(var(--l3-c)); --i-icon: oklch(var(--l3-c)); }
+  .ui-btn[data-appearance="accented"] {
+    --i-col: oklch(var(--l3-c));
+    --i-icon: color-mix(in oklch, oklch(var(--l3-c)), oklch(var(--l4-c)) 30%);
+  }
+  .ui-btn[data-appearance="subtle"],
+  .ui-btn[data-appearance="ghost"] {
+    --i-bg: transparent;
+    --i-hov: oklch(var(--b4) / 40%);
+    --i-atv: oklch(var(--b4) / 60%);
+    --i-col: oklch(var(--c2) / 80%);
+    --i-icon: currentColor;
+    --i-shadow: none;
+  }
+  .ui-btn[data-appearance="ghost"] { --i-col: oklch(var(--c3)); }
+
+  .ui-btn[data-loading="true"] { pointer-events: none; }
+
+  /* Spinner: two comet arcs, 1.2s linear. Spinners stay under reduced motion. */
+  .ui-spinner { width: 14px; height: 14px; flex: none; color: oklch(var(--c3)); animation: ui-spin 1.2s linear infinite; }
+  .ui-spinner[data-static] { animation: none; }
+
+  .ui-btn-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .ui-btn-group[data-extra] { gap: 15px; }
+  .ui-btn-combo { display: inline-flex; align-items: center; }
+  .ui-btn-combo > .ui-btn { flex: 1; min-width: 32px; border-radius: 0; }
+  .ui-btn-combo > .ui-btn:first-child { border-radius: var(--button-radius, 9px) 0 0 var(--button-radius, 9px); }
+  .ui-btn-combo > .ui-btn:last-child { border-radius: 0 var(--button-radius, 9px) var(--button-radius, 9px) 0; }
+  .ui-btn-combo > .ui-btn + .ui-btn::before {
+    content: "";
+    position: absolute;
+    left: -0.5px;
+    top: 9px;
+    width: 1px;
+    height: 10px;
+    background: var(--card-border-base);
+  }
+
+  /* Filter chips: bleh view-button look, selected = primary styling */
+  .ui-chip {
+    --i-bg: transparent;
+    --i-hov: oklch(var(--b4) / 40%);
+    --i-atv: oklch(var(--b4) / 60%);
+    --i-shadow: none;
+  }
+  .ui-chip[aria-pressed="true"] {
+    --i-bg: oklch(var(--h3));
+    --i-hov: color-mix(in oklch, oklch(var(--h4)), oklch(var(--h3)) 80%);
+    --i-atv: color-mix(in oklch, oklch(var(--h4)), oklch(var(--h3)) 60%);
+    --i-col: oklch(var(--b7));
+    --i-icon: oklch(var(--b7) / 70%);
+    --i-weight: var(--fw-medium, 500);
+    --i-shadow: var(--primary-shadow), 0 3px 12px oklch(var(--h4) / 32%);
+  }
+  .ui-chip-count { font-size: 12px; opacity: 0.7; font-variant-numeric: tabular-nums; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-btn:active { transform: none; }
+}

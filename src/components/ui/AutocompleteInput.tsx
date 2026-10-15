@@ -160,10 +160,10 @@ export function AutocompleteInput({
           onKeyDown={handleKeyDown}
           onFocus={() => { if (options.length > 0 && value.trim().length >= 2) setIsOpen(true) }}
           placeholder={placeholder}
-          className="w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-colors"
+          className="w-full px-3 py-2 bg-[oklch(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-colors"
           style={{
             boxShadow: selectedId
-              ? 'inset 0 0 0 1px hsl(var(--h3) / 0.4)'
+              ? 'inset 0 0 0 1px oklch(var(--h3) / 0.4)'
               : 'none',
           }}
         />
@@ -171,14 +171,14 @@ export function AutocompleteInput({
         {/* Right-side indicators */}
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
           {isLoading && (
-            <div className="w-3.5 h-3.5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'hsl(var(--c3) / 0.3)', borderTopColor: 'transparent' }} />
+            <div className="w-3.5 h-3.5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'oklch(var(--c3) / 0.3)', borderTopColor: 'transparent' }} />
           )}
           {selectedId && (
             <button
               type="button"
               onClick={handleClearBinding}
               className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors hover:opacity-80"
-              style={{ background: 'hsl(var(--h3) / 0.15)', color: 'hsl(var(--h3))' }}
+              style={{ background: 'oklch(var(--h3) / 0.15)', color: 'oklch(var(--h3))' }}
               title="Linked — click to unlink"
             >
               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -195,8 +195,8 @@ export function AutocompleteInput({
         <div
           className="absolute z-50 w-full mt-1 max-h-52 overflow-y-auto rounded-xl py-1"
           style={{
-            background: 'hsl(var(--b4))',
-            boxShadow: '0 8px 35px rgba(0,0,0,0.35), inset 0 0 0 1px hsl(var(--b3) / 0.4)',
+            background: 'oklch(var(--b4))',
+            boxShadow: '0 8px 35px rgba(0,0,0,0.35), inset 0 0 0 1px oklch(var(--b3) / 0.4)',
             backdropFilter: 'blur(12px)',
           }}
         >
@@ -207,14 +207,14 @@ export function AutocompleteInput({
               onClick={() => handleSelect(option)}
               className="w-full text-left px-3 py-2 text-sm transition-colors flex items-center gap-2"
               style={{
-                background: i === highlightedIndex ? 'hsl(var(--h3) / 0.1)' : 'transparent',
-                color: i === highlightedIndex ? 'hsl(var(--h3))' : 'hsl(var(--c1))',
+                background: i === highlightedIndex ? 'oklch(var(--h3) / 0.1)' : 'transparent',
+                color: i === highlightedIndex ? 'oklch(var(--h3))' : 'oklch(var(--c1))',
               }}
               onMouseEnter={() => setHighlightedIndex(i)}
             >
               <span className="truncate flex-1">{option.label}</span>
               {option.sublabel && (
-                <span className="text-[10px] flex-shrink-0" style={{ color: 'hsl(var(--c3))' }}>
+                <span className="text-[10px] flex-shrink-0" style={{ color: 'oklch(var(--c3))' }}>
                   {option.sublabel}
                 </span>
               )}
@@ -224,7 +224,7 @@ export function AutocompleteInput({
           {/* "Create new" option when no results and onCreateNew is provided */}
           {options.length === 0 && onCreateNew && (
             <>
-              <div className="px-3 py-1.5 text-[11px]" style={{ color: 'hsl(var(--c3))' }}>
+              <div className="px-3 py-1.5 text-[11px]" style={{ color: 'oklch(var(--c3))' }}>
                 No matches found
               </div>
               <button
@@ -235,8 +235,8 @@ export function AutocompleteInput({
                 }}
                 className="w-full text-left px-3 py-2 text-sm transition-colors flex items-center gap-2"
                 style={{
-                  background: highlightedIndex === 0 ? 'hsl(var(--h3) / 0.1)' : 'transparent',
-                  color: 'hsl(var(--h3))',
+                  background: highlightedIndex === 0 ? 'oklch(var(--h3) / 0.1)' : 'transparent',
+                  color: 'oklch(var(--h3))',
                 }}
                 onMouseEnter={() => setHighlightedIndex(0)}
               >

@@ -1,0 +1,9 @@
+/* ui primitives (bleh interactables). Rules sit in @layer components so Tailwind utilities can still override. */
+@import "./css/interactable.css";
+@import "./css/forms.css";
+@import "./css/overlays.css";
+@import "./css/notify.css";
+@import "./css/text.css";
+@import "./css/tabs.css";
+
+:root { --modal-close-dur: 350ms; }

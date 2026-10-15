@@ -1,53 +1,53 @@
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+import { useId, type InputHTMLAttributes, type TextareaHTMLAttributes } from 'react'
+import { cn } from '../../lib/cn'
+import { inputClass, textareaClass } from '../bleh/ui/inputClass'
+
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
   error?: string
 }
 
-export function Input({ label, error, className = '', ...props }: InputProps) {
+interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label?: string
+  error?: string
+}
+
+/** Legacy Zephyron input: label + error wrapper around the bleh `ui-input` recipe. */
+export function Input({ label, error, className, id, ...props }: InputProps) {
+  const autoId = useId()
+  const inputId = id ?? autoId
+  const msgId = `${inputId}-msg`
   return (
-    <div className="flex flex-col gap-1.5">
-      {label && (
-        <label className="text-sm font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c2))' }}>{label}</label>
-      )}
+    <div className="flex min-w-0 flex-col gap-1.5">
+      {label && <label htmlFor={inputId} className="ui-field-label">{label}</label>}
       <input
-        className={`w-full px-3 py-2 rounded-[var(--button-radius)] text-sm placeholder:text-text-muted focus:outline-none transition-all duration-200 ${className}`}
-        style={{
-          background: 'hsl(var(--b4) / 0.4)',
-          color: 'hsl(var(--c1))',
-          boxShadow: error ? 'inset 0 0 0 1px hsl(0, 60%, 50%)' : 'none',
-          transitionTimingFunction: 'var(--ease-out-custom)',
-        }}
-        onFocus={(e) => { e.currentTarget.style.boxShadow = 'inset 0 0 0 1px hsl(var(--h3) / 0.5)'; props.onFocus?.(e) }}
-        onBlur={(e) => { e.currentTarget.style.boxShadow = error ? 'inset 0 0 0 1px hsl(0, 60%, 50%)' : 'none'; props.onBlur?.(e) }}
+        id={inputId}
+        className={cn(inputClass, className)}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? msgId : undefined}
         {...props}
       />
-      {error && <p className="text-xs" style={{ color: 'hsl(0, 60%, 55%)' }}>{error}</p>}
+      {error && <span id={msgId} className="ui-field-msg" data-error>{error}</span>}
     </div>
   )
 }
 
-interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  label?: string
-  error?: string
-}
-
-export function Textarea({ label, error, className = '', ...props }: TextareaProps) {
+/** Legacy Zephyron textarea, same wrapper as Input. */
+export function Textarea({ label, error, className, id, ...props }: TextareaProps) {
+  const autoId = useId()
+  const inputId = id ?? autoId
+  const msgId = `${inputId}-msg`
   return (
-    <div className="flex flex-col gap-1.5">
-      {label && (
-        <label className="text-sm font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c2))' }}>{label}</label>
-      )}
+    <div className="flex min-w-0 flex-col gap-1.5">
+      {label && <label htmlFor={inputId} className="ui-field-label">{label}</label>}
       <textarea
-        className={`w-full px-3 py-2 rounded-[var(--button-radius)] text-sm placeholder:text-text-muted focus:outline-none transition-all duration-200 resize-none ${className}`}
-        style={{
-          background: 'hsl(var(--b4) / 0.4)',
-          color: 'hsl(var(--c1))',
-          boxShadow: error ? 'inset 0 0 0 1px hsl(0, 60%, 50%)' : 'none',
-          transitionTimingFunction: 'var(--ease-out-custom)',
-        }}
+        id={inputId}
+        className={cn(textareaClass, className)}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? msgId : undefined}
         {...props}
       />
-      {error && <p className="text-xs" style={{ color: 'hsl(0, 60%, 55%)' }}>{error}</p>}
+      {error && <span id={msgId} className="ui-field-msg" data-error>{error}</span>}
     </div>
   )
 }

@@ -1,25 +1,30 @@
+import type { CSSProperties, ReactNode } from 'react'
+import { CheckCircleFilled, FolderFilled, HeartFilled, Headphone2Filled, MusicFilled, StarFilled, TrophyFilled } from '@mingcute/react/core-filled'
 import type { ActivityItem as ActivityItemType } from '../../lib/types'
 
 interface ActivityItemProps {
   item: ActivityItemType
   showUser?: boolean
+  index?: number
 }
 
-export function ActivityItem({ item, showUser = false }: ActivityItemProps) {
-  const getActivityIcon = () => {
-    switch (item.activity_type) {
-      case 'badge_earned': return '🏆'
-      case 'song_liked': return '❤️'
-      case 'playlist_created': return '📁'
-      case 'playlist_updated': return '📁'
-      case 'annotation_approved': return '✅'
-      case 'milestone_reached': return '🎉'
-      case 'set_listened': return '🎧'
-      default: return '•'
-    }
-  }
+const ACTIVITY_ICON: Record<string, ReactNode> = {
+  badge_earned: <TrophyFilled />,
+  song_liked: <HeartFilled />,
+  playlist_created: <FolderFilled />,
+  playlist_updated: <FolderFilled />,
+  annotation_approved: <CheckCircleFilled />,
+  milestone_reached: <StarFilled />,
+  set_listened: <Headphone2Filled />,
+}
 
-  const getActivityText = () => {
+const NAME = 'font-medium text-heading'
+const ACCENT = 'font-medium text-accent-2'
+
+export function ActivityItem({ item, showUser = false, index = 0 }: ActivityItemProps) {
+  const getActivityIcon = (): ReactNode => ACTIVITY_ICON[item.activity_type] ?? <MusicFilled />
+
+  const getActivityText = (): ReactNode => {
     const { activity_type, metadata } = item
     const userName = showUser && item.user_name ? item.user_name : 'You'
 
@@ -27,8 +32,8 @@ export function ActivityItem({ item, showUser = false }: ActivityItemProps) {
       case 'badge_earned':
         return (
           <>
-            <span className="font-[var(--font-weight-medium)]">{userName}</span> earned{' '}
-            <span className="font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--h3))' }}>
+            <span className={NAME}>{userName}</span> earned{' '}
+            <span className={ACCENT}>
               {metadata.badge_name}
             </span>{' '}
             badge
@@ -37,39 +42,39 @@ export function ActivityItem({ item, showUser = false }: ActivityItemProps) {
       case 'song_liked':
         return (
           <>
-            <span className="font-[var(--font-weight-medium)]">{userName}</span> liked{' '}
-            <span className="font-[var(--font-weight-medium)]">{metadata.song_title}</span>
+            <span className={NAME}>{userName}</span> liked{' '}
+            <span className={NAME}>{metadata.song_title}</span>
             {metadata.song_artist && ` - ${metadata.song_artist}`}
           </>
         )
       case 'playlist_created':
         return (
           <>
-            <span className="font-[var(--font-weight-medium)]">{userName}</span> created playlist{' '}
-            <span className="font-[var(--font-weight-medium)]">{metadata.playlist_title}</span>
+            <span className={NAME}>{userName}</span> created playlist{' '}
+            <span className={NAME}>{metadata.playlist_title}</span>
           </>
         )
       case 'playlist_updated':
         return (
           <>
-            <span className="font-[var(--font-weight-medium)]">{userName}</span> added{' '}
-            <span className="font-[var(--font-weight-medium)]">{metadata.set_title}</span> to{' '}
+            <span className={NAME}>{userName}</span> added{' '}
+            <span className={NAME}>{metadata.set_title}</span> to{' '}
             {metadata.playlist_title}
           </>
         )
       case 'annotation_approved':
         return (
           <>
-            <span className="font-[var(--font-weight-medium)]">{userName}</span> added{' '}
-            <span className="font-[var(--font-weight-medium)]">{metadata.track_title}</span> to{' '}
+            <span className={NAME}>{userName}</span> added{' '}
+            <span className={NAME}>{metadata.track_title}</span> to{' '}
             {metadata.set_title}
           </>
         )
       case 'milestone_reached':
         return (
           <>
-            <span className="font-[var(--font-weight-medium)]">{userName}</span> reached{' '}
-            <span className="font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--h3))' }}>
+            <span className={NAME}>{userName}</span> reached{' '}
+            <span className={ACCENT}>
               {metadata.milestone}
             </span>
           </>
@@ -77,8 +82,8 @@ export function ActivityItem({ item, showUser = false }: ActivityItemProps) {
       case 'set_listened':
         return (
           <>
-            <span className="font-[var(--font-weight-medium)]">{userName}</span> listened to{' '}
-            <span className="font-[var(--font-weight-medium)]">{metadata.title}</span>
+            <span className={NAME}>{userName}</span> listened to{' '}
+            <span className={NAME}>{metadata.title}</span>
             {metadata.artist && ` by ${metadata.artist}`}
           </>
         )
@@ -101,13 +106,18 @@ export function ActivityItem({ item, showUser = false }: ActivityItemProps) {
   }
 
   return (
-    <div className="card p-4 flex items-start gap-3">
-      <div className="text-2xl">{getActivityIcon()}</div>
-      <div className="flex-1">
-        <div className="text-sm mb-1" style={{ color: 'hsl(var(--c1))' }}>
+    <div
+      className="animate-item flex items-start gap-3 rounded-item px-3 py-2.5 transition-colors duration-200 ease-bleh hover:bg-b4/40"
+      style={{ '--delay': `${index * 30}ms` } as CSSProperties}
+    >
+      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-item bg-b4/50 text-accent-2 [&>svg]:h-4 [&>svg]:w-4" aria-hidden="true">
+        {getActivityIcon()}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="text-[14px] leading-[18px] text-text">
           {getActivityText()}
         </div>
-        <div className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
+        <div className="mt-0.5 text-[12px] leading-[16px] text-muted">
           {getTimeAgo(item.created_at)}
         </div>
       </div>

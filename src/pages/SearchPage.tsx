@@ -1,59 +1,44 @@
-import { useState, useEffect, useCallback, memo } from 'react'
+import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import { useSearchParams, Link } from 'react-router'
+import {
+  CalendarFilled, DiscFilled, MusicFilled, RightFilled, SearchFilled, UserStarFilled,
+} from '@mingcute/react/core-filled'
 import { searchSets, getCoverUrl, getArtistImageUrl, getEventCoverUrl, getSongCoverUrl } from '../lib/api'
 import { getPlaceholder } from '../lib/placeholders'
-import { usePlayerStore } from '../stores/playerStore'
 import { formatTime, formatConfidence } from '../lib/formatTime'
-import type { SearchResults, TopResult, DjSet } from '../lib/types'
+import { ContentCard, EmptyState, Section, Skeleton, Toolbar, ToolbarTabs, SeeMore } from '../components/bleh'
+import { PageFrame } from '../components/shell'
+import { SetGrid } from '../components/sets/SetGrid'
+import type { SearchResults, TopResult } from '../lib/types'
+import './library.css'
 
 const TABS = ['all', 'sets', 'tracks', 'artists', 'events'] as const
 type Tab = typeof TABS[number]
 
+const TAB_ICONS: Record<Tab, ReactNode> = {
+  all: <SearchFilled />,
+  sets: <DiscFilled />,
+  tracks: <MusicFilled />,
+  artists: <UserStarFilled />,
+  events: <CalendarFilled />,
+}
 
-// ── Set card (square art, hover play) ────────────────────────────────────────
+const TAB_LABELS: Record<Tab, string> = {
+  all: 'All',
+  sets: 'Sets',
+  tracks: 'Tracks',
+  artists: 'Artists',
+  events: 'Events',
+}
 
-const SetCard = memo(function SetCard({ set }: { set: DjSet }) {
-  const play = usePlayerStore((s) => s.play)
-  const currentSet = usePlayerStore((s) => s.currentSet)
-  const isPlaying = currentSet?.id === set.id
+const ALL_PREVIEW = { sets: 5, tracks: 5, artists: 5, events: 4 } as const
+const SKELETON_TILES = 2
+const SKELETON_HEIGHT = 208
 
-  return (
-    <Link
-      to={`/app/sets/${set.id}`}
-      className="group block rounded-[var(--card-radius)] p-3.5 no-underline transition-colors"
-      style={{ background: 'hsl(var(--b5))' }}
-      onMouseEnter={() => {}}
-    >
-      <div className="relative aspect-square rounded-lg overflow-hidden mb-3" style={{ boxShadow: '0 8px 20px rgba(0,0,0,0.35)' }}>
-        <img
-          src={set.cover_image_r2_key ? getCoverUrl(set.id) : getPlaceholder('square')}
-          alt={set.title}
-          className="w-full h-full object-cover"
-          loading="lazy"
-          onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder('square') }}
-        />
-        <button
-          type="button"
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); play(set) }}
-          className="absolute bottom-2 right-2 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 opacity-0 translate-y-1.5 group-hover:opacity-100 group-hover:translate-y-0"
-          style={{ background: 'hsl(var(--h3))', boxShadow: '0 4px 14px hsl(var(--h4) / 0.5)' }}
-          aria-label={`Play ${set.title}`}
-        >
-          {isPlaying
-            ? <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-            : <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-          }
-        </button>
-      </div>
-      <p className="text-sm font-[var(--font-weight-medium)] truncate mb-0.5" style={{ color: 'hsl(var(--c1))' }}>{set.title}</p>
-      <p className="text-xs truncate" style={{ color: 'hsl(var(--c3))' }}>{set.artist}</p>
-    </Link>
-  )
-})
+// ── Top Result card ───────────────────────────────────────────────────────────
 
-// ── Top Result hero card ──────────────────────────────────────────────────────
-
-const TopResultCard = memo(function TopResultCard({ result }: { result: TopResult }) {
+function TopResultCard({ result }: { result: TopResult }) {
+  const isRound = result.type === 'artist'
   const coverUrl = result.type === 'set' && result.image_r2_key
     ? getCoverUrl(result.id)
     : result.type === 'artist' && result.image_r2_key
@@ -62,61 +47,30 @@ const TopResultCard = memo(function TopResultCard({ result }: { result: TopResul
     ? getEventCoverUrl(result.id)
     : null
 
-  const isRound = result.type === 'artist'
-
   return (
-    <Link
-      to={result.link}
-      className="group flex flex-col gap-5 p-5 rounded-[var(--card-radius)] no-underline h-full transition-colors"
-      style={{ background: 'hsl(var(--b4))' }}
-    >
-      <div
-        className={`w-24 h-24 overflow-hidden flex-shrink-0 ${isRound ? 'rounded-full' : 'rounded-lg'}`}
-        style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
-      >
+    <Link to={result.link} className="zl-top">
+      <div className="zl-top-art" data-round={isRound ? '' : undefined}>
         <img
           src={coverUrl ?? getPlaceholder(isRound ? 'circle' : 'square')}
-          alt={result.title}
-          className="w-full h-full object-cover"
+          alt=""
           onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder(isRound ? 'circle' : 'square') }}
         />
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-[var(--font-weight-medium)] uppercase tracking-wider mb-2" style={{ color: 'hsl(var(--c3))' }}>
-          Top Result
-        </p>
-        <p className="text-2xl font-[var(--font-weight-bold)] leading-tight mb-1" style={{ color: 'hsl(var(--c1))' }}>
-          {result.title}
-        </p>
-        <p className="text-sm mb-3" style={{ color: 'hsl(var(--c3))' }}>
+      <div className="zl-top-body">
+        <p className="zl-top-sub">
           {result.type.charAt(0).toUpperCase() + result.type.slice(1)}
           {result.subtitle ? ` · ${result.subtitle}` : ''}
         </p>
-        {result.tags.length > 0 && (
-          <div className="flex gap-1.5 flex-wrap">
-            {result.tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-xs px-2.5 py-0.5 rounded-full"
-                style={{ background: 'hsl(var(--b3))', color: 'hsl(var(--c2))' }}
-              >
-                #{tag.toLowerCase()}
-              </span>
-            ))}
-          </div>
-        )}
+        <h3 className="zl-top-title">{result.title}</h3>
       </div>
-      <div>
-        <div
-          className="w-12 h-12 rounded-full flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200"
-          style={{ background: 'hsl(var(--h3))', boxShadow: '0 4px 16px hsl(var(--h4) / 0.5)' }}
-        >
-          <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      {result.tags.length > 0 && (
+        <div className="zl-tags">
+          {result.tags.map((tag) => <span key={tag} className="zl-tag">#{tag.toLowerCase()}</span>)}
         </div>
-      </div>
+      )}
     </Link>
   )
-})
+}
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
@@ -148,268 +102,196 @@ export function SearchPage() {
   // Empty state
   if (!query.trim()) {
     return (
-      <div className="px-6 lg:px-10 py-24 flex flex-col items-center gap-4">
-        <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-2"
-          style={{ background: 'hsl(var(--b5))', boxShadow: 'var(--card-border)' }}
-        >
-          <svg className="w-8 h-8" style={{ color: 'hsl(var(--c3))' }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-          </svg>
-        </div>
-        <p className="text-base font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c2))' }}>Search sets, artists, tracks, and events</p>
-        <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>Use the search bar above to get started</p>
-      </div>
+      <PageFrame>
+        <ContentCard
+          toolbar={<Toolbar><h1 className="zl-toolbar-title">Search</h1></Toolbar>}
+          main={
+            <Section>
+              <EmptyState
+                icon={<SearchFilled />}
+                title="Search sets, artists, tracks and events"
+                description="Use the search bar above to get started."
+              />
+            </Section>
+          }
+        />
+      </PageFrame>
     )
   }
 
   const show = (tab: Tab) => activeTab === 'all' || activeTab === tab
+  const isAll = activeTab === 'all'
 
-  return (
-    <div className="px-6 lg:px-10 py-6">
+  const tabs = TABS.map((tab) => {
+    const count = tab === 'all' ? totalResults
+      : tab === 'sets' ? (results?.sets.length ?? 0)
+      : tab === 'tracks' ? (results?.tracks.length ?? 0)
+      : tab === 'artists' ? (results?.artists.length ?? 0)
+      : (results?.events.length ?? 0)
+    return { key: tab, label: TAB_LABELS[tab], icon: TAB_ICONS[tab], count: tab === activeTab ? undefined : count }
+  })
 
-      {/* Category tabs — pill style */}
-      <div className="flex items-center gap-2 mb-8 flex-wrap">
-        {TABS.map((tab) => {
-          const count = tab === 'all' ? totalResults
-            : tab === 'sets' ? (results?.sets.length ?? 0)
-            : tab === 'tracks' ? (results?.tracks.length ?? 0)
-            : tab === 'artists' ? (results?.artists.length ?? 0)
-            : (results?.events.length ?? 0)
-          const isActive = activeTab === tab
-          return (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setTab(tab)}
-              className="px-4 py-1.5 rounded-full text-sm font-[var(--font-weight-medium)] transition-colors capitalize"
-              style={{
-                background: isActive ? 'hsl(var(--c1))' : 'hsl(var(--b4))',
-                color: isActive ? 'hsl(var(--b6))' : 'hsl(var(--c2))',
-              }}
-            >
-              {tab}
-              {tab !== 'all' && count > 0 && !isActive && (
-                <span className="ml-1.5 text-xs opacity-60">{count}</span>
-              )}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Loading skeletons */}
-      {loading && (
-        <div className="grid grid-cols-2 gap-5 mb-8">
-          <div className="h-52 rounded-[var(--card-radius)] animate-pulse" style={{ background: 'hsl(var(--b5))' }} />
-          <div className="h-52 rounded-[var(--card-radius)] animate-pulse" style={{ background: 'hsl(var(--b5))' }} />
+  let body: ReactNode = null
+  if (loading) {
+    body = (
+      <Section>
+        <div className="zl-two">
+          {Array.from({ length: SKELETON_TILES }).map((_, i) => (
+            <Skeleton key={i} height={SKELETON_HEIGHT} borderRadius="var(--card-radius)" />
+          ))}
         </div>
-      )}
+      </Section>
+    )
+  } else if (results) {
+    body = (
+      <>
+        {/* All tab: top result beside the first tracks */}
+        {isAll && (results.top_result || results.tracks.length > 0) && (
+          <div className="zl-two">
+            {results.top_result && (
+              <Section title="Top result">
+                <TopResultCard result={results.top_result} />
+              </Section>
+            )}
+            {results.tracks.length > 0 && (
+              <Section
+                title="Tracks"
+                action={results.tracks.length > ALL_PREVIEW.tracks
+                  ? <SeeMore onClick={() => setTab('tracks')}>See all</SeeMore>
+                  : undefined}
+              >
+                <TrackRows tracks={results.tracks.slice(0, ALL_PREVIEW.tracks)} />
+              </Section>
+            )}
+          </div>
+        )}
 
-      {!loading && results && (
-        <div className="space-y-10">
+        {/* Tracks tab: full list */}
+        {activeTab === 'tracks' && results.tracks.length > 0 && (
+          <Section title="Tracks">
+            <TrackRows tracks={results.tracks} />
+          </Section>
+        )}
 
-          {/* All tab: Spotify 2-col hero */}
-          {activeTab === 'all' && (results.top_result || results.tracks.length > 0) && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
-              {/* Left: Top Result */}
-              {results.top_result && (
-                <div>
-                  <h2 className="text-xl font-[var(--font-weight-bold)] mb-4" style={{ color: 'hsl(var(--c1))' }}>Top Result</h2>
-                  <TopResultCard result={results.top_result} />
-                </div>
-              )}
+        {show('sets') && results.sets.length > 0 && (
+          <Section
+            title="Sets"
+            action={isAll && results.sets.length > ALL_PREVIEW.sets
+              ? <SeeMore onClick={() => setTab('sets')}>See all {results.sets.length}</SeeMore>
+              : undefined}
+          >
+            <SetGrid sets={isAll ? results.sets.slice(0, ALL_PREVIEW.sets) : results.sets} />
+          </Section>
+        )}
 
-              {/* Right: Tracks */}
-              {results.tracks.length > 0 && (
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c1))' }}>Tracks</h2>
-                    {results.tracks.length > 5 && (
-                      <button type="button" onClick={() => setTab('tracks')} className="text-xs font-[var(--font-weight-medium)] uppercase tracking-wider" style={{ color: 'hsl(var(--c3))' }}>
-                        See all
-                      </button>
-                    )}
-                  </div>
-                  <div className="space-y-0.5">
-                    {results.tracks.slice(0, 5).map((track, i) => (
-                      <Link
-                        key={track.id}
-                        to={`/app/sets/${track.set_id}`}
-                        className="group flex items-center gap-3 px-3 py-2 rounded-lg no-underline transition-colors hover:bg-[hsl(var(--b4))]"
-                      >
-                        <span className="w-5 text-right text-sm shrink-0" style={{ color: 'hsl(var(--c3))' }}>{i + 1}</span>
-                        <img
-                          src={track.song_id && track.song_cover_r2_key ? getSongCoverUrl(track.song_id) : getCoverUrl(track.set_id)}
-                          alt={track.track_title}
-                          className="w-10 h-10 rounded shrink-0 object-cover"
-                          loading="lazy"
-                          onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder('square') }}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm truncate font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c1))' }}>{track.track_title}</p>
-                          <p className="text-xs truncate mt-0.5" style={{ color: 'hsl(var(--c3))' }}>
-                            {track.set_artist} · {formatTime(track.start_time_seconds)}
-                          </p>
-                        </div>
-                        <span className="text-xs font-mono shrink-0 opacity-0 group-hover:opacity-100" style={{ color: 'hsl(var(--c3))' }}>
-                          {formatConfidence(track.confidence)}
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Tracks tab (standalone full list) */}
-          {activeTab === 'tracks' && results.tracks.length > 0 && (
-            <section>
-              <h2 className="text-xl font-[var(--font-weight-bold)] mb-5" style={{ color: 'hsl(var(--c1))' }}>Tracks</h2>
-              <div className="space-y-0.5">
-                {results.tracks.map((track, i) => (
-                  <Link
-                    key={track.id}
-                    to={`/app/sets/${track.set_id}`}
-                    className="group flex items-center gap-3 px-3 py-2.5 rounded-lg no-underline transition-colors hover:bg-[hsl(var(--b4))]"
-                  >
-                    <span className="w-5 text-right text-sm shrink-0" style={{ color: 'hsl(var(--c3))' }}>{i + 1}</span>
-                    <img
-                      src={getCoverUrl(track.set_id)}
-                      alt={track.set_title}
-                      className="w-10 h-10 rounded shrink-0 object-cover"
-                      loading="lazy"
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder('square') }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c1))' }}>{track.track_title}</p>
-                      <p className="text-xs truncate mt-0.5" style={{ color: 'hsl(var(--c3))' }}>
-                        {track.set_artist} · in {track.set_title} · {formatTime(track.start_time_seconds)}
-                      </p>
-                    </div>
-                    <span className="text-xs font-mono shrink-0" style={{ color: 'hsl(var(--c3))' }}>
-                      {formatConfidence(track.confidence)}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Sets */}
-          {show('sets') && results.sets.length > 0 && (
-            <section>
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-xl font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c1))' }}>Sets</h2>
-                {activeTab === 'all' && results.sets.length > 5 && (
-                  <button type="button" onClick={() => setTab('sets')} className="text-xs font-[var(--font-weight-medium)] uppercase tracking-wider" style={{ color: 'hsl(var(--c3))' }}>
-                    See all {results.sets.length}
-                  </button>
-                )}
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                {(activeTab === 'all' ? results.sets.slice(0, 5) : results.sets).map((set) => (
-                  <SetCard key={set.id} set={set} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Artists */}
-          {show('artists') && results.artists.length > 0 && (
-            <section>
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-xl font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c1))' }}>Artists</h2>
-                {activeTab === 'all' && results.artists.length > 5 && (
-                  <button type="button" onClick={() => setTab('artists')} className="text-xs font-[var(--font-weight-medium)] uppercase tracking-wider" style={{ color: 'hsl(var(--c3))' }}>
-                    See all {results.artists.length}
-                  </button>
-                )}
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                {(activeTab === 'all' ? results.artists.slice(0, 5) : results.artists).map((artist) => (
-                  <Link
-                    key={artist.id}
-                    to={`/app/artists/${artist.id}`}
-                    className="group flex flex-col items-center gap-3 p-4 rounded-[var(--card-radius)] no-underline text-center transition-colors hover:bg-[hsl(var(--b4))]"
-                  >
-                    <div
-                      className="w-full aspect-square rounded-full overflow-hidden"
-                      style={{ boxShadow: '0 8px 20px rgba(0,0,0,0.35)' }}
-                    >
+        {show('artists') && results.artists.length > 0 && (
+          <Section
+            title="Artists"
+            action={isAll && results.artists.length > ALL_PREVIEW.artists
+              ? <SeeMore onClick={() => setTab('artists')}>See all {results.artists.length}</SeeMore>
+              : undefined}
+          >
+            <ul className="zl-square-grid">
+              {(isAll ? results.artists.slice(0, ALL_PREVIEW.artists) : results.artists).map((artist) => (
+                <li key={artist.id} className="zl-tile-cell">
+                  <Link to={`/app/artists/${artist.id}`} className="zl-square-tile">
+                    <div className="zl-square-art" data-round="">
                       <img
                         src={getArtistImageUrl(artist.id)}
-                        alt={artist.name}
-                        className="w-full h-full object-cover"
+                        alt=""
                         loading="lazy"
                         onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder('circle') }}
                       />
                     </div>
-                    <div>
-                      <p className="text-sm font-[var(--font-weight-medium)] truncate w-full" style={{ color: 'hsl(var(--c1))' }}>{artist.name}</p>
-                      <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--c3))' }}>Artist · {artist.set_count} sets</p>
-                    </div>
+                    <span className="zl-square-title">{artist.name}</span>
+                    <span className="zl-square-sub">Artist · {artist.set_count} sets</span>
                   </Link>
-                ))}
-              </div>
-            </section>
-          )}
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
 
-          {/* Events */}
-          {show('events') && results.events.length > 0 && (
-            <section>
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-xl font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c1))' }}>Events</h2>
-                {activeTab === 'all' && results.events.length > 4 && (
-                  <button type="button" onClick={() => setTab('events')} className="text-xs font-[var(--font-weight-medium)] uppercase tracking-wider" style={{ color: 'hsl(var(--c3))' }}>
-                    See all {results.events.length}
-                  </button>
-                )}
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {(activeTab === 'all' ? results.events.slice(0, 4) : results.events).map((event) => (
-                  <Link
-                    key={event.id}
-                    to={`/app/events/${event.slug || event.id}`}
-                    className="group rounded-[var(--card-radius)] overflow-hidden no-underline transition-colors"
-                    style={{ background: 'hsl(var(--b5))' }}
-                  >
-                    <div
-                      className="w-full aspect-square"
-                    >
+        {show('events') && results.events.length > 0 && (
+          <Section
+            title="Events"
+            action={isAll && results.events.length > ALL_PREVIEW.events
+              ? <SeeMore onClick={() => setTab('events')}>See all {results.events.length}</SeeMore>
+              : undefined}
+          >
+            <ul className="zl-square-grid">
+              {(isAll ? results.events.slice(0, ALL_PREVIEW.events) : results.events).map((event) => (
+                <li key={event.id} className="zl-tile-cell">
+                  <Link to={`/app/events/${event.slug || event.id}`} className="zl-square-tile">
+                    <div className="zl-square-art">
                       <img
                         src={event.cover_image_r2_key ? getEventCoverUrl(event.id) : getPlaceholder('square')}
-                        alt={event.name}
-                        className="w-full h-full object-cover"
+                        alt=""
                         loading="lazy"
                         onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder('square') }}
                       />
                     </div>
-                    <div className="p-3">
-                      <p className="text-sm font-[var(--font-weight-medium)] truncate" style={{ color: 'hsl(var(--c1))' }}>{event.name}</p>
-                      <p className="text-xs mt-0.5 truncate" style={{ color: 'hsl(var(--c3))' }}>
-                        {[event.location, event.set_count ? `${event.set_count} sets` : null].filter(Boolean).join(' · ')}
-                      </p>
-                    </div>
+                    <span className="zl-square-title">{event.name}</span>
+                    <span className="zl-square-sub">
+                      {[event.location, event.set_count ? `${event.set_count} sets` : null].filter(Boolean).join(' · ')}
+                    </span>
                   </Link>
-                ))}
-              </div>
-            </section>
-          )}
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
 
-          {/* No results */}
-          {totalResults === 0 && (
-            <div className="py-24 text-center">
-              <p className="text-base font-[var(--font-weight-medium)] mb-2" style={{ color: 'hsl(var(--c2))' }}>
-                No results for &ldquo;{query}&rdquo;
-              </p>
-              <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
-                Try a shorter query or check the spelling
-              </p>
-            </div>
-          )}
-        </div>
-      )}
+        {totalResults === 0 && (
+          <Section>
+            <EmptyState
+              icon={<SearchFilled />}
+              title={`No results for “${query}”`}
+              description="Try a shorter query or check the spelling."
+            />
+          </Section>
+        )}
+      </>
+    )
+  }
+
+  return (
+    <PageFrame>
+      <h1 className="sr-only">Search results for “{query}”</h1>
+      <ContentCard
+        toolbar={
+          <ToolbarTabs tabs={tabs} active={activeTab} onChange={setTab} />
+        }
+        main={body}
+      />
+    </PageFrame>
+  )
+}
+
+function TrackRows({ tracks }: { tracks: SearchResults['tracks'] }) {
+  return (
+    <div className="zl-rows">
+      {tracks.map((track, i) => (
+        <Link key={track.id} to={`/app/sets/${track.set_id}`} className="zl-row">
+          <span className="zl-row-index">{i + 1}</span>
+          <span className="zl-row-thumb">
+            <img
+              src={track.song_id && track.song_cover_r2_key ? getSongCoverUrl(track.song_id) : getCoverUrl(track.set_id)}
+              alt=""
+              loading="lazy"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder('square') }}
+            />
+          </span>
+          <span className="zl-row-main">
+            <span className="zl-row-title">{track.track_title}</span>
+            <span className="zl-row-sub">
+              {track.set_artist} · {formatTime(track.start_time_seconds)}
+            </span>
+          </span>
+          <span className="zl-row-end">{formatConfidence(track.confidence)}</span>
+          <span className="zl-tile-chev" aria-hidden="true"><RightFilled /></span>
+        </Link>
+      ))}
     </div>
   )
 }

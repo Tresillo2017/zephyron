@@ -1,0 +1,113 @@
+/* AuthShell: standalone public page (no masthead): accent glow + one centred glass dialog.
+   Ported from sc-dashboard AuthShell.css; Zephyron brand text. */
+
+.as-page {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 40px 15px;
+  background: oklch(var(--b6));
+}
+
+/* same recipe as the shell backdrop: blurred accent wash that fades into the page colour */
+.as-glow {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: -1;
+  height: 800px;
+  pointer-events: none;
+  opacity: 0.6;
+  background:
+    radial-gradient(48% 62% at 50% 8%, oklch(var(--h4) / 85%), transparent 70%),
+    radial-gradient(30% 40% at 14% 22%, oklch(var(--h3) / 40%), transparent 70%),
+    radial-gradient(30% 40% at 86% 18%, oklch(var(--h3) / 30%), transparent 70%);
+  filter: blur(clamp(24px, 3vw, 60px));
+}
+.as-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: oklch(var(--b6));
+  mask-image: linear-gradient(180deg, transparent 20%, white);
+}
+
+.as-dialog {
+  position: relative;
+  width: 100%;
+  max-width: var(--as-width, 420px);
+  padding: 20px;
+  border: 1px solid var(--card-border-base);
+  border-radius: 12px;
+  box-shadow: var(--overlay-shadow);
+  color: oklch(var(--c2));
+}
+
+.as-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  color: var(--accent-2);
+  text-decoration: none;
+  border-radius: 8px;
+}
+.as-brand:focus-visible { outline: 2px solid oklch(var(--h3)); outline-offset: 4px; }
+.as-brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+.as-brand-name { font-family: var(--font-head); font-size: 20px; font-style: italic; color: var(--accent-2); }
+.as-brand-eyebrow { font-size: 13px; color: oklch(var(--c3)); }
+
+.as-head { margin-bottom: 20px; }
+.as-head h1 { margin: 0; color: oklch(var(--c1)); font-style: italic; }
+.as-head p { margin: 6px 0 0; font-size: 14px; line-height: 18px; color: oklch(var(--c3)); }
+
+.as-divider { display: flex; align-items: center; gap: 12px; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: oklch(var(--c3)); }
+.as-divider::before, .as-divider::after { content: ''; height: 1px; flex: 1; background: var(--separator, oklch(var(--b3))); }
+
+.as-foot { margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--separator, oklch(var(--b3))); text-align: center; font-size: 14px; color: oklch(var(--c3)); }
+
+.as-link {
+  cursor: pointer;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--accent);
+  border-radius: 4px;
+  transition: color var(--trans, 0.2s) var(--trans-function, ease);
+}
+.as-link:hover { text-decoration: underline; }
+.as-link:focus-visible { outline: 2px solid oklch(var(--h3)); outline-offset: 2px; }
+.as-link[data-muted] { color: oklch(var(--c3)); }
+.as-link[data-muted]:hover { color: oklch(var(--c1)); }
+.as-link[data-small] { font-size: 13px; }
+
+.as-badge {
+  display: flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--item-big-radius, 12px);
+  background: oklch(var(--f4) / 20%);
+  color: var(--accent);
+  box-shadow: var(--avatar-inset, none);
+}
+.as-badge > svg { width: 22px; height: 22px; }
+
+.as-stack { display: flex; flex-direction: column; gap: 12px; }
+.as-center { display: flex; flex-direction: column; align-items: center; gap: 15px; text-align: center; }
+.as-center p { margin: 0; max-width: 320px; font-size: 14px; line-height: 18px; color: oklch(var(--c3)); }
+
+.as-box {
+  border-radius: var(--item-big-radius, 12px);
+  background: oklch(var(--b4) / 40%);
+  box-shadow: var(--inset-shadow);
+}
+
+@media (max-width: 980px) {
+  .as-page { align-items: flex-start; padding-top: 24px; }
+}

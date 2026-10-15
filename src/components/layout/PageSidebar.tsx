@@ -60,14 +60,14 @@ export function PageSidebar({
     <aside
       className="w-[200px] shrink-0 px-4 py-6 sticky top-0 h-screen flex flex-col"
       style={{
-        borderRight: '1px solid hsl(var(--b4) / 0.25)',
-        background: 'hsl(var(--b6))',
+        borderRight: '1px solid oklch(var(--b4) / 0.25)',
+        background: 'oklch(var(--b6))',
       }}
     >
       {/* Title */}
       <h1
         className="text-sm font-[var(--font-weight-bold)] mb-4 px-3"
-        style={{ color: 'hsl(var(--c1))' }}
+        style={{ color: 'oklch(var(--c1))' }}
       >
         {title}
       </h1>
@@ -85,8 +85,8 @@ export function PageSidebar({
                 : ''
             }`}
             style={{
-              color: activeTab === tab.id ? 'hsl(var(--c1))' : 'hsl(var(--c2))',
-              background: activeTab === tab.id ? 'hsl(var(--b4) / 0.5)' : 'transparent',
+              color: activeTab === tab.id ? 'oklch(var(--c1))' : 'oklch(var(--c2))',
+              background: activeTab === tab.id ? 'oklch(var(--b4) / 0.5)' : 'transparent',
             }}
           >
             <svg
@@ -122,10 +122,10 @@ export function PageSidebar({
                 }`}
                 style={{
                   color: isActive
-                    ? 'hsl(var(--c1))'
-                    : 'hsl(var(--c2))',
+                    ? 'oklch(var(--c1))'
+                    : 'oklch(var(--c2))',
                   background: isActive
-                    ? 'hsl(var(--b4) / 0.5)'
+                    ? 'oklch(var(--b4) / 0.5)'
                     : 'transparent',
                 }}
               >
@@ -172,8 +172,8 @@ export function PageSidebar({
                           : ''
                       }`}
                       style={{
-                        color: activeTab === item.id ? 'hsl(var(--c1))' : 'hsl(var(--c2))',
-                        background: activeTab === item.id ? 'hsl(var(--b4) / 0.5)' : 'transparent',
+                        color: activeTab === item.id ? 'oklch(var(--c1))' : 'oklch(var(--c2))',
+                        background: activeTab === item.id ? 'oklch(var(--b4) / 0.5)' : 'transparent',
                       }}
                     >
                       <svg

@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { signUp } from '../lib/auth-client'
-import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
-import { Logo } from '../components/ui/Logo'
+import { Button, Input } from '../components/bleh'
+import { AuthShell } from '../components/auth/AuthShell'
+import { AuthHeading } from '../components/auth/AuthParts'
 
 export function RegisterPage() {
   const [name, setName] = useState('')
@@ -46,68 +46,42 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col lg:flex-row">
-      {/* Left panel — brand */}
-      <div className="hidden lg:flex lg:w-2/5 bg-surface-raised border-r border-border items-end p-12 relative overflow-hidden">
-        <div className="absolute top-1/3 -right-20 w-[300px] h-[300px] rounded-full bg-accent/5 blur-[80px]" />
-        <div className="relative z-10">
-          <Link to="/" className="flex items-center gap-2.5 mb-12 no-underline">
-            <Logo size={32} />
-            <span className="text-lg font-semibold text-text-primary tracking-tight">Zephyron</span>
-          </Link>
-          <p className="text-2xl font-semibold text-text-primary leading-snug mb-3">
-            Join the beta
-          </p>
-          <p className="text-sm text-text-muted">
-            Invite-only access to the future of DJ set streaming.
-          </p>
+    <AuthShell width={420} eyebrow="Invite-only beta">
+      <div className="animate-item">
+        <AuthHeading title="Get beta access" subtitle="Enter your invite code to create an account" />
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <Input
+            label="Invite code"
+            name="inviteCode"
+            value={inviteCode}
+            onChange={(e) => setInviteCode(e.target.value)}
+            placeholder="ABCD1234"
+            autoComplete="off"
+            required
+            className="text-center font-mono uppercase tracking-[0.25em] placeholder:tracking-[0.25em]"
+          />
+
+          <Input label="Display name" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" autoComplete="name" required />
+          <Input label="Email" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" required />
+          <Input label="Password" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" autoComplete="new-password" required />
+
+          {error && <p role="alert" className="ui-field-msg" data-error>{error}</p>}
+
+          <Button
+            appearance="primary"
+            label={isLoading ? 'Creating account...' : 'Create account'}
+            htmlButtonType="submit"
+            disabled={isLoading}
+            loading={isLoading}
+            className="mt-1 w-full"
+          />
+        </form>
+
+        <div className="as-foot">
+          Already have an account? <Link to="/login" className="as-link">Sign in</Link>
         </div>
       </div>
-
-      {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center px-5 sm:px-8 py-12">
-        <div className="w-full max-w-sm">
-          {/* Mobile logo */}
-          <Link to="/" className="flex items-center gap-2.5 mb-10 lg:hidden no-underline">
-            <Logo size={28} />
-            <span className="text-base font-semibold text-text-primary tracking-tight">Zephyron</span>
-          </Link>
-
-          <h1 className="text-xl font-semibold text-text-primary mb-1">Get beta access</h1>
-          <p className="text-sm text-text-muted mb-8">Enter your invite code to create an account</p>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Invite code — visually distinct */}
-            <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1.5">Invite Code</label>
-              <input
-                value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value)}
-                placeholder="ABCD1234"
-                required
-                className="w-full px-4 py-3 bg-surface-overlay border border-accent/30 rounded-lg text-sm text-text-primary font-mono text-center tracking-[0.25em] uppercase placeholder:text-text-muted placeholder:tracking-[0.25em] focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20 transition-colors"
-              />
-            </div>
-
-            <div className="h-px bg-border my-2" />
-
-            <Input label="Display Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" required />
-            <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
-            <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" required />
-
-            {error && <p className="text-xs text-danger">{error}</p>}
-
-            <Button variant="primary" type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? 'Creating account...' : 'Create Account'}
-            </Button>
-          </form>
-
-          <p className="text-xs text-text-muted mt-8">
-            Already have an account?{' '}
-            <Link to="/login" className="text-accent hover:text-accent-hover no-underline">Sign in</Link>
-          </p>
-        </div>
-      </div>
-    </div>
+    </AuthShell>
   )
 }

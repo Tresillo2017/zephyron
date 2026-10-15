@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react'
-import { Modal } from './ui/Modal'
+import { Modal, Button, Badge } from './bleh'
+import './shell/dialogs.css'
 import changelog from '../../CHANGELOG.md?raw'
 
 const LS_KEY = 'zephyron_last_seen_version'
 const OPEN_CHANGELOG_EVENT = 'zephyron:open-changelog'
 
-const categoryConfig: Record<string, { color: string }> = {
-  'New': { color: 'hsl(var(--h3))' },
-  'Improved': { color: 'hsl(180 60% 60%)' },
-  'Fixed': { color: 'hsl(140 50% 55%)' },
-  'Changed': { color: 'hsl(40 70% 60%)' },
-  'Deprecated': { color: 'hsl(30 80% 60%)' },
-  'Removed': { color: 'hsl(0 60% 55%)' },
-  'Security': { color: 'hsl(330 60% 60%)' },
+const categoryConfig: Record<string, { tone: 'accent' | 'success' | 'warning' | 'error' | 'new' | 'neutral' }> = {
+  'New': { tone: 'accent' },
+  'Improved': { tone: 'new' },
+  'Fixed': { tone: 'success' },
+  'Changed': { tone: 'warning' },
+  'Deprecated': { tone: 'warning' },
+  'Removed': { tone: 'error' },
+  'Security': { tone: 'error' },
 }
 
 // Helper to open changelog from anywhere
@@ -56,101 +57,38 @@ export function WhatsNew() {
   }
 
   if (!section) return null
+  if (!open) return null
+
+  const total = section.categories.reduce((sum, cat) => sum + cat.items.length, 0)
 
   return (
     <Modal
-      isOpen={open}
-      onClose={handleDismiss}
       title={`What's New in v${section.version}`}
-      className="max-w-2xl"
+      description={section.date ?? undefined}
+      onClose={handleDismiss}
+      width={560}
+      footer={<Button appearance="primary" label="Got it" onClick={handleDismiss} />}
     >
-      <div className="space-y-4">
-        {/* Header with date and change count */}
-        <div className="flex items-center gap-3 pb-3" style={{ borderBottom: '1px solid hsl(var(--b4) / 0.3)' }}>
-          {section.date && (
-            <span
-              className="text-xs font-mono px-2 py-1 rounded-md"
-              style={{
-                background: 'hsl(var(--b4))',
-                color: 'hsl(var(--c2))',
-              }}
-            >
-              {section.date}
-            </span>
-          )}
-          <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>
-            {section.categories.reduce((sum, cat) => sum + cat.items.length, 0)} changes
-          </span>
-        </div>
-
-        {/* Category cards */}
-        <div className="space-y-3">
-          {section.categories.map((cat, i) => {
-            const config = categoryConfig[cat.name] || categoryConfig['Changed']
-            return (
-              <div key={i} className="card p-4">
-                {/* Category header */}
-                <div className="flex items-center gap-2 mb-3">
-                  <h3
-                    className="text-sm font-[var(--font-weight-bold)] uppercase tracking-wide"
-                    style={{ color: config.color }}
-                  >
-                    {cat.name}
-                  </h3>
-                  <span
-                    className="text-xs font-mono ml-auto px-2 py-0.5 rounded"
-                    style={{
-                      background: 'hsl(var(--b4))',
-                      color: 'hsl(var(--c3))',
-                    }}
-                  >
-                    {cat.items.length}
-                  </span>
-                </div>
-
-                {/* Items list */}
-                <ul className="space-y-2">
-                  {cat.items.map((item, j) => (
-                    <li key={j} className="flex gap-2.5 text-sm leading-relaxed">
-                      <span
-                        className="shrink-0 mt-2 w-1 h-1 rounded-full"
-                        style={{
-                          background: 'hsl(var(--c3))',
-                        }}
-                      />
-                      <span style={{ color: 'hsl(var(--c2))' }}>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Action button */}
-        <div className="pt-2">
-          <button
-            onClick={handleDismiss}
-            className="w-full h-[var(--button-height)] rounded-[var(--button-radius)] text-sm font-[var(--font-weight-medium)] cursor-pointer transition-all"
-            style={{
-              background: 'hsl(var(--h3))',
-              color: 'white',
-              boxShadow: '0 0 20px hsl(var(--h3) / 0.3)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'hsl(var(--h2))'
-              e.currentTarget.style.transform = 'scale(0.98)'
-              e.currentTarget.style.boxShadow = '0 0 25px hsl(var(--h3) / 0.4)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'hsl(var(--h3))'
-              e.currentTarget.style.transform = ''
-              e.currentTarget.style.boxShadow = '0 0 20px hsl(var(--h3) / 0.3)'
-            }}
-          >
-            Got it
-          </button>
-        </div>
+      <div className="wn-meta">
+        <Badge>{total} {total === 1 ? 'change' : 'changes'}</Badge>
+      </div>
+      <div className="wn-cats">
+        {section.categories.map((cat, i) => {
+          const config = categoryConfig[cat.name] || categoryConfig['Changed']
+          return (
+            <section key={i} className="wn-cat">
+              <header className="wn-cat-head">
+                <Badge tone={config.tone}>{cat.name}</Badge>
+                <span className="wn-cat-count">{cat.items.length}</span>
+              </header>
+              <ul className="wn-items">
+                {cat.items.map((item, j) => (
+                  <li key={j}>{item}</li>
+                ))}
+              </ul>
+            </section>
+          )
+        })}
       </div>
     </Modal>
   )

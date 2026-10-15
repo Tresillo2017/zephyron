@@ -1,33 +1,17 @@
 import { useLocation, useNavigationType, Outlet } from 'react-router'
 
-type AnimationKey = 'enter' | 'open' | 'back' | 'fade'
-
-/** Pick an animation based on where we're going and how we got there */
-function resolveAnimation(pathname: string, navType: string): AnimationKey {
-  // Browser back/forward — slide from above
-  if (navType === 'POP') return 'back'
-  // Redirects (RequireAuth, RedirectIfAuth) — quick opacity only
-  if (navType === 'REPLACE') return 'fade'
-  // Opening a detail page from a list — expand/open feel
-  if (/\/app\/(sets|artists|events|playlists)\/[^/]+/.test(pathname)) return 'open'
-  // Everything else — standard slide-up
-  return 'enter'
-}
-
-const ANIMATIONS: Record<AnimationKey, string> = {
-  enter: 'page-enter 0.22s var(--ease-spring) both',
-  open:  'page-open 0.28s var(--ease-spring) both',
-  back:  'page-back 0.18s var(--ease-spring) both',
-  fade:  'fade-in 0.15s ease both',
-}
-
+/**
+ * Keyed wrapper around the routed page. Enter uses the bleh `grid` entrance (animate-page);
+ * redirects (REPLACE) only fade. Both come from motion.css, which drops them under reduced
+ * motion, so no JS check is needed. The key remounts the subtree on every path change.
+ */
 export function PageTransition() {
   const { pathname } = useLocation()
   const navType = useNavigationType()
-  const animation = ANIMATIONS[resolveAnimation(pathname, navType)]
+  const entrance = navType === 'REPLACE' ? 'animate-fade' : 'animate-page'
 
   return (
-    <div key={pathname} style={{ animation }}>
+    <div key={pathname} className={entrance}>
       <Outlet />
     </div>
   )

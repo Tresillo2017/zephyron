@@ -1,0 +1,30 @@
+/* Profile page additions on top of the shell Hero (sh-hero-*). */
+.sh-hero-art-button {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.sh-hero-art-button:focus-visible { outline: 2px solid oklch(var(--glow)); outline-offset: 3px; }
+.sh-hero-art-button:active { scale: 0.98; }
+.sh-hero-art-button,
+.sh-hero-art-button > img { transition: scale 0.2s var(--trans-function); }
+.sh-hero-initial {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  background: oklch(var(--h3) / 15%);
+  color: oklch(var(--h3));
+  font-size: 3rem;
+  font-weight: var(--fw-bold, 700);
+}
+.sh-hero-bio { margin: 0; color: oklch(var(--c2)); font-size: 14px; line-height: 20px; max-width: 60ch; }
+
+/* Tab body entrance; --motion: none (reduced motion) removes it. */
+.profile-tab-enter { animation: var(--motion, fade 0.3s var(--trans-function-ani) both); }

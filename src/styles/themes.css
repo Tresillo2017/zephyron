@@ -1,0 +1,488 @@
+/* ─────────────────────────────────────────────────────────────
+   Themes: surfaces (b*), text (c*), derived surface tokens, glass and
+   shadows. Base values are Ash (`dark`); each theme overrides what differs.
+   Raw colours live under [data-bleh--theme="<id>"] so any `.theme-scope`
+   element can render another theme. S(k) = sat * k * card vibrancy.
+   ───────────────────────────────────────────────────────────── */
+
+:root, .theme-scope {
+  --sat-s: calc(var(--sat) * var(--sat-bg));
+
+  --b2: 0.47 calc(var(--sat-s) * 0.04) var(--hue);
+  --b3: 0.38 calc(var(--sat-s) * 0.04) var(--hue);
+  --b4: 0.35 calc(var(--sat-s) * 0.03) var(--hue);
+  --b5: 0.30 calc(var(--sat-s) * 0.03) var(--hue);
+  --b6: 0.26 calc(var(--sat-s) * 0.02) var(--hue);
+  --b7: 0 0 0;
+  --b8: 0.33 calc(var(--sat-s) * 0.02) var(--hue);
+  --b9: var(--b6);
+  --tooltip: var(--b2);
+
+  --c1: 2 0 var(--hue);
+  --c2: 0.87 calc(clamp(0, var(--sat), 1) * 0.07) var(--hue);
+  --c3: 0.6 calc(clamp(0, var(--sat), 1) * 0.07) var(--hue);
+  --opposite-text: var(--b6);
+
+  /* lines and separators */
+  --card-border: inset 0 0 0 1px oklch(var(--b4) / 60%);
+  --card-border-base: oklch(var(--b3) / 60%);
+  --card-border-base-highlight: oklch(var(--b2) / 55%);
+  --menu-border: oklch(var(--b3) / 60%);
+  --separator-base: oklch(var(--b3) / 80%);
+  --separator: var(--separator-base);
+  --separator-shadow: 0 1px 2px 0 oklch(0.01 calc(var(--sat-s) * 0.02) var(--hue) / 15%);
+  --subtle-border: 1px solid oklch(var(--b4) / 55%);
+
+  /* menus and rows */
+  --menu-bg-base: var(--b6);
+  --menu-opacity: 92%;
+  --menu-bg: oklch(var(--menu-bg-base) / var(--solarium-opacity, var(--menu-opacity)));
+  --menu-item-hov: oklch(var(--b4) / 40%);
+  --menu-item-atv: oklch(var(--b4) / 60%);
+  --setting-hover: oklch(var(--b4) / 20%);
+  --setting-active: oklch(var(--b4) / 30%);
+  --setting-group: oklch(var(--b4) / 10%);
+  --setting-group-bg: color-mix(in oklch, var(--setting-group), oklch(var(--b5)) 20%);
+  --side-action-hov: oklch(var(--b4) / 40%);
+  --side-action-atv: oklch(var(--b4) / 60%);
+  --modal-button-hov: oklch(var(--b4) / 40%);
+  --modal-button-atv: oklch(var(--b4) / 60%);
+  --chart-button-hov: oklch(var(--b4) / 60%);
+  --chart-button-atv: oklch(var(--b4) / 80%);
+  --tracklist-odd: oklch(var(--b4) / 15%);
+  --tracklist-hover: oklch(var(--b4) / 30%);
+  --view-buttons-bg: oklch(var(--b6) / 70%);
+  --view-buttons-hov: oklch(var(--b4) / 40%);
+  --view-buttons-atv: oklch(var(--b4) / 60%);
+  --button-outline: inset 0 0 0 1px oklch(var(--b2) / 40%);
+  --btn-bg: oklch(var(--b3));
+  --btn-bg-hov: color-mix(in oklch, oklch(var(--b6)), oklch(var(--b3)) 90%);
+  --btn-bg-atv: color-mix(in oklch, oklch(var(--b6)), oklch(var(--b3)) 80%);
+  --textarea: oklch(var(--b6) / 20%);
+  --textarea-hov: oklch(var(--b6) / 40%);
+
+  /* sidebar, toolbar, glass cards */
+  --sidebar-bg-solid: color-mix(in oklch, oklch(var(--b6)) 22%, oklch(var(--b5)));
+  --sidebar-bg: var(--card-blur-bg);
+  --sidebar-border: color-mix(in oklch, oklch(var(--b5)), oklch(var(--b2)) 20%);
+  --sidebar-shadow: 4px 0 5px 1px oklch(var(--b6) / 80%);
+  --toolbar-bg: oklch(var(--b6) / 60%);
+  --toolbar-border: oklch(var(--b4) / 75%);
+  --card-blur-bg-base: 0.3 calc(var(--sat-s) * 0.04) var(--hue);
+  --card-blur-opacity: 60%;
+  --card-blur-bg: oklch(var(--card-blur-bg-base) / var(--solarium-opacity, var(--card-blur-opacity)));
+  --card-blur-bg-alt-opacity: 35%;
+  --card-blur-bg-alt: oklch(var(--b5) / var(--solarium-opacity, var(--card-blur-bg-alt-opacity)));
+  --inset-background: oklch(var(--b6) / 23%);
+  --inset-shadow: inset 0 4px 10px oklch(var(--b6) / 50%);
+  --input-shadow: inset 0 0 0 1px oklch(var(--b3) / 70%), inset 0 1px 2px 1px oklch(var(--b6) / 80%);
+  --focused-input-shadow: inset 0 0 0 1px oklch(var(--h3) / 40%), var(--input-shadow);
+  --group-shadow: inset 0 0 0 1px oklch(var(--b2) / 36%), 0 1px 2px 0 oklch(0.01 calc(var(--sat-s) * 0.02) var(--hue) / 30%);
+  --background-overlay: oklch(var(--b6) / 44%);
+  --background-overlay-mix: darken;
+  --banner-overlay: transparent;
+  --banner-overlay-mix: normal;
+
+  /* glass surfaces: alpha falls back per surface while --solarium-opacity is unset (glass on) */
+  --blur-saturate: 240%;
+  --blur-brightness: 0.7;
+  --blur-contrast: 1;
+  --solarium-compensate: brightness(70%);
+  --card-blur: blur(6px) saturate(var(--blur-saturate)) brightness(var(--blur-brightness)) contrast(var(--blur-contrast));
+  --solarium: var(--card-blur) url(#solarium);
+  --solarium-bright: var(--card-blur) brightness(190%);
+  --solarium-dark: var(--card-blur) brightness(60%) contrast(120%);
+  --solarium-percent: 1;
+  --tooltip-bg: oklch(var(--tooltip) / var(--solarium-opacity, 80%));
+  --dialog-bg: oklch(var(--b5) / var(--solarium-opacity, 90%));
+  --toast-bg: oklch(var(--b5) / var(--solarium-opacity, 92%));
+  --status-bg: oklch(var(--b8) / var(--solarium-opacity, 80%));
+  --mobile-nav-bg: oklch(var(--b6) / var(--solarium-opacity, 85%));
+  --modal-scrim: oklch(var(--b6) / 60%);
+
+  /* shadows */
+  --card-shadow: 0 8px 35px oklch(0.01 calc(var(--sat-s) * 0.02) var(--hue) / 30%);
+  --menu-shadow: 0 5px 15px 11px oklch(0 0 0 / 40%);
+  --overlay-shadow: 0 20px 40px 20px oklch(0 0 0 / 40%);
+  --standout-shadow: 0 6px 20px 7px oklch(0 0 0 / 20%);
+  --subtle-shadow: 0 6px 20px 2px oklch(0 0 0 / 20%);
+  --avatar-shadow: 0 6px 15px 10px oklch(0 0 0 / 5%);
+  --highlight-shadow: oklch(var(--b3) / 25%) 0 0 2px 1px;
+  --interact-shadow: 0 1px 2px 0 oklch(0 0 0 / 30%);
+  --interact-active-shadow: 0 2px 25px 0 oklch(var(--c1) / 3%);
+  --avatar-inset: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  --grid-inset: inset 0 0 0 1px rgb(255 255 255 / 7%);
+  --item-inset: inset 0 0 0 1px rgb(255 255 255 / 10%);
+  --nav-filter-shadow: drop-shadow(0 0 4px oklch(var(--b6))) drop-shadow(0 0 10px oklch(var(--b6) / 90%));
+  --header-filter-shadow: drop-shadow(0 1px 3px oklch(var(--b6) / 80%)) drop-shadow(0 3px 10px oklch(var(--b6) / 60%));
+
+  /* semantic colours */
+  --bg: oklch(var(--b6));
+  --surface: oklch(var(--b5));
+  --surface-hover: oklch(var(--b4) / 40%);
+  --surface-raised: oklch(var(--b4));
+  --text: oklch(var(--c2));
+  --text-muted: oklch(var(--c3));
+  --text-heading: oklch(var(--c1));
+  --border: var(--card-border-base);
+  --border-soft: var(--separator-base);
+  --accent-fg: oklch(var(--b7));
+  --on-accent: oklch(var(--b7));
+  /* status colours: the accent text stop computed at the pos / fav / neg triplets */
+  --success: oklch(calc(clamp(0.5, var(--pos-l), 2) * 0.72) calc(clamp(0, var(--pos-c), 2) * 0.46) var(--hue-pos));
+  --warning: oklch(calc(clamp(0.5, var(--fav-l), 2) * 0.72) calc(clamp(0, var(--fav-c), 2) * 0.46) var(--hue-fav));
+  --error: oklch(calc(clamp(0.5, var(--neg-l), 2) * 0.72) calc(clamp(0, var(--neg-c), 2) * 0.46) var(--hue-neg));
+
+  /* analytics: heat-map ramp and categorical series */
+  --summary-block-0: oklch(calc(var(--lit) * 0.45) calc(clamp(0, var(--sat), 2) * 0.76) var(--hue) / 20%);
+  --summary-block-1: oklch(calc(var(--lit) * 0.5) calc(clamp(0, var(--sat), 2) * 0.72) var(--hue) / 35%);
+  --summary-block-2: oklch(calc(var(--lit) * 0.56) calc(clamp(0, var(--sat), 2) * 0.64) var(--hue) / 50%);
+  --summary-block-3: oklch(calc(var(--lit) * 0.6) calc(clamp(0, var(--sat), 2) * 0.62) var(--hue) / 60%);
+  --summary-block-4: oklch(calc(var(--lit) * 0.67) calc(clamp(0, var(--sat), 2) * 0.56) var(--hue) / 80%);
+  --summary-block-5: oklch(calc(var(--lit) * 0.76) calc(clamp(0, var(--sat), 2) * 0.53) var(--hue) / 90%);
+  --summary-block-6: oklch(calc(var(--lit) * 0.82) calc(clamp(0, var(--sat), 2) * 0.48) var(--hue));
+  --summary-block-7: oklch(calc(var(--lit) * 0.9) calc(clamp(0, var(--sat), 2) * 0.43) var(--hue));
+  --summary-block-8: oklch(calc(var(--lit) * 0.98) calc(clamp(0, var(--sat), 2) * 0.37) var(--hue));
+  --summary-block-9: oklch(calc(var(--lit) * 1.12) calc(clamp(0, var(--sat), 2) * 0.34) var(--hue));
+  --graph-colour-0: oklch(75% 61% 30);
+  --graph-colour-1: oklch(80% 50% 45);
+  --graph-colour-2: oklch(100% 54% 60);
+  --graph-colour-3: oklch(80% 50% 135);
+  --graph-colour-4: oklch(85% 60% 150);
+  --graph-colour-5: oklch(80% 77% 180);
+  --graph-colour-6: oklch(94% 31% 210);
+  --graph-colour-7: oklch(70% 61% 260);
+  --graph-colour-8: oklch(80% 60% 290);
+  --graph-colour-9: oklch(80% 65% 310);
+  --graph-colour-10: oklch(80% 65% 360);
+}
+
+/* Firefox and Safari cannot reference an SVG filter from backdrop-filter */
+@supports (-moz-appearance: none) {
+  :root, .theme-scope { --solarium: var(--card-blur); }
+}
+@supports (font: -apple-system-body) {
+  :root, .theme-scope { --solarium: var(--card-blur); }
+}
+
+/* ── Dark (default Ash is the base above) ── */
+[data-bleh--theme="darker"] {
+  --b2: 0.37 calc(var(--sat-s) * 0.04) var(--hue);
+  --b3: 0.31 calc(var(--sat-s) * 0.04) var(--hue);
+  --b4: 0.26 calc(var(--sat-s) * 0.03) var(--hue);
+  --b5: 0.21 calc(var(--sat-s) * 0.03) var(--hue);
+  --b6: 0.18 calc(var(--sat-s) * 0.02) var(--hue);
+  --b8: 0.23 calc(var(--sat-s) * 0.02) var(--hue);
+  --card-border-base: oklch(var(--b3) / 50%);
+  --menu-border: oklch(var(--b3) / 50%);
+  --separator-base: oklch(var(--b3) / 70%);
+  --menu-item-hov: oklch(var(--b4) / 60%);
+  --menu-item-atv: oklch(var(--b4) / 80%);
+  --setting-hover: oklch(var(--b4) / 30%);
+  --setting-active: oklch(var(--b4) / 40%);
+  --sidebar-border: color-mix(in oklch, oklch(var(--b5)), oklch(var(--b2)) 25%);
+  --toolbar-bg: oklch(var(--b6) / 70%);
+  --card-blur-bg-base: 0.21 calc(var(--sat-s) * 0.05) var(--hue);
+  --card-blur-opacity: 50%;
+  --inset-background: oklch(var(--b6) / 25%);
+}
+
+/* ── Void ── */
+[data-bleh--theme="oled"] {
+  --b2: 0.35 calc(var(--sat-s) * 0.08) var(--hue);
+  --b3: 0.25 calc(var(--sat-s) * 0.04) var(--hue);
+  --b4: 0.16 calc(var(--sat-s) * 0.02) var(--hue);
+  --b5: 0.04 calc(var(--sat-s) * 0.01) var(--hue);
+  --b6: 0 0 0;
+  --b8: 0.17 0 0;
+  --c1: 0.98 0 var(--hue);
+  --card-border: inset 0 0 0 1px oklch(var(--b4) / 80%);
+  --card-border-base: oklch(var(--b3) / 40%);
+  --menu-border: oklch(var(--b2) / 30%);
+  --menu-bg-base: 0.16 calc(var(--sat-s) * 0.01) var(--hue);
+  --menu-opacity: 90%;
+  --menu-item-hov: oklch(var(--b2) / 20%);
+  --menu-item-atv: oklch(var(--b2) / 40%);
+  --setting-hover: oklch(var(--b2) / 16%);
+  --setting-active: oklch(var(--b2) / 30%);
+  --setting-group: oklch(var(--b4) / 18%);
+  --side-action-hov: oklch(var(--b4) / 80%);
+  --side-action-atv: oklch(var(--b4) / 100%);
+  --modal-button-hov: oklch(var(--b2) / 40%);
+  --modal-button-atv: oklch(var(--b2) / 60%);
+  --chart-button-hov: oklch(var(--b2) / 40%);
+  --chart-button-atv: oklch(var(--b2) / 60%);
+  --tracklist-odd: oklch(var(--b2) / 10%);
+  --tracklist-hover: oklch(var(--b2) / 20%);
+  --view-buttons-hov: oklch(var(--b2) / 40%);
+  --view-buttons-atv: oklch(var(--b2) / 60%);
+  --surface-hover: oklch(var(--b4) / 60%);
+  --sidebar-bg-solid: color-mix(in oklch, oklch(var(--b4)) 22%, oklch(var(--b5)));
+  --sidebar-border: color-mix(in oklch, oklch(var(--b5)), oklch(var(--b2)) 38%);
+  --toolbar-bg: oklch(0.04 calc(var(--sat-s) * 0.01) var(--hue) / 50%);
+  --toolbar-border: oklch(var(--b2) / 24%);
+  --subtle-border: 1px solid oklch(var(--b2) / 35%);
+  --card-blur-bg-base: 0.12 calc(var(--sat-s) * 0.05) var(--hue);
+  --card-blur-opacity: 50%;
+  --card-blur-bg-alt-opacity: 20%;
+  --textarea: oklch(var(--b4) / 25%);
+  --textarea-hov: oklch(var(--b4) / 35%);
+  --inset-background: oklch(var(--b2) / 10%);
+  --input-shadow: inset 0 0 0 1px oklch(var(--b3)), inset 0 1px 2px 1px oklch(var(--b6) / 80%);
+  --group-shadow: inset 0 0 0 1px oklch(var(--b2) / 42%);
+  --separator-shadow: 0 1px 2px 0 oklch(0.03 0 0 / 40%);
+  --button-outline: inset 0 0 0 1px oklch(0.27 calc(var(--sat-s) * 0.02) var(--hue));
+  --blur-saturate: 240%;
+  --solarium-compensate: brightness(75%);
+}
+
+/* ── Rosé Pine / Kanagawa Dragon: literal surfaces, no card vibrancy ── */
+[data-bleh--theme="rose_pine"] {
+  --b2: 0.4299 0.0392 290.42;
+  --b3: 0.3717 0.0358 291.1;
+  --b4: 0.3008 0.0423 289.23;
+  --b5: 0.2413 0.0322 289.14;
+  --b6: 0.2134 0.0255 291.13;
+  --b8: 0.2512 0.0263 287.62;
+  --c1: 0.9488 0.0299 289.97;
+  --c2: 0.848 0.0299 289.97;
+  --c3: 0.6539 0.0444 291.23;
+  --separator-base: oklch(var(--b3) / 55%);
+  --setting-group: oklch(var(--b4) / 20%);
+  --card-blur-bg-base: var(--b5);
+  --card-blur-opacity: 60%;
+  --group-shadow: inset 0 0 0 1px oklch(var(--b2) / 36%), 0 1px 2px 0 oklch(var(--b6) / 30%);
+}
+[data-bleh--theme="kanagawa_dragon"] {
+  --b2: 0.351 0.0037 84.58;
+  --b3: 0.2938 0.0015 17.25;
+  --b4: 0.2925 0.0022 17.42;
+  --b5: 0.2264 0.0059 91.62;
+  --b6: 0.181 0.006 106.98;
+  --b8: 0.1556 0.0017 17.34;
+  --c1: 0.9255 0.0391 99.09;
+  --c2: 0.8755 0.0391 99.09;
+  --c3: 0.537 0.02 96.31;
+  --card-border-base: oklch(var(--b2) / 60%);
+  --card-border-base-highlight: oklch(var(--b2) / 78%);
+  --menu-border: oklch(var(--b2) / 60%);
+  --separator-base: oklch(var(--b2) / 53%);
+  --card-blur-bg-base: var(--b5);
+  --card-blur-opacity: 60%;
+  --input-shadow: inset 0 0 0 1px oklch(var(--b3) / 90%), inset 0 1px 2px 1px oklch(var(--b6) / 80%);
+}
+
+/* ── light type: Light is the base, Ink and Rosé Pine Dawn override ── */
+[data-bleh--theme_type="light"] {
+  --c1: 0 calc(var(--sat) * 0.06) var(--hue);
+  --c2: 0.28 calc(var(--sat) * 0.04) var(--hue);
+  --c3: 0.55 calc(var(--sat) * 0.02) var(--hue);
+  --opposite-text: var(--c1);
+  --card-border: inset 0 0 0 1px oklch(var(--b4) / 70%);
+  --card-border-base: oklch(0.87 0 0);
+  --card-border-base-highlight: oklch(0.89 0 0);
+  --menu-border: oklch(0.87 0 0);
+  --separator-base: oklch(var(--b2) / 30%);
+  --separator-shadow: 0 1px 2px 0 oklch(0 0 0 / 2%);
+  --subtle-border: 1px solid oklch(var(--b4) / 65%);
+  --menu-bg-base: var(--b5);
+  --menu-opacity: 94%;
+  --menu-item-hov: oklch(var(--b4) / 60%);
+  --menu-item-atv: oklch(var(--b4) / 80%);
+  --setting-group: oklch(var(--b6) / 5%);
+  --view-buttons-bg: oklch(var(--b6) / 25%);
+  --view-buttons-hov: oklch(var(--b4) / 60%);
+  --view-buttons-atv: oklch(var(--b4) / 80%);
+  --button-outline: inset 0 0 0 1px oklch(var(--b2) / 50%);
+  --textarea: oklch(var(--b6) / 10%);
+  --textarea-hov: oklch(var(--b6) / 30%);
+  --sidebar-bg-solid: color-mix(in oklch, oklch(var(--b6)) 70%, oklch(var(--b5)));
+  --sidebar-border: color-mix(in oklch, oklch(var(--b5)), oklch(var(--b4)) 42%);
+  --toolbar-bg: oklch(var(--b5) / 70%);
+  --toolbar-border: oklch(var(--b4) / 65%);
+  --card-blur-bg-base: 0.99 calc(var(--sat-s) * 0.02) var(--hue);
+  --card-blur-opacity: 73%;
+  --card-blur-bg-alt-opacity: 22%;
+  --inset-background: oklch(var(--b6) / 3%);
+  --input-shadow: inset 0 0 0 1px oklch(var(--b2) / 30%), inset 0 1px 3px 0 oklch(0 0 0 / 2%);
+  --focused-input-shadow: inset 0 0 0 1px oklch(var(--l3-c) / 30%), var(--input-shadow);
+  --group-shadow: inset 0 0 0 1px oklch(var(--b4) / 80%), 0 1px 2px 0 oklch(0 0 0 / 4%);
+  --background-overlay: oklch(var(--b5));
+  --background-overlay-mix: overlay;
+  --banner-overlay: oklch(var(--b5) / 40%);
+  --banner-overlay-mix: lighten;
+  --blur-saturate: 130%;
+  --blur-brightness: 1.1;
+  --solarium-compensate: brightness(110%);
+
+  --card-shadow: 0 2px 10px oklch(0 0 0 / 5%);
+  --menu-shadow: 0 3px 15px 9px oklch(0 0 0 / 7%);
+  --overlay-shadow: var(--menu-shadow);
+  --standout-shadow: 0 6px 20px 7px oklch(0 0 0 / 6%);
+  --subtle-shadow: 0 3px 13px 0 oklch(0 0 0 / 4%);
+  --interact-shadow: 0 1px 2px 0 oklch(0 0 0 / 6%);
+  --interact-active-shadow: 0 0 transparent;
+  --avatar-inset: inset 0 0 0 1px rgb(0 0 0 / 6%);
+  --grid-inset: inset 0 0 0 1px rgb(0 0 0 / 5%);
+  --item-inset: inset 0 0 0 1px rgb(0 0 0 / 6%);
+  --nav-filter-shadow: drop-shadow(0 0 2px oklch(var(--b5)));
+  --header-filter-shadow: drop-shadow(0 3px 7px oklch(var(--b5)));
+
+  --success: oklch(calc(clamp(0.7, var(--pos-l), 1.1) * 0.51) calc(clamp(0, var(--pos-c), 2) * 0.33) var(--hue-pos));
+  --warning: oklch(calc(clamp(0.7, var(--fav-l), 1.1) * 0.51) calc(clamp(0, var(--fav-c), 2) * 0.33) var(--hue-fav));
+  --error: oklch(calc(clamp(0.7, var(--neg-l), 1.1) * 0.51) calc(clamp(0, var(--neg-c), 2) * 0.33) var(--hue-neg));
+
+  --summary-block-0: oklch(calc(var(--lit) * 0.99) calc(clamp(0, var(--sat), 2) * 0.07) var(--hue));
+  --summary-block-1: oklch(calc(var(--lit) * 0.99) calc(clamp(0, var(--sat), 2) * 0.2) var(--hue));
+  --summary-block-2: oklch(calc(var(--lit) * 0.93) calc(clamp(0, var(--sat), 2) * 0.27) var(--hue));
+  --summary-block-3: oklch(calc(var(--lit) * 0.84) calc(clamp(0, var(--sat), 2) * 0.34) var(--hue));
+  --summary-block-4: oklch(calc(var(--lit) * 0.74) calc(clamp(0, var(--sat), 2) * 0.42) var(--hue));
+  --summary-block-5: oklch(calc(var(--lit) * 0.65) calc(clamp(0, var(--sat), 2) * 0.49) var(--hue));
+  --summary-block-6: oklch(calc(var(--lit) * 0.55) calc(clamp(0, var(--sat), 2) * 0.54) var(--hue));
+  --summary-block-7: oklch(calc(var(--lit) * 0.45) calc(clamp(0, var(--sat), 2) * 0.57) var(--hue));
+  --summary-block-8: oklch(calc(var(--lit) * 0.3) calc(clamp(0, var(--sat), 2) * 0.6) var(--hue));
+  --summary-block-9: oklch(calc(var(--lit) * 0.2) calc(clamp(0, var(--sat), 2) * 0.64) var(--hue));
+  --graph-colour-0: oklch(62% 51% 30);
+  --graph-colour-1: oklch(76% 47% 45);
+  --graph-colour-2: oklch(90% 51% 60);
+  --graph-colour-3: oklch(74% 56% 135);
+  --graph-colour-4: oklch(70% 50% 150);
+  --graph-colour-5: oklch(65% 62% 185);
+  --graph-colour-6: oklch(83% 30% 210);
+  --graph-colour-7: oklch(52% 55% 260);
+  --graph-colour-8: oklch(70% 60% 290);
+  --graph-colour-9: oklch(75% 65% 310);
+  --graph-colour-10: oklch(70% 60% 360);
+}
+
+[data-bleh--theme="light"] {
+  --b2: 0.82 0 0;
+  --b3: 0.94 0 0;
+  --b4: 0.91 0 0;
+  --b5: 1 0 0;
+  --b6: 0.96 calc(var(--sat-s) * 0.02) var(--hue);
+  --b8: 1 0 0;
+  --b9: 1 0 0;
+  --tooltip: 0.92 0 0;
+}
+
+[data-bleh--theme="ink"] {
+  --b2: 0.70 calc(var(--sat-s) * 0.12) var(--hue);
+  --b3: 0.94 calc(var(--sat-s) * 0.12) var(--hue);
+  --b4: 0.85 calc(var(--sat-s) * 0.10) var(--hue);
+  --b5: 0.92 calc(var(--sat-s) * 0.09) var(--hue);
+  --b6: 0.86 calc(var(--sat-s) * 0.10) var(--hue);
+  --b7: 0.17 calc(var(--sat-s) * 0.26) var(--hue);
+  --b8: 0.86 calc(var(--sat-s) * 0.10) var(--hue);
+  --b9: 0.84 0 0;
+  --tooltip: 0.92 calc(var(--sat-s) * 0.07) var(--hue);
+  --c1: 0.14 calc(var(--sat) * 0.6) var(--hue);
+  --c2: 0.2 calc(var(--sat) * 0.4) var(--hue);
+  --c3: 0.5 calc(var(--sat) * 0.1) var(--hue);
+  --card-border-base: oklch(0.79 calc(var(--sat-s) * 0.12) var(--hue));
+  --card-border-base-highlight: oklch(0.76 calc(var(--sat-s) * 0.11) var(--hue));
+  --menu-border: oklch(0.78 calc(var(--sat-s) * 0.12) var(--hue));
+  --separator-base: oklch(var(--b2) / 20%);
+  --setting-group: oklch(var(--b6) / 8%);
+  --view-buttons-bg: oklch(var(--b6) / 10%);
+  --view-buttons-hov: oklch(var(--b4) / 40%);
+  --view-buttons-atv: oklch(var(--b4) / 60%);
+  --textarea: oklch(var(--b6) / 30%);
+  --textarea-hov: oklch(var(--b6) / 60%);
+  --sidebar-bg-solid: color-mix(in oklch, oklch(var(--b6)) 56%, oklch(var(--b5)));
+  --sidebar-border: oklch(0.88 calc(var(--sat-s) * 0.1) var(--hue));
+  --toolbar-bg: oklch(var(--b5) / 50%);
+  --toolbar-border: oklch(var(--b4) / 45%);
+  --card-blur-bg-base: 0.91 calc(var(--sat-s) * 0.11) var(--hue);
+  --card-blur-opacity: 63%;
+  --input-shadow: inset 0 0 0 1px oklch(var(--b2) / 20%), inset 0 1px 3px 0 oklch(var(--b6) / 40%);
+  --focused-input-shadow: inset 0 0 0 1px oklch(var(--h3) / 40%), var(--input-shadow);
+  --group-shadow: inset 0 0 0 1px oklch(var(--b2) / 28%), 0 1px 2px 0 oklch(0 0 0 / 3%);
+  --card-shadow: 0 2px 10px oklch(0.3 calc(var(--sat-s) * 0.72) var(--hue) / 8%);
+  --menu-shadow: 0 4px 40px oklch(0 0 0 / 20%);
+  --header-filter-shadow: drop-shadow(0 0 10px oklch(var(--b5)));
+  --background-overlay: oklch(var(--b5) / 50%);
+  --background-overlay-mix: plus-lighter;
+  --banner-overlay: oklch(var(--b5) / 30%);
+  --blur-brightness: 1;
+  --solarium-compensate: none;
+  --accent-fg: oklch(var(--b7));
+  --success: oklch(calc(clamp(0.7, var(--pos-l), 1.1) * 0.49) calc(clamp(0, var(--pos-c), 2) * 0.33) var(--hue-pos));
+  --warning: oklch(calc(clamp(0.7, var(--fav-l), 1.1) * 0.49) calc(clamp(0, var(--fav-c), 2) * 0.33) var(--hue-fav));
+  --error: oklch(calc(clamp(0.7, var(--neg-l), 1.1) * 0.49) calc(clamp(0, var(--neg-c), 2) * 0.33) var(--hue-neg));
+  --graph-colour-0: oklch(55% 40% 30);
+  --graph-colour-1: oklch(70% 40% 45);
+  --graph-colour-2: oklch(90% 45% 60);
+  --graph-colour-3: oklch(73% 45% 135);
+  --graph-colour-4: oklch(76% 40% 150);
+  --graph-colour-5: oklch(70% 57% 180);
+  --graph-colour-6: oklch(62% 40% 210);
+  --graph-colour-7: oklch(50% 58% 260);
+  --graph-colour-8: oklch(70% 50% 290);
+  --graph-colour-9: oklch(75% 55% 310);
+  --graph-colour-10: oklch(70% 50% 360);
+}
+
+[data-bleh--theme="rose_pine_dawn"] {
+  --b2: 0.8031 0.006 334;
+  --b3: 0.942 0.0057 31.06;
+  --b4: 0.8989 0.0145 64.34;
+  --b5: 0.989 0.0107 76.6;
+  --b6: 0.9691 0.0113 71.9;
+  --b8: 0.9502 0.0101 58.21;
+  --tooltip: 0.992 0.0057 31.06;
+  --c1: 0.3164 0.0519 289.72;
+  --c2: 0.4164 0.0519 289.72;
+  --c3: 0.6568 0.0458 291;
+  --card-border-base: oklch(var(--b2) / 49%);
+  --card-border-base-highlight: oklch(var(--b2) / 42%);
+  --menu-border: oklch(var(--b2) / 48%);
+  --separator-base: oklch(var(--b2) / 20%);
+  --separator-shadow: 0 1px 2px 0 oklch(0.7502 0.0101 58.21 / 6%);
+  --setting-group: oklch(var(--b6) / 25%);
+  --sidebar-bg-solid: color-mix(in oklch, oklch(var(--b6)) 92%, oklch(var(--b5)));
+  --sidebar-border: color-mix(in oklch, oklch(var(--b5)), oklch(var(--b4)) 44%);
+  --toolbar-bg: oklch(var(--b5) / 60%);
+  --toolbar-border: oklch(var(--b4) / 59%);
+  --card-blur-bg-base: var(--b5);
+  --card-blur-opacity: 70%;
+  --inset-background: oklch(var(--b6) / 50%);
+  --inset-shadow: inset 0 4px 10px oklch(var(--b6) / 90%);
+  --group-shadow: inset 0 0 0 1px oklch(var(--b4) / 60%), 0 1px 2px 0 oklch(0.7502 0.0101 58.21 / 10%);
+  --card-shadow: 0 2px 10px oklch(0.7699 0.0113 71.9 / 10%);
+  --menu-shadow: 0 4px 40px oklch(0 0 0 / 20%);
+  --background-overlay-mix: overlay;
+  --banner-overlay: oklch(var(--b5) / 30%);
+  --blur-brightness: 0.98;
+  --solarium-compensate: none;
+  --success: oklch(calc(clamp(0.7, var(--pos-l), 1.1) * 0.55) calc(clamp(0, var(--pos-c), 2) * 0.38) var(--hue-pos));
+  --warning: oklch(calc(clamp(0.7, var(--fav-l), 1.1) * 0.55) calc(clamp(0, var(--fav-c), 2) * 0.38) var(--hue-fav));
+  --error: oklch(calc(clamp(0.7, var(--neg-l), 1.1) * 0.55) calc(clamp(0, var(--neg-c), 2) * 0.38) var(--hue-neg));
+  --graph-colour-0: oklch(55% 40% 30);
+  --graph-colour-1: oklch(70% 40% 45);
+  --graph-colour-2: oklch(90% 45% 60);
+  --graph-colour-3: oklch(73% 45% 135);
+  --graph-colour-4: oklch(76% 40% 150);
+  --graph-colour-5: oklch(70% 57% 180);
+  --graph-colour-6: oklch(62% 40% 210);
+  --graph-colour-7: oklch(50% 58% 260);
+  --graph-colour-8: oklch(70% 50% 290);
+  --graph-colour-9: oklch(75% 55% 310);
+  --graph-colour-10: oklch(70% 50% 360);
+}
+
+/* ── glass off: every glass surface goes opaque and the blur becomes a small brightness drop ── */
+[data-bleh--solarium="false"], [data-bleh--solarium="false"] .theme-scope {
+  --solarium: var(--solarium-compensate);
+  --solarium-bright: var(--solarium-compensate);
+  --solarium-dark: var(--solarium-compensate);
+  --card-blur: var(--solarium-compensate);
+  --solarium-opacity: 1;
+  --solarium-percent: 0;
+  --sidebar-bg: var(--sidebar-bg-solid);
+}
+
+/* ≤980px the card fills the viewport: no outer shadow */
+@media (max-width: 980px) {
+  :root { --card-shadow: 0 0 transparent; }
+}

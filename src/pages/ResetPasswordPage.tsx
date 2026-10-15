@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
+import { AlertFilled } from '@mingcute/react/core-filled'
 import { authClient } from '../lib/auth-client'
-import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
-import { Logo } from '../components/ui/Logo'
+import { Button, Input } from '../components/bleh'
+import { AuthShell } from '../components/auth/AuthShell'
+import { AuthHeading, AuthNotice } from '../components/auth/AuthParts'
 
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
@@ -47,81 +48,60 @@ export function ResetPasswordPage() {
     }
   }
 
+  if (!token || isExpiredToken) {
+    return (
+      <AuthShell width={420} eyebrow="Password reset">
+        <div className="animate-item">
+          <AuthNotice
+            icon={<AlertFilled />}
+            hue="hue-warn"
+            title="Link expired or invalid"
+            body="This password reset link has expired or is no longer valid."
+          >
+            <Link to="/login" className="as-link text-sm">Request a new reset link</Link>
+          </AuthNotice>
+        </div>
+      </AuthShell>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-surface flex flex-col lg:flex-row">
-      {/* Left panel — brand */}
-      <div className="hidden lg:flex lg:w-2/5 bg-surface-raised border-r border-border items-end p-12 relative overflow-hidden">
-        <div className="absolute top-1/3 -right-20 w-[300px] h-[300px] rounded-full bg-accent/5 blur-[80px]" />
-        <div className="relative z-10">
-          <Link to="/" className="flex items-center gap-2.5 mb-12 no-underline">
-            <Logo size={32} />
-            <span className="text-lg font-semibold text-text-primary tracking-tight">Zephyron</span>
-          </Link>
-          <p className="text-2xl font-semibold text-text-primary leading-snug mb-3">
-            The platform for<br />curated DJ sets
-          </p>
-          <p className="text-sm text-text-muted">
-            AI-powered tracklists. Community-verified.
-          </p>
-        </div>
+    <AuthShell width={420} eyebrow="Password reset">
+      <div className="animate-item">
+        <AuthHeading title="Choose a new password" subtitle="Pick something strong." />
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <Input
+            label="New password"
+            name="newPassword"
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            autoComplete="new-password"
+            required
+            autoFocus
+            minLength={8}
+          />
+          <Input
+            label="Confirm password"
+            name="confirmPassword"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            autoComplete="new-password"
+            required
+            error={confirmError ?? undefined}
+          />
+          {submitError && <p role="alert" className="ui-field-msg" data-error>{submitError}</p>}
+          <Button
+            appearance="primary"
+            label={isLoading ? 'Setting password...' : 'Set new password'}
+            htmlButtonType="submit"
+            disabled={isLoading}
+            loading={isLoading}
+            className="mt-1 w-full"
+          />
+        </form>
       </div>
-
-      {/* Right panel */}
-      <div className="flex-1 flex items-center justify-center px-5 sm:px-8 py-12">
-        <div className="w-full max-w-sm">
-          {/* Mobile logo */}
-          <Link to="/" className="flex items-center gap-2.5 mb-10 lg:hidden no-underline">
-            <Logo size={28} />
-            <span className="text-base font-semibold text-text-primary tracking-tight">Zephyron</span>
-          </Link>
-
-          {!token || isExpiredToken ? (
-            <div
-              className="rounded-xl p-5 space-y-3"
-              style={{ background: 'hsl(0 60% 50% / 0.08)', boxShadow: 'inset 0 0 0 1px hsl(0 60% 50% / 0.2)' }}
-            >
-              <p className="text-sm font-semibold text-text-primary">Link expired or invalid</p>
-              <p className="text-sm text-text-muted">This password reset link has expired or is no longer valid.</p>
-              <Link
-                to="/login"
-                className="text-sm text-accent hover:text-accent-hover no-underline"
-              >
-                Request a new reset link →
-              </Link>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <h1 className="text-xl font-semibold text-text-primary mb-1">Choose a new password</h1>
-                <p className="text-sm text-text-muted mb-8">Pick something strong.</p>
-              </div>
-              <Input
-                label="New password"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                autoFocus
-                minLength={8}
-              />
-              <Input
-                label="Confirm password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                error={confirmError ?? undefined}
-              />
-              {submitError && (
-                <p className="text-xs text-danger">{submitError}</p>
-              )}
-              <Button variant="primary" type="submit" disabled={isLoading} className="w-full">
-                {isLoading ? 'Setting password...' : 'Set new password'}
-              </Button>
-            </form>
-          )}
-        </div>
-      </div>
-    </div>
+    </AuthShell>
   )
 }

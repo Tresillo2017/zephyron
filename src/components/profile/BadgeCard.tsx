@@ -34,21 +34,21 @@ export function BadgeCard({ userBadge, badge, locked = false }: BadgeCardProps) 
 
       <div
         className="text-sm font-[var(--font-weight-bold)] mb-1 line-clamp-2"
-        style={{ color: 'hsl(var(--c1))' }}
+        style={{ color: 'oklch(var(--c1))' }}
       >
         {badgeDef.name}
       </div>
 
       <div
         className="text-xs mb-2 line-clamp-2"
-        style={{ color: 'hsl(var(--c2))' }}
+        style={{ color: 'oklch(var(--c2))' }}
       >
         {badgeDef.description}
       </div>
 
       <div
         className="text-xs font-mono"
-        style={{ color: 'hsl(var(--c3))' }}
+        style={{ color: 'oklch(var(--c3))' }}
       >
         {formattedDate}
       </div>

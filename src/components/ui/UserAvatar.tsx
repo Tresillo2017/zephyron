@@ -30,8 +30,8 @@ export function UserAvatar({ avatarUrl, name, size = 32, className = '' }: UserA
         width: size,
         height: size,
         fontSize: size * 0.4,
-        background: 'hsl(var(--h3) / 0.15)',
-        color: 'hsl(var(--h3))',
+        background: 'oklch(var(--h3) / 0.15)',
+        color: 'oklch(var(--h3))',
       }}
     >
       {initial}

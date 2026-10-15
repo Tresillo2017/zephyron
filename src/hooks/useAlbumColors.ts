@@ -10,11 +10,11 @@ export interface AlbumColors {
 }
 
 const DEFAULT_COLORS: AlbumColors = {
-  vibrant: "hsl(var(--h3))",
-  darkVibrant: "hsl(var(--h4))",
-  muted: "hsl(var(--b4))",
-  darkMuted: "hsl(var(--b6))",
-  lightVibrant: "hsl(var(--h2))",
+  vibrant: "oklch(var(--h3))",
+  darkVibrant: "oklch(var(--h4))",
+  muted: "oklch(var(--b4))",
+  darkMuted: "oklch(var(--b6))",
+  lightVibrant: "oklch(var(--h2))",
 };
 
 // Cache extracted colors by URL to avoid re-extraction

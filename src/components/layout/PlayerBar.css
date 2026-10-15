@@ -1,0 +1,274 @@
+/* PlayerBar — bleh "scrobbling" bar: 72px glass solarium strip, inset-border cover,
+   accent play button with --glow-shadow, 12px controls, 4px progress rail at the bottom. */
+
+.player-bar {
+  position: relative;
+  flex-shrink: 0;
+  height: 72px;
+}
+
+.player-bar__panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+  box-shadow: var(--card-border);
+  overflow: visible;
+}
+
+.player-bar__playing {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, oklch(var(--h3) / 50%), transparent);
+}
+
+.player-bar__now {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 260px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.player-bar__cover {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: oklch(var(--b4));
+  box-shadow: var(--card-border);
+}
+
+.player-bar__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.player-bar__center {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.player-bar__ghost,
+.player-bar__play,
+.player-bar__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: oklch(var(--c2));
+  border-radius: 12px;
+  transition:
+    color 0.2s cubic-bezier(0.095, 0.41, 0.055, 0.96),
+    background-color 0.2s cubic-bezier(0.095, 0.41, 0.055, 0.96),
+    transform 0.2s cubic-bezier(0.095, 0.41, 0.055, 0.96),
+    box-shadow 0.2s cubic-bezier(0.095, 0.41, 0.055, 0.96);
+}
+
+.player-bar__ghost,
+.player-bar__icon {
+  width: 32px;
+  height: 32px;
+}
+
+.player-bar__ghost:hover,
+.player-bar__icon:hover {
+  color: oklch(var(--c1));
+  background: oklch(var(--b4) / 40%);
+}
+
+.player-bar__play {
+  width: 42px;
+  height: 42px;
+  color: oklch(var(--c1));
+  background: oklch(var(--h3));
+  box-shadow: var(--glow-shadow);
+}
+
+.player-bar__play:hover:not(:disabled) {
+  background: oklch(var(--h2));
+  transform: scale(1.04);
+}
+
+.player-bar__play:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.player-bar__ghost:active,
+.player-bar__play:active:not(:disabled),
+.player-bar__icon:active {
+  transform: scale(0.98);
+}
+
+.player-bar__time {
+  width: 44px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: oklch(var(--c3));
+}
+
+.player-bar__time--end {
+  text-align: left;
+}
+
+.player-bar__time--start {
+  text-align: right;
+}
+
+.player-bar__right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 260px;
+  flex-shrink: 0;
+}
+
+.player-bar__volume {
+  width: 110px;
+}
+
+/* Progress rail — 4px, grows on hover; integrates chapter ticks and storyboard popup */
+.player-bar__rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 5px;
+  cursor: pointer;
+}
+
+.player-bar__rail-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 4px;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: oklch(var(--b2) / 25%);
+  transition: height 0.2s cubic-bezier(0.095, 0.41, 0.055, 0.96);
+}
+
+.player-bar__rail:hover .player-bar__rail-track,
+.player-bar__rail:focus-visible .player-bar__rail-track {
+  height: 6px;
+}
+
+.player-bar__rail-fill {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 4px;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: oklch(var(--h3));
+  pointer-events: none;
+}
+
+.player-bar__rail:hover .player-bar__rail-fill {
+  height: 6px;
+}
+
+.player-bar__tick {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  opacity: 0;
+  background: oklch(var(--c1) / 45%);
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.player-bar__rail:hover .player-bar__tick {
+  opacity: 1;
+}
+
+.player-bar__nub {
+  position: absolute;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  background: #fff;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 1px 5px rgb(0 0 0 / 40%);
+  pointer-events: none;
+}
+
+.player-bar__hover-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  opacity: 0.4;
+  background: oklch(var(--c2));
+  pointer-events: none;
+}
+
+.player-bar__thumb {
+  position: absolute;
+  bottom: 100%;
+  margin-bottom: 10px;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.player-bar__thumb-frame {
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: var(--subtle-shadow), var(--card-border);
+}
+
+.player-bar__thumb-time {
+  margin-top: 4px;
+  text-align: center;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: oklch(var(--c2));
+}
+
+@media (max-width: 639px) {
+  .player-bar__panel {
+    padding: 0 12px;
+    gap: 10px;
+  }
+
+  .player-bar__now {
+    width: auto;
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-bar__ghost,
+  .player-bar__play,
+  .player-bar__icon,
+  .player-bar__rail-track,
+  .player-bar__tick {
+    transition: none;
+  }
+}

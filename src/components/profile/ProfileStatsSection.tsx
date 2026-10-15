@@ -24,14 +24,14 @@ export function ProfileStatsSection({ userId }: ProfileStatsSectionProps) {
   if (statsError) {
     return (
       <div className="card p-8 text-center">
-        <div className="text-sm mb-4" style={{ color: 'hsl(var(--c2))' }}>
+        <div className="text-sm mb-4" style={{ color: 'oklch(var(--c2))' }}>
           Stats unavailable
         </div>
         <button
           onClick={() => fetchStats(userId)}
           className="px-4 py-2 rounded text-sm font-[var(--font-weight-medium)]"
           style={{
-            backgroundColor: 'hsl(var(--h3))',
+            backgroundColor: 'oklch(var(--h3))',
             color: 'white'
           }}
         >
@@ -45,10 +45,10 @@ export function ProfileStatsSection({ userId }: ProfileStatsSectionProps) {
     return (
       <div className="card p-8 text-center">
         <div className="text-4xl mb-4">📊</div>
-        <div className="text-lg font-[var(--font-weight-medium)] mb-2" style={{ color: 'hsl(var(--c1))' }}>
+        <div className="text-lg font-[var(--font-weight-medium)] mb-2" style={{ color: 'oklch(var(--c1))' }}>
           No listening history yet
         </div>
-        <div className="text-sm" style={{ color: 'hsl(var(--c2))' }}>
+        <div className="text-sm" style={{ color: 'oklch(var(--c2))' }}>
           Start listening to see your stats
         </div>
       </div>
@@ -59,7 +59,7 @@ export function ProfileStatsSection({ userId }: ProfileStatsSectionProps) {
     <div>
       <h2
         className="text-2xl font-[var(--font-weight-bold)] mb-4"
-        style={{ color: 'hsl(var(--c1))' }}
+        style={{ color: 'oklch(var(--c1))' }}
       >
         Listening Statistics
       </h2>
@@ -74,7 +74,7 @@ export function ProfileStatsSection({ userId }: ProfileStatsSectionProps) {
 
       {stats.top_genres.length > 0 && (
         <div className="mb-6">
-          <span className="text-sm" style={{ color: 'hsl(var(--c2))' }}>
+          <span className="text-sm" style={{ color: 'oklch(var(--c2))' }}>
             Top Genres:{' '}
           </span>
           {stats.top_genres.map(g => (
@@ -82,8 +82,8 @@ export function ProfileStatsSection({ userId }: ProfileStatsSectionProps) {
               key={g.genre}
               className="inline-block px-2 py-1 rounded text-xs mr-2"
               style={{
-                backgroundColor: 'hsl(var(--h3) / 0.2)',
-                color: 'hsl(var(--h3))'
+                backgroundColor: 'oklch(var(--h3) / 0.2)',
+                color: 'oklch(var(--h3))'
               }}
             >
               #{g.genre}
@@ -98,12 +98,12 @@ export function ProfileStatsSection({ userId }: ProfileStatsSectionProps) {
 
       <div className="card p-4">
         <div className="flex items-center justify-center gap-8 text-sm">
-          <span style={{ color: 'hsl(var(--c2))' }}>
-            Avg Session: <span style={{ color: 'hsl(var(--c1))' }}>{stats.average_session_minutes} min</span>
+          <span style={{ color: 'oklch(var(--c2))' }}>
+            Avg Session: <span style={{ color: 'oklch(var(--c1))' }}>{stats.average_session_minutes} min</span>
           </span>
-          <span style={{ color: 'hsl(var(--c3))' }}>•</span>
-          <span style={{ color: 'hsl(var(--c2))' }}>
-            Longest: <span style={{ color: 'hsl(var(--c1))' }}>{Math.floor(stats.longest_session_minutes / 60)}h {Math.floor(stats.longest_session_minutes % 60)}min</span>
+          <span style={{ color: 'oklch(var(--c3))' }}>•</span>
+          <span style={{ color: 'oklch(var(--c2))' }}>
+            Longest: <span style={{ color: 'oklch(var(--c1))' }}>{Math.floor(stats.longest_session_minutes / 60)}h {Math.floor(stats.longest_session_minutes % 60)}min</span>
           </span>
         </div>
       </div>

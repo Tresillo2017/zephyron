@@ -1,0 +1,160 @@
+/* ─────────────────────────────────────────────────────────────
+   Base: reset, typography, links, focus, scrollbars, noise and the glass
+   surface classes. Element rules sit in @layer base and reusable classes in
+   @layer components so Tailwind utilities still win.
+   ───────────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* scrollbars are hidden everywhere; only <html> can opt back in */
+* {
+  scrollbar-width: none;
+  scrollbar-gutter: stable both-edges;
+  scroll-behavior: smooth;
+}
+html[data-bleh--show_scroller="true"] {
+  scrollbar-width: thin;
+  scrollbar-gutter: unset;
+}
+
+html {
+  color-scheme: dark;
+  scroll-padding-top: 67px;
+  background: var(--bg);
+  transition: background-color var(--trans) var(--trans-function);
+}
+[data-bleh--theme_type="dark"] { color-scheme: dark; }
+[data-bleh--theme_type="light"] { color-scheme: light; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font);
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  font-weight: var(--fw-regular);
+  letter-spacing: unset;
+  color: var(--text);
+  background: var(--bg);
+  accent-color: var(--accent);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: none;
+  transition:
+    background-color var(--trans) var(--trans-function),
+    color var(--trans) var(--trans-function),
+    box-shadow var(--trans) var(--trans-function);
+}
+
+#root { min-height: 100vh; }
+
+/* grain: bleh's turbulence + specular tile, soft-light over everything */
+:root {
+  --noise: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='700'%20height='700'%20viewBox='0%200%20700%20700'%3E%3Cfilter%20id='n'%20x='-20%25'%20y='-20%25'%20width='140%25'%20height='140%25'%20color-interpolation-filters='linearRGB'%3E%3CfeTurbulence%20type='turbulence'%20baseFrequency='0.102'%20numOctaves='4'%20seed='15'%20stitchTiles='stitch'%20result='t'/%3E%3CfeSpecularLighting%20in='t'%20surfaceScale='15'%20specularConstant='0.75'%20specularExponent='20'%20lighting-color='%236e6e6e'%3E%3CfeDistantLight%20azimuth='3'%20elevation='100'/%3E%3C/feSpecularLighting%3E%3C/filter%3E%3Crect%20width='700'%20height='700'%20fill='%236e6e6e'%20filter='url%28%23n%29'/%3E%3C/svg%3E");
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+  opacity: var(--noise-opacity, 0.25);
+  mix-blend-mode: soft-light;
+  background-image: var(--noise);
+  background-repeat: repeat;
+  background-size: 128px;
+}
+
+::selection {
+  background: oklch(var(--h4) / 30%);
+  color: var(--select-colour, oklch(var(--l3-c)));
+}
+
+:focus-visible {
+  outline: var(--focus-outline, 2px solid oklch(var(--l3-c))) !important;
+  outline-offset: 0;
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--fw-medium);
+    letter-spacing: 0;
+    line-height: 1.2;
+    color: oklch(var(--c1));
+    margin: 0;
+    text-wrap: balance;
+  }
+  h1 { font-weight: var(--fw-bold); }
+  b, strong { font-weight: var(--fw-bold); }
+  em, i { font-style: italic; }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+    text-underline-offset: var(--underline-offset);
+    cursor: pointer;
+  }
+  a:hover { text-decoration: underline; }
+
+  code, kbd, samp, pre, .time {
+    font-family: var(--font-code);
+    font-size: var(--font-size);
+    line-height: var(--line-height);
+    color: oklch(var(--c3));
+    background: oklch(var(--b6));
+    padding: 0 4px;
+    border-radius: var(--radius-xs);
+  }
+  pre { padding: 4px 8px; border-radius: var(--radius-s); }
+}
+
+[data-bleh--underline_links="true"] a:not([class*="no-underline"]) { text-decoration: underline; }
+
+/* ── reusable classes ── */
+
+@layer components {
+  /* display serif for hero and section titles only; sans medium when serif is off */
+  .font-head, .setting-head {
+    font-family: var(--font-head);
+    font-size: var(--font-size-head-3);
+    line-height: var(--line-height-head-3);
+    font-weight: var(--font-weight-head);
+    font-style: var(--font-style-head);
+  }
+  /* accent word inside a serif title */
+  .highlight { color: var(--accent); font-style: normal; }
+
+  .header-shadow { filter: var(--header-filter-shadow); }
+  .glow-text { text-shadow: 0 7px 20px oklch(var(--k4)); }
+  [data-bleh--grid_glow="false"] .glow-text { text-shadow: none; }
+
+  .hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+
+  .avatar-shape { border-radius: var(--avatar-radius); overflow: hidden; }
+  .avatar-shape :is(canvas, img, svg) { border-radius: var(--avatar-radius) !important; }
+
+  /* glass: each surface picks its own alpha; the opacity falls back while glass is on */
+  .glass-menu { background-color: var(--menu-bg); }
+  .glass-tooltip { background-color: var(--tooltip-bg); }
+  .glass-dialog { background-color: var(--dialog-bg); }
+  .glass-toast { background-color: var(--toast-bg); }
+  .glass-nav { background-color: var(--mobile-nav-bg); }
+  .glass { background-color: oklch(var(--b6) / var(--solarium-opacity, 85%)); }
+  .glass-surface { background-color: oklch(var(--b5) / var(--solarium-opacity, 90%)); }
+  :is(.glass-menu, .glass-tooltip, .glass-dialog, .glass-toast, .glass-nav, .glass, .glass-surface) {
+    background-image: var(--solarium-image, none);
+    backdrop-filter: var(--solarium);
+    -webkit-backdrop-filter: var(--solarium);
+  }
+}
+
+/* compact mode: tighter vertical rhythm */
+[data-bleh--compact="true"] {
+  --card-padding-v: 28px;
+  --card-gap: 11px;
+  --side-action-height: 32px;
+}

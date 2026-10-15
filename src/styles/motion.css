@@ -1,0 +1,222 @@
+/* ─────────────────────────────────────────────────────────────
+   Motion. State changes are 0.2s var(--trans-function); entrances are
+   0.3-0.4s var(--trans-function-ani). Every entrance is written as
+   `animation: var(--motion, <anim>)`, so --motion: none (reduced motion)
+   removes it. Spinners are functional and ignore --motion. Items stagger
+   through --delay and backwards fill.
+   ───────────────────────────────────────────────────────────── */
+
+@keyframes chartlist {
+  from { opacity: 0; translate: 0 8px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+@keyframes grid {
+  from { opacity: 0; translate: 0 10px; scale: 0.98; }
+  to   { opacity: 1; translate: 0 0; scale: 1; }
+}
+@keyframes activity {
+  from { opacity: 0; translate: 0 -5px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+@keyframes fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes bubble {
+  from { opacity: 0; scale: 0.9; }
+  to   { opacity: 1; scale: 1; }
+}
+@keyframes solarium_menu {
+  from { filter: blur(calc(3px * var(--solarium-percent, 1))); scale: 1 0.95; }
+  to   { filter: blur(0); scale: 1 1; }
+}
+@keyframes solarium {
+  from { filter: blur(calc(3px * var(--solarium-percent, 1))); scale: 0.98; }
+  to   { filter: blur(0); scale: 1; }
+}
+@keyframes modal_in {
+  from { opacity: 0; translate: 0 6px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+@keyframes notif {
+  from { opacity: 0; translate: 15px 0; }
+  to   { opacity: 1; translate: 0 0; }
+}
+@keyframes notif_out {
+  from { opacity: 1; translate: 0 0; }
+  to   { opacity: 0; translate: 15px 0; }
+}
+@keyframes status {
+  from { opacity: 0; scale: 1.1; filter: blur(2px); }
+  to   { opacity: 1; scale: 1; filter: blur(0); }
+}
+@keyframes carousel_left {
+  from { opacity: 0; translate: -20px 0; }
+  to   { opacity: 1; translate: 0 0; }
+}
+@keyframes carousel_right {
+  from { opacity: 0; translate: 20px 0; }
+  to   { opacity: 1; translate: 0 0; }
+}
+@keyframes banner {
+  from { opacity: 0; }
+  to   { opacity: 0.4; }
+}
+@keyframes ina {
+  0%, 100% { scale: 1 1; }
+  30% { scale: 1.03 1; }
+}
+@keyframes blur_in {
+  0%, 100% { scale: 1; filter: blur(0); opacity: 1; }
+  60% { scale: 1.05; filter: blur(4px); opacity: 0; }
+}
+@keyframes spinner {
+  to { rotate: 360deg; }
+}
+@keyframes staggered_spinner {
+  to { rotate: 360deg; }
+}
+@keyframes loading {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+@keyframes chartlist_loading {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@keyframes new {
+  0%, 100% { background-color: oklch(var(--k4) / 30%); color: oklch(var(--l3-c)); }
+  50% { background-color: oklch(var(--k4) / 60%); color: oklch(var(--l2-c-theme-switch)); }
+}
+@keyframes theme-bubble-new {
+  0%, 100% { background-color: oklch(var(--h3)); scale: 1; rotate: -3deg; }
+  40% { background-color: color-mix(in oklch, oklch(var(--l2-c)) 30%, oklch(var(--h3))); scale: 1.08; rotate: 6deg; }
+}
+@keyframes highlight_setting {
+  0%, 100% { background-color: transparent; }
+  40% { background-color: oklch(var(--k4) / 20%); }
+}
+@keyframes flash {
+  from { background-color: oklch(var(--h4) / 15%); }
+  to   { background-color: transparent; }
+}
+@keyframes animate_status {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.4); }
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+@layer components {
+  .animate-page { animation: var(--motion, grid 0.4s var(--trans-function-ani)); animation-delay: var(--delay, 0s); animation-fill-mode: backwards; }
+  .animate-grid { animation: var(--motion, grid 0.4s var(--trans-function-ani)); animation-delay: var(--delay, 0s); animation-fill-mode: backwards; }
+  .animate-item { animation: var(--motion, chartlist 0.4s var(--trans-function-ani)); animation-delay: var(--delay, 0s); animation-fill-mode: backwards; }
+  .animate-activity { animation: var(--motion, activity 0.35s var(--trans-function)); animation-delay: var(--delay, 0s); animation-fill-mode: backwards; }
+  .animate-fade { animation: var(--motion, fade 0.2s ease); }
+  .animate-bubble { animation: var(--motion, bubble 0.9s var(--trans-function)); }
+  .animate-menu { animation: var(--motion, solarium_menu 0.22s var(--trans-function)); transform-origin: top; }
+  .animate-menu-up { animation: var(--motion, solarium_menu 0.22s var(--trans-function)); transform-origin: bottom; }
+  .animate-solarium { animation: var(--motion, solarium 0.22s var(--trans-function)); }
+  .animate-modal-in { animation: var(--motion, modal_in 0.3s var(--trans-function-ani)); }
+  .animate-notif { animation: var(--motion, notif 0.2s var(--trans-function)); }
+  .animate-notif-out { animation: var(--motion, notif_out 0.2s var(--trans-function) forwards); }
+  .animate-status { animation: var(--motion, status 0.2s var(--trans-function)); }
+  .animate-blur-in, .animate-blur { animation: var(--motion, blur_in 0.4s var(--trans-function-ani)); }
+  .animate-ina { animation: var(--motion, ina 0.4s var(--trans-function-ani)); }
+  .animate-carousel-left { animation: var(--motion, carousel_left 0.6s var(--trans-function)); }
+  .animate-carousel-right { animation: var(--motion, carousel_right 0.6s var(--trans-function)); }
+  .animate-banner { opacity: 0.4; animation: var(--motion, banner 0.5s var(--trans-function-ani)); }
+  .animate-skeleton { animation: var(--motion, chartlist_loading 2s var(--trans-function-ani) infinite); }
+  .animate-new { animation: var(--motion, new 4s linear infinite); }
+  .animate-sticker { animation: var(--motion, theme-bubble-new 2.6s var(--trans-function-ani) infinite); }
+  .animate-highlight { animation: var(--motion, highlight_setting 4s var(--trans-function-ani)); }
+  .animate-flash { animation: var(--motion, flash 1s var(--trans-function-ani)); }
+  .animate-live { animation: var(--motion, animate_status 3s linear infinite); }
+
+  /* functional loops stay on under reduced motion */
+  .animate-spin-bleh { animation: spinner 1.2s linear infinite; }
+  .animate-spring-spin { animation: staggered_spinner 3s var(--spring) infinite; }
+}
+
+/* ── text swap + digit pop (PairingCard) ── */
+:root {
+  --digit-dur: 400ms;
+  --digit-distance: 6px;
+  --digit-stagger: 60ms;
+  --digit-blur: 2px;
+  --digit-ease: var(--trans-function-ani);
+  --digit-dir-x: 0;
+  --digit-dir-y: 1;
+  --text-swap-dur: 200ms;
+  --text-swap-translate-y: 8px;
+  --text-swap-blur: 2px;
+  --text-swap-ease: var(--trans-function);
+}
+
+.t-text-swap {
+  display: inline-block;
+  transform: translateY(0);
+  filter: blur(0);
+  opacity: 1;
+  transition:
+    transform var(--text-swap-dur) var(--text-swap-ease),
+    filter    var(--text-swap-dur) var(--text-swap-ease),
+    opacity   var(--text-swap-dur) var(--text-swap-ease);
+  will-change: transform, filter, opacity;
+}
+.t-text-swap.is-exit {
+  transform: translateY(calc(var(--text-swap-translate-y) * -1));
+  filter: blur(var(--text-swap-blur));
+  opacity: 0;
+}
+.t-text-swap.is-enter-start {
+  transform: translateY(var(--text-swap-translate-y));
+  filter: blur(var(--text-swap-blur));
+  opacity: 0;
+  transition: none;
+}
+
+@keyframes t-digit-pop-in {
+  0% {
+    transform: translate(calc(var(--digit-distance) * var(--digit-dir-x)), calc(var(--digit-distance) * var(--digit-dir-y)));
+    opacity: 0;
+    filter: blur(var(--digit-blur));
+  }
+  100% { transform: translate(0, 0); opacity: 1; filter: blur(0); }
+}
+.t-digit-group { display: inline-flex; align-items: baseline; }
+.t-digit { display: inline-block; will-change: transform, opacity, filter; }
+.t-digit-group.is-animating .t-digit { animation: var(--motion, t-digit-pop-in var(--digit-dur) var(--digit-ease) both); }
+.t-digit-group.is-animating .t-digit[data-stagger="1"] { animation-delay: var(--digit-stagger); }
+.t-digit-group.is-animating .t-digit[data-stagger="2"] { animation-delay: calc(var(--digit-stagger) * 2); }
+
+/* ── reduced motion: setting or OS preference. Entrance animations go; colour and
+   opacity transitions, press scale, tooltip fades and spinners stay. ── */
+[data-bleh--reduced_motion="true"],
+[data-bleh--reduced_motion="true"] * {
+  scroll-behavior: auto;
+}
+[data-bleh--reduced_motion="true"] {
+  --motion: none;
+  --text-swap-translate-y: 0px;
+  --text-swap-blur: 0px;
+  --digit-distance: 0px;
+  --digit-blur: 0px;
+}
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto; }
+  :root {
+    --motion: none;
+    --text-swap-translate-y: 0px;
+    --text-swap-blur: 0px;
+    --digit-distance: 0px;
+    --digit-blur: 0px;
+  }
+  [style*="skeleton-shimmer"] { animation: none !important; }
+}

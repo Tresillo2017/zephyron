@@ -1,16 +1,19 @@
 import { ActivityFeed } from '../components/activity/ActivityFeed'
+import { ContentCard, Section, Toolbar } from '../components/bleh'
+import { PageFrame } from '../components/shell'
+import './library.css'
 
 export function ActivityPage() {
   return (
-    <div className="px-6 lg:px-10 py-6">
-      <h1
-        className="text-3xl font-[var(--font-weight-bold)] mb-6"
-        style={{ color: 'hsl(var(--c1))' }}
-      >
-        My Activity
-      </h1>
-
-      <ActivityFeed feed="me" showLoadMore />
-    </div>
+    <PageFrame>
+      <ContentCard
+        toolbar={<Toolbar><h1 className="zl-toolbar-title">My Activity</h1></Toolbar>}
+        main={
+          <Section>
+            <ActivityFeed feed="me" showLoadMore />
+          </Section>
+        }
+      />
+    </PageFrame>
   )
 }

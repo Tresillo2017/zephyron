@@ -24,7 +24,7 @@ export function Slider({ value, min, max, step = 1, onChange, label, displayValu
           onChange={(e) => onChange(parseFloat(e.target.value))}
           className="w-full h-[6px] rounded-full appearance-none cursor-pointer"
           style={{
-            background: `linear-gradient(to right, hsl(var(--h3)) 0%, hsl(var(--h3)) ${percent}%, hsl(var(--b3)) ${percent}%, hsl(var(--b3)) 100%)`,
+            background: `linear-gradient(to right, oklch(var(--h3)) 0%, oklch(var(--h3)) ${percent}%, oklch(var(--b3)) ${percent}%, oklch(var(--b3)) 100%)`,
           }}
         />
       </div>

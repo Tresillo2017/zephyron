@@ -209,6 +209,28 @@ export async function createSet(
     ? extract1001TracklistId(body.tracklist_1001_url)
     : null
 
+  // Never REPLACE an existing set that is already keyed by this 1001Tracklists id (that would
+  // wipe its audio, plays and detections). Return 409 with the existing row so the importer
+  // can update it in place via PUT /api/admin/sets/:id/sync-1001tracklists.
+  if (tracklist1001Id) {
+    const existing = await env.DB.prepare(
+      'SELECT id, stream_type, r2_key, tracklist_1001_hash FROM sets WHERE tracklist_1001_id = ?'
+    ).bind(tracklist1001Id).first<{ id: string; stream_type: string | null; r2_key: string | null; tracklist_1001_hash: string | null }>()
+    if (existing) {
+      return json({
+        error: `Set already exists for this 1001Tracklists id (id: ${existing.id})`,
+        ok: false,
+        data: {
+          id: existing.id,
+          slug: null,
+          stream_type: existing.stream_type,
+          has_audio: Boolean(existing.r2_key),
+          tracklist_1001_hash: existing.tracklist_1001_hash,
+        },
+      }, 409)
+    }
+  }
+
   // Derive the actual stream_type:
   // - explicit 'youtube' or a youtube_video_id present → 'invidious' (existing infra)
   // - explicit 'soundcloud' or 'hearthis' → store as-is
@@ -915,7 +937,7 @@ export async function import1001Tracklists(
     return errorResponse('Set not found', 404)
   }
 
-  let body: { tracks: Track1001[] }
+  let body: { tracks: Track1001[]; source_hash?: string }
   try {
     body = await request.json()
   } catch {
@@ -1044,6 +1066,13 @@ export async function import1001Tracklists(
       }
     }
     console.log(`[1001tl] Queued ${queueMessages.length} background tasks for set ${id}`)
+  }
+
+  // Remember which tracklist content was imported so the crawler can skip unchanged re-syncs.
+  if (body.source_hash) {
+    await env.DB.prepare(
+      'UPDATE sets SET tracklist_1001_hash = ?, tracklist_1001_synced_at = CURRENT_TIMESTAMP WHERE id = ?'
+    ).bind(body.source_hash, id).run()
   }
 
   return json({

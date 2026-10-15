@@ -140,6 +140,16 @@ export async function createEvent(
 
   const source1001Id = typeof body.source_1001_id === 'string' ? body.source_1001_id.trim() || null : null
 
+  // Idempotent import: an event already keyed by this 1001Tracklists id is returned as a 409
+  // with its id so the importer can update it instead of creating a duplicate.
+  if (source1001Id) {
+    const existing = await env.DB.prepare('SELECT id, slug FROM events WHERE source_1001_id = ?')
+      .bind(source1001Id).first<{ id: string; slug: string }>()
+    if (existing) {
+      return json({ error: `Event already exists (id: ${existing.id})`, ok: false, data: existing }, 409)
+    }
+  }
+
   // Year: explicit override > extracted from start_date > extracted from name
   let year: number | null = null
   if (typeof body.year === 'number') {

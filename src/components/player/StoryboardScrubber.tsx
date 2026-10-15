@@ -76,7 +76,7 @@ export function StoryboardScrubber({ storyboard, duration }: StoryboardScrubberP
           className="absolute top-0 bottom-0 w-px opacity-50 pointer-events-none"
           style={{
             left: `${(hoverTime / duration) * 100}%`,
-            background: 'hsl(var(--c2))',
+            background: 'oklch(var(--c2))',
           }}
         />
       )}
@@ -133,7 +133,7 @@ function ThumbnailPopup({
           width: `${popupWidth}px`,
           height: `${popupHeight}px`,
           boxShadow: '0 8px 25px rgba(0,0,0,0.5)',
-          border: '1px solid hsl(var(--b3) / 0.5)',
+          border: '1px solid oklch(var(--b3) / 0.5)',
         }}
       >
         <div
@@ -151,7 +151,7 @@ function ThumbnailPopup({
       {/* Time label */}
       <div
         className="mt-1 text-center text-[10px] font-mono tabular-nums"
-        style={{ color: 'hsl(var(--c2))' }}
+        style={{ color: 'oklch(var(--c2))' }}
       >
         {formatTime(hoverTime)}
       </div>

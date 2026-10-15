@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { fetchPendingAnnotations, moderateAnnotation } from '../../lib/api'
-import { Button } from '../ui/Button'
-import { Badge } from '../ui/Badge'
+import { Card } from '../bleh'
 import { formatTime, formatRelativeTime } from '../../lib/formatTime'
+import { AdminBadge, AdminButton, cellMuted } from './adminUi'
 
 interface PendingAnnotation {
   id: string
@@ -19,6 +19,11 @@ interface PendingAnnotation {
   original_track_title: string | null
   original_track_artist: string | null
   original_confidence: number | null
+}
+
+const TYPE_LABEL: Record<string, string> = {
+  correction: 'Correction',
+  new_track: 'New Track',
 }
 
 export function ModerationTab() {
@@ -49,93 +54,85 @@ export function ModerationTab() {
   }
 
   if (isLoading) {
-    return <p className="text-sm text-text-muted">Loading...</p>
+    return <p className={cellMuted}>Loading...</p>
   }
 
   if (annotations.length === 0) {
     return (
-      <div className="text-center py-12">
-        <svg className="w-12 h-12 text-text-muted/30 mx-auto mb-3" fill="currentColor" viewBox="0 0 24 24">
+      <div className="flex flex-col items-center gap-3 py-12 text-center">
+        <svg className="h-10 w-10 text-muted/40" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
         </svg>
-        <p className="text-text-muted text-sm">No pending annotations to review.</p>
+        <p className="text-[13px] text-muted">No pending annotations to review.</p>
       </div>
     )
   }
 
   return (
-    <div>
-      <p className="text-sm text-text-muted mb-4">{annotations.length} pending annotation{annotations.length !== 1 ? 's' : ''}</p>
+    <div className="flex flex-col gap-3">
+      <p className="text-[13px] text-muted">
+        {annotations.length} pending annotation{annotations.length !== 1 ? 's' : ''}
+      </p>
 
-      <div className="space-y-3">
-        {annotations.map((ann) => (
-          <div key={ann.id} className="card p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <Badge
-                  variant={
-                    ann.annotation_type === 'correction' ? 'default'
-                      : ann.annotation_type === 'new_track' ? 'accent'
-                      : 'default'
-                  }
-                >
-                  {ann.annotation_type === 'correction' ? 'Correction'
-                    : ann.annotation_type === 'new_track' ? 'New Track'
-                    : 'Flag as False'}
-                </Badge>
-                <span className="text-xs text-text-muted ml-2">{formatRelativeTime(ann.created_at)}</span>
-              </div>
-              <span className="text-xs text-text-muted">
-                in {ann.set_title} by {ann.set_artist}
-              </span>
+      {annotations.map((ann) => (
+        <Card key={ann.id} className="flex flex-col gap-3 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <AdminBadge variant={ann.annotation_type === 'new_track' ? 'accent' : 'default'}>
+                {TYPE_LABEL[ann.annotation_type] ?? 'Flag as False'}
+              </AdminBadge>
+              <span className="text-[12px] text-muted">{formatRelativeTime(ann.created_at)}</span>
             </div>
+            <span className="min-w-0 truncate text-[12px] text-muted">
+              in {ann.set_title} by {ann.set_artist}
+            </span>
+          </div>
 
-            {/* Original vs proposed */}
-            <div className="grid grid-cols-2 gap-4 mb-3">
-              {ann.original_track_title && (
-                <div className="bg-surface-overlay rounded p-2">
-                  <p className="text-[10px] text-text-muted uppercase tracking-wider mb-1">Original Detection</p>
-                  <p className="text-sm text-text-secondary">
-                    {ann.original_track_title}
-                    {ann.original_track_artist && <span className="text-text-muted"> - {ann.original_track_artist}</span>}
-                  </p>
-                  {ann.original_confidence != null && (
-                    <p className="text-xs text-text-muted mt-0.5">{Math.round(ann.original_confidence * 100)}% confidence</p>
-                  )}
-                </div>
-              )}
-              <div className="bg-surface-overlay rounded p-2">
-                <p className="text-[10px] text-text-muted uppercase tracking-wider mb-1">Proposed</p>
-                <p className="text-sm text-text-primary">
-                  {ann.track_title}
-                  {ann.track_artist && <span className="text-text-secondary"> - {ann.track_artist}</span>}
+          {/* Original vs proposed */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {ann.original_track_title && (
+              <div className="rounded-item bg-b4/40 p-3 shadow-[inset_0_0_0_1px_color-mix(in_oklch,var(--b4),transparent_75%)]">
+                <p className="mb-1 text-[10px] uppercase tracking-wider text-muted">Original Detection</p>
+                <p className="text-[13px] text-text">
+                  {ann.original_track_title}
+                  {ann.original_track_artist && <span className="text-muted"> - {ann.original_track_artist}</span>}
                 </p>
-                <p className="text-xs text-text-muted mt-0.5">at {formatTime(ann.start_time_seconds)}</p>
+                {ann.original_confidence != null && (
+                  <p className="mt-0.5 text-[12px] text-muted">{Math.round(ann.original_confidence * 100)}% confidence</p>
+                )}
               </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-2">
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => handleModerate(ann.id, 'approve')}
-                disabled={moderating === ann.id}
-              >
-                Approve
-              </Button>
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => handleModerate(ann.id, 'reject')}
-                disabled={moderating === ann.id}
-              >
-                Reject
-              </Button>
+            )}
+            <div className="rounded-item bg-b4/40 p-3 shadow-[inset_0_0_0_1px_color-mix(in_oklch,var(--b4),transparent_75%)]">
+              <p className="mb-1 text-[10px] uppercase tracking-wider text-muted">Proposed</p>
+              <p className="text-[13px] text-heading">
+                {ann.track_title}
+                {ann.track_artist && <span className="text-text"> - {ann.track_artist}</span>}
+              </p>
+              <p className="mt-0.5 text-[12px] text-muted">at {formatTime(ann.start_time_seconds)}</p>
             </div>
           </div>
-        ))}
-      </div>
+
+          {/* Actions */}
+          <div className="flex gap-2">
+            <AdminButton
+              variant="primary"
+              size="sm"
+              onClick={() => handleModerate(ann.id, 'approve')}
+              disabled={moderating === ann.id}
+            >
+              Approve
+            </AdminButton>
+            <AdminButton
+              variant="danger"
+              size="sm"
+              onClick={() => handleModerate(ann.id, 'reject')}
+              disabled={moderating === ann.id}
+            >
+              Reject
+            </AdminButton>
+          </div>
+        </Card>
+      ))}
     </div>
   )
 }

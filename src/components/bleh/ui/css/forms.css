@@ -1,0 +1,255 @@
+/* Switch, checkbox, radio, range, select button, input, textarea */
+@layer components {
+  /* ── Switch: 34x20 pill, 14px knob inset 3px ── */
+  .ui-switch {
+    --i-radius: 50px;
+    width: 34px;
+    height: 20px;
+    padding: 0;
+    flex: none;
+  }
+  .ui-switch-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    display: grid;
+    place-items: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 12px;
+    background: oklch(var(--c3));
+    box-shadow: inset 0 -1px 2px oklch(var(--c2) / 15%);
+    transition: left 0.2s var(--trans-function-ani), background-color 0.2s var(--trans-function-ani);
+  }
+  .ui-switch[aria-checked="true"] {
+    --i-bg: oklch(var(--h3));
+    --i-hov: color-mix(in oklch, oklch(var(--h4)), oklch(var(--h3)) 80%);
+    --i-atv: color-mix(in oklch, oklch(var(--h4)), oklch(var(--h3)) 60%);
+    --i-shadow: var(--primary-shadow), 0 3px 12px oklch(var(--h4) / 25%), var(--interact-shadow);
+  }
+  .ui-switch[aria-checked="true"] .ui-switch-knob { left: 17px; background: oklch(var(--b7)); }
+  .ui-switch-glyph { width: 10px; height: 10px; color: oklch(var(--b2)); opacity: 0; transition: opacity 0.2s var(--trans-function); }
+  .ui-switch[data-glyph] .ui-switch-glyph { opacity: 1; }
+  .ui-switch[aria-checked="true"] .ui-switch-glyph { color: oklch(var(--h2)); }
+
+  /* ── Checkbox / radio rows ── */
+  .ui-check-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 22px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: oklch(var(--c2));
+    font: inherit;
+    font-size: 14px;
+    line-height: 22px;
+    text-align: left;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ui-check-row:disabled { opacity: 0.65; cursor: default; }
+  .ui-check-box {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    background: oklch(var(--b3));
+    box-shadow: var(--interact-shadow);
+    transition: background-color 0.2s var(--trans-function), box-shadow 0.2s var(--trans-function), transform 0.2s var(--trans-function);
+  }
+  .ui-check-row:not(:disabled):hover .ui-check-box { background: color-mix(in oklch, oklch(var(--b6)), oklch(var(--b3)) 90%); transition-property: transform; }
+  .ui-check-row:not(:disabled):active .ui-check-box { background: color-mix(in oklch, oklch(var(--b6)), oklch(var(--b3)) 80%); transform: scale(0.98); }
+  .ui-check-row[aria-checked="true"] .ui-check-box {
+    background: oklch(var(--h3));
+    box-shadow: var(--primary-shadow), 0 3px 12px oklch(var(--h4) / 25%), var(--interact-shadow);
+  }
+  .ui-check-row[aria-checked="true"]:not(:disabled):hover .ui-check-box { background: color-mix(in oklch, oklch(var(--h4)), oklch(var(--h3)) 80%); }
+  .ui-check-row[aria-checked="true"]:not(:disabled):active .ui-check-box { background: color-mix(in oklch, oklch(var(--h4)), oklch(var(--h3)) 60%); }
+  .ui-check-glyph {
+    width: 12px;
+    height: 12px;
+    color: oklch(var(--b7));
+    scale: 0;
+    opacity: 0;
+    transform-origin: 0 100%;
+    transition: scale 0.3s var(--trans-function), opacity 0.3s var(--trans-function);
+  }
+  .ui-check-row[aria-checked="true"] .ui-check-glyph { scale: 1; opacity: 1; }
+
+  .ui-radio-dot { display: none; }
+  .ui-check-row[role="radio"] .ui-check-box { border-radius: 50%; }
+  .ui-check-row[role="radio"][aria-checked="true"] .ui-check-box {
+    background: color-mix(in oklch, oklch(var(--b6)), oklch(var(--b3)) 80%);
+    box-shadow: inset 0 0 0 4px oklch(var(--l3-c)), 0 3px 12px oklch(var(--h4) / 25%), var(--interact-shadow);
+  }
+
+  /* ── Range: 6px track, h3 fill, 12x16 nub that turns into a hollow glass lozenge while dragging ── */
+  .ui-range {
+    --p: 0;
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 28px;
+  }
+  .ui-range[data-disabled] { opacity: 0.65; }
+  .ui-range-input {
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 0;
+    right: 45px;
+    width: auto;
+    height: 28px;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+  }
+  .ui-range-input:disabled { cursor: default; }
+  .ui-range-input::-webkit-slider-runnable-track { background: transparent; height: 28px; }
+  .ui-range-input::-moz-range-track { background: transparent; height: 28px; }
+  .ui-range-input::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 16px; margin-top: 6px; border: 0; background: transparent; }
+  .ui-range-input::-moz-range-thumb { width: 12px; height: 16px; border: 0; background: transparent; }
+  .ui-range-track {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 45px;
+    height: 6px;
+    translate: 0 -50%;
+    border-radius: 12px;
+    background: oklch(var(--b3));
+    box-shadow: var(--group-shadow);
+    pointer-events: none;
+  }
+  .ui-range-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: calc(6px + (100% - 12px) * var(--p));
+    border-radius: 12px;
+    background: oklch(var(--h3));
+    box-shadow: var(--primary-shadow), 0 3px 12px oklch(var(--h4) / 32%);
+  }
+  .ui-range-nub {
+    position: absolute;
+    top: 50%;
+    left: calc(6px + (100% - 12px) * var(--p));
+    width: 12px;
+    height: 16px;
+    translate: -50% -50%;
+    border-radius: 12px;
+    background: oklch(var(--h3));
+    box-shadow: var(--primary-shadow), 0 3px 12px oklch(var(--h4) / 32%);
+    transition:
+      width 0.4s var(--trans-function-ani), height 0.4s var(--trans-function-ani),
+      background-color 0.4s var(--trans-function-ani), box-shadow 0.4s var(--trans-function-ani),
+      backdrop-filter 0.4s var(--trans-function-ani);
+  }
+  .ui-range-input:active:not(:disabled) + .ui-range-track .ui-range-nub {
+    width: 22px;
+    height: 14px;
+    background: transparent;
+    box-shadow: inset 0 0 5px 2px oklch(var(--h3) / 60%);
+    backdrop-filter: blur(2px);
+  }
+  .ui-range-value {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    width: 30px;
+    translate: 0 -50%;
+    text-align: right;
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: var(--fw-medium, 500);
+    color: oklch(var(--l3-c));
+    pointer-events: none;
+  }
+  .ui-range-value small { font-size: inherit; opacity: 0.7; }
+  .ui-range[data-variant="hue"] .ui-range-track {
+    box-shadow: none;
+    background: linear-gradient(90deg,
+      oklch(from oklch(var(--h3)) l c 0), oklch(from oklch(var(--h3)) l c 60), oklch(from oklch(var(--h3)) l c 120),
+      oklch(from oklch(var(--h3)) l c 180), oklch(from oklch(var(--h3)) l c 240), oklch(from oklch(var(--h3)) l c 300),
+      oklch(from oklch(var(--h3)) l c 360));
+  }
+  .ui-range[data-variant="hue"] .ui-range-fill { opacity: 0; }
+
+  /* ── Select button: default button + 12px chevron ── */
+  .ui-select { padding-right: 25px; justify-content: flex-start; min-width: 100px; text-align: left; }
+  .ui-select-label { overflow: hidden; text-overflow: ellipsis; }
+  .ui-select-chevron {
+    position: absolute;
+    right: 9px;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    margin-top: -6px;
+    color: oklch(var(--c3));
+    transition: transform 0.2s var(--trans-function);
+  }
+  .ui-select:active .ui-select-chevron { transform: translateY(1px); }
+  .ui-select[aria-expanded="true"] .ui-select-chevron { transform: scaleY(-1); }
+  .ui-select[aria-expanded="true"]:active .ui-select-chevron { transform: scaleY(-1) translateY(-1px); }
+  .ui-select[data-variant="settings"] {
+    --i-bg: transparent;
+    --i-hov: oklch(var(--b2) / 20%);
+    --i-atv: oklch(var(--b2) / 40%);
+    --i-shadow: none;
+  }
+  .ui-select[data-variant="settings"]::after {
+    content: "";
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    margin-top: -7px;
+    border-radius: 4px;
+    background: oklch(var(--b2) / 20%);
+    transition: opacity 0.2s var(--trans-function);
+    pointer-events: none;
+  }
+  .ui-select[data-variant="settings"]:hover::after,
+  .ui-select[data-variant="settings"]:active::after,
+  .ui-select[data-variant="settings"][aria-expanded="true"]::after { opacity: 0; transition-duration: 0s; }
+  .ui-select-native { padding-right: 28px; appearance: none; }
+
+  /* ── Inputs ── */
+  .ui-input {
+    display: block;
+    width: 100%;
+    height: var(--button-height, 28px);
+    padding: 5px 9px;
+    border: 0;
+    border-radius: var(--button-radius, 9px);
+    background: var(--textarea);
+    box-shadow: var(--input-shadow);
+    color: oklch(var(--c2));
+    font: inherit;
+    font-size: 14px;
+    line-height: 18px;
+    outline: none;
+    transition: background-color 0.2s var(--trans-function), box-shadow 0.2s var(--trans-function), opacity 0.2s var(--trans-function);
+  }
+  .ui-input:hover,
+  .ui-input:focus { background: var(--textarea-hov); }
+  .ui-input:focus { box-shadow: var(--focused-input-shadow); }
+  .ui-input::placeholder { color: oklch(var(--c3)); }
+  .ui-input:disabled,
+  .ui-input[readonly] { color: oklch(var(--c3)); opacity: 0.7; }
+  .ui-input[aria-invalid="true"] {
+    box-shadow: var(--input-shadow), inset 0 0 0 1px color-mix(in oklch, var(--error) 45%, transparent);
+    background-image: linear-gradient(90deg, transparent, color-mix(in oklch, var(--error) 14%, transparent));
+  }
+  .ui-textarea { height: auto; min-height: 64px; padding: 6px 9px; resize: vertical; line-height: 20px; }
+  .ui-field-label { font-size: 13px; line-height: 17px; color: oklch(var(--c3)); }
+  .ui-field-msg { font-size: 12px; line-height: 16px; color: oklch(var(--c3)); }
+  .ui-field-msg[data-error] { color: var(--error); }
+}

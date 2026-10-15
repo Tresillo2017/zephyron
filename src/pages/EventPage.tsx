@@ -1,15 +1,27 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, type ReactNode } from 'react'
 import { useParams, Link, useNavigate } from 'react-router'
 import { fetchEvent, getEventCoverUrl, getEventLogoUrl, getArtistImageUrl } from '../lib/api'
 import { useSession } from '../lib/auth-client'
 import { Skeleton } from '../components/ui/Skeleton'
-import { Badge } from '../components/ui/Badge'
-import { Button } from '../components/ui/Button'
-import { TabBar } from '../components/ui/TabBar'
 import { SetGrid } from '../components/sets/SetGrid'
 import { SocialLinks, countSocialLinks } from '../components/ui/SocialLinks'
+import { Badge, Button, ContentCard, Section } from '../components/bleh'
+import { PageFrame } from '../components/shell'
+import { DetailHero } from '../components/detail/DetailHero'
+import { DetailTabs, type DetailTab } from '../components/detail/DetailTabs'
 import { formatPlayCount } from '../lib/formatTime'
+import { getPlaceholder } from '../lib/placeholders'
 import type { EventArtist, EventGenreBreakdown, EventEdition } from '../lib/types'
+import {
+  CalendarFilled,
+  EditFilled,
+  Group2Filled,
+  HeadphoneFilled,
+  InformationFilled,
+  LayoutGridFilled,
+  MapPinFilled,
+} from '@mingcute/react/core-filled'
+import '../components/detail/detail.css'
 
 /** Extract YouTube video ID from any YouTube URL format */
 function extractYouTubeId(url: string): string | null {
@@ -25,11 +37,13 @@ function extractYouTubeId(url: string): string | null {
   return null
 }
 
-const TABS = [
-  { id: 'overview', label: 'Overview', icon: 'M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z' },
-  { id: 'lineup', label: 'Artist Lineup', icon: 'M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z' },
-  { id: 'sets', label: 'Sets', icon: 'M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 1 1-.99-3.467l2.31-.66a2.25 2.25 0 0 0 1.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 0 1-.99-3.467l2.31-.66A2.25 2.25 0 0 0 9 15.553Z' },
-  { id: 'info', label: 'Info', icon: 'M11.25 11.25l.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z' },
+type EventTab = 'overview' | 'lineup' | 'sets' | 'info'
+
+const TABS: DetailTab<EventTab>[] = [
+  { id: 'overview', label: 'Overview', icon: LayoutGridFilled },
+  { id: 'lineup', label: 'Artist Lineup', icon: Group2Filled },
+  { id: 'sets', label: 'Sets', icon: HeadphoneFilled },
+  { id: 'info', label: 'Info', icon: InformationFilled },
 ]
 
 /** Format an ISO date string to a readable format like "Jul 19, 2024" */
@@ -75,16 +89,95 @@ function formatTotalDuration(seconds: number): string {
   return `${h}h ${m}m`
 }
 
+/** Avatar + name link to an artist page (used in the lineup grids). */
+function PersonLink({ artist, large }: { artist: EventArtist; large?: boolean }) {
+  return (
+    <Link
+      to={`/app/artists/${artist.slug || artist.id}`}
+      className={large ? 'dt-person dt-person--lg' : 'dt-person'}
+    >
+      <span className="dt-person-avatar">
+        {artist.id ? (
+          <img
+            src={getArtistImageUrl(artist.id)}
+            alt=""
+            loading="lazy"
+            onError={(e) => { e.currentTarget.src = getPlaceholder('square') }}
+          />
+        ) : (
+          <span className="dt-person-initial">{artist.name.charAt(0).toUpperCase()}</span>
+        )}
+      </span>
+      <span className="dt-person-name">{artist.name}</span>
+    </Link>
+  )
+}
+
+/** Labelled values: location, dates, series and website. */
+function EventDetails({
+  event,
+  year,
+  dateLabel,
+}: {
+  event: any
+  year?: number | null
+  dateLabel: string
+}) {
+  const website = event.website as string | undefined
+  return (
+    <div className="dt-fields">
+      {event.location && (
+        <div>
+          <p className="dt-field-label">Location</p>
+          <p className="dt-field-value">{event.location as string}</p>
+        </div>
+      )}
+      {year && (
+        <div>
+          <p className="dt-field-label">Year</p>
+          <p className="dt-field-value dt-field-value--mono">{year}</p>
+        </div>
+      )}
+      {(event.start_date || event.end_date) && (
+        <div>
+          <p className="dt-field-label">{dateLabel}</p>
+          <p className="dt-field-value dt-field-value--mono">{formatDateRange(event.start_date, event.end_date)}</p>
+        </div>
+      )}
+      {event.series && (
+        <div>
+          <p className="dt-field-label">Series</p>
+          <p className="dt-field-value">{event.series as string}</p>
+        </div>
+      )}
+      {website && (
+        <div>
+          <p className="dt-field-label">Website</p>
+          <p className="dt-field-value">
+            <a href={website} target="_blank" rel="noopener noreferrer">
+              {website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}
+            </a>
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function EmptyCard({ children }: { children: ReactNode }) {
+  return <div className="dt-empty"><p>{children}</p></div>
+}
+
 export function EventPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { data: session } = useSession()
   const isAdmin = session?.user?.role === 'admin'
-   
+
   const [event, setEvent] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState<EventTab>('overview')
 
   useEffect(() => {
     if (!id) return
@@ -106,12 +199,12 @@ export function EventPage() {
     return combined.sort((a, b) => (b.year || 0) - (a.year || 0))
   }, [event, eventYear, editions])
 
-  if (error) return <div className="flex items-center justify-center h-full"><p className="text-sm" style={{ color: 'hsl(0, 60%, 55%)' }}>{error}</p></div>
+  if (error) return <div className="flex items-center justify-center h-full"><p className="dt-error">{error}</p></div>
 
   if (isLoading || !event) {
     return (
       <div>
-        <div className="h-[280px] bg-surface-raised" />
+        <div className="dt-skeleton-banner" />
         <div className="px-6 lg:px-10 -mt-24 relative z-10">
           <div className="flex gap-6">
             <Skeleton className="w-[160px] h-[160px] rounded-xl flex-shrink-0" />
@@ -125,467 +218,278 @@ export function EventPage() {
     )
   }
 
-  const tags = Array.isArray(event.tags) ? event.tags : []
+  const tags: string[] = Array.isArray(event.tags) ? event.tags : []
   const sets = event.sets || []
   const stats = event.stats || { set_count: 0, total_plays: 0, total_duration: 0, artist_count: 0 }
   const genres: EventGenreBreakdown[] = event.genres || []
   const artists: EventArtist[] = event.artists || []
   const maxGenreCount = genres.length > 0 ? genres[0].count : 1
   const aftermovieVideoId = extractYouTubeId(event.aftermovie_url || '')
+  const hasSocialLinks = countSocialLinks(event, ['social']) > 0
+
+  const goToEdition = (ed: EventEdition) => {
+    if (ed.id !== event.id) navigate(`/app/events/${ed.slug || ed.id}`)
+  }
+
+  const editionChips = allEditions.length > 1 && (
+    <div className="dt-chips" role="group" aria-label="Editions">
+      {allEditions.map((ed) => {
+        const isCurrent = ed.id === event.id
+        return (
+          <button
+            key={ed.id}
+            type="button"
+            className="dt-chip-btn"
+            aria-current={isCurrent ? 'true' : undefined}
+            onClick={() => goToEdition(ed)}
+          >
+            {ed.year || '?'}
+          </button>
+        )
+      })}
+    </div>
+  )
+
+  const socialBlock = hasSocialLinks && (
+    <div className="dt-about">
+      <SocialLinks data={event} categories={['social']} heading="CONNECT" />
+    </div>
+  )
+
+  const renderTab = (): { main: ReactNode; side?: ReactNode } => {
+    if (activeTab === 'overview') {
+      return {
+        main: (
+          <>
+            {genres.length > 0 && (
+              <Section title="Genres">
+                <div className="dt-genres">
+                  {genres.map((g) => (
+                    <div key={g.genre}>
+                      <div className="dt-genre-head">
+                        <span className="dt-genre-name">{g.genre}</span>
+                        <span className="dt-genre-count">{g.count} {g.count === 1 ? 'set' : 'sets'}</span>
+                      </div>
+                      <div className="dt-genre-track">
+                        <div className="dt-genre-bar" style={{ width: `${(g.count / maxGenreCount) * 100}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Section>
+            )}
+            {artists.length > 0 && (
+              <Section
+                title="Artist Lineup"
+                action={artists.length > 6 && (
+                  <button type="button" className="dt-link-btn" onClick={() => setActiveTab('lineup')}>
+                    View all {artists.length} →
+                  </button>
+                )}
+              >
+                <div className="dt-people">
+                  {artists.slice(0, 6).map((artist) => <PersonLink key={artist.id} artist={artist} />)}
+                </div>
+              </Section>
+            )}
+            {socialBlock}
+          </>
+        ),
+        side: (
+          <>
+            <Section title="Event stats">
+              <div className="dt-grid2">
+                <div className="dt-stat-block">
+                  <span className="dt-stat-value">{stats.set_count}</span>
+                  <span className="dt-stat-label">Sets</span>
+                </div>
+                <div className="dt-stat-block">
+                  <span className="dt-stat-value">{stats.artist_count}</span>
+                  <span className="dt-stat-label">Artists</span>
+                </div>
+                <div className="dt-stat-block">
+                  <span className="dt-stat-value">{formatTotalDuration(stats.total_duration)}</span>
+                  <span className="dt-stat-label">Total Music</span>
+                </div>
+                <div className="dt-stat-block">
+                  <span className="dt-stat-value">{formatPlayCount(stats.total_plays)}</span>
+                  <span className="dt-stat-label">Total Plays</span>
+                </div>
+              </div>
+            </Section>
+            <Section title="Details">
+              <EventDetails event={event} dateLabel="Date" />
+            </Section>
+          </>
+        ),
+      }
+    }
+
+    if (activeTab === 'lineup') {
+      return {
+        main: artists.length > 0 ? (
+          <Section
+            title="Artist Lineup"
+            action={<span className="dt-mono-count">{artists.length} {artists.length === 1 ? 'artist' : 'artists'}</span>}
+          >
+            <div className="dt-people dt-people--wide">
+              {artists.map((artist) => <PersonLink key={artist.id} artist={artist} large />)}
+            </div>
+          </Section>
+        ) : (
+          <EmptyCard>No artist lineup data available.</EmptyCard>
+        ),
+      }
+    }
+
+    if (activeTab === 'sets') {
+      return {
+        main: sets.length > 0 ? (
+          <Section
+            title="DJ Sets"
+            action={<span className="dt-mono-count">{sets.length} {sets.length === 1 ? 'set' : 'sets'}</span>}
+          >
+            <SetGrid sets={sets} />
+          </Section>
+        ) : (
+          <EmptyCard>No sets linked to this event yet.</EmptyCard>
+        ),
+      }
+    }
+
+    return {
+      main: (
+        <>
+          {event.description && (
+            <Section title="About">
+              <p className="dt-prose">{event.description}</p>
+            </Section>
+          )}
+          {tags.length > 0 && (
+            <Section title="Tags">
+              <div className="dt-tags">
+                {tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}
+              </div>
+            </Section>
+          )}
+          {allEditions.length > 1 && (
+            <Section title="Editions">
+              <div className="dt-fields">
+                {allEditions.map((ed) => {
+                  const isCurrent = ed.id === event.id
+                  return (
+                    <button
+                      key={ed.id}
+                      type="button"
+                      className="dt-edition"
+                      aria-current={isCurrent ? 'true' : undefined}
+                      onClick={() => goToEdition(ed)}
+                    >
+                      <span className="dt-edition-year">{ed.year || '?'}</span>
+                      <span className="dt-edition-name">{ed.name}</span>
+                      {isCurrent && <span className="dt-edition-current">CURRENT</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </Section>
+          )}
+        </>
+      ),
+      side: (
+        <>
+          <Section title="Details">
+            <EventDetails event={event} year={eventYear} dateLabel="Dates" />
+          </Section>
+          {socialBlock}
+        </>
+      ),
+    }
+  }
+
+  const { main, side } = renderTab()
 
   return (
-    <div>
-      {/* ═══ BANNER — aftermovie video > cover image > fallback ═══ */}
-      <div className="relative h-[280px] overflow-hidden">
-        {aftermovieVideoId ? (
+    <>
+      <DetailHero
+        media={
+          aftermovieVideoId ? (
+            <>
+              <iframe
+                className="dt-aftermovie"
+                src={`https://www.youtube-nocookie.com/embed/${aftermovieVideoId}?autoplay=1&mute=1&loop=1&controls=0&playlist=${aftermovieVideoId}&modestbranding=1&rel=0&showinfo=0&disablekb=1&fs=0&iv_load_policy=3`}
+                allow="autoplay; encrypted-media"
+                title="Aftermovie"
+              />
+              {/* Fallback cover shown until iframe loads */}
+              {event.cover_image_r2_key && (
+                <img src={getEventCoverUrl(event.id)} alt="" className="dt-aftermovie-cover" />
+              )}
+            </>
+          ) : event.cover_image_r2_key ? (
+            <img src={getEventCoverUrl(event.id)} alt="" className="dt-hero-media" />
+          ) : undefined
+        }
+        art={
+          event.logo_r2_key ? (
+            <img src={getEventLogoUrl(event.id)} alt={event.name} />
+          ) : event.cover_image_r2_key ? (
+            <img src={getEventCoverUrl(event.id)} alt={event.name} />
+          ) : (
+            <div className="dt-art-fallback">
+              <CalendarFilled aria-hidden="true" />
+            </div>
+          )
+        }
+        eyebrow={
+          <span className="dt-hero-badges">
+            <span>Event</span>
+            {eventYear && <Badge tone="accent">{eventYear}</Badge>}
+          </span>
+        }
+        title={event.name}
+        meta={
+          <span className="dt-hero-badges">
+            {event.location && (
+              <span className="dt-hero-badges">
+                <MapPinFilled className="dt-ico--sm" aria-hidden="true" />
+                {event.location}
+              </span>
+            )}
+            {(event.start_date || event.end_date) && (
+              <span className="dt-mono-count">{formatDateRange(event.start_date, event.end_date)}</span>
+            )}
+            {event.series && <Badge tone="accent">{event.series}</Badge>}
+          </span>
+        }
+        actions={
           <>
-            <iframe
-              src={`https://www.youtube-nocookie.com/embed/${aftermovieVideoId}?autoplay=1&mute=1&loop=1&controls=0&playlist=${aftermovieVideoId}&modestbranding=1&rel=0&showinfo=0&disablekb=1&fs=0&iv_load_policy=3`}
-              allow="autoplay; encrypted-media"
-              title="Aftermovie"
-              style={{
-                border: 'none',
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                // Keep 16:9 ratio but always fill the container:
-                // width = 100% of container height × (16/9), height = 100% of container width × (9/16)
-                // Use whichever is larger so no black bars remain
-                width: 'calc(280px * 16 / 9)',
-                height: 'calc(100vw * 9 / 16)',
-                minWidth: '100%',
-                minHeight: '100%',
-                transform: 'translate(-50%, -50%)',
-                pointerEvents: 'none',
-              }}
-            />
-            {/* Fallback cover shown until iframe loads */}
-            {event.cover_image_r2_key && (
-              <img
-                src={getEventCoverUrl(event.id)}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover object-center"
-                style={{ zIndex: -1 }}
+            {editionChips}
+            {isAdmin && (
+              <Button
+                appearance="default"
+                size="sm"
+                label="Edit"
+                to={`/app/admin?tab=events&edit=${event.id}`}
+                icon={<EditFilled className="dt-ico--sm" aria-hidden="true" />}
               />
             )}
           </>
-        ) : event.cover_image_r2_key ? (
-          <img src={getEventCoverUrl(event.id)} alt="" className="w-full h-full object-cover object-center" />
-        ) : (
-          <div className="w-full h-full bg-surface-raised" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/30 to-transparent" />
-      </div>
+        }
+      />
 
-      {/* ═══ HEADER — overlapping banner ═══ */}
-      <div className="relative -mt-[100px] z-10">
-        <div className="px-6 lg:px-10">
-          <div className="flex items-end gap-5 mb-6">
-            {/* Cover art / logo */}
-            <div
-              className="w-[130px] h-[130px] sm:w-[160px] sm:h-[160px] rounded-[var(--card-radius)] overflow-hidden flex-shrink-0 bg-surface-overlay"
-              style={{ boxShadow: 'var(--subtle-shadow)' }}
-            >
-              {event.logo_r2_key ? (
-                <img src={getEventLogoUrl(event.id)} alt={event.name} className="w-full h-full object-cover" />
-              ) : event.cover_image_r2_key ? (
-                <img src={getEventCoverUrl(event.id)} alt={event.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/15 to-surface-overlay">
-                  <svg className="w-14 h-14 text-text-muted/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-                  </svg>
-                </div>
-              )}
+      <DetailTabs tabs={TABS} active={activeTab} onChange={setActiveTab} label="Event sections" />
+
+      <PageFrame>
+        <ContentCard
+          main={
+            <div key={activeTab} className="dt-main animate-fade">
+              {main}
             </div>
-
-            {/* Title on banner */}
-            <div className="pb-2 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <p className="text-sm text-text-secondary banner-text">Event</p>
-                {eventYear && <Badge variant="accent">{eventYear}</Badge>}
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-text-primary leading-tight banner-text mb-1 truncate">
-                {event.name}
-              </h1>
-              <div className="flex items-center gap-3 flex-wrap">
-                {event.location && (
-                  <span className="text-sm text-text-secondary banner-text flex items-center gap-1">
-                    <svg className="w-3.5 h-3.5 shrink-0 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0 1 15 0Z" />
-                    </svg>
-                    {event.location}
-                  </span>
-                )}
-                {(event.start_date || event.end_date) && (
-                  <span className="text-xs font-mono text-text-muted banner-text">
-                    {formatDateRange(event.start_date, event.end_date)}
-                  </span>
-                )}
-                {event.series && <Badge variant="accent">{event.series}</Badge>}
-              </div>
-
-              {/* Edition year selector */}
-              {allEditions.length > 1 && (
-                <div className="flex gap-1 flex-wrap mt-2">
-                  {allEditions.map((ed) => {
-                    const isCurrent = ed.id === event.id
-                    return (
-                      <button
-                        key={ed.id}
-                        onClick={() => { if (!isCurrent) navigate(`/app/events/${ed.slug || ed.id}`) }}
-                        className="px-2.5 py-1 rounded-md text-xs font-mono transition-all cursor-pointer border-none"
-                        style={{
-                          background: isCurrent ? 'hsl(var(--h3) / 0.2)' : 'hsl(var(--b3) / 0.4)',
-                          color: isCurrent ? 'hsl(var(--h2))' : 'hsl(var(--c3))',
-                          fontWeight: isCurrent ? 'var(--font-weight-bold)' : 'var(--font-weight-default)',
-                        }}
-                      >
-                        {ed.year || '?'}
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Admin edit button */}
-            {isAdmin && (
-              <div className="pb-2 flex items-end">
-                <Link to={`/app/admin?tab=events&edit=${event.id}`} className="no-underline">
-                  <Button variant="secondary" size="sm">
-                    <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Edit
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Tab bar */}
-        <div className="px-6 lg:px-10">
-          <TabBar tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
-        </div>
-      </div>
-
-      {/* ═══ CONTENT ═══ */}
-      <div className="px-6 lg:px-10 py-5">
-
-        {/* ── OVERVIEW ── */}
-        {activeTab === 'overview' && (
-          <div className="flex flex-col lg:flex-row gap-5">
-            {/* Main: genres + featured artists */}
-            <div className="flex-1 min-w-0 space-y-5">
-
-              {/* Genre breakdown */}
-              {genres.length > 0 && (
-                <div className="card p-5">
-                  <h3 className="text-xs text-text-muted font-mono tracking-wider mb-4">GENRES</h3>
-                  <div className="space-y-3">
-                    {genres.map((g) => (
-                      <div key={g.genre}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm text-text-primary">{g.genre}</span>
-                          <span className="text-xs font-mono tabular-nums text-text-muted">{g.count} {g.count === 1 ? 'set' : 'sets'}</span>
-                        </div>
-                        <div className="h-1.5 rounded-full overflow-hidden bg-surface-overlay">
-                          <div
-                            className="h-full rounded-full"
-                            style={{
-                              width: `${(g.count / maxGenreCount) * 100}%`,
-                              background: 'hsl(var(--h3))',
-                              transition: 'width 0.4s ease-out',
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Featured artists preview */}
-              {artists.length > 0 && (
-                <div className="card p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xs text-text-muted font-mono tracking-wider">ARTIST LINEUP</h3>
-                    {artists.length > 6 && (
-                      <button
-                        onClick={() => setActiveTab('lineup')}
-                        className="text-xs text-accent hover:text-accent-hover transition-colors"
-                      >
-                        View all {artists.length} →
-                      </button>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {artists.slice(0, 6).map((artist) => (
-                      <Link
-                        key={artist.id}
-                        to={`/app/artists/${artist.slug || artist.id}`}
-                        className="flex items-center gap-2.5 px-3 py-2 rounded-lg no-underline transition-colors hover:bg-surface-hover"
-                      >
-                        <div
-                          className="w-8 h-8 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
-                          style={{ background: 'hsl(var(--b3))', boxShadow: 'var(--card-border)' }}
-                        >
-                          {artist.id ? (
-                            <img src={getArtistImageUrl(artist.id)} alt="" className="w-full h-full object-cover" loading="lazy" />
-                          ) : (
-                            <span className="text-[11px] font-bold text-text-muted">{artist.name.charAt(0).toUpperCase()}</span>
-                          )}
-                        </div>
-                        <span className="text-xs text-text-secondary truncate">{artist.name}</span>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Social links */}
-              {countSocialLinks(event, ['social']) > 0 && (
-                <div className="card p-5">
-                  <SocialLinks data={event} categories={['social']} heading="CONNECT" />
-                </div>
-              )}
-            </div>
-
-            {/* Sidebar: stats */}
-            <div className="lg:w-[280px] shrink-0 space-y-5">
-              <div className="card p-5">
-                <h3 className="text-xs text-text-muted font-mono tracking-wider mb-4">EVENT STATS</h3>
-                <div className="grid grid-cols-2 gap-5">
-                  <div>
-                    <p className="text-2xl font-bold tabular-nums text-text-primary">{stats.set_count}</p>
-                    <p className="text-xs text-text-muted mt-0.5">Sets</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold tabular-nums text-text-primary">{stats.artist_count}</p>
-                    <p className="text-xs text-text-muted mt-0.5">Artists</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold tabular-nums text-text-primary">{formatTotalDuration(stats.total_duration)}</p>
-                    <p className="text-xs text-text-muted mt-0.5">Total Music</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold tabular-nums text-text-primary">{formatPlayCount(stats.total_plays)}</p>
-                    <p className="text-xs text-text-muted mt-0.5">Total Plays</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick info */}
-              <div className="card p-5">
-                <h3 className="text-xs text-text-muted font-mono tracking-wider mb-4">DETAILS</h3>
-                <div className="space-y-3">
-                  {event.location && (
-                    <div>
-                      <p className="text-[10px] text-text-muted mb-0.5">Location</p>
-                      <p className="text-sm text-text-primary">{event.location as string}</p>
-                    </div>
-                  )}
-                  {(event.start_date || event.end_date) && (
-                    <div>
-                      <p className="text-[10px] text-text-muted mb-0.5">Date</p>
-                      <p className="text-sm font-mono text-text-primary">{formatDateRange(event.start_date, event.end_date)}</p>
-                    </div>
-                  )}
-                  {event.series && (
-                    <div>
-                      <p className="text-[10px] text-text-muted mb-0.5">Series</p>
-                      <p className="text-sm text-text-primary">{event.series as string}</p>
-                    </div>
-                  )}
-                  {event.website && (
-                    <div>
-                      <p className="text-[10px] text-text-muted mb-0.5">Website</p>
-                      <a
-                        href={event.website as string}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm no-underline text-accent hover:text-accent-hover transition-colors"
-                      >
-                        {(event.website as string).replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── ARTIST LINEUP ── */}
-        {activeTab === 'lineup' && (
-          <>
-            {artists.length > 0 ? (
-              <div className="card p-5">
-                <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-sm font-semibold text-text-primary">Artist Lineup</h3>
-                  <span className="text-xs font-mono text-text-muted">{artists.length} {artists.length === 1 ? 'artist' : 'artists'}</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                  {artists.map((artist) => (
-                    <Link
-                      key={artist.id}
-                      to={`/app/artists/${artist.slug || artist.id}`}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg no-underline transition-colors hover:bg-surface-hover"
-                    >
-                      <div
-                        className="w-10 h-10 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
-                        style={{ background: 'hsl(var(--b3))', boxShadow: 'var(--card-border)' }}
-                      >
-                        {artist.id ? (
-                          <img src={getArtistImageUrl(artist.id)} alt="" className="w-full h-full object-cover" loading="lazy" />
-                        ) : (
-                          <span className="text-sm font-bold text-text-muted">{artist.name.charAt(0).toUpperCase()}</span>
-                        )}
-                      </div>
-                      <span className="text-sm text-text-secondary truncate">{artist.name}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="card p-10 text-center">
-                <p className="text-text-muted text-sm">No artist lineup data available.</p>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* ── SETS ── */}
-        {activeTab === 'sets' && (
-          <>
-            {sets.length > 0 ? (
-              <div className="card p-5">
-                <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-sm font-semibold text-text-primary">DJ Sets</h3>
-                  <span className="text-xs font-mono text-text-muted">{sets.length} {sets.length === 1 ? 'set' : 'sets'}</span>
-                </div>
-                <SetGrid sets={sets} />
-              </div>
-            ) : (
-              <div className="card p-10 text-center">
-                <p className="text-text-muted text-sm">No sets linked to this event yet.</p>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* ── INFO ── */}
-        {activeTab === 'info' && (
-          <div className="flex flex-col lg:flex-row gap-5">
-            <div className="flex-1 min-w-0 space-y-5">
-
-              {/* About / Description */}
-              {event.description && (
-                <div className="card p-5">
-                  <h3 className="text-xs text-text-muted font-mono tracking-wider mb-3">ABOUT</h3>
-                  <p className="text-sm text-text-secondary leading-relaxed">{event.description}</p>
-                </div>
-              )}
-
-              {/* Tags */}
-              {tags.length > 0 && (
-                <div className="card p-5">
-                  <h3 className="text-xs text-text-muted font-mono tracking-wider mb-3">TAGS</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {tags.map((tag: string) => <Badge key={tag} variant="tag">{tag}</Badge>)}
-                  </div>
-                </div>
-              )}
-
-              {/* Editions */}
-              {allEditions.length > 1 && (
-                <div className="card p-5">
-                  <h3 className="text-xs text-text-muted font-mono tracking-wider mb-4">EDITIONS</h3>
-                  <div className="space-y-1">
-                    {allEditions.map((ed) => {
-                      const isCurrent = ed.id === event.id
-                      return (
-                        <button
-                          key={ed.id}
-                          onClick={() => { if (!isCurrent) navigate(`/app/events/${ed.slug || ed.id}`) }}
-                          className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left border-none cursor-pointer"
-                          style={{
-                            background: isCurrent ? 'hsl(var(--h3) / 0.1)' : 'transparent',
-                            color: isCurrent ? 'hsl(var(--h2))' : 'hsl(var(--c2))',
-                          }}
-                          onMouseEnter={(e) => { if (!isCurrent) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--b3) / 0.4)' }}
-                          onMouseLeave={(e) => { if (!isCurrent) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                        >
-                          <span className="text-sm font-semibold">{ed.year || '?'}</span>
-                          <span className="text-xs text-text-muted truncate max-w-[200px]">{ed.name}</span>
-                          {isCurrent && <span className="text-[10px] font-mono text-accent ml-auto">CURRENT</span>}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Sidebar: full details */}
-            <div className="lg:w-[280px] shrink-0 space-y-5">
-              <div className="card p-5">
-                <h3 className="text-xs text-text-muted font-mono tracking-wider mb-4">DETAILS</h3>
-                <div className="space-y-3">
-                  {event.location && (
-                    <div>
-                      <p className="text-[10px] text-text-muted mb-0.5">Location</p>
-                      <p className="text-sm text-text-primary">{event.location as string}</p>
-                    </div>
-                  )}
-                  {eventYear && (
-                    <div>
-                      <p className="text-[10px] text-text-muted mb-0.5">Year</p>
-                      <p className="text-sm font-mono text-text-primary">{eventYear}</p>
-                    </div>
-                  )}
-                  {(event.start_date || event.end_date) && (
-                    <div>
-                      <p className="text-[10px] text-text-muted mb-0.5">Dates</p>
-                      <p className="text-sm font-mono text-text-primary">{formatDateRange(event.start_date, event.end_date)}</p>
-                    </div>
-                  )}
-                  {event.series && (
-                    <div>
-                      <p className="text-[10px] text-text-muted mb-0.5">Series</p>
-                      <p className="text-sm text-text-primary">{event.series as string}</p>
-                    </div>
-                  )}
-                  {event.website && (
-                    <div>
-                      <p className="text-[10px] text-text-muted mb-0.5">Website</p>
-                      <a
-                        href={event.website as string}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm no-underline text-accent hover:text-accent-hover transition-colors break-all"
-                      >
-                        {(event.website as string).replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Social links */}
-              {countSocialLinks(event, ['social']) > 0 && (
-                <div className="card p-5">
-                  <SocialLinks data={event} categories={['social']} heading="CONNECT" />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-      </div>
-    </div>
+          }
+          side={side ? <div className="dt-side">{side}</div> : undefined}
+        />
+      </PageFrame>
+    </>
   )
 }

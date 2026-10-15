@@ -1,10 +1,12 @@
 import { Link } from 'react-router'
+import { PauseFilled, PlayFilled } from '@mingcute/react/core-filled'
 import { usePlayerStore } from '../../stores/playerStore'
-import { Badge } from '../ui/Badge'
+import { Badge } from '../bleh'
 import { formatDuration, formatPlayCount } from '../../lib/formatTime'
 import { getCoverUrl } from '../../lib/api'
 import { getPlaceholder } from '../../lib/placeholders'
 import type { DjSet } from '../../lib/types'
+import './sets.css'
 
 interface SetCardProps {
   set: DjSet
@@ -17,9 +19,7 @@ export function SetCard({ set }: SetCardProps) {
 
   const isCurrentlyPlaying = currentSet?.id === set.id && isPlaying
 
-  const handlePlay = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+  const handlePlay = () => {
     if (isCurrentlyPlaying) {
       usePlayerStore.getState().pause()
     } else {
@@ -27,65 +27,31 @@ export function SetCard({ set }: SetCardProps) {
     }
   }
 
-  return (
-    <Link to={`/app/sets/${set.id}`} className="group flex flex-col gap-3 no-underline">
-      {/* Cover art */}
-      <div className={`relative aspect-square bg-surface-overlay rounded-xl overflow-hidden transition-all duration-200 ${
-        isCurrentlyPlaying ? 'ring-1 ring-accent/40 shadow-lg shadow-accent/10' : 'group-hover:shadow-lg group-hover:shadow-accent/5'
-      }`}
-        style={{ transitionTimingFunction: 'var(--ease-out-custom)' }}
-      >
-        {set.cover_image_r2_key ? (
-          <img
-            src={getCoverUrl(set.id)}
-            alt={set.title}
-            className="absolute inset-0 w-full h-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <img
-            src={getPlaceholder('square')}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover opacity-60"
-          />
-        )}
+  const cover = set.cover_image_r2_key ? getCoverUrl(set.id) : getPlaceholder('square')
 
-        {/* Play button overlay */}
+  return (
+    <article className="zl-set" data-playing={isCurrentlyPlaying ? '' : undefined}>
+      <div className="zl-set-art">
+        <img src={cover} alt="" className="zl-set-img" loading="lazy" />
         <button
+          type="button"
+          className="zl-set-play"
           onClick={handlePlay}
-          className={`absolute bottom-2 right-2 w-10 h-10 bg-accent rounded-full flex items-center justify-center shadow-[0_3px_12px_hsl(var(--h4)/0.35)] transition-all duration-200 cursor-pointer ${
-            isCurrentlyPlaying
-              ? 'opacity-100 translate-y-0'
-              : 'opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0'
-          } hover:scale-105 hover:bg-accent-hover active:scale-95`}
+          aria-label={`${isCurrentlyPlaying ? 'Pause' : 'Play'} ${set.title}`}
         >
-          {isCurrentlyPlaying ? (
-            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-            </svg>
-          ) : (
-            <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          )}
+          {isCurrentlyPlaying ? <PauseFilled size={18} /> : <PlayFilled size={18} />}
         </button>
       </div>
-
-      {/* Info */}
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-text-primary truncate leading-snug">{set.title}</p>
-        <p className="text-xs text-text-secondary truncate mt-1">{set.artist}</p>
-        {set.event && (
-          <p className="text-[11px] truncate mt-0.5" style={{ color: 'hsl(var(--h3) / 0.7)' }}>{set.event}</p>
-        )}
-        <div className="flex items-center gap-2 mt-2">
-          {set.genre && <Badge variant="muted">{set.genre}</Badge>}
-          <span className="text-xs text-text-muted">{formatDuration(set.duration_seconds)}</span>
-          {set.play_count > 0 && (
-            <span className="text-xs text-text-muted">{formatPlayCount(set.play_count)} plays</span>
-          )}
+      <div className="zl-set-info">
+        <Link to={`/app/sets/${set.id}`} className="zl-set-title">{set.title}</Link>
+        <p className="zl-set-artist">{set.artist}</p>
+        {set.event && <p className="zl-set-event">{set.event}</p>}
+        <div className="zl-set-meta">
+          {set.genre && <Badge>{set.genre}</Badge>}
+          <span>{formatDuration(set.duration_seconds)}</span>
+          {set.play_count > 0 && <span>{formatPlayCount(set.play_count)} plays</span>}
         </div>
       </div>
-    </Link>
+    </article>
   )
 }
