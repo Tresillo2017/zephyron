@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import { generateInviteCode, fetchInviteCodes, revokeInviteCode } from '../../lib/api'
-import { Button } from '../ui/Button'
-import { Input } from '../ui/Input'
-import { Badge } from '../ui/Badge'
+import { Input, Table, THead, TBody, Tr, Th, Td } from '../bleh'
 import { formatRelativeTime } from '../../lib/formatTime'
+import { AdminBadge, AdminButton, cellMono, cellMuted } from './adminUi'
 
 interface InviteCode {
   id: string
@@ -13,6 +12,12 @@ interface InviteCode {
   expires_at: string | null
   note: string | null
   created_at: string
+}
+
+function codeStatus(code: InviteCode): { label: string; tone: 'success' | 'accent' | 'neutral' } {
+  if (code.expires_at && new Date(code.expires_at) < new Date()) return { label: 'Expired', tone: 'neutral' }
+  if (code.max_uses > 0 && code.used_count >= code.max_uses) return { label: 'Fully Used', tone: 'accent' }
+  return { label: 'Active', tone: 'success' }
 }
 
 export function InviteCodesTab() {
@@ -58,67 +63,68 @@ export function InviteCodesTab() {
   }
 
   return (
-    <div>
+    <div className="flex flex-col gap-4">
       {/* Generate form */}
-      <div className="flex gap-3 items-end mb-6">
-        <Input
-          label="Max uses"
-          type="number"
-          min={1}
-          value={maxUses}
-          onChange={(e) => setMaxUses(e.target.value)}
-          className="w-24"
-        />
-        <Input
-          label="Note (optional)"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="For whom?"
-          className="flex-1"
-        />
-        <Button variant="primary" onClick={handleGenerate} disabled={isGenerating}>
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="w-24">
+          <Input
+            label="Max uses"
+            type="number"
+            min={1}
+            value={maxUses}
+            onChange={(e) => setMaxUses(e.target.value)}
+          />
+        </div>
+        <div className="min-w-[200px] flex-1">
+          <Input
+            label="Note (optional)"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="For whom?"
+          />
+        </div>
+        <AdminButton variant="primary" onClick={handleGenerate} disabled={isGenerating}>
           {isGenerating ? '...' : 'Generate Code'}
-        </Button>
+        </AdminButton>
       </div>
 
       {/* Code list */}
       {isLoading ? (
-        <p className="text-sm text-text-muted">Loading...</p>
+        <p className={cellMuted}>Loading...</p>
       ) : codes.length === 0 ? (
-        <p className="text-sm text-text-muted text-center py-8">No invite codes yet.</p>
+        <p className="py-8 text-center text-[13px] text-muted">No invite codes yet.</p>
       ) : (
-        <div className="card !p-0 overflow-hidden">
-          {codes.map((code, i) => {
-            const isExpired = code.expires_at && new Date(code.expires_at) < new Date()
-            const isFullyUsed = code.max_uses > 0 && code.used_count >= code.max_uses
-
-            return (
-              <div
-                key={code.id}
-                className={`flex items-center gap-4 px-4 py-3 ${i > 0 ? '' : ''}`}
-              >
-                <span className="font-mono text-sm text-accent font-bold tracking-wider w-24">
-                  {code.code}
-                </span>
-                <div className="flex-1 min-w-0">
-                  {code.note && <p className="text-xs text-text-secondary truncate">{code.note}</p>}
-                  <p className="text-xs text-text-muted">
-                    {code.used_count}/{code.max_uses} used · {formatRelativeTime(code.created_at)}
-                  </p>
-                </div>
-                {isExpired && <Badge>Expired</Badge>}
-                {isFullyUsed && <Badge variant="accent">Fully Used</Badge>}
-                {!isExpired && !isFullyUsed && <Badge variant="accent">Active</Badge>}
-                <button
-                  onClick={() => handleRevoke(code.id)}
-                  className="text-xs text-text-muted hover:text-danger transition-colors"
-                >
-                  Revoke
-                </button>
-              </div>
-            )
-          })}
-        </div>
+        <Table>
+          <THead>
+            <Tr>
+              <Th>Code</Th>
+              <Th>Note</Th>
+              <Th>Usage</Th>
+              <Th>Created</Th>
+              <Th>Status</Th>
+              <Th className="w-0"><span className="sr-only">Actions</span></Th>
+            </Tr>
+          </THead>
+          <TBody>
+            {codes.map((code) => {
+              const status = codeStatus(code)
+              return (
+                <Tr key={code.id}>
+                  <Td className={cellMono}>{code.code}</Td>
+                  <Td className="max-w-[260px] truncate text-[13px]">{code.note ?? <span className="text-muted">—</span>}</Td>
+                  <Td className={cellMuted + ' tabular-nums'}>{code.used_count}/{code.max_uses}</Td>
+                  <Td className={cellMuted}>{formatRelativeTime(code.created_at)}</Td>
+                  <Td><AdminBadge tone={status.tone}>{status.label}</AdminBadge></Td>
+                  <Td className="text-right">
+                    <AdminButton variant="danger" size="sm" onClick={() => handleRevoke(code.id)}>
+                      Revoke
+                    </AdminButton>
+                  </Td>
+                </Tr>
+              )
+            })}
+          </TBody>
+        </Table>
       )}
     </div>
   )
