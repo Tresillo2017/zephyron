@@ -1,6 +1,6 @@
 // Visual QA screenshots against the LOCAL dev server (real API, no mocks).
 // 1. LOCAL_ONLY=1 bun run dev        (http://localhost:5173)
-// 2. bash scripts/seed-local.sh      (fixtures + QA admin qa@zephyron.test / QaLocal-2026!)
+// 2. bash scripts/seed-local.sh      (fixtures + QA admin qa@zephyron.test; password from $QA_PASSWORD)
 // 3. node .playwright-mcp/shoot.mjs [--routes /app/browse ...] [--themes dark light]
 //      [--widths 1440 390] [--full] [--prefix p-] [--out DIR] [--wait ms]
 //      [--click "css" ...] [--scroll px] [--ls key=value ...] [--base URL] [--relogin]
@@ -11,6 +11,7 @@
 // Output: <out>/<prefix><theme>-<width>-<slug>.png and <out>/<prefix>report.json
 //   (per shot: console errors, page errors, failed requests, HTTP >= 400 responses).
 // Shots, storageState and logs are gitignored; do not commit them. Local dev server only.
+import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -19,7 +20,7 @@ const CHROME = '/home/tomas/.cache/ms-playwright/chromium_headless_shell-1217/ch
 const { chromium } = await import(PW);
 
 const THEME_IDS = ['light', 'ink', 'rose_pine_dawn', 'dark', 'darker', 'oled', 'rose_pine', 'kanagawa_dragon'];
-const QA = { email: 'qa@zephyron.test', password: 'QaLocal-2026!' };
+const QA = { email: 'qa@zephyron.test', password: process.env.QA_PASSWORD || 'qa-' + createHash('sha256').update('zephyron-local').digest('hex').slice(0, 12) };
 const STATE_FILE = '.playwright-mcp/qa-storage.json';
 
 // ---------- args ----------

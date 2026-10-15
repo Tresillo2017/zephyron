@@ -3,7 +3,7 @@ import { updateSongAdmin, getSongCoverUrl } from "../../lib/api";
 import { SERVICES, ServiceIcon } from "../../lib/services";
 import { Card, Input, InlineAlert } from "../bleh";
 import type { Song } from "../../lib/types";
-import { AdminButton, AdminModal } from "./adminUi";
+import { AdminButton, AdminModal, safeUrl } from "./adminUi";
 
 interface DeleteSongModalProps {
   song: Song | null;
@@ -116,7 +116,7 @@ export function EditSongModal({ song, onClose, onSaved }: EditSongModalProps) {
         {coverPreview && (
           <div className="flex justify-center">
             <img
-              src={coverPreview}
+              src={safeUrl(coverPreview)}
               alt=""
               className="h-24 w-24 rounded-xl object-cover shadow-[var(--subtle-shadow)]"
             />

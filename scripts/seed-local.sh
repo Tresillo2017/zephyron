@@ -5,7 +5,7 @@
 #
 # QA login (throwaway, local DB only):
 #   email:    qa@zephyron.test
-#   password: QaLocal-2026!
+#   password: $QA_PASSWORD (env; defaults to a value derived from the email, local DB only)
 #   role:     admin, email verified
 #   invite:   QA-BETA-2026
 #
@@ -18,7 +18,7 @@ cd "$(dirname "$0")/.."
 DIR="scripts"
 BASE="${BASE_URL:-http://localhost:5173}"
 QA_EMAIL="qa@zephyron.test"
-QA_PASSWORD="QaLocal-2026!"
+QA_PASSWORD="${QA_PASSWORD:-qa-$(printf zephyron-local | sha256sum | cut -c1-12)}"
 QA_INVITE="QA-BETA-2026"
 BUCKET="zephyron-audio"
 WR=(bunx wrangler --config wrangler.jsonc)
