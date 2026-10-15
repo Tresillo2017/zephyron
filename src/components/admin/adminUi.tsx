@@ -148,3 +148,17 @@ export function RowMenu({ label, items, disabled }: { label: string; items: RowM
 /** Dense admin table cell helpers (compact 36px rows, muted secondary text). */
 export const cellMuted = 'text-[13px] leading-[17px] text-muted'
 export const cellMono = 'font-mono text-[13px] tracking-wider text-accent-2'
+
+/**
+ * Returns the URL only when it parses as http(s); otherwise undefined so callers
+ * render plain text instead of an href. Blocks javascript:/data: URLs from user input.
+ */
+export function safeUrl(raw: string | null | undefined): string | undefined {
+  if (!raw) return undefined
+  try {
+    const url = new URL(raw)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : undefined
+  } catch {
+    return undefined
+  }
+}
