@@ -4,7 +4,7 @@ import { parseArtistSourceHtml } from '../../lib/parse-1001tracklists-source'
 import { cn } from '../../lib/cn'
 import { DownSmallFilled } from '@mingcute/react/core-filled'
 import { Input, InlineAlert, Textarea } from '../bleh'
-import { AdminButton, AdminModal } from './adminUi'
+import { AdminButton, AdminModal, safeUrl } from './adminUi'
 import { parseArtistTags, type Artist } from './artistTypes'
 
 interface EnrichPanelProps {
@@ -221,9 +221,9 @@ export function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; 
           ))}
         </div>
 
-        {artist.lastfm_url && (
+        {safeUrl(artist.lastfm_url) && (
           <a
-            href={artist.lastfm_url}
+            href={safeUrl(artist.lastfm_url)}
             target="_blank"
             rel="noopener noreferrer"
             className="block text-[12px] text-accent-2 no-underline hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-2 rounded-sm"
