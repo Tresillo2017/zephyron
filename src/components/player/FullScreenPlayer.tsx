@@ -13,6 +13,13 @@ import {
 } from "../../lib/api";
 import { getAvailableServices, ServiceIconLink } from "../../lib/services";
 import { DotmSquare18 } from "../ui/loading-square";
+import {
+  PlayFilled,
+  PauseFilled,
+  SkipPreviousFilled,
+  SkipForwardFilled,
+} from "@mingcute/react/core-filled";
+import "./FullScreenPlayer.css";
 import type { Detection } from "../../lib/types";
 
 type AnimState = "hidden" | "entering" | "visible" | "exiting";
@@ -501,7 +508,7 @@ export function FullScreenPlayer() {
       ref={fullscreenTargetRef}
       className="fixed inset-0 z-50 flex flex-col"
       style={{
-        background: "#050507",
+        background: "oklch(var(--b6))",
         transform: isEntering ? "translateY(0)" : "translateY(100%)",
         transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
         willChange: "transform",
@@ -905,14 +912,14 @@ export function FullScreenPlayer() {
                       width: showTracklist ? 300 : 0,
                       opacity: showTracklist ? 1 : 0,
                       maxHeight: isTheaterMode ? "100%" : undefined,
-                      background: "rgba(0, 0, 0, 0.5)",
+                      background: "oklch(var(--b6) / 60%)",
                       backdropFilter: "blur(24px)",
                       WebkitBackdropFilter: "blur(24px)",
                       borderRadius: isTheaterMode
                         ? "12px 0 0 12px"
                         : "0 12px 12px 0",
                       boxShadow: showTracklist
-                        ? "inset 0 0 0 1px rgba(255,255,255,0.06)"
+                        ? "var(--card-border)"
                         : "none",
                       transition:
                         "width 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -930,7 +937,7 @@ export function FullScreenPlayer() {
                         <div className="flex items-center justify-between">
                           <p
                             className="text-[11px] font-mono tracking-wider"
-                            style={{ color: "rgba(255,255,255,0.35)" }}
+                            style={{ color: "oklch(var(--c3))" }}
                           >
                             TRACKLIST
                           </p>
@@ -949,7 +956,7 @@ export function FullScreenPlayer() {
                         </div>
                         <p
                           className="text-[10px] font-mono"
-                          style={{ color: "rgba(255,255,255,0.2)" }}
+                          style={{ color: "oklch(var(--c3) / 70%)" }}
                         >
                           {detections.length} tracks
                         </p>
@@ -1004,7 +1011,7 @@ export function FullScreenPlayer() {
                                 onMouseEnter={(e) => {
                                   if (!isPrimaryActive)
                                     e.currentTarget.style.background =
-                                      "rgba(255,255,255,0.04)";
+                                      "var(--tracklist-hover)";
                                 }}
                                 onMouseLeave={(e) => {
                                   if (!isPrimaryActive)
@@ -1089,7 +1096,7 @@ export function FullScreenPlayer() {
                                     style={{
                                       background: isPrimaryActive
                                         ? "oklch(var(--h3) / 0.1)"
-                                        : "rgba(255,255,255,0.04)",
+                                        : "var(--tracklist-hover)",
                                       boxShadow: isPrimaryPlaying
                                         ? "inset 0 0 0 1px oklch(var(--h3) / 0.4)"
                                         : "none",
@@ -1175,7 +1182,7 @@ export function FullScreenPlayer() {
                                         onMouseEnter={(e) => {
                                           if (!isSecActive)
                                             e.currentTarget.style.background =
-                                              "rgba(255,255,255,0.04)";
+                                              "var(--tracklist-hover)";
                                         }}
                                         onMouseLeave={(e) => {
                                           e.currentTarget.style.background =
@@ -1976,8 +1983,7 @@ export function FullScreenPlayer() {
                       isMuted={isMuted}
                       onVolumeChange={setVolume}
                       onToggleMute={toggleMute}
-                      variant="fullscreen"
-                    />
+                          />
                   </div>
 
                   {/* Center: prev / play / next */}
@@ -2166,8 +2172,7 @@ export function FullScreenPlayer() {
 
             {/* Progress bar with hover + storyboard */}
             <div
-              className="relative h-[5px] rounded-full cursor-pointer group"
-              style={{ background: "rgba(255,255,255,0.15)" }}
+              className="fsp-progress group"
               onClick={handleSeek}
               onMouseMove={handleProgressMouseMove}
               onMouseLeave={handleProgressMouseLeave}
@@ -2179,37 +2184,25 @@ export function FullScreenPlayer() {
                 return (
                   <div
                     key={d.id}
-                    className="absolute top-0 h-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                    style={{
-                      left: `${pos}%`,
-                      width: 1.5,
-                      background: "rgba(255,255,255,0.35)",
-                    }}
+                    className="fsp-progress__tick"
+                    style={{ left: `${pos}%` }}
                   />
                 );
               })}
               {/* Fill */}
               <div
-                className="absolute top-0 left-0 h-full rounded-full pointer-events-none"
+                className="fsp-progress__fill"
                 style={{
                   width: `${progress}%`,
-                  background: "oklch(var(--h3))",
                   transition: "width 0.1s linear",
                 }}
               />
               {/* Hover thumb */}
               {hoverTime !== null && (
                 <div
-                  className="absolute pointer-events-none"
+                  className="fsp-progress__nub"
                   style={{
                     left: `${(hoverTime / duration) * 100}%`,
-                    top: "50%",
-                    transform: "translate(-50%, -50%)",
-                    width: 13,
-                    height: 13,
-                    borderRadius: "50%",
-                    background: "white",
-                    boxShadow: "0 1px 5px rgba(0,0,0,0.4)",
                   }}
                 />
               )}
@@ -2244,8 +2237,7 @@ export function FullScreenPlayer() {
                     style={{
                       width: thumbnailInfo.thumbWidth,
                       height: thumbnailInfo.thumbHeight,
-                      boxShadow: "0 8px 25px rgba(0,0,0,0.55)",
-                      border: "1px solid rgba(255,255,255,0.1)",
+                      boxShadow: "0 8px 25px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.1)",
                     }}
                   >
                     <div
@@ -2268,8 +2260,7 @@ export function FullScreenPlayer() {
                     />
                   </div>
                   <p
-                    className="mt-1 text-center text-[10px] font-mono tabular-nums"
-                    style={{ color: "rgba(255,255,255,0.5)" }}
+                    className="mt-1 text-center text-[10px] font-mono tabular-nums fsp-time"
                   >
                     {formatTime(hoverTime)}
                   </p>
@@ -2279,16 +2270,10 @@ export function FullScreenPlayer() {
 
             {/* Time */}
             <div className="flex justify-between mt-1.5">
-              <span
-                className="text-[10px] font-mono tabular-nums"
-                style={{ color: "rgba(255,255,255,0.4)" }}
-              >
+              <span className="text-[10px] font-mono tabular-nums fsp-time">
                 {formatTime(currentTime)}
               </span>
-              <span
-                className="text-[10px] font-mono tabular-nums"
-                style={{ color: "rgba(255,255,255,0.4)" }}
-              >
+              <span className="text-[10px] font-mono tabular-nums fsp-time">
                 {formatTime(duration)}
               </span>
             </div>
@@ -2302,69 +2287,30 @@ export function FullScreenPlayer() {
               <div className="flex items-center gap-6">
                 <button
                   onClick={playPrevious}
-                  className="transition-all"
-                  style={{ color: "rgba(255,255,255,0.5)" }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.color = "rgba(255,255,255,0.9)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.color = "rgba(255,255,255,0.5)")
-                  }
+                  className="fsp-ghost"
+                  aria-label="Previous track"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
-                  </svg>
+                  <SkipPreviousFilled size={22} />
                 </button>
 
                 <button
                   onClick={togglePlay}
-                  className="w-12 h-12 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
-                  style={{
-                    background: "oklch(var(--h3))",
-                    boxShadow: "0 4px 20px oklch(var(--h4) / 0.35)",
-                  }}
+                  className="fsp-play"
+                  aria-label={isPlaying ? "Pause" : "Play"}
                 >
                   {isPlaying ? (
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                    </svg>
+                    <PauseFilled size={22} />
                   ) : (
-                    <svg
-                      className="w-5 h-5 text-white ml-0.5"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
+                    <PlayFilled size={22} style={{ marginLeft: 2 }} />
                   )}
                 </button>
 
                 <button
                   onClick={playNext}
-                  className="transition-all"
-                  style={{ color: "rgba(255,255,255,0.5)" }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.color = "rgba(255,255,255,0.9)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.color = "rgba(255,255,255,0.5)")
-                  }
+                  className="fsp-ghost"
+                  aria-label="Next track"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
-                  </svg>
+                  <SkipForwardFilled size={22} />
                 </button>
               </div>
 
@@ -2374,7 +2320,6 @@ export function FullScreenPlayer() {
                 isMuted={isMuted}
                 onVolumeChange={setVolume}
                 onToggleMute={toggleMute}
-                variant="fullscreen"
               />
             </div>
           </div>

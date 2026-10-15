@@ -60,7 +60,7 @@ export function DetectionGroup({
   return (
     <>
       <div
-        className="group relative transition-colors duration-150"
+        className="group relative transition-colors duration-150 hover:bg-[var(--tracklist-hover)]"
         style={{ background: isActive ? 'oklch(var(--h3) / 0.06)' : 'transparent' }}
       >
         {/* Active indicator bar */}
@@ -198,7 +198,7 @@ export function DetectionGroup({
         )}
 
         {/* Separator */}
-        <div className="mx-4" style={{ borderBottom: '1px solid oklch(var(--b4) / 0.15)' }} />
+        <div className="mx-4 h-px" style={{ background: 'oklch(var(--b4) / 0.15)' }} />
       </div>
     </>
   )

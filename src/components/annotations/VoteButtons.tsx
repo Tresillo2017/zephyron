@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react'
 import { voteDetection as voteDetectionApi } from '../../lib/api'
 import type { Detection } from '../../lib/types'
+import { Button } from '../bleh/Button'
+import { ArrowUpFilled, ArrowDownFilled } from '@mingcute/react/core-filled'
 
 interface VoteButtonsProps {
   detection: Detection
@@ -51,46 +53,33 @@ export function VoteButtons({ detection, onVoteChange }: VoteButtonsProps) {
   )
 
   return (
-    <div className="flex items-center gap-1">
-      {/* Upvote */}
-      <button
+    <div className="flex items-center gap-1" role="group" aria-label="Vote on this detection">
+      <Button
+        label={String(upvotes)}
+        aria-label={`This detection is correct, ${upvotes} upvotes`}
+        aria-pressed={userVote === 1}
+        size="sm"
+        appearance={userVote === 1 ? 'primary' : 'ghost'}
+        icon={<ArrowUpFilled size={14} />}
+        disabled={isVoting}
         onClick={(e) => {
           e.stopPropagation()
           handleVote(1)
         }}
+      />
+      <Button
+        label={String(downvotes)}
+        aria-label={`This detection is wrong, ${downvotes} downvotes`}
+        aria-pressed={userVote === -1}
+        size="sm"
+        appearance={userVote === -1 ? 'danger' : 'ghost'}
+        icon={<ArrowDownFilled size={14} />}
         disabled={isVoting}
-        className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs transition-colors ${
-          userVote === 1
-            ? 'bg-accent/15 text-accent'
-            : 'text-text-muted hover:text-accent hover:bg-accent/10'
-        } disabled:opacity-50`}
-        title="This detection is correct"
-      >
-        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M7 14l5-5 5 5z" />
-        </svg>
-        <span>{upvotes}</span>
-      </button>
-
-      {/* Downvote */}
-      <button
         onClick={(e) => {
           e.stopPropagation()
           handleVote(-1)
         }}
-        disabled={isVoting}
-        className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs transition-colors ${
-          userVote === -1
-            ? 'bg-danger/15 text-danger'
-            : 'text-text-muted hover:text-danger hover:bg-danger/10'
-        } disabled:opacity-50`}
-        title="This detection is wrong"
-      >
-        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M7 10l5 5 5-5z" />
-        </svg>
-        <span>{downvotes}</span>
-      </button>
+      />
     </div>
   )
 }

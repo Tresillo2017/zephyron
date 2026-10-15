@@ -1,0 +1,133 @@
+/* FullScreenPlayer chrome — bleh treatment: accent-filled rail with white nub,
+   12px-radius accent play button with --glow-shadow, ghost transport buttons. */
+
+.fsp-progress {
+  position: relative;
+  height: 5px;
+  cursor: pointer;
+  border-radius: 999px;
+  background: oklch(var(--b2) / 25%);
+}
+
+.fsp-progress::before {
+  /* Wider hit area without changing the visual rail */
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -8px;
+  bottom: -8px;
+}
+
+.fsp-progress:hover,
+.fsp-progress:focus-visible {
+  height: 6px;
+}
+
+.fsp-progress__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: oklch(var(--h3));
+  pointer-events: none;
+}
+
+.fsp-progress__nub {
+  position: absolute;
+  top: 50%;
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  background: #fff;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 1px 5px rgb(0 0 0 / 40%);
+  pointer-events: none;
+}
+
+.fsp-progress__tick {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  opacity: 0;
+  background: oklch(var(--c1) / 45%);
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.fsp-progress:hover .fsp-progress__tick {
+  opacity: 1;
+}
+
+.fsp-time {
+  color: oklch(var(--c3));
+}
+
+.fsp-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: oklch(var(--c2));
+  cursor: pointer;
+  transition:
+    color 0.2s cubic-bezier(0.095, 0.41, 0.055, 0.96),
+    background-color 0.2s cubic-bezier(0.095, 0.41, 0.055, 0.96),
+    transform 0.2s cubic-bezier(0.095, 0.41, 0.055, 0.96);
+}
+
+.fsp-ghost:hover {
+  color: oklch(var(--c1));
+  background: oklch(var(--b4) / 40%);
+}
+
+.fsp-ghost:active {
+  transform: scale(0.98);
+}
+
+.fsp-play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: 12px;
+  color: oklch(var(--c1));
+  background: oklch(var(--h3));
+  box-shadow: var(--glow-shadow);
+  cursor: pointer;
+  transition:
+    transform 0.2s cubic-bezier(0.095, 0.41, 0.055, 0.96),
+    background-color 0.2s cubic-bezier(0.095, 0.41, 0.055, 0.96);
+}
+
+.fsp-play:hover {
+  background: oklch(var(--h2));
+  transform: scale(1.04);
+}
+
+.fsp-play:active {
+  transform: scale(0.98);
+}
+
+.fsp-play:focus-visible,
+.fsp-ghost:focus-visible,
+.fsp-progress:focus-visible {
+  outline: 2px solid oklch(var(--h3));
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fsp-ghost,
+  .fsp-play,
+  .fsp-progress__tick {
+    transition: none;
+  }
+}

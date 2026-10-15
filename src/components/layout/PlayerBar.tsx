@@ -3,6 +3,17 @@ import { usePlayerStore } from '../../stores/playerStore'
 import { formatTime } from '../../lib/formatTime'
 import { getCoverUrl, fetchStoryboard, type StoryboardData } from '../../lib/api'
 import { Logo } from '../ui/Logo'
+import { VolumeSlider } from '../ui/VolumeSlider'
+import { Tooltip } from '../bleh/ui/Tooltip'
+import {
+  PlayFilled,
+  PauseFilled,
+  SkipPreviousFilled,
+  SkipForwardFilled,
+  FullscreenFilled,
+  LoadingFilled,
+} from '@mingcute/react/core-filled'
+import './PlayerBar.css'
 import { FullScreenPlayer } from '../player/FullScreenPlayer'
 import type { Detection } from '../../lib/types'
 
@@ -32,59 +43,6 @@ function getThumbnailPosition(sb: StoryboardData, time: number): ThumbnailInfo |
     thumbWidth: sb.width,
     thumbHeight: sb.height,
   }
-}
-
-// ─── Volume icon component ──────────────────────────────────────────────────
-
-function VolumeButton({ volume, isMuted, onVolumeChange, onToggleMute }: {
-  volume: number
-  isMuted: boolean
-  onVolumeChange: (v: number) => void
-  onToggleMute: () => void
-}) {
-  const effective = isMuted ? 0 : volume
-
-  return (
-    <div className="flex items-center gap-1.5">
-      {/* Icon — mute toggle on click */}
-      <button
-        onClick={onToggleMute}
-        className="text-text-muted hover:text-text-primary transition-colors shrink-0"
-        title={isMuted ? 'Unmute' : 'Mute'}
-      >
-        {isMuted || volume === 0 ? (
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" />
-          </svg>
-        ) : volume < 0.5 ? (
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z" />
-          </svg>
-        ) : (
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
-          </svg>
-        )}
-      </button>
-
-      {/* Slider — always visible */}
-      <div
-        className="relative rounded-full cursor-pointer"
-        style={{ width: 64, height: 4, background: 'rgba(255,255,255,0.12)' }}
-      >
-        <div
-          className="absolute top-0 left-0 h-full rounded-full pointer-events-none"
-          style={{ width: `${effective * 100}%`, background: 'oklch(var(--h3))', transition: 'width 0.1s linear' }}
-        />
-        <input
-          type="range" min={0} max={1} step={0.01}
-          value={effective}
-          onChange={e => onVolumeChange(parseFloat(e.target.value))}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-        />
-      </div>
-    </div>
-  )
 }
 
 // ─── Main PlayerBar ─────────────────────────────────────────────────────────
@@ -213,31 +171,15 @@ export function PlayerBar() {
       />
 
       {currentSet && !isTheaterMode && (
-        <div className="shrink-0 relative" style={{ height: 62 }}>
+        <div className="player-bar">
           {/* Playing glow */}
-          {isPlaying && (
-            <div
-              className="absolute top-0 left-0 right-0 h-px pointer-events-none"
-              style={{ background: 'linear-gradient(to right, transparent, oklch(var(--h3) / 0.5), transparent)' }}
-            />
-          )}
+          {isPlaying && <div className="player-bar__playing" />}
 
-          {/* Main content row — stops 5px before the bottom (progress bar lives there) */}
-          <div
-            className="absolute left-0 right-0 top-0 flex items-center px-5 gap-4"
-            style={{
-              bottom: 5,
-              background: 'oklch(var(--b5) / 0.92)',
-              backdropFilter: 'blur(16px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-            }}
-          >
+          {/* Main content row — stops 5px before the bottom (progress rail lives there) */}
+          <div className="player-bar__panel glass-nav">
             {/* Left: cover + set / track info */}
-            <div className="flex items-center gap-3 shrink-0" style={{ width: 220 }}>
-              <div
-                className="w-10 h-10 rounded-[10px] overflow-hidden shrink-0"
-                style={{ boxShadow: 'var(--card-border)', background: 'oklch(var(--b4))' }}
-              >
+            <div className="player-bar__now">
+              <div className="player-bar__cover">
                 {currentSet.cover_image_r2_key ? (
                   <img src={getCoverUrl(currentSet.id)} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -260,119 +202,103 @@ export function PlayerBar() {
               </div>
             </div>
 
-            {/* Center: time — prev — [play slot] — next — time */}
-            <div className="flex-1 flex items-center justify-center gap-5">
-              <span className="text-[11px] font-mono tabular-nums text-text-muted hidden sm:block w-11 text-right">
+            {/* Center: time — prev — play — next — time */}
+            <div className="player-bar__center">
+              <span className="player-bar__time player-bar__time--start hidden sm:block">
                 {formatTime(currentTime)}
               </span>
+              <Tooltip content="Previous">
+                <button
+                  type="button"
+                  onClick={playPrevious}
+                  className="player-bar__ghost hidden sm:inline-flex"
+                  aria-label="Previous track"
+                >
+                  <SkipPreviousFilled size={18} />
+                </button>
+              </Tooltip>
+
               <button
-                onClick={playPrevious}
-                className="hidden sm:block text-text-muted hover:text-text-primary transition-colors"
+                type="button"
+                onClick={togglePlay}
+                disabled={isLoadingStream}
+                className="player-bar__play"
+                aria-label={isPlaying ? 'Pause' : 'Play'}
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
-                </svg>
+                {isLoadingStream ? (
+                  <LoadingFilled size={18} className="animate-spin" />
+                ) : isPlaying ? (
+                  <PauseFilled size={18} />
+                ) : (
+                  <PlayFilled size={18} style={{ marginLeft: 2 }} />
+                )}
               </button>
 
-              {/* Spacer matching the play button width so layout doesn't collapse */}
-              <div style={{ width: 36, height: 36, flexShrink: 0 }} />
-
-              <button
-                onClick={playNext}
-                className="hidden sm:block text-text-muted hover:text-text-primary transition-colors"
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
-                </svg>
-              </button>
-              <span className="text-[11px] font-mono tabular-nums text-text-muted hidden sm:block w-11">
+              <Tooltip content="Next">
+                <button
+                  type="button"
+                  onClick={playNext}
+                  className="player-bar__ghost hidden sm:inline-flex"
+                  aria-label="Next track"
+                >
+                  <SkipForwardFilled size={18} />
+                </button>
+              </Tooltip>
+              <span className="player-bar__time player-bar__time--end hidden sm:block">
                 {formatTime(duration)}
               </span>
             </div>
 
-            {/* Right: volume icon + expand */}
-            <div className="hidden sm:flex items-center gap-3 shrink-0 justify-end" style={{ width: 220 }}>
-              <VolumeButton
+            {/* Right: volume + expand */}
+            <div className="player-bar__right hidden sm:flex">
+              <VolumeSlider
                 volume={volume}
                 isMuted={isMuted}
                 onVolumeChange={setVolume}
                 onToggleMute={toggleMute}
               />
-              <button
-                onClick={usePlayerStore.getState().toggleFullScreen}
-                className="text-text-muted hover:text-text-primary transition-colors"
-                title="Full screen player"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                </svg>
-              </button>
+              <Tooltip content="Full screen player">
+                <button
+                  type="button"
+                  onClick={usePlayerStore.getState().toggleFullScreen}
+                  className="player-bar__icon"
+                  aria-label="Full screen player"
+                >
+                  <FullscreenFilled size={18} />
+                </button>
+              </Tooltip>
             </div>
 
             {/* Mobile: compact time */}
-            <span className="sm:hidden text-[10px] text-text-muted tabular-nums font-mono shrink-0">
+            <span className="sm:hidden player-bar__time player-bar__time--start">
               {formatTime(currentTime)}
             </span>
           </div>
 
-          {/* Play / pause button — absolute, centered vertically in content row, touching progress bar */}
-          <button
-            onClick={togglePlay}
-            disabled={isLoadingStream}
-            style={{
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              top: 0,
-              bottom: 5,
-              width: 36,
-              height: 36,
-              margin: 'auto',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'oklch(var(--h3))',
-              boxShadow: '0 2px 12px oklch(var(--h4) / 0.35)',
-              transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-              zIndex: 10,
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.transform = 'scale(1.08)'
-              e.currentTarget.style.boxShadow = '0 4px 18px oklch(var(--h4) / 0.5)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.transform = ''
-              e.currentTarget.style.boxShadow = '0 2px 12px oklch(var(--h4) / 0.35)'
-            }}
-          >
-            {isLoadingStream ? (
-              <svg className="w-3.5 h-3.5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-            ) : isPlaying ? (
-              <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-              </svg>
-            ) : (
-              <svg className="w-3.5 h-3.5 text-white" style={{ marginLeft: 1 }} fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            )}
-          </button>
-
-          {/* Progress bar — full width, absolute bottom, integrates storyboard */}
+          {/* Progress rail — full width, absolute bottom, integrates storyboard */}
           <div
             ref={progressRef}
-            className="absolute left-0 right-0 bottom-0 cursor-pointer group"
-            style={{ height: 5 }}
+            className="player-bar__rail"
             onClick={handleProgressClick}
             onMouseMove={handleProgressMouseMove}
             onMouseLeave={handleProgressMouseLeave}
+            role="slider"
+            tabIndex={0}
+            aria-label="Seek"
+            aria-valuemin={0}
+            aria-valuemax={Math.round(duration) || 0}
+            aria-valuenow={Math.round(currentTime)}
+            aria-valuetext={formatTime(currentTime)}
+            onKeyDown={e => {
+              if (duration <= 0) return
+              if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                e.preventDefault()
+                const delta = e.key === 'ArrowRight' ? 5 : -5
+                seek(Math.max(0, Math.min(duration, currentTime + delta)))
+              }
+            }}
           >
-            {/* Track */}
-            <div className="absolute inset-0 rounded-full" style={{ background: 'rgba(255,255,255,0.12)' }} />
+            <div className="player-bar__rail-track" />
 
             {/* Detection chapter markers */}
             {detections.map((d: Detection) => {
@@ -381,8 +307,8 @@ export function PlayerBar() {
               return (
                 <div
                   key={d.id}
-                  className="absolute top-0 h-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                  style={{ left: `${pos}%`, width: 1.5, background: 'rgba(255,255,255,0.35)' }}
+                  className="player-bar__tick"
+                  style={{ left: `${pos}%` }}
                   title={d.track_title}
                 />
               )
@@ -390,42 +316,23 @@ export function PlayerBar() {
 
             {/* Fill */}
             <div
-              className="absolute top-0 left-0 h-full rounded-full pointer-events-none"
-              style={{ width: `${progress}%`, background: 'oklch(var(--h3))', transition: 'width 0.1s linear' }}
+              className="player-bar__rail-fill"
+              style={{ width: `${progress}%`, transition: 'width 0.1s linear' }}
             />
 
-            {/* Playhead thumb on hover */}
+            {/* Playhead thumb + hover line on hover */}
             {hoverTime !== null && (
-              <div
-                className="absolute pointer-events-none"
-                style={{
-                  left: `${(hoverTime / duration) * 100}%`,
-                  top: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  width: 11,
-                  height: 11,
-                  borderRadius: '50%',
-                  background: 'white',
-                  boxShadow: '0 1px 5px rgba(0,0,0,0.4)',
-                  transition: 'opacity 0.1s',
-                }}
-              />
-            )}
-
-            {/* Hover time indicator */}
-            {hoverTime !== null && (
-              <div
-                className="absolute top-0 bottom-0 w-px pointer-events-none opacity-40"
-                style={{ left: `${(hoverTime / duration) * 100}%`, background: 'oklch(var(--c2))' }}
-              />
+              <>
+                <div className="player-bar__hover-line" style={{ left: `${(hoverTime / duration) * 100}%` }} />
+                <div className="player-bar__nub" style={{ left: `${(hoverTime / duration) * 100}%` }} />
+              </>
             )}
 
             {/* Storyboard thumbnail popup */}
             {hoverTime !== null && thumbnailInfo && (
               <div
-                className="absolute pointer-events-none z-20"
+                className="player-bar__thumb"
                 style={{
-                  bottom: '100%',
                   left: Math.max(
                     0,
                     Math.min(
@@ -433,16 +340,13 @@ export function PlayerBar() {
                       hoverX - thumbnailInfo.thumbWidth / 2,
                     ),
                   ),
-                  marginBottom: 10,
                 }}
               >
                 <div
-                  className="overflow-hidden rounded-lg"
+                  className="player-bar__thumb-frame"
                   style={{
                     width: thumbnailInfo.thumbWidth,
                     height: thumbnailInfo.thumbHeight,
-                    boxShadow: '0 8px 25px rgba(0,0,0,0.55)',
-                    border: '1px solid oklch(var(--b3) / 0.5)',
                   }}
                 >
                   <div
@@ -458,12 +362,7 @@ export function PlayerBar() {
                     }}
                   />
                 </div>
-                <p
-                  className="mt-1 text-center text-[10px] font-mono tabular-nums"
-                  style={{ color: 'oklch(var(--c2))' }}
-                >
-                  {formatTime(hoverTime)}
-                </p>
+                <p className="player-bar__thumb-time">{formatTime(hoverTime)}</p>
               </div>
             )}
           </div>

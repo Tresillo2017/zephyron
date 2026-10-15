@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react'
 import { createAnnotation } from '../../lib/api'
-import { Button } from '../ui/Button'
-import { Input } from '../ui/Input'
-import { Modal } from '../ui/Modal'
+import { Button } from '../bleh/Button'
+import { Input } from '../bleh/ui/Input'
+import { Modal, ModalFooter, FooterFill } from '../bleh/ui/Modal'
+import { Badge } from '../bleh/ui/Badge'
+import { CheckFilled } from '@mingcute/react/core-filled'
 import { formatTime } from '../../lib/formatTime'
 import type { Detection } from '../../lib/types'
 
@@ -109,13 +111,29 @@ export function AnnotationEditor({
     ? annotationType === 'delete' ? 'Remove Detection' : 'Correct Detection'
     : 'Add New Track'
 
+  if (!isOpen) return null
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title}>
+    <Modal
+      title={title}
+      onClose={onClose}
+      width={460}
+      footer={success ? undefined : (
+        <ModalFooter end>
+          <FooterFill />
+          <Button label="Cancel" appearance="ghost" onClick={onClose} />
+          <Button
+            label={isSubmitting ? 'Submitting...' : annotationType === 'delete' ? 'Flag as False' : 'Submit'}
+            appearance={annotationType === 'delete' ? 'danger-primary' : 'primary'}
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          />
+        </ModalFooter>
+      )}
+    >
       {success ? (
         <div className="text-center py-8">
-          <svg className="w-12 h-12 text-accent mx-auto mb-3" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-          </svg>
+          <CheckFilled size={48} className="text-accent mx-auto mb-3" />
           <p className="text-text-primary font-medium">Annotation submitted</p>
           <p className="text-xs text-text-muted mt-1">Thank you for improving our tracklist</p>
         </div>
@@ -124,35 +142,29 @@ export function AnnotationEditor({
           {/* Type selector (only when correcting an existing detection) */}
           {detection && (
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-2">Action</label>
-              <div className="flex gap-2">
-                <button
+              <span className="ui-field-label block mb-2">Action</span>
+              <div className="flex gap-2" role="group" aria-label="Action">
+                <Button
+                  label="Correct Track"
+                  appearance={annotationType === 'correction' ? 'primary' : 'default'}
+                  aria-pressed={annotationType === 'correction'}
                   onClick={() => setAnnotationType('correction')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                    annotationType === 'correction'
-                      ? 'bg-accent/15 text-accent border border-accent/30'
-                      : 'bg-surface-overlay text-text-secondary border border-border hover:border-border-light'
-                  }`}
-                >
-                  Correct Track
-                </button>
-                <button
+                  className="flex-1"
+                />
+                <Button
+                  label="Not a Real Track"
+                  appearance={annotationType === 'delete' ? 'danger' : 'default'}
+                  aria-pressed={annotationType === 'delete'}
                   onClick={() => setAnnotationType('delete')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                    annotationType === 'delete'
-                      ? 'bg-danger/15 text-danger border border-danger/30'
-                      : 'bg-surface-overlay text-text-secondary border border-border hover:border-border-light'
-                  }`}
-                >
-                  Not a Real Track
-                </button>
+                  className="flex-1"
+                />
               </div>
             </div>
           )}
 
           {/* Original detection info */}
           {detection && annotationType === 'correction' && (
-            <div className="bg-surface-overlay rounded-lg p-3 border border-border">
+            <div className="rounded-[12px] p-3" style={{ boxShadow: 'var(--card-border)', background: 'oklch(var(--b5))' }}>
               <p className="text-xs text-text-muted mb-1">Original detection:</p>
               <p className="text-sm text-text-secondary">
                 {detection.track_title}
@@ -182,9 +194,9 @@ export function AnnotationEditor({
 
           {/* Time inputs */}
           <div>
-            <label className="text-sm font-medium text-text-secondary block mb-2">
+            <span className="ui-field-label block mb-2">
               Start Time {duration > 0 && <span className="text-text-muted font-normal">(max {formatTime(duration)})</span>}
-            </label>
+            </span>
             <div className="flex items-center gap-2">
               <Input
                 type="number"
@@ -213,9 +225,9 @@ export function AnnotationEditor({
 
           {annotationType !== 'delete' && (
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-2">
+              <span className="ui-field-label block mb-2">
                 End Time <span className="text-text-muted font-normal">(optional)</span>
-              </label>
+              </span>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
@@ -247,32 +259,14 @@ export function AnnotationEditor({
 
           {/* Delete confirmation */}
           {annotationType === 'delete' && detection && (
-            <div className="bg-danger/5 border border-danger/20 rounded-lg p-3">
+            <div className="rounded-[12px] p-3 bg-danger/5" style={{ boxShadow: 'var(--card-border)' }}>
               <p className="text-sm text-danger">
                 This will flag "{detection.track_title}" as a false detection. Other users will be able to see this correction.
               </p>
             </div>
           )}
 
-          {error && <p className="text-xs text-danger">{error}</p>}
-
-          <div className="flex gap-3 pt-2">
-            <Button variant="secondary" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
-            <Button
-              variant={annotationType === 'delete' ? 'danger' : 'primary'}
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="flex-1"
-            >
-              {isSubmitting
-                ? 'Submitting...'
-                : annotationType === 'delete'
-                ? 'Flag as False'
-                : 'Submit'}
-            </Button>
-          </div>
+          {error && <Badge tone="error">{error}</Badge>}
         </div>
       )}
     </Modal>
