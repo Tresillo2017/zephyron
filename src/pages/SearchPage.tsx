@@ -21,7 +21,7 @@ const SetCard = memo(function SetCard({ set }: { set: DjSet }) {
     <Link
       to={`/app/sets/${set.id}`}
       className="group block rounded-[var(--card-radius)] p-3.5 no-underline transition-colors"
-      style={{ background: 'hsl(var(--b5))' }}
+      style={{ background: 'oklch(var(--b5))' }}
       onMouseEnter={() => {}}
     >
       <div className="relative aspect-square rounded-lg overflow-hidden mb-3" style={{ boxShadow: '0 8px 20px rgba(0,0,0,0.35)' }}>
@@ -36,7 +36,7 @@ const SetCard = memo(function SetCard({ set }: { set: DjSet }) {
           type="button"
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); play(set) }}
           className="absolute bottom-2 right-2 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 opacity-0 translate-y-1.5 group-hover:opacity-100 group-hover:translate-y-0"
-          style={{ background: 'hsl(var(--h3))', boxShadow: '0 4px 14px hsl(var(--h4) / 0.5)' }}
+          style={{ background: 'oklch(var(--h3))', boxShadow: '0 4px 14px oklch(var(--h4) / 0.5)' }}
           aria-label={`Play ${set.title}`}
         >
           {isPlaying
@@ -45,8 +45,8 @@ const SetCard = memo(function SetCard({ set }: { set: DjSet }) {
           }
         </button>
       </div>
-      <p className="text-sm font-[var(--font-weight-medium)] truncate mb-0.5" style={{ color: 'hsl(var(--c1))' }}>{set.title}</p>
-      <p className="text-xs truncate" style={{ color: 'hsl(var(--c3))' }}>{set.artist}</p>
+      <p className="text-sm font-[var(--font-weight-medium)] truncate mb-0.5" style={{ color: 'oklch(var(--c1))' }}>{set.title}</p>
+      <p className="text-xs truncate" style={{ color: 'oklch(var(--c3))' }}>{set.artist}</p>
     </Link>
   )
 })
@@ -68,7 +68,7 @@ const TopResultCard = memo(function TopResultCard({ result }: { result: TopResul
     <Link
       to={result.link}
       className="group flex flex-col gap-5 p-5 rounded-[var(--card-radius)] no-underline h-full transition-colors"
-      style={{ background: 'hsl(var(--b4))' }}
+      style={{ background: 'oklch(var(--b4))' }}
     >
       <div
         className={`w-24 h-24 overflow-hidden flex-shrink-0 ${isRound ? 'rounded-full' : 'rounded-lg'}`}
@@ -82,13 +82,13 @@ const TopResultCard = memo(function TopResultCard({ result }: { result: TopResul
         />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-[var(--font-weight-medium)] uppercase tracking-wider mb-2" style={{ color: 'hsl(var(--c3))' }}>
+        <p className="text-xs font-[var(--font-weight-medium)] uppercase tracking-wider mb-2" style={{ color: 'oklch(var(--c3))' }}>
           Top Result
         </p>
-        <p className="text-2xl font-[var(--font-weight-bold)] leading-tight mb-1" style={{ color: 'hsl(var(--c1))' }}>
+        <p className="text-2xl font-[var(--font-weight-bold)] leading-tight mb-1" style={{ color: 'oklch(var(--c1))' }}>
           {result.title}
         </p>
-        <p className="text-sm mb-3" style={{ color: 'hsl(var(--c3))' }}>
+        <p className="text-sm mb-3" style={{ color: 'oklch(var(--c3))' }}>
           {result.type.charAt(0).toUpperCase() + result.type.slice(1)}
           {result.subtitle ? ` · ${result.subtitle}` : ''}
         </p>
@@ -98,7 +98,7 @@ const TopResultCard = memo(function TopResultCard({ result }: { result: TopResul
               <span
                 key={tag}
                 className="text-xs px-2.5 py-0.5 rounded-full"
-                style={{ background: 'hsl(var(--b3))', color: 'hsl(var(--c2))' }}
+                style={{ background: 'oklch(var(--b3))', color: 'oklch(var(--c2))' }}
               >
                 #{tag.toLowerCase()}
               </span>
@@ -109,7 +109,7 @@ const TopResultCard = memo(function TopResultCard({ result }: { result: TopResul
       <div>
         <div
           className="w-12 h-12 rounded-full flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200"
-          style={{ background: 'hsl(var(--h3))', boxShadow: '0 4px 16px hsl(var(--h4) / 0.5)' }}
+          style={{ background: 'oklch(var(--h3))', boxShadow: '0 4px 16px oklch(var(--h4) / 0.5)' }}
         >
           <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
         </div>
@@ -151,14 +151,14 @@ export function SearchPage() {
       <div className="px-6 lg:px-10 py-24 flex flex-col items-center gap-4">
         <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center mb-2"
-          style={{ background: 'hsl(var(--b5))', boxShadow: 'var(--card-border)' }}
+          style={{ background: 'oklch(var(--b5))', boxShadow: 'var(--card-border)' }}
         >
-          <svg className="w-8 h-8" style={{ color: 'hsl(var(--c3))' }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <svg className="w-8 h-8" style={{ color: 'oklch(var(--c3))' }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
           </svg>
         </div>
-        <p className="text-base font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c2))' }}>Search sets, artists, tracks, and events</p>
-        <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>Use the search bar above to get started</p>
+        <p className="text-base font-[var(--font-weight-medium)]" style={{ color: 'oklch(var(--c2))' }}>Search sets, artists, tracks, and events</p>
+        <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>Use the search bar above to get started</p>
       </div>
     )
   }
@@ -184,8 +184,8 @@ export function SearchPage() {
               onClick={() => setTab(tab)}
               className="px-4 py-1.5 rounded-full text-sm font-[var(--font-weight-medium)] transition-colors capitalize"
               style={{
-                background: isActive ? 'hsl(var(--c1))' : 'hsl(var(--b4))',
-                color: isActive ? 'hsl(var(--b6))' : 'hsl(var(--c2))',
+                background: isActive ? 'oklch(var(--c1))' : 'oklch(var(--b4))',
+                color: isActive ? 'oklch(var(--b6))' : 'oklch(var(--c2))',
               }}
             >
               {tab}
@@ -200,8 +200,8 @@ export function SearchPage() {
       {/* Loading skeletons */}
       {loading && (
         <div className="grid grid-cols-2 gap-5 mb-8">
-          <div className="h-52 rounded-[var(--card-radius)] animate-pulse" style={{ background: 'hsl(var(--b5))' }} />
-          <div className="h-52 rounded-[var(--card-radius)] animate-pulse" style={{ background: 'hsl(var(--b5))' }} />
+          <div className="h-52 rounded-[var(--card-radius)] animate-pulse" style={{ background: 'oklch(var(--b5))' }} />
+          <div className="h-52 rounded-[var(--card-radius)] animate-pulse" style={{ background: 'oklch(var(--b5))' }} />
         </div>
       )}
 
@@ -214,7 +214,7 @@ export function SearchPage() {
               {/* Left: Top Result */}
               {results.top_result && (
                 <div>
-                  <h2 className="text-xl font-[var(--font-weight-bold)] mb-4" style={{ color: 'hsl(var(--c1))' }}>Top Result</h2>
+                  <h2 className="text-xl font-[var(--font-weight-bold)] mb-4" style={{ color: 'oklch(var(--c1))' }}>Top Result</h2>
                   <TopResultCard result={results.top_result} />
                 </div>
               )}
@@ -223,9 +223,9 @@ export function SearchPage() {
               {results.tracks.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c1))' }}>Tracks</h2>
+                    <h2 className="text-xl font-[var(--font-weight-bold)]" style={{ color: 'oklch(var(--c1))' }}>Tracks</h2>
                     {results.tracks.length > 5 && (
-                      <button type="button" onClick={() => setTab('tracks')} className="text-xs font-[var(--font-weight-medium)] uppercase tracking-wider" style={{ color: 'hsl(var(--c3))' }}>
+                      <button type="button" onClick={() => setTab('tracks')} className="text-xs font-[var(--font-weight-medium)] uppercase tracking-wider" style={{ color: 'oklch(var(--c3))' }}>
                         See all
                       </button>
                     )}
@@ -235,9 +235,9 @@ export function SearchPage() {
                       <Link
                         key={track.id}
                         to={`/app/sets/${track.set_id}`}
-                        className="group flex items-center gap-3 px-3 py-2 rounded-lg no-underline transition-colors hover:bg-[hsl(var(--b4))]"
+                        className="group flex items-center gap-3 px-3 py-2 rounded-lg no-underline transition-colors hover:bg-[oklch(var(--b4))]"
                       >
-                        <span className="w-5 text-right text-sm shrink-0" style={{ color: 'hsl(var(--c3))' }}>{i + 1}</span>
+                        <span className="w-5 text-right text-sm shrink-0" style={{ color: 'oklch(var(--c3))' }}>{i + 1}</span>
                         <img
                           src={track.song_id && track.song_cover_r2_key ? getSongCoverUrl(track.song_id) : getCoverUrl(track.set_id)}
                           alt={track.track_title}
@@ -246,12 +246,12 @@ export function SearchPage() {
                           onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder('square') }}
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm truncate font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c1))' }}>{track.track_title}</p>
-                          <p className="text-xs truncate mt-0.5" style={{ color: 'hsl(var(--c3))' }}>
+                          <p className="text-sm truncate font-[var(--font-weight-medium)]" style={{ color: 'oklch(var(--c1))' }}>{track.track_title}</p>
+                          <p className="text-xs truncate mt-0.5" style={{ color: 'oklch(var(--c3))' }}>
                             {track.set_artist} · {formatTime(track.start_time_seconds)}
                           </p>
                         </div>
-                        <span className="text-xs font-mono shrink-0 opacity-0 group-hover:opacity-100" style={{ color: 'hsl(var(--c3))' }}>
+                        <span className="text-xs font-mono shrink-0 opacity-0 group-hover:opacity-100" style={{ color: 'oklch(var(--c3))' }}>
                           {formatConfidence(track.confidence)}
                         </span>
                       </Link>
@@ -265,15 +265,15 @@ export function SearchPage() {
           {/* Tracks tab (standalone full list) */}
           {activeTab === 'tracks' && results.tracks.length > 0 && (
             <section>
-              <h2 className="text-xl font-[var(--font-weight-bold)] mb-5" style={{ color: 'hsl(var(--c1))' }}>Tracks</h2>
+              <h2 className="text-xl font-[var(--font-weight-bold)] mb-5" style={{ color: 'oklch(var(--c1))' }}>Tracks</h2>
               <div className="space-y-0.5">
                 {results.tracks.map((track, i) => (
                   <Link
                     key={track.id}
                     to={`/app/sets/${track.set_id}`}
-                    className="group flex items-center gap-3 px-3 py-2.5 rounded-lg no-underline transition-colors hover:bg-[hsl(var(--b4))]"
+                    className="group flex items-center gap-3 px-3 py-2.5 rounded-lg no-underline transition-colors hover:bg-[oklch(var(--b4))]"
                   >
-                    <span className="w-5 text-right text-sm shrink-0" style={{ color: 'hsl(var(--c3))' }}>{i + 1}</span>
+                    <span className="w-5 text-right text-sm shrink-0" style={{ color: 'oklch(var(--c3))' }}>{i + 1}</span>
                     <img
                       src={getCoverUrl(track.set_id)}
                       alt={track.set_title}
@@ -282,12 +282,12 @@ export function SearchPage() {
                       onError={(e) => { (e.currentTarget as HTMLImageElement).src = getPlaceholder('square') }}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c1))' }}>{track.track_title}</p>
-                      <p className="text-xs truncate mt-0.5" style={{ color: 'hsl(var(--c3))' }}>
+                      <p className="text-sm truncate font-[var(--font-weight-medium)]" style={{ color: 'oklch(var(--c1))' }}>{track.track_title}</p>
+                      <p className="text-xs truncate mt-0.5" style={{ color: 'oklch(var(--c3))' }}>
                         {track.set_artist} · in {track.set_title} · {formatTime(track.start_time_seconds)}
                       </p>
                     </div>
-                    <span className="text-xs font-mono shrink-0" style={{ color: 'hsl(var(--c3))' }}>
+                    <span className="text-xs font-mono shrink-0" style={{ color: 'oklch(var(--c3))' }}>
                       {formatConfidence(track.confidence)}
                     </span>
                   </Link>
@@ -300,9 +300,9 @@ export function SearchPage() {
           {show('sets') && results.sets.length > 0 && (
             <section>
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-xl font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c1))' }}>Sets</h2>
+                <h2 className="text-xl font-[var(--font-weight-bold)]" style={{ color: 'oklch(var(--c1))' }}>Sets</h2>
                 {activeTab === 'all' && results.sets.length > 5 && (
-                  <button type="button" onClick={() => setTab('sets')} className="text-xs font-[var(--font-weight-medium)] uppercase tracking-wider" style={{ color: 'hsl(var(--c3))' }}>
+                  <button type="button" onClick={() => setTab('sets')} className="text-xs font-[var(--font-weight-medium)] uppercase tracking-wider" style={{ color: 'oklch(var(--c3))' }}>
                     See all {results.sets.length}
                   </button>
                 )}
@@ -319,9 +319,9 @@ export function SearchPage() {
           {show('artists') && results.artists.length > 0 && (
             <section>
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-xl font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c1))' }}>Artists</h2>
+                <h2 className="text-xl font-[var(--font-weight-bold)]" style={{ color: 'oklch(var(--c1))' }}>Artists</h2>
                 {activeTab === 'all' && results.artists.length > 5 && (
-                  <button type="button" onClick={() => setTab('artists')} className="text-xs font-[var(--font-weight-medium)] uppercase tracking-wider" style={{ color: 'hsl(var(--c3))' }}>
+                  <button type="button" onClick={() => setTab('artists')} className="text-xs font-[var(--font-weight-medium)] uppercase tracking-wider" style={{ color: 'oklch(var(--c3))' }}>
                     See all {results.artists.length}
                   </button>
                 )}
@@ -331,7 +331,7 @@ export function SearchPage() {
                   <Link
                     key={artist.id}
                     to={`/app/artists/${artist.id}`}
-                    className="group flex flex-col items-center gap-3 p-4 rounded-[var(--card-radius)] no-underline text-center transition-colors hover:bg-[hsl(var(--b4))]"
+                    className="group flex flex-col items-center gap-3 p-4 rounded-[var(--card-radius)] no-underline text-center transition-colors hover:bg-[oklch(var(--b4))]"
                   >
                     <div
                       className="w-full aspect-square rounded-full overflow-hidden"
@@ -346,8 +346,8 @@ export function SearchPage() {
                       />
                     </div>
                     <div>
-                      <p className="text-sm font-[var(--font-weight-medium)] truncate w-full" style={{ color: 'hsl(var(--c1))' }}>{artist.name}</p>
-                      <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--c3))' }}>Artist · {artist.set_count} sets</p>
+                      <p className="text-sm font-[var(--font-weight-medium)] truncate w-full" style={{ color: 'oklch(var(--c1))' }}>{artist.name}</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'oklch(var(--c3))' }}>Artist · {artist.set_count} sets</p>
                     </div>
                   </Link>
                 ))}
@@ -359,9 +359,9 @@ export function SearchPage() {
           {show('events') && results.events.length > 0 && (
             <section>
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-xl font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c1))' }}>Events</h2>
+                <h2 className="text-xl font-[var(--font-weight-bold)]" style={{ color: 'oklch(var(--c1))' }}>Events</h2>
                 {activeTab === 'all' && results.events.length > 4 && (
-                  <button type="button" onClick={() => setTab('events')} className="text-xs font-[var(--font-weight-medium)] uppercase tracking-wider" style={{ color: 'hsl(var(--c3))' }}>
+                  <button type="button" onClick={() => setTab('events')} className="text-xs font-[var(--font-weight-medium)] uppercase tracking-wider" style={{ color: 'oklch(var(--c3))' }}>
                     See all {results.events.length}
                   </button>
                 )}
@@ -372,7 +372,7 @@ export function SearchPage() {
                     key={event.id}
                     to={`/app/events/${event.slug || event.id}`}
                     className="group rounded-[var(--card-radius)] overflow-hidden no-underline transition-colors"
-                    style={{ background: 'hsl(var(--b5))' }}
+                    style={{ background: 'oklch(var(--b5))' }}
                   >
                     <div
                       className="w-full aspect-square"
@@ -386,8 +386,8 @@ export function SearchPage() {
                       />
                     </div>
                     <div className="p-3">
-                      <p className="text-sm font-[var(--font-weight-medium)] truncate" style={{ color: 'hsl(var(--c1))' }}>{event.name}</p>
-                      <p className="text-xs mt-0.5 truncate" style={{ color: 'hsl(var(--c3))' }}>
+                      <p className="text-sm font-[var(--font-weight-medium)] truncate" style={{ color: 'oklch(var(--c1))' }}>{event.name}</p>
+                      <p className="text-xs mt-0.5 truncate" style={{ color: 'oklch(var(--c3))' }}>
                         {[event.location, event.set_count ? `${event.set_count} sets` : null].filter(Boolean).join(' · ')}
                       </p>
                     </div>
@@ -400,10 +400,10 @@ export function SearchPage() {
           {/* No results */}
           {totalResults === 0 && (
             <div className="py-24 text-center">
-              <p className="text-base font-[var(--font-weight-medium)] mb-2" style={{ color: 'hsl(var(--c2))' }}>
+              <p className="text-base font-[var(--font-weight-medium)] mb-2" style={{ color: 'oklch(var(--c2))' }}>
                 No results for &ldquo;{query}&rdquo;
               </p>
-              <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+              <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>
                 Try a shorter query or check the spelling
               </p>
             </div>

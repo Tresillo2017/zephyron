@@ -88,23 +88,23 @@ export function DeleteAccountPage() {
 function LoggedOutState() {
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-2" style={{ color: 'hsl(var(--c1))' }}>Delete Account</h1>
-      <p className="text-sm mb-8" style={{ color: 'hsl(var(--c3))' }}>Permanently remove your Zephyron account and all associated data.</p>
+      <h1 className="text-3xl font-bold mb-2" style={{ color: 'oklch(var(--c1))' }}>Delete Account</h1>
+      <p className="text-sm mb-8" style={{ color: 'oklch(var(--c3))' }}>Permanently remove your Zephyron account and all associated data.</p>
 
       <div
         className="rounded-xl p-5 space-y-4"
         style={{
-          background: 'hsl(var(--b5))',
+          background: 'oklch(var(--b5))',
           boxShadow: 'var(--card-border), var(--card-shadow)',
         }}
       >
-        <p className="text-sm" style={{ color: 'hsl(var(--c2))' }}>
+        <p className="text-sm" style={{ color: 'oklch(var(--c2))' }}>
           To delete your account, you need to be signed in. Please sign in first and you'll be brought back here to complete the process.
         </p>
         <Link
           to="/login?redirect=/delete-account"
           className="inline-flex items-center justify-center px-4 h-[var(--button-height)] rounded-[var(--button-radius)] text-sm font-[var(--font-weight-medium)] no-underline transition-all active:scale-[0.98]"
-          style={{ background: 'hsl(var(--h3))', color: '#fff' }}
+          style={{ background: 'oklch(var(--h3))', color: '#fff' }}
         >
           Sign In to Continue
         </Link>
@@ -132,23 +132,23 @@ function LoggedInState({
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-2" style={{ color: 'hsl(var(--c1))' }}>Delete Account</h1>
-      <p className="text-sm mb-8" style={{ color: 'hsl(var(--c3))' }}>
-        Signed in as <span style={{ color: 'hsl(var(--c1))' }}>{userName}</span>
+      <h1 className="text-3xl font-bold mb-2" style={{ color: 'oklch(var(--c1))' }}>Delete Account</h1>
+      <p className="text-sm mb-8" style={{ color: 'oklch(var(--c3))' }}>
+        Signed in as <span style={{ color: 'oklch(var(--c1))' }}>{userName}</span>
       </p>
 
       {/* What gets deleted */}
       <div
         className="rounded-xl p-5 mb-5 space-y-3"
         style={{
-          background: 'hsl(var(--b5))',
+          background: 'oklch(var(--b5))',
           boxShadow: 'var(--card-border), var(--card-shadow)',
         }}
       >
-        <h2 className="text-sm font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c1))' }}>
+        <h2 className="text-sm font-[var(--font-weight-medium)]" style={{ color: 'oklch(var(--c1))' }}>
           What will be deleted
         </h2>
-        <ul className="text-sm space-y-1.5 list-none p-0 m-0" style={{ color: 'hsl(var(--c2))' }}>
+        <ul className="text-sm space-y-1.5 list-none p-0 m-0" style={{ color: 'oklch(var(--c2))' }}>
           {[
             'Your account and login credentials',
             'Listening history and playlists',
@@ -172,8 +172,8 @@ function LoggedInState({
           boxShadow: 'inset 0 0 0 1px hsl(0, 60%, 50% / 0.2)',
         }}
       >
-        <p className="text-sm" style={{ color: 'hsl(var(--c2))' }}>
-          This action is <strong style={{ color: 'hsl(0, 60%, 65%)' }}>permanent and cannot be undone</strong>. Type <code className="px-1 py-0.5 rounded text-xs" style={{ background: 'hsl(var(--b3))', color: 'hsl(var(--c1))' }}>DELETE</code> to confirm.
+        <p className="text-sm" style={{ color: 'oklch(var(--c2))' }}>
+          This action is <strong style={{ color: 'hsl(0, 60%, 65%)' }}>permanent and cannot be undone</strong>. Type <code className="px-1 py-0.5 rounded text-xs" style={{ background: 'oklch(var(--b3))', color: 'oklch(var(--c1))' }}>DELETE</code> to confirm.
         </p>
 
         <input
@@ -184,9 +184,9 @@ function LoggedInState({
           placeholder="Type DELETE to confirm"
           className="w-full px-3 py-2 rounded-[var(--button-radius)] text-sm focus:outline-none transition-all"
           style={{
-            background: 'hsl(var(--b4) / 0.4)',
-            color: 'hsl(var(--c1))',
-            boxShadow: confirmed ? 'inset 0 0 0 1px hsl(0, 60%, 50% / 0.5)' : 'inset 0 0 0 1px hsl(var(--b4) / 0.4)',
+            background: 'oklch(var(--b4) / 0.4)',
+            color: 'oklch(var(--c1))',
+            boxShadow: confirmed ? 'inset 0 0 0 1px hsl(0, 60%, 50% / 0.5)' : 'inset 0 0 0 1px oklch(var(--b4) / 0.4)',
           }}
           disabled={loading}
           autoComplete="off"
@@ -213,7 +213,7 @@ function LoggedInState({
           <Link
             to="/app/profile?tab=account"
             className="text-sm no-underline transition-colors"
-            style={{ color: 'hsl(var(--c3))' }}
+            style={{ color: 'oklch(var(--c3))' }}
           >
             Cancel
           </Link>

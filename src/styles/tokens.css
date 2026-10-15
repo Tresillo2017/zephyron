@@ -1,0 +1,293 @@
+/* ─────────────────────────────────────────────────────────────
+   Design tokens (bleh's colour model, Zephyron defaults).
+
+   Palette values are bare `L C H` triplets used as oklch(var(--x)) or
+   oklch(var(--x) / 40%). One accent triplet (hue/sat/lit) feeds every
+   token through the override chain below. Custom-property calc()s resolve
+   on the element that declares them, so the accent palette is re-declared
+   on `.colourful` (and :root / .theme-scope): set --hue-over on any such
+   element and its subtree recolours. Surfaces live in themes.css.
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  --default-hue: 285;
+  --default-sat: 1.28;
+  --default-lit: 0.9;
+  --sat-bg: 1;
+  --noise-opacity: 0.25;
+
+  /* status triplets (hue / sat / lit); .hue-pos etc. recolour a subtree with them */
+  --hue-pos: 133; --sat-pos: 1.19; --lit-pos: 0.98;
+  --hue-neg: 23;  --sat-neg: 1.9;  --lit-neg: 0.83;
+  --hue-fav: 56;  --sat-fav: 1.58; --lit-fav: 1.1;
+  /* the same triplets after the sat x0.18 / lit x1.25 multipliers */
+  --pos-l: calc(var(--lit-pos) * 1.25); --pos-c: calc(var(--sat-pos) * 0.18);
+  --neg-l: calc(var(--lit-neg) * 1.25); --neg-c: calc(var(--sat-neg) * 0.18);
+  --fav-l: calc(var(--lit-fav) * 1.25); --fav-c: calc(var(--sat-fav) * 0.18);
+
+  /* geometry */
+  --card-padding: 20px;
+  --card-padding-v: 40px;
+  --card-gap: 15px;
+  --card-radius: 8px;
+  --cards-main-width: 902px;
+  --cards-sidebar-width: 400px;
+  --cards-width: calc(var(--cards-main-width) + var(--cards-sidebar-width) + 3px);
+  --masthead-height: 48px;
+  --tab-size: 46px;
+  --button-height: 28px;
+  --button-sides: 9px;
+  --button-verts: 5px;
+  --mobile-bar-height: 58px;
+  --hero-avatar: 180px;
+  --side-action-height: 36px;
+  --side-action-side: 10px;
+
+  /* radii */
+  --radius-xs: 4px;
+  --radius-s: 7px;
+  --radius-m: 10px;
+  --radius-l: 13px;
+  --radius-xl: 20px;
+  --radius-page: 9px;
+  --item-small-radius: 4px;
+  --item-med-radius: 10px;
+  --item-big-radius: 12px;
+  --button-radius: 9px;
+  --input-radius: 9px;
+  --menu-radius: 14px;
+  --avatar-radius: 50%;
+
+  /* motion: --motion stays unset (none when reduced), entrances read it */
+  --trans: 0.2s;
+  --trans-short: 0.2s;
+  --trans-function: cubic-bezier(0.095, 0.410, 0.055, 0.960);
+  --trans-function-ani: cubic-bezier(0.205, 0.060, 0.050, 0.965);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* type */
+  --font-choice: 'Hanken Grotesk';
+  --font-symbols: 'Apple Color Emoji', 'Noto Color Emoji', 'Apple Symbols';
+  --font-i18n: 'Noto Sans', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans TC';
+  --font: var(--font-choice), Inter, 'Ubuntu Sans', 'Spline Sans', Roboto, var(--font-symbols), var(--font-i18n), 'Lucida Grande', Verdana, -apple-system, BlinkMacSystemFont, 'Segoe UI Emoji', sans-serif;
+  --font-head: 'Instrument Serif', var(--font);
+  --font-code: Inconsolata, 'JetBrains Mono', 'Roboto Mono', ui-monospace, monospace;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-bold: 600;
+  --font-size: 14px;
+  --line-height: 18px;
+  --font-size-sm: 12px;
+  --line-height-sm: 16px;
+  --font-size-head: 22px;
+  --line-height-head: 17px;
+  --font-size-head-2: 24px;
+  --line-height-head-2: 28px;
+  --font-size-head-3: 26px;
+  --line-height-head-3: 34px;
+  --font-weight-head: 300;
+  --font-style-head: italic;
+  --underline-offset: 3px;
+}
+
+@media (min-width: 2000px) {
+  :root { --cards-main-width: 1002px; }
+}
+@media (max-width: 1360px) {
+  :root { --cards-main-width: calc(100vw - 440px); }
+}
+@media (max-width: 980px) {
+  :root {
+    --card-padding: 15px;
+    --cards-main-width: 100vw;
+    --cards-sidebar-width: 100vw;
+    --cards-width: 100vw;
+    --hero-avatar: 100px;
+  }
+}
+
+/* serif headings off: headings fall back to the body font at a sans scale */
+[data-bleh--font_serif="false"] {
+  --font-head: var(--font);
+  --font-size-head: 16px; --line-height-head: 20px;
+  --font-size-head-2: 16px; --line-height-head-2: 20px;
+  --font-size-head-3: 18px; --line-height-head-3: 22px;
+  --font-weight-head: var(--fw-medium);
+  --font-style-head: normal;
+}
+[data-bleh--font_choice="font_2025"] { --font-choice: 'Funnel Sans'; }
+[data-bleh--font_choice="hyperlegible"] { --font-choice: 'Atkinson Hyperlegible Next'; }
+[data-bleh--font_choice="custom"] { --font-choice: var(--custom-font, 'Hanken Grotesk'); }
+
+[data-bleh--avatar_radius="squircle"] { --avatar-radius: 33%; }
+[data-bleh--avatar_radius="square"] { --avatar-radius: 0; }
+
+/* ── 1. accent chain + palette ──────────────────────────────── */
+
+:root, .theme-scope, :is(.colourful, .hue-neg, .hue-pos, .hue-fav, .hue-warn, .hue-orange, .hue-sponsor, .hue-new) {
+  --hue: var(--hue-over, var(--hue-user, var(--hue-seasonal, var(--default-hue))));
+  --sat-raw: var(--sat-over, var(--sat-user, var(--sat-seasonal, var(--default-sat))));
+  --lit-raw: var(--lit-over, var(--lit-user, var(--lit-seasonal, var(--default-lit))));
+  --sat: calc(var(--sat-raw) * 0.18);
+  --lit: calc(var(--lit-raw) * 1.25);
+
+  /* dark-type formulas; cS(n) = clamp(0, sat, n) */
+  --l2: calc(var(--lit) * 0.83) calc(var(--sat) * 0.5) var(--hue);
+  --l3: calc(var(--lit) * 0.7) calc(var(--sat) * 0.6) var(--hue);
+  --l4: calc(var(--lit) * 0.5) calc(var(--sat) * 0.7) var(--hue);
+  --l2-c: calc(var(--lit) * 0.92) calc(clamp(0, var(--sat), 2) * 0.4) var(--hue);
+  --l3-c: calc(clamp(0.5, var(--lit), 2) * 0.72) calc(clamp(0, var(--sat), 2) * 0.46) var(--hue);
+  --l4-c: calc(clamp(0.5, var(--lit), 2) * 0.49) calc(clamp(0, var(--sat), 2) * 0.46) var(--hue);
+  --h2: var(--l2-c);
+  --h3: calc(var(--lit) * 0.7) calc(clamp(0, var(--sat), 2) * 0.46) var(--hue);
+  --h4: var(--l4-c);
+  --f4: calc(var(--lit) * 0.42) calc(clamp(0, var(--sat), 2) * 0.4) var(--hue);
+  --f5: calc(var(--lit) * 0.36) calc(clamp(0, var(--sat), 2) * 0.6) var(--hue);
+  --k4: calc(var(--lit) * 0.45) calc(clamp(0, var(--sat), 2) * 0.38) var(--hue);
+  --g4: calc(var(--lit) * 0.15) calc(clamp(0, var(--sat), 2) * 0.6) var(--hue);
+  --s3: calc(clamp(0.5, var(--lit), 1.2) * 0.6) calc(clamp(0, var(--sat), 2) * 0.55) var(--hue);
+  --s4: calc(clamp(0.5, var(--lit), 1.2) * 0.55) calc(clamp(0, var(--sat), 2) * 0.42) var(--hue);
+  --p3: var(--s4);
+  /* theme-switch aliases: icons at rest and fills pick a different stop per theme type */
+  --l2-c-theme-switch: var(--l2-c);
+  --l3-c-theme-switch: var(--l3-c);
+  --h3-theme-switch: var(--h3);
+
+  --accent: oklch(var(--l3-c));
+  --accent-2: oklch(var(--l2-c-theme-switch));
+  --accent-deep: oklch(var(--l4-c));
+  --accent-fill: oklch(var(--h3));
+  --accent-glow: oklch(var(--h4));
+  --glow: oklch(var(--h3) / 40%);
+  --primary-shadow: inset 0 0 0 1px oklch(var(--l2-c) / 10%), inset 0 1px 0 1px oklch(var(--l2-c) / 15%);
+  --glow-shadow: 0 6px 20px oklch(var(--h4) / 50%);
+  --grid-colour-shadow: 0 10px 20px oklch(var(--h4) / 25%);
+  --taste-glow: drop-shadow(0 0 15px oklch(var(--h4)));
+  --glass-inset: 0 0 5px 2px oklch(var(--h3) / 60%) inset;
+  --badge-shadow: 0 3px 15px 1px oklch(var(--h4) / 40%), 0 -4px 10px 0 oklch(var(--h4) / 40%) inset;
+  --badge-bg: oklch(var(--f4) / 30%);
+  --badge-bg-hov: oklch(var(--f4) / 50%);
+  --menu-item-accent-hov: oklch(var(--h4) / 12%);
+  --menu-item-accent-atv: oklch(var(--h4) / 22%);
+  --card-gradient: oklch(calc(clamp(0.5, var(--lit), 0.9) * 0.5) calc(clamp(0, var(--sat), 2) * 0.55) var(--hue) / 16%);
+  --side-action-bg: oklch(var(--k4) / 5%);
+}
+
+/* light type (Light, Ink, Rosé Pine Dawn); cL(a,b) = clamp(a, lit, b) */
+[data-bleh--theme_type="light"], [data-bleh--theme_type="light"] :is(.colourful, .hue-neg, .hue-pos, .hue-fav, .hue-warn, .hue-orange, .hue-sponsor, .hue-new) {
+  --l2: calc(var(--lit) * 0.63) calc(var(--sat) * 0.4) var(--hue);
+  --l3: calc(var(--lit) * 0.4) calc(var(--sat) * 0.5) var(--hue);
+  --l4: calc(var(--lit) * 0.22) calc(var(--sat) * 0.6) var(--hue);
+  --l2-c: calc(clamp(0.7, var(--lit), 1.1) * 0.98) calc(clamp(0, var(--sat), 2) * 0.2) var(--hue);
+  --l3-c: calc(clamp(0.7, var(--lit), 1.1) * 0.51) calc(clamp(0, var(--sat), 2) * 0.33) var(--hue);
+  --l4-c: calc(clamp(0.7, var(--lit), 1.1) * 0.35) calc(clamp(0, var(--sat), 2) * 0.4) var(--hue);
+  --h2: calc(clamp(0.7, var(--lit), 1.1) * 1.1) calc(clamp(0, var(--sat), 2) * 0.4) var(--hue);
+  --h3: calc(clamp(0.85, var(--lit), 1.1) * 0.78) calc(clamp(0, var(--sat), 2) * 0.42) var(--hue);
+  --h4: calc(clamp(0.7, var(--lit), 1.1) * 0.63) calc(clamp(0, var(--sat), 2) * 0.6) var(--hue);
+  --f4: calc(clamp(1, var(--lit), 1.2) * 0.96) calc(clamp(0, var(--sat), 2) * 0.6) var(--hue);
+  --f5: calc(clamp(0.7, var(--lit), 1.1) * 0.63) calc(clamp(0, var(--sat), 2) * 0.72) var(--hue);
+  --k4: calc(clamp(0.7, var(--lit), 1) * 0.88) calc(clamp(0, var(--sat), 2) * 0.15) var(--hue);
+  --g4: 0.92 calc(clamp(0, var(--sat), 2) * 0.7) var(--hue);
+  --p3: calc(clamp(0.85, var(--lit), 1.1) * 1) calc(clamp(0, var(--sat), 2) * 0.3) var(--hue);
+  --s4: var(--p3);
+  --l2-c-theme-switch: var(--l3-c);
+  --h3-theme-switch: var(--h4);
+
+  --glow: oklch(var(--h3) / 60%);
+  --primary-shadow: 0 0 transparent;
+  --grid-colour-shadow: 0 10px 30px oklch(var(--h4) / 30%);
+  --taste-glow: drop-shadow(0 0 15px oklch(var(--h3)));
+  --glass-inset: 0 0 5px 2px oklch(var(--h4) / 60%) inset;
+  --badge-bg: oklch(var(--f4) / 60%);
+  --badge-bg-hov: oklch(var(--f4) / 80%);
+  --menu-item-accent-hov: oklch(var(--h4) / 15%);
+  --menu-item-accent-atv: oklch(var(--h4) / 25%);
+  --card-gradient: oklch(var(--h2) / 6%);
+  --side-action-bg: oklch(var(--k4) / 15%);
+}
+
+[data-bleh--theme="ink"], [data-bleh--theme="ink"] :is(.colourful, .hue-neg, .hue-pos, .hue-fav, .hue-warn, .hue-orange, .hue-sponsor, .hue-new) {
+  --l2-c: calc(clamp(0.7, var(--lit), 1.1) * 0.87) calc(clamp(0, var(--sat), 2) * 0.3) var(--hue);
+  --l3-c: calc(clamp(0.7, var(--lit), 1.1) * 0.49) calc(clamp(0, var(--sat), 2) * 0.33) var(--hue);
+  --l4-c: calc(clamp(0.7, var(--lit), 1.1) * 0.3) calc(clamp(0, var(--sat), 2) * 0.6) var(--hue);
+  --h2: var(--l2-c);
+  --h3: calc(clamp(0.85, var(--lit), 1.1) * 0.76) calc(clamp(0, var(--sat), 2) * 0.39) var(--hue);
+  --h4: calc(clamp(0.7, var(--lit), 1.1) * 0.63) calc(clamp(0, var(--sat), 2) * 0.6) var(--hue);
+  --f4: calc(clamp(1, var(--lit), 1.1) * 0.9) calc(clamp(0, var(--sat), 2) * 0.5) var(--hue);
+  --f5: calc(clamp(0.7, var(--lit), 1.1) * 0.6) calc(clamp(0, var(--sat), 2) * 0.68) var(--hue);
+  --k4: calc(clamp(0.7, var(--lit), 1.1) * 0.7) calc(clamp(0, var(--sat), 2) * 0.46) var(--hue);
+  --p3: calc(clamp(0.85, var(--lit), 1.1) * 0.9) calc(clamp(0, var(--sat), 2) * 0.4) var(--hue);
+  --s4: var(--p3);
+  --badge-bg: oklch(var(--f4) / 40%);
+  --badge-bg-hov: oklch(var(--f4) / 60%);
+  --card-gradient: oklch(var(--h2) / 8%);
+}
+
+[data-bleh--theme="rose_pine_dawn"], [data-bleh--theme="rose_pine_dawn"] :is(.colourful, .hue-neg, .hue-pos, .hue-fav, .hue-warn, .hue-orange, .hue-sponsor, .hue-new) {
+  --l2-c: calc(clamp(0.7, var(--lit), 1.1) * 0.86) calc(clamp(0, var(--sat), 2) * 0.2) var(--hue);
+  --l3-c: calc(clamp(0.7, var(--lit), 1.1) * 0.55) calc(clamp(0, var(--sat), 2) * 0.38) var(--hue);
+  --l4-c: calc(clamp(0.7, var(--lit), 1.1) * 0.34) calc(clamp(0, var(--sat), 2) * 0.57) var(--hue);
+  --h2: var(--l2-c);
+  --h3: calc(clamp(0.85, var(--lit), 1.1) * 0.76) calc(clamp(0, var(--sat), 2) * 0.39) var(--hue);
+  --h4: calc(clamp(0.7, var(--lit), 1.1) * 0.63) calc(clamp(0, var(--sat), 2) * 0.6) var(--hue);
+  --f4: calc(clamp(1, var(--lit), 1.1) * 0.86) calc(clamp(0, var(--sat), 2) * 0.35) var(--hue);
+  --k4: calc(clamp(0.7, var(--lit), 1.1) * 0.79) calc(clamp(0, var(--sat), 2) * 0.26) var(--hue);
+  --p3: calc(clamp(0.85, var(--lit), 1.1) * 0.9) calc(clamp(0, var(--sat), 2) * 0.3) var(--hue);
+  --s4: var(--p3);
+  --badge-bg: oklch(var(--f4) / 40%);
+  --badge-bg-hov: oklch(var(--f4) / 60%);
+  --side-action-bg: oklch(var(--k4) / 7%);
+}
+
+[data-bleh--theme="oled"], [data-bleh--theme="oled"] :is(.colourful, .hue-neg, .hue-pos, .hue-fav, .hue-warn, .hue-orange, .hue-sponsor, .hue-new) {
+  --l3: calc(var(--lit) * 0.75) calc(var(--sat) * 0.5) var(--hue);
+  --l4: calc(var(--lit) * 0.45) calc(var(--sat) * 0.6) var(--hue);
+  --f4: calc(var(--lit) * 0.4) calc(clamp(0, var(--sat), 2) * 0.32) var(--hue);
+  --k4: calc(var(--lit) * 0.5) calc(clamp(0, var(--sat), 2) * 0.44) var(--hue);
+  --g4: calc(var(--lit) * 0.1) calc(clamp(0, var(--sat), 2) * 0.6) var(--hue);
+  --grid-colour-shadow: 0 10px 30px oklch(var(--h4) / 40%);
+}
+
+[data-bleh--theme="kanagawa_dragon"], [data-bleh--theme="kanagawa_dragon"] :is(.colourful, .hue-neg, .hue-pos, .hue-fav, .hue-warn, .hue-orange, .hue-sponsor, .hue-new) {
+  --l4-c: calc(clamp(0.5, var(--lit), 2) * 0.53) calc(clamp(0, var(--sat), 2) * 0.42) var(--hue);
+  --card-gradient: oklch(calc(clamp(0.5, var(--lit), 0.9) * 0.53) calc(clamp(0, var(--sat), 2) * 0.4) var(--hue) / 13%);
+}
+
+/* low lightness accents flip the text on accent fills to white */
+.increase-btn-contrast { --b7: 1 0 0 !important; }
+
+/* grid glow off: no colour reflected below cards, no glow on primary fills */
+[data-bleh--grid_glow="false"], [data-bleh--grid_glow="false"] :is(.colourful, .hue-neg, .hue-pos, .hue-fav, .hue-warn, .hue-orange, .hue-sponsor, .hue-new) {
+  --grid-colour-shadow: 0 0 transparent;
+  --glow-shadow: 0 0 transparent;
+  --taste-glow: drop-shadow(0 0 0 transparent);
+}
+
+/* ── 2. seasons: the accent only shows while the user accent is the default ── */
+
+[data-bleh--season="new_years"], [data-season="new_years"] { --hue-seasonal: 324; --sat-seasonal: 1.88; --lit-seasonal: 0.88; }
+[data-bleh--season="easter"], [data-season="easter"] { --hue-seasonal: 114; --sat-seasonal: 1.16; --lit-seasonal: 0.95; }
+[data-bleh--season="pride"], [data-season="pride"] { --hue-seasonal: 276; --sat-seasonal: 1.58; --lit-seasonal: 0.66; }
+[data-bleh--season="summer"], [data-season="summer"] { --hue-seasonal: 43; --sat-seasonal: 2.39; --lit-seasonal: 0.89; }
+[data-bleh--season="halloween"], [data-season="halloween"] { --hue-seasonal: 35; --sat-seasonal: 1.75; --lit-seasonal: 0.67; }
+[data-bleh--season="pre_fall"], [data-season="pre_fall"] { --hue-seasonal: 43; --sat-seasonal: 1.65; --lit-seasonal: 0.98; }
+[data-bleh--season="fall"], [data-season="fall"] {
+  --hue-seasonal: 256; --sat-seasonal: 0.92; --lit-seasonal: 1.06;
+  --hue-pos: 150;
+}
+[data-bleh--season="christmas"], [data-season="christmas"] { --hue-seasonal: 19; --sat-seasonal: 2.36; --lit-seasonal: 0.77; }
+
+/* winter seasons add a faint sheen to glass panels */
+[data-bleh--season="new_years"], [data-bleh--season="fall"], [data-bleh--season="christmas"] {
+  --solarium-image: linear-gradient(180deg, rgb(255 255 255 / 6%), transparent 80%);
+}
+
+/* ── 3. local recolouring helpers (each implies .colourful) ──── */
+
+.hue-neg { --hue-over: var(--hue-neg); --sat-over: var(--sat-neg); --lit-over: var(--lit-neg); }
+.hue-pos { --hue-over: var(--hue-pos); --sat-over: var(--sat-pos); --lit-over: var(--lit-pos); }
+.hue-fav { --hue-over: var(--hue-fav); --sat-over: var(--sat-fav); --lit-over: var(--lit-fav); }
+.hue-warn { --hue-over: 50; --sat-over: 1.5; --lit-over: 1; }
+.hue-orange { --hue-over: 37; --sat-over: 2.16; --lit-over: 1; }
+.hue-sponsor { --hue-over: 15; --sat-over: 2; --lit-over: 0.93; }
+.hue-new { --hue-over: 317; --sat-over: 1.44; --lit-over: 0.96; }

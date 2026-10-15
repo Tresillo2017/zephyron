@@ -110,7 +110,7 @@ export function LikeButton({ songId, size = 16, className = '', showCount = fals
                   width: 3,
                   height: 3,
                   borderRadius: '50%',
-                  background: 'hsl(var(--h3))',
+                  background: 'oklch(var(--h3))',
                   animation: `particleBurst 0.5s cubic-bezier(0, 0.5, 0.5, 1) forwards`,
                   animationDelay: `${i * 0.02}s`,
                   transform: `rotate(${i * 60}deg) translateY(0)`,
@@ -126,8 +126,8 @@ export function LikeButton({ songId, size = 16, className = '', showCount = fals
           <FaHeart
             size={size}
             style={{
-              color: 'hsl(var(--h3))',
-              filter: 'drop-shadow(0 0 6px hsl(var(--h3) / 0.6))',
+              color: 'oklch(var(--h3))',
+              filter: 'drop-shadow(0 0 6px oklch(var(--h3) / 0.6))',
               transition: 'filter 0.3s ease',
             }}
           />
@@ -135,11 +135,11 @@ export function LikeButton({ songId, size = 16, className = '', showCount = fals
           <FiHeart
             size={size}
             style={{
-              color: 'hsl(var(--c3))',
+              color: 'oklch(var(--c3))',
               transition: 'color 0.2s ease, transform 0.2s ease',
               transform: 'scale(1)',
             }}
-            className="group-hover:scale-110 group-hover:!text-[hsl(var(--h3)/0.7)]"
+            className="group-hover:scale-110 group-hover:!text-[oklch(var(--h3)/0.7)]"
           />
         )}
       </span>
@@ -149,7 +149,7 @@ export function LikeButton({ songId, size = 16, className = '', showCount = fals
         <span
           className="text-[10px] font-mono tabular-nums"
           style={{
-            color: liked ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
+            color: liked ? 'oklch(var(--h3))' : 'oklch(var(--c3))',
             transition: 'color 0.3s ease',
           }}
         >
@@ -162,8 +162,8 @@ export function LikeButton({ songId, size = 16, className = '', showCount = fals
         <span
           className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-[10px] whitespace-nowrap pointer-events-none z-50"
           style={{
-            background: 'hsl(var(--b5))',
-            color: 'hsl(var(--c1))',
+            background: 'oklch(var(--b5))',
+            color: 'oklch(var(--c1))',
             boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
             animation: 'tooltipSlideIn 0.2s ease-out',
           }}

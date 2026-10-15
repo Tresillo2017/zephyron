@@ -19,8 +19,8 @@ export function VolumeSlider({
 
   const isFs = variant === 'fullscreen'
 
-  const trackBg = isFs ? 'rgba(255,255,255,0.15)' : 'hsl(var(--b3))'
-  const fillBg = isFs ? 'rgba(255,255,255,0.8)' : 'hsl(var(--h3))'
+  const trackBg = isFs ? 'rgba(255,255,255,0.15)' : 'oklch(var(--b3))'
+  const fillBg = isFs ? 'rgba(255,255,255,0.8)' : 'oklch(var(--h3))'
   const thumbBg = 'white'
   const iconColor = isFs ? 'rgba(255,255,255,0.5)' : undefined
 

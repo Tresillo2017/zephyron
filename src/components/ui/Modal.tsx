@@ -56,21 +56,21 @@ export function Modal({ isOpen, onClose, title, children, className = '', size =
             : 'animate-[solarium_0.2s_var(--ease-spring)]'
         } ${className}`}
         style={{
-          background: 'hsl(var(--b5) / 0.92)',
+          background: 'oklch(var(--b5) / 0.92)',
           backdropFilter: 'var(--card-blur)',
           WebkitBackdropFilter: 'var(--card-blur)',
           borderRadius: 'var(--card-radius)',
-          boxShadow: 'var(--card-border), 0 20px 60px hsl(var(--b7) / 0.5)',
+          boxShadow: 'var(--card-border), 0 20px 60px oklch(var(--b7) / 0.5)',
         }}
       >
         <div className="flex items-center justify-between px-5 py-4">
-          <h2 className="text-base font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c1))' }}>{title}</h2>
+          <h2 className="text-base font-[var(--font-weight-bold)]" style={{ color: 'oklch(var(--c1))' }}>{title}</h2>
           <button
             onClick={onClose}
             className="p-1.5 cursor-pointer rounded-lg transition-colors"
-            style={{ color: 'hsl(var(--c3))' }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'hsl(var(--b3) / 0.5)'; e.currentTarget.style.color = 'hsl(var(--c1))' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'hsl(var(--c3))' }}
+            style={{ color: 'oklch(var(--c3))' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'oklch(var(--b3) / 0.5)'; e.currentTarget.style.color = 'oklch(var(--c1))' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'oklch(var(--c3))' }}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

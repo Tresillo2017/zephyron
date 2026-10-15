@@ -52,15 +52,15 @@ export function Onboarding() {
           <div key={f.title} className="flex items-start gap-3 py-3">
             <div
               className="w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0"
-              style={{ background: 'hsl(var(--h3) / 0.12)' }}
+              style={{ background: 'oklch(var(--h3) / 0.12)' }}
             >
               {f.icon}
             </div>
             <div>
-              <p className="text-sm font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c1))' }}>
+              <p className="text-sm font-[var(--font-weight-medium)]" style={{ color: 'oklch(var(--c1))' }}>
                 {f.title}
               </p>
-              <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'hsl(var(--c2))' }}>
+              <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'oklch(var(--c2))' }}>
                 {f.description}
               </p>
             </div>
@@ -73,19 +73,19 @@ export function Onboarding() {
         onClick={handleDismiss}
         className="w-full h-[var(--button-height)] rounded-[var(--button-radius)] text-sm font-[var(--font-weight-medium)] cursor-pointer transition-all"
         style={{
-          background: 'hsl(var(--h3))',
+          background: 'oklch(var(--h3))',
           color: 'white',
-          boxShadow: '0 0 20px hsl(var(--h3) / 0.3)',
+          boxShadow: '0 0 20px oklch(var(--h3) / 0.3)',
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'hsl(var(--h2))'
+          e.currentTarget.style.background = 'oklch(var(--h2))'
           e.currentTarget.style.transform = 'scale(0.98)'
-          e.currentTarget.style.boxShadow = '0 0 25px hsl(var(--h3) / 0.4)'
+          e.currentTarget.style.boxShadow = '0 0 25px oklch(var(--h3) / 0.4)'
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'hsl(var(--h3))'
+          e.currentTarget.style.background = 'oklch(var(--h3))'
           e.currentTarget.style.transform = ''
-          e.currentTarget.style.boxShadow = '0 0 20px hsl(var(--h3) / 0.3)'
+          e.currentTarget.style.boxShadow = '0 0 20px oklch(var(--h3) / 0.3)'
         }}
       >
         Let's go →

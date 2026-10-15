@@ -47,13 +47,13 @@ export function BioEditor({ initialBio, onUpdate }: BioEditorProps) {
       <div className="flex items-center justify-between">
         <label
           htmlFor="bio-input"
-          className="text-sm font-[var(--font-weight-medium)] text-[hsl(var(--c1))]"
+          className="text-sm font-[var(--font-weight-medium)] text-[oklch(var(--c1))]"
         >
           Bio
         </label>
         <span
           className={`text-xs font-mono ${
-            isOverLimit ? 'text-[var(--color-danger)]' : 'text-[hsl(var(--c3))]'
+            isOverLimit ? 'text-[var(--color-danger)]' : 'text-[oklch(var(--c3))]'
           }`}
         >
           {charCount} / {maxChars}
@@ -68,15 +68,15 @@ export function BioEditor({ initialBio, onUpdate }: BioEditorProps) {
         onBlur={handleBlur}
         disabled={saving}
         placeholder="Tell us a bit about yourself..."
-        className="w-full px-3 py-2 rounded-lg text-sm bg-[hsl(var(--b4))] text-[hsl(var(--c1))] placeholder:text-[hsl(var(--c3))] disabled:opacity-50"
+        className="w-full px-3 py-2 rounded-lg text-sm bg-[oklch(var(--b4))] text-[oklch(var(--c1))] placeholder:text-[oklch(var(--c3))] disabled:opacity-50"
         style={{
-          boxShadow: 'inset 0 0 0 1px hsl(var(--b3) / 0.5)',
+          boxShadow: 'inset 0 0 0 1px oklch(var(--b3) / 0.5)',
           transition: 'box-shadow 0.2s var(--ease-out-custom)',
         }}
       />
 
       {saving && (
-        <p className="text-xs text-[hsl(var(--c3))]">Saving...</p>
+        <p className="text-xs text-[oklch(var(--c3))]">Saving...</p>
       )}
     </div>
   )

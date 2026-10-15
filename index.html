@@ -24,6 +24,74 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&family=Instrument+Serif:ital@0;1&family=Inconsolata:wght@200..900&family=Funnel+Sans:ital,wght@0,300..800;1,300..800&family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&display=swap"
+    />
+    <script>
+      // Prepaint: mirrors applySettings in src/stores/settingsStore.ts so the first frame already has
+      // the right theme, accent and appearance. Keep both in sync.
+      (function () {
+        var el = document.documentElement;
+        var A = 'data-bleh--';
+        var THEMES = ['light', 'ink', 'rose_pine_dawn', 'dark', 'darker', 'oled', 'rose_pine', 'kanagawa_dragon'];
+        var LIGHT = ['light', 'ink', 'rose_pine_dawn'];
+        // key: [default, allowed values]
+        var BUBBLE = {
+          solarium: [true], reduced_motion: [false], underline_links: [false], show_scroller: [false],
+          grid_glow: [true], font_serif: [true], compact: [false],
+          avatar_radius: ['circle', ['circle', 'squircle', 'square']],
+          font_choice: ['font_2026', ['font_2026', 'font_2025', 'hyperlegible']]
+        };
+        // key: [css name, default, min, max]
+        var CSS = { noise: ['noise-opacity', 0.25, 0, 1], sat_bg: ['sat-bg', 1, 0, 5] };
+        function num(v, d, min, max) {
+          return typeof v === 'number' && isFinite(v) ? Math.min(max, Math.max(min, v)) : d;
+        }
+        try {
+          var s = {};
+          var raw = localStorage.getItem('zephyron_settings');
+          if (raw !== null) {
+            try { var parsed = JSON.parse(raw); if (parsed && typeof parsed === 'object') s = parsed; } catch (e) { s = {}; }
+          } else {
+            try {
+              var old = JSON.parse(localStorage.getItem('zephyron_theme') || 'null');
+              if (old && typeof old.theme === 'string') s.theme = old.theme;
+              if (old && typeof old.customHue === 'number') { s.accent_type = 'colour'; s.hue = old.customHue; }
+            } catch (e) {}
+            if (localStorage.getItem('reduceMotion') === 'true') s.reduced_motion = true;
+          }
+          var theme = THEMES.indexOf(s.theme) >= 0 ? s.theme : 'dark';
+          var type = LIGHT.indexOf(theme) >= 0 ? 'light' : 'dark';
+          el.setAttribute(A + 'theme', theme);
+          el.setAttribute(A + 'theme_type', type);
+          el.setAttribute('data-theme', type);
+          for (var k in BUBBLE) {
+            var def = BUBBLE[k][0], allowed = BUBBLE[k][1], v = s[k];
+            var ok = typeof v === typeof def && (!allowed || allowed.indexOf(v) >= 0);
+            if (ok && v !== def) el.setAttribute(A + k, String(v));
+          }
+          for (var c in CSS) {
+            var cv = num(s[c], CSS[c][1], CSS[c][2], CSS[c][3]);
+            if (cv !== CSS[c][1]) el.style.setProperty('--' + CSS[c][0], String(cv));
+          }
+          if (s.accent_type === 'colour') {
+            var lit = num(s.lit, 0.9, 0, 1.5);
+            el.style.setProperty('--hue-user', String(num(s.hue, 285, 0, 360)));
+            el.style.setProperty('--sat-user', String(num(s.sat, 1.28, 0, 4)));
+            el.style.setProperty('--lit-user', String(lit));
+            if (lit <= 0.3) el.classList.add('increase-btn-contrast');
+          }
+          if (s.reduced_motion === true) el.classList.add('reduce-motion');
+        } catch (e) {
+          el.setAttribute('data-theme', 'dark');
+          el.setAttribute(A + 'theme', 'dark');
+          el.setAttribute(A + 'theme_type', 'dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

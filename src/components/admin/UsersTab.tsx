@@ -125,12 +125,12 @@ function UserActionsMenu({
         onClick();
       }}
       className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-      style={{ color: danger ? "hsl(0, 60%, 60%)" : "hsl(var(--c2))" }}
+      style={{ color: danger ? "hsl(0, 60%, 60%)" : "oklch(var(--c2))" }}
       onMouseEnter={(e) => {
         if (!disabled && !loading)
           e.currentTarget.style.background = danger
             ? "hsl(0, 60%, 50% / 0.12)"
-            : "hsl(var(--b3) / 0.6)";
+            : "oklch(var(--b3) / 0.6)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = "";
@@ -144,7 +144,7 @@ function UserActionsMenu({
     <div
       key="div"
       className="h-px my-1"
-      style={{ background: "hsl(var(--b4) / 0.4)" }}
+      style={{ background: "oklch(var(--b4) / 0.4)" }}
     />
   );
 
@@ -155,14 +155,14 @@ function UserActionsMenu({
         onClick={handleToggle}
         disabled={loading}
         className="p-1.5 rounded-lg cursor-pointer disabled:opacity-40 transition-colors"
-        style={{ color: "hsl(var(--c3))" }}
+        style={{ color: "oklch(var(--c3))" }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = "hsl(var(--b3) / 0.6)";
-          e.currentTarget.style.color = "hsl(var(--c1))";
+          e.currentTarget.style.background = "oklch(var(--b3) / 0.6)";
+          e.currentTarget.style.color = "oklch(var(--c1))";
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.background = "";
-          e.currentTarget.style.color = "hsl(var(--c3))";
+          e.currentTarget.style.color = "oklch(var(--c3))";
         }}
         title="User actions"
       >
@@ -200,10 +200,10 @@ function UserActionsMenu({
             style={{
               top: menuPos.top,
               left: menuPos.left,
-              background: "hsl(var(--b5) / 0.95)",
+              background: "oklch(var(--b5) / 0.95)",
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
-              boxShadow: "var(--card-border), 0 12px 40px hsl(var(--b7) / 0.5)",
+              boxShadow: "var(--card-border), 0 12px 40px oklch(var(--b7) / 0.5)",
             }}
           >
             {/* Role */}
@@ -512,7 +512,7 @@ export function UsersTab() {
         <div className="relative flex-1 max-w-xs">
           <svg
             className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
-            style={{ color: "hsl(var(--c3))" }}
+            style={{ color: "oklch(var(--c3))" }}
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -529,13 +529,13 @@ export function UsersTab() {
             onChange={(e) => setSearchInput(e.target.value)}
             className="w-full pl-8 pr-3 py-1.5 rounded-[var(--button-radius)] text-sm placeholder:text-text-muted focus:outline-none transition-all duration-200"
             style={{
-              background: "hsl(var(--b4) / 0.4)",
-              color: "hsl(var(--c1))",
+              background: "oklch(var(--b4) / 0.4)",
+              color: "oklch(var(--c1))",
               boxShadow: "none",
             }}
             onFocus={(e) => {
               e.currentTarget.style.boxShadow =
-                "inset 0 0 0 1px hsl(var(--h3) / 0.5)";
+                "inset 0 0 0 1px oklch(var(--h3) / 0.5)";
             }}
             onBlur={(e) => {
               e.currentTarget.style.boxShadow = "none";
@@ -551,7 +551,7 @@ export function UsersTab() {
         </Button>
         <p
           className="text-sm shrink-0"
-          style={{ color: "hsl(var(--c3))" }}
+          style={{ color: "oklch(var(--c3))" }}
         >
           {total} user{total !== 1 ? "s" : ""}
         </p>
@@ -563,11 +563,11 @@ export function UsersTab() {
           className="mb-4 px-4 py-2.5 rounded-xl text-sm animate-[solarium_0.2s_var(--ease-spring)]"
           style={{
             background: toast.ok
-              ? "hsl(var(--h3) / 0.12)"
+              ? "oklch(var(--h3) / 0.12)"
               : "hsl(0, 60%, 50% / 0.12)",
-            color: toast.ok ? "hsl(var(--h3))" : "hsl(0, 60%, 65%)",
+            color: toast.ok ? "oklch(var(--h3))" : "hsl(0, 60%, 65%)",
             boxShadow: `inset 0 0 0 1px ${
-              toast.ok ? "hsl(var(--h3) / 0.25)" : "hsl(0, 60%, 50% / 0.25)"
+              toast.ok ? "oklch(var(--h3) / 0.25)" : "hsl(0, 60%, 50% / 0.25)"
             }`,
           }}
         >
@@ -584,7 +584,7 @@ export function UsersTab() {
       ) : users.length === 0 ? (
         <p
           className="text-sm text-center py-8"
-          style={{ color: "hsl(var(--c3))" }}
+          style={{ color: "oklch(var(--c3))" }}
         >
           {search ? "No users matching that search." : "No users yet."}
         </p>
@@ -594,9 +594,9 @@ export function UsersTab() {
           <div
             className="flex items-center gap-4 px-4 py-2 text-xs font-[var(--font-weight-medium)]"
             style={{
-              background: "hsl(var(--b4) / 0.35)",
-              color: "hsl(var(--c3))",
-              borderBottom: "1px solid hsl(var(--b4) / 0.3)",
+              background: "oklch(var(--b4) / 0.35)",
+              color: "oklch(var(--c3))",
+              borderBottom: "1px solid oklch(var(--b4) / 0.3)",
             }}
           >
             <span className="flex-1">User</span>
@@ -612,10 +612,10 @@ export function UsersTab() {
               className="flex items-center gap-4 px-4 py-3 transition-colors"
               style={{
                 borderTop:
-                  index > 0 ? "1px solid hsl(var(--b4) / 0.2)" : "none",
+                  index > 0 ? "1px solid oklch(var(--b4) / 0.2)" : "none",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "hsl(var(--b4) / 0.15)";
+                e.currentTarget.style.background = "oklch(var(--b4) / 0.15)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = "";
@@ -626,7 +626,7 @@ export function UsersTab() {
                 <div className="flex items-center gap-2">
                   <p
                     className="text-sm font-[var(--font-weight-medium)] truncate"
-                    style={{ color: "hsl(var(--c1))" }}
+                    style={{ color: "oklch(var(--c1))" }}
                   >
                     {user.name}
                   </p>
@@ -648,7 +648,7 @@ export function UsersTab() {
                 {/* Email - blurred by default, show on hover */}
                 <p
                   className="text-xs truncate group/email"
-                  style={{ color: "hsl(var(--c3))" }}
+                  style={{ color: "oklch(var(--c3))" }}
                 >
                   <span className="blur-sm group-hover/email:blur-none transition-all cursor-pointer">
                     {user.email}
@@ -662,20 +662,20 @@ export function UsersTab() {
                       navigator.clipboard.writeText(user.id);
                     }}
                     className="text-[10px] font-mono truncate hover:underline cursor-pointer"
-                    style={{ color: "hsl(var(--c3) / 0.7)" }}
+                    style={{ color: "oklch(var(--c3) / 0.7)" }}
                     title="Click to copy full ID"
                   >
                     ID: {user.id.slice(0, 12)}...
                   </button>
                   <span
                     className="text-[10px]"
-                    style={{ color: "hsl(var(--c3) / 0.5)" }}
+                    style={{ color: "oklch(var(--c3) / 0.5)" }}
                   >
                     ·
                   </span>
                   <span
                     className="text-[10px]"
-                    style={{ color: "hsl(var(--c3) / 0.7)" }}
+                    style={{ color: "oklch(var(--c3) / 0.7)" }}
                   >
                     {formatRelativeTime(user.createdAt)}
                   </span>
@@ -693,7 +693,7 @@ export function UsersTab() {
               <div className="w-14 text-center">
                 <span
                   className="text-sm tabular-nums"
-                  style={{ color: "hsl(var(--c2))" }}
+                  style={{ color: "oklch(var(--c2))" }}
                 >
                   {(user as User & { reputation?: number }).reputation ?? 0}
                 </span>
@@ -742,7 +742,7 @@ export function UsersTab() {
           >
             Previous
           </Button>
-          <span className="text-sm" style={{ color: "hsl(var(--c3))" }}>
+          <span className="text-sm" style={{ color: "oklch(var(--c3))" }}>
             Page {page + 1} of {totalPages}
           </span>
           <Button
@@ -766,7 +766,7 @@ export function UsersTab() {
         title={`Ban ${modal?.type === "ban" ? modal.user.name : ""}`}
       >
         <div className="flex flex-col gap-4">
-          <p className="text-sm" style={{ color: "hsl(var(--c2))" }}>
+          <p className="text-sm" style={{ color: "oklch(var(--c2))" }}>
             Banned users cannot sign in. You can set an optional reason and
             expiry.
           </p>
@@ -781,7 +781,7 @@ export function UsersTab() {
           <div className="flex flex-col gap-1.5">
             <label
               className="text-sm font-[var(--font-weight-medium)]"
-              style={{ color: "hsl(var(--c2))" }}
+              style={{ color: "oklch(var(--c2))" }}
             >
               Duration
             </label>
@@ -794,15 +794,15 @@ export function UsersTab() {
                   style={{
                     background:
                       banExpiry === opt.value
-                        ? "hsl(var(--h3) / 0.15)"
-                        : "hsl(var(--b4) / 0.4)",
+                        ? "oklch(var(--h3) / 0.15)"
+                        : "oklch(var(--b4) / 0.4)",
                     color:
                       banExpiry === opt.value
-                        ? "hsl(var(--h3))"
-                        : "hsl(var(--c2))",
+                        ? "oklch(var(--h3))"
+                        : "oklch(var(--c2))",
                     boxShadow:
                       banExpiry === opt.value
-                        ? "inset 0 0 0 1px hsl(var(--h3) / 0.4)"
+                        ? "inset 0 0 0 1px oklch(var(--h3) / 0.4)"
                         : "none",
                   }}
                 >
@@ -837,9 +837,9 @@ export function UsersTab() {
         title="Revoke All Sessions"
       >
         <div className="flex flex-col gap-4">
-          <p className="text-sm" style={{ color: "hsl(var(--c2))" }}>
+          <p className="text-sm" style={{ color: "oklch(var(--c2))" }}>
             This will immediately sign out{" "}
-            <span style={{ color: "hsl(var(--c1))" }}>
+            <span style={{ color: "oklch(var(--c1))" }}>
               {modal?.type === "revoke" ? modal.user.name : ""}
             </span>{" "}
             from all devices. They will need to sign in again.
@@ -862,9 +862,9 @@ export function UsersTab() {
         title="Delete User"
       >
         <div className="flex flex-col gap-4">
-          <p className="text-sm" style={{ color: "hsl(var(--c2))" }}>
+          <p className="text-sm" style={{ color: "oklch(var(--c2))" }}>
             Permanently delete{" "}
-            <span style={{ color: "hsl(var(--c1))" }}>
+            <span style={{ color: "oklch(var(--c1))" }}>
               {modal?.type === "delete" ? modal.user.name : ""}
             </span>
             ? This action cannot be undone. All their data will be removed.
@@ -903,7 +903,7 @@ export function UsersTab() {
         }`}
       >
         <div className="flex flex-col gap-4">
-          <p className="text-sm" style={{ color: "hsl(var(--c2))" }}>
+          <p className="text-sm" style={{ color: "oklch(var(--c2))" }}>
             Set a new password for this user. They can change it after signing
             in.
           </p>
@@ -982,7 +982,7 @@ export function UsersTab() {
           <div className="flex flex-col gap-1.5">
             <label
               className="text-sm font-[var(--font-weight-medium)]"
-              style={{ color: "hsl(var(--c2))" }}
+              style={{ color: "oklch(var(--c2))" }}
             >
               Role
             </label>
@@ -996,15 +996,15 @@ export function UsersTab() {
                   style={{
                     background:
                       createRole === r
-                        ? "hsl(var(--h3) / 0.15)"
-                        : "hsl(var(--b4) / 0.4)",
+                        ? "oklch(var(--h3) / 0.15)"
+                        : "oklch(var(--b4) / 0.4)",
                     color:
                       createRole === r
-                        ? "hsl(var(--h3))"
-                        : "hsl(var(--c2))",
+                        ? "oklch(var(--h3))"
+                        : "oklch(var(--c2))",
                     boxShadow:
                       createRole === r
-                        ? "inset 0 0 0 1px hsl(var(--h3) / 0.4)"
+                        ? "inset 0 0 0 1px oklch(var(--h3) / 0.4)"
                         : "none",
                   }}
                 >

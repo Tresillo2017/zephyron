@@ -47,7 +47,7 @@ export function ProfileHeader({
           <div
             className="absolute inset-0"
             style={{
-              background: 'linear-gradient(135deg, hsl(var(--h3) / 0.08) 0%, hsl(var(--b5)) 50%, hsl(var(--h3) / 0.05) 100%)',
+              background: 'linear-gradient(135deg, oklch(var(--h3) / 0.08) 0%, oklch(var(--b5)) 50%, oklch(var(--h3) / 0.05) 100%)',
             }}
           />
         )}
@@ -55,7 +55,7 @@ export function ProfileHeader({
         {/* Bottom fade */}
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ background: 'linear-gradient(to top, hsl(var(--b6)) 0%, transparent 60%)' }}
+          style={{ background: 'linear-gradient(to top, oklch(var(--b6)) 0%, transparent 60%)' }}
         />
 
         {/* Change cover overlay — shown on hover for own profile */}
@@ -102,8 +102,8 @@ export function ProfileHeader({
                 <div
                   className="w-full h-full flex items-center justify-center font-[var(--font-weight-bold)]"
                   style={{
-                    background: 'hsl(var(--h3) / 0.15)',
-                    color: 'hsl(var(--h3))',
+                    background: 'oklch(var(--h3) / 0.15)',
+                    color: 'oklch(var(--h3))',
                     fontSize: '3rem',
                   }}
                 >
@@ -127,17 +127,17 @@ export function ProfileHeader({
             {/* Info */}
             <div className="pb-2 flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>Profile</p>
+                <p className="text-xs" style={{ color: 'oklch(var(--c3))' }}>Profile</p>
                 <Badge variant="accent">{user.role}</Badge>
               </div>
               <h1
                 className="text-2xl sm:text-3xl font-[var(--font-weight-bold)] leading-tight mb-1"
-                style={{ color: 'hsl(var(--c1))' }}
+                style={{ color: 'oklch(var(--c1))' }}
               >
                 {user.name}
               </h1>
               {user.bio && (
-                <p className="text-sm mt-1 line-clamp-2" style={{ color: 'hsl(var(--c2))' }}>
+                <p className="text-sm mt-1 line-clamp-2" style={{ color: 'oklch(var(--c2))' }}>
                   {user.bio}
                 </p>
               )}

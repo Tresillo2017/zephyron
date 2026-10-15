@@ -3,7 +3,7 @@
  *
  * The logo adapts in two ways:
  * 1. Brightness: Inverts for light theme, stays normal for dark themes
- * 2. Color: Tints with the current accent color (hsl(var(--h3)))
+ * 2. Color: Tints with the current accent color (oklch(var(--h3)))
  *
  * @param size - Width/height in pixels (default: 32)
  * @param className - Additional CSS classes

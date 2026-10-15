@@ -327,7 +327,7 @@ function SetsListTab({ editId }: { editId?: string }) {
   }
 
   const selectCls = 'px-2.5 py-1.5 rounded-lg text-xs focus:outline-none appearance-none cursor-pointer'
-  const selectStyle = { background: 'hsl(var(--b4) / 0.4)', color: 'hsl(var(--c2))' }
+  const selectStyle = { background: 'oklch(var(--b4) / 0.4)', color: 'oklch(var(--c2))' }
 
   // Helper to check if a set's metadata is complete
   const isSetMetadataComplete = (set: DjSet) => {
@@ -421,8 +421,8 @@ function SetsListTab({ editId }: { editId?: string }) {
             onClick={() => setSetsView('all')}
             className="px-3 py-1.5 rounded-lg text-sm font-[var(--font-weight-medium)] transition-colors"
             style={{
-              background: setsView === 'all' ? 'hsl(var(--h3) / 0.12)' : 'transparent',
-              color: setsView === 'all' ? 'hsl(var(--h3))' : 'hsl(var(--c2))',
+              background: setsView === 'all' ? 'oklch(var(--h3) / 0.12)' : 'transparent',
+              color: setsView === 'all' ? 'oklch(var(--h3))' : 'oklch(var(--c2))',
             }}
           >
             All Sets
@@ -432,8 +432,8 @@ function SetsListTab({ editId }: { editId?: string }) {
             onClick={() => setSetsView('requests')}
             className="px-3 py-1.5 rounded-lg text-sm font-[var(--font-weight-medium)] transition-colors"
             style={{
-              background: setsView === 'requests' ? 'hsl(var(--h3) / 0.12)' : 'transparent',
-              color: setsView === 'requests' ? 'hsl(var(--h3))' : 'hsl(var(--c2))',
+              background: setsView === 'requests' ? 'oklch(var(--h3) / 0.12)' : 'transparent',
+              color: setsView === 'requests' ? 'oklch(var(--h3))' : 'oklch(var(--c2))',
             }}
           >
             Requested Sets
@@ -441,13 +441,13 @@ function SetsListTab({ editId }: { editId?: string }) {
         </div>
         {setsView === 'all' && (
           <div className="flex items-center gap-2">
-            <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid hsl(var(--b4) / 0.4)' }}>
+            <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid oklch(var(--b4) / 0.4)' }}>
               <button
                 onClick={() => setViewMode('list')}
                 className="px-2 py-1 transition-colors"
                 style={{
-                  background: viewMode === 'list' ? 'hsl(var(--b4) / 0.5)' : 'transparent',
-                  color: viewMode === 'list' ? 'hsl(var(--c1))' : 'hsl(var(--c3))',
+                  background: viewMode === 'list' ? 'oklch(var(--b4) / 0.5)' : 'transparent',
+                  color: viewMode === 'list' ? 'oklch(var(--c1))' : 'oklch(var(--c3))',
                 }}
                 title="List view"
               >
@@ -459,8 +459,8 @@ function SetsListTab({ editId }: { editId?: string }) {
                 onClick={() => setViewMode('grid')}
                 className="px-2 py-1 transition-colors"
                 style={{
-                  background: viewMode === 'grid' ? 'hsl(var(--b4) / 0.5)' : 'transparent',
-                  color: viewMode === 'grid' ? 'hsl(var(--c1))' : 'hsl(var(--c3))',
+                  background: viewMode === 'grid' ? 'oklch(var(--b4) / 0.5)' : 'transparent',
+                  color: viewMode === 'grid' ? 'oklch(var(--c1))' : 'oklch(var(--c3))',
                 }}
                 title="Grid view"
               >
@@ -478,19 +478,19 @@ function SetsListTab({ editId }: { editId?: string }) {
 
       {/* Requests view */}
       {setsView === 'requests' && (
-        <div className="rounded-xl overflow-hidden" style={{ boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)' }}>
-          <div className="flex items-center gap-0" style={{ background: 'hsl(var(--b5) / 0.6)', borderBottom: '1px solid hsl(var(--b4) / 0.2)' }}>
+        <div className="rounded-xl overflow-hidden" style={{ boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.25)' }}>
+          <div className="flex items-center gap-0" style={{ background: 'oklch(var(--b5) / 0.6)', borderBottom: '1px solid oklch(var(--b4) / 0.2)' }}>
             <button
               onClick={() => setRequestsTab('source')}
               className="px-4 py-2.5 text-xs font-medium transition-colors flex items-center gap-1.5"
               style={{
-                color: requestsTab === 'source' ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
-                borderBottom: requestsTab === 'source' ? '2px solid hsl(var(--h3))' : '2px solid transparent',
+                color: requestsTab === 'source' ? 'oklch(var(--h3))' : 'oklch(var(--c3))',
+                borderBottom: requestsTab === 'source' ? '2px solid oklch(var(--h3))' : '2px solid transparent',
               }}
             >
               Source Requests
               {sourceRequests.length > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono" style={{ background: 'hsl(var(--h3) / 0.2)', color: 'hsl(var(--h3))' }}>
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono" style={{ background: 'oklch(var(--h3) / 0.2)', color: 'oklch(var(--h3))' }}>
                   {sourceRequests.length}
                 </span>
               )}
@@ -499,18 +499,18 @@ function SetsListTab({ editId }: { editId?: string }) {
               onClick={() => setRequestsTab('sets')}
               className="px-4 py-2.5 text-xs font-medium transition-colors flex items-center gap-1.5"
               style={{
-                color: requestsTab === 'sets' ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
-                borderBottom: requestsTab === 'sets' ? '2px solid hsl(var(--h3))' : '2px solid transparent',
+                color: requestsTab === 'sets' ? 'oklch(var(--h3))' : 'oklch(var(--c3))',
+                borderBottom: requestsTab === 'sets' ? '2px solid oklch(var(--h3))' : '2px solid transparent',
               }}
             >
               Set Requests
               {setRequests.length > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono" style={{ background: 'hsl(var(--h3) / 0.2)', color: 'hsl(var(--h3))' }}>
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono" style={{ background: 'oklch(var(--h3) / 0.2)', color: 'oklch(var(--h3))' }}>
                   {setRequests.length}
                 </span>
               )}
             </button>
-            <button onClick={loadRequests} className="ml-auto mr-3 p-1.5 rounded-md transition-colors" style={{ color: 'hsl(var(--c3))' }} title="Refresh">
+            <button onClick={loadRequests} className="ml-auto mr-3 p-1.5 rounded-md transition-colors" style={{ color: 'oklch(var(--c3))' }} title="Refresh">
               <svg className={`w-3.5 h-3.5 ${requestsLoading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
@@ -518,7 +518,7 @@ function SetsListTab({ editId }: { editId?: string }) {
           </div>
 
           {requestActionMsg && (
-            <div className="px-4 py-2 text-xs" style={{ background: 'hsl(var(--h3) / 0.1)', color: 'hsl(var(--h3))' }}>
+            <div className="px-4 py-2 text-xs" style={{ background: 'oklch(var(--h3) / 0.1)', color: 'oklch(var(--h3))' }}>
               {requestActionMsg}
               <button onClick={() => setRequestActionMsg(null)} className="ml-2 opacity-60 hover:opacity-100">×</button>
             </div>
@@ -528,25 +528,25 @@ function SetsListTab({ editId }: { editId?: string }) {
             {requestsTab === 'source' && (
               <>
                 {sourceRequests.length === 0 ? (
-                  <p className="text-center py-12 text-sm" style={{ color: 'hsl(var(--c3))' }}>No pending source requests</p>
+                  <p className="text-center py-12 text-sm" style={{ color: 'oklch(var(--c3))' }}>No pending source requests</p>
                 ) : (
                   sourceRequests.map((req) => (
-                    <div key={req.id} className="flex items-start gap-3 px-4 py-3" style={{ borderBottom: '1px solid hsl(var(--b4) / 0.1)' }}>
+                    <div key={req.id} className="flex items-start gap-3 px-4 py-3" style={{ borderBottom: '1px solid oklch(var(--b4) / 0.1)' }}>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate" style={{ color: 'hsl(var(--c1))' }}>
+                        <p className="text-sm font-medium truncate" style={{ color: 'oklch(var(--c1))' }}>
                           {req.set_title} — {req.set_artist}
                         </p>
-                        <p className="text-xs mt-0.5 truncate" style={{ color: 'hsl(var(--c3))' }}>
+                        <p className="text-xs mt-0.5 truncate" style={{ color: 'oklch(var(--c3))' }}>
                           <span className="uppercase font-mono mr-1">{req.source_type}</span>
                           <a href={req.source_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
                             {req.source_url.length > 60 ? req.source_url.slice(0, 60) + '…' : req.source_url}
                           </a>
                         </p>
                         {req.user_name && (
-                          <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--c3))' }}>by {req.user_name}</p>
+                          <p className="text-xs mt-0.5" style={{ color: 'oklch(var(--c3))' }}>by {req.user_name}</p>
                         )}
                         {req.notes && (
-                          <p className="text-xs italic mt-1" style={{ color: 'hsl(var(--c3))' }}>{req.notes}</p>
+                          <p className="text-xs italic mt-1" style={{ color: 'oklch(var(--c3))' }}>{req.notes}</p>
                         )}
                       </div>
                       <div className="flex gap-1.5 shrink-0">
@@ -566,16 +566,16 @@ function SetsListTab({ editId }: { editId?: string }) {
             {requestsTab === 'sets' && (
               <>
                 {setRequests.length === 0 ? (
-                  <p className="text-center py-12 text-sm" style={{ color: 'hsl(var(--c3))' }}>No pending set requests</p>
+                  <p className="text-center py-12 text-sm" style={{ color: 'oklch(var(--c3))' }}>No pending set requests</p>
                 ) : (
                   setRequests.map((req) => (
-                    <div key={req.id} className="flex items-start gap-3 px-4 py-3" style={{ borderBottom: '1px solid hsl(var(--b4) / 0.1)' }}>
+                    <div key={req.id} className="flex items-start gap-3 px-4 py-3" style={{ borderBottom: '1px solid oklch(var(--b4) / 0.1)' }}>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium" style={{ color: 'hsl(var(--c1))' }}>
+                        <p className="text-sm font-medium" style={{ color: 'oklch(var(--c1))' }}>
                           {req.artist} — {req.title}
                         </p>
                         {req.source_url && (
-                          <p className="text-xs mt-0.5 truncate" style={{ color: 'hsl(var(--c3))' }}>
+                          <p className="text-xs mt-0.5 truncate" style={{ color: 'oklch(var(--c3))' }}>
                             <span className="uppercase font-mono mr-1">{req.source_type}</span>
                             <a href={req.source_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
                               {req.source_url}
@@ -585,10 +585,10 @@ function SetsListTab({ editId }: { editId?: string }) {
                         <div className="flex gap-2 mt-0.5">
                           {req.event && <Badge variant="muted">{req.event}</Badge>}
                           {req.genre && <Badge variant="muted">{req.genre}</Badge>}
-                          {req.user_name && <span className="text-xs" style={{ color: 'hsl(var(--c3))' }}>by {req.user_name}</span>}
+                          {req.user_name && <span className="text-xs" style={{ color: 'oklch(var(--c3))' }}>by {req.user_name}</span>}
                         </div>
                         {req.notes && (
-                          <p className="text-xs italic mt-1" style={{ color: 'hsl(var(--c3))' }}>{req.notes}</p>
+                          <p className="text-xs italic mt-1" style={{ color: 'oklch(var(--c3))' }}>{req.notes}</p>
                         )}
                       </div>
                       <div className="flex gap-1.5 shrink-0">
@@ -612,11 +612,11 @@ function SetsListTab({ editId }: { editId?: string }) {
       {setsView === 'all' && (
         <>
           {/* Search + Filters bar */}
-          <div className="rounded-xl p-3 mb-4" style={{ background: 'hsl(var(--b5) / 0.4)', boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.2)' }}>
+          <div className="rounded-xl p-3 mb-4" style={{ background: 'oklch(var(--b5) / 0.4)', boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.2)' }}>
         {/* Search row */}
         <div className="flex gap-3 mb-3">
           <div className="relative flex-1">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ color: 'hsl(var(--c3))' }}>
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ color: 'oklch(var(--c3))' }}>
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
@@ -624,8 +624,8 @@ function SetsListTab({ editId }: { editId?: string }) {
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by title, artist, event, venue..."
               className="w-full pl-9 pr-3 py-1.5 rounded-lg text-sm placeholder:text-text-muted focus:outline-none transition-all duration-200"
-              style={{ background: 'hsl(var(--b4) / 0.5)', color: 'hsl(var(--c1))' }}
-              onFocus={(e) => { e.currentTarget.style.boxShadow = 'inset 0 0 0 1px hsl(var(--h3) / 0.4)' }}
+              style={{ background: 'oklch(var(--b4) / 0.5)', color: 'oklch(var(--c1))' }}
+              onFocus={(e) => { e.currentTarget.style.boxShadow = 'inset 0 0 0 1px oklch(var(--h3) / 0.4)' }}
               onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
             />
           </div>
@@ -655,9 +655,9 @@ function SetsListTab({ editId }: { editId?: string }) {
             <button
               onClick={() => { setGenre(''); setStreamType(''); setDetectionStatus(''); setHasSource(''); setPage(1) }}
               className="px-2.5 py-1.5 rounded-lg text-xs cursor-pointer transition-colors"
-              style={{ color: 'hsl(var(--c3))' }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = 'hsl(var(--c1))' }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = 'hsl(var(--c3))' }}
+              style={{ color: 'oklch(var(--c3))' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'oklch(var(--c1))' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'oklch(var(--c3))' }}
             >
               Clear filters
             </button>
@@ -669,18 +669,18 @@ function SetsListTab({ editId }: { editId?: string }) {
       {someSelected && (
         <div
           className="rounded-xl p-3 mb-4 flex flex-wrap items-center gap-3"
-          style={{ background: 'hsl(var(--h3) / 0.06)', boxShadow: 'inset 0 0 0 1px hsl(var(--h3) / 0.15)' }}
+          style={{ background: 'oklch(var(--h3) / 0.06)', boxShadow: 'inset 0 0 0 1px oklch(var(--h3) / 0.15)' }}
         >
-          <span className="text-xs font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--h3))' }}>
+          <span className="text-xs font-[var(--font-weight-medium)]" style={{ color: 'oklch(var(--h3))' }}>
             {selectedIds.size} selected
           </span>
-          <div className="h-4 w-px" style={{ background: 'hsl(var(--h3) / 0.2)' }} />
+          <div className="h-4 w-px" style={{ background: 'oklch(var(--h3) / 0.2)' }} />
 
           <select
             value={batchAction}
             onChange={(e) => setBatchAction(e.target.value as typeof batchAction)}
             className={selectCls}
-            style={{ background: 'hsl(var(--h3) / 0.1)', color: 'hsl(var(--h3))' }}
+            style={{ background: 'oklch(var(--h3) / 0.1)', color: 'oklch(var(--h3))' }}
           >
             <option value="">Choose action...</option>
             <option value="detect">Run Detection</option>
@@ -759,13 +759,13 @@ function SetsListTab({ editId }: { editId?: string }) {
           <button
             onClick={() => { setSelectedIds(new Set()); setBatchAction(''); setBatchMsg(null) }}
             className="text-xs cursor-pointer ml-auto"
-            style={{ color: 'hsl(var(--c3))' }}
+            style={{ color: 'oklch(var(--c3))' }}
           >
             Cancel
           </button>
 
           {batchMsg && (
-            <p className="w-full text-xs mt-1" style={{ color: batchMsg.type === 'error' ? 'hsl(0, 60%, 55%)' : 'hsl(var(--h3))' }}>
+            <p className="w-full text-xs mt-1" style={{ color: batchMsg.type === 'error' ? 'hsl(0, 60%, 55%)' : 'oklch(var(--h3))' }}>
               {batchMsg.text}
             </p>
           )}
@@ -791,7 +791,7 @@ function SetsListTab({ editId }: { editId?: string }) {
         </div>
       ) : sets.length === 0 ? (
         <div className="card text-center py-12">
-          <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+          <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>
             {debouncedSearch || activeFilterCount > 0 ? 'No sets match your filters.' : 'No sets in the catalog yet. Click "Add Set" to upload your first DJ set.'}
           </p>
         </div>
@@ -802,13 +802,13 @@ function SetsListTab({ editId }: { editId?: string }) {
               {/* Table header */}
               <div
                 className="flex items-center gap-3 px-4 py-2 mb-1 text-[10px] uppercase tracking-wider"
-                style={{ color: 'hsl(var(--c3))' }}
+                style={{ color: 'oklch(var(--c3))' }}
               >
                 <input
                   type="checkbox"
                   checked={allSelected}
                   onChange={toggleAll}
-                  className="w-3.5 h-3.5 rounded shrink-0 cursor-pointer accent-[hsl(var(--h3))]"
+                  className="w-3.5 h-3.5 rounded shrink-0 cursor-pointer accent-[oklch(var(--h3))]"
                 />
                 <span className="flex-1 min-w-0">Title / Artist</span>
                 <span className="w-20 text-center hidden sm:block">Genre</span>
@@ -834,7 +834,7 @@ function SetsListTab({ editId }: { editId?: string }) {
                   className="card !p-0 transition-all duration-150"
                   style={{
                     boxShadow: isSelected
-                      ? 'inset 0 0 0 1px hsl(var(--h3) / 0.3), 0 0 0 1px hsl(var(--h3) / 0.1)'
+                      ? 'inset 0 0 0 1px oklch(var(--h3) / 0.3), 0 0 0 1px oklch(var(--h3) / 0.1)'
                       : undefined,
                   }}
                 >
@@ -843,36 +843,36 @@ function SetsListTab({ editId }: { editId?: string }) {
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleOne(set.id)}
-                      className="w-3.5 h-3.5 rounded shrink-0 cursor-pointer accent-[hsl(var(--h3))]"
+                      className="w-3.5 h-3.5 rounded shrink-0 cursor-pointer accent-[oklch(var(--h3))]"
                     />
                     <Link to={`/app/sets/${set.id}`} className="flex-1 min-w-0 no-underline group">
-                      <p className="text-sm font-[var(--font-weight-medium)] truncate group-hover:underline" style={{ color: 'hsl(var(--c1))' }}>
+                      <p className="text-sm font-[var(--font-weight-medium)] truncate group-hover:underline" style={{ color: 'oklch(var(--c1))' }}>
                         {set.title}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs truncate" style={{ color: 'hsl(var(--c3))' }}>{set.artist}</span>
+                        <span className="text-xs truncate" style={{ color: 'oklch(var(--c3))' }}>{set.artist}</span>
                         {set.event && (
-                          <span className="text-[10px] truncate max-w-28 hidden lg:inline" style={{ color: 'hsl(var(--c3) / 0.7)' }}>
+                          <span className="text-[10px] truncate max-w-28 hidden lg:inline" style={{ color: 'oklch(var(--c3) / 0.7)' }}>
                             {set.event}
                           </span>
                         )}
                       </div>
                     </Link>
                     <span className="w-20 text-center hidden sm:block">
-                      {set.genre ? <Badge variant="muted">{set.genre}</Badge> : <span className="text-xs" style={{ color: 'hsl(var(--c3) / 0.4)' }}>—</span>}
+                      {set.genre ? <Badge variant="muted">{set.genre}</Badge> : <span className="text-xs" style={{ color: 'oklch(var(--c3) / 0.4)' }}>—</span>}
                     </span>
                     <span className="w-20 text-center hidden md:block">
                       <span
                         className="text-[10px] px-1.5 py-0.5 rounded-md inline-block"
                         style={{
-                          background: sourceLabel === 'None' ? 'hsl(0 40% 30% / 0.15)' : 'hsl(var(--b4) / 0.4)',
-                          color: sourceLabel === 'None' ? 'hsl(0, 50%, 60%)' : 'hsl(var(--c3))',
+                          background: sourceLabel === 'None' ? 'hsl(0 40% 30% / 0.15)' : 'oklch(var(--b4) / 0.4)',
+                          color: sourceLabel === 'None' ? 'hsl(0, 50%, 60%)' : 'oklch(var(--c3))',
                         }}
                       >
                         {sourceLabel}
                       </span>
                     </span>
-                    <span className="w-16 text-center text-xs font-mono hidden md:block" style={{ color: 'hsl(var(--c3))' }}>
+                    <span className="w-16 text-center text-xs font-mono hidden md:block" style={{ color: 'oklch(var(--c3))' }}>
                       {formatDuration(set.duration_seconds)}
                     </span>
                     <span className="w-24 text-center">
@@ -886,7 +886,7 @@ function SetsListTab({ editId }: { editId?: string }) {
                         {/* Hover tooltip */}
                         <div
                           className="absolute left-1/2 bottom-full mb-1 -translate-x-1/2 px-2 py-1.5 rounded-md text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50"
-                          style={{ background: 'hsl(var(--b3))', color: 'hsl(var(--c1))', boxShadow: 'var(--menu-shadow)' }}
+                          style={{ background: 'oklch(var(--b3))', color: 'oklch(var(--c1))', boxShadow: 'var(--menu-shadow)' }}
                         >
                           <div className="text-left">
                             <div>Event: {set.event_id ? '✓' : '✗'}</div>
@@ -897,7 +897,7 @@ function SetsListTab({ editId }: { editId?: string }) {
                         </div>
                       </div>
                     </span>
-                    <span className="w-14 text-right text-xs font-mono hidden sm:block" style={{ color: 'hsl(var(--c3))' }}>
+                    <span className="w-14 text-right text-xs font-mono hidden sm:block" style={{ color: 'oklch(var(--c3))' }}>
                       {set.play_count > 0 ? set.play_count : '—'}
                     </span>
                     <Button variant="ghost" size="sm" onClick={() => setEditingSet(set)} className="w-12 shrink-0">
@@ -926,7 +926,7 @@ function SetsListTab({ editId }: { editId?: string }) {
                       className="card !p-4 relative transition-all duration-150"
                       style={{
                         boxShadow: isSelected
-                          ? 'inset 0 0 0 2px hsl(var(--h3) / 0.3), 0 0 0 1px hsl(var(--h3) / 0.1)'
+                          ? 'inset 0 0 0 2px oklch(var(--h3) / 0.3), 0 0 0 1px oklch(var(--h3) / 0.1)'
                           : undefined,
                       }}
                     >
@@ -934,15 +934,15 @@ function SetsListTab({ editId }: { editId?: string }) {
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleOne(set.id)}
-                        className="absolute top-3 right-3 w-4 h-4 rounded cursor-pointer accent-[hsl(var(--h3))]"
+                        className="absolute top-3 right-3 w-4 h-4 rounded cursor-pointer accent-[oklch(var(--h3))]"
                       />
                       <Link to={`/app/sets/${set.id}`} className="no-underline group block mb-3">
-                        <p className="text-base font-[var(--font-weight-medium)] group-hover:underline mb-1 pr-6" style={{ color: 'hsl(var(--c1))' }}>
+                        <p className="text-base font-[var(--font-weight-medium)] group-hover:underline mb-1 pr-6" style={{ color: 'oklch(var(--c1))' }}>
                           {set.title}
                         </p>
-                        <p className="text-sm mb-2" style={{ color: 'hsl(var(--c2))' }}>{set.artist}</p>
+                        <p className="text-sm mb-2" style={{ color: 'oklch(var(--c2))' }}>{set.artist}</p>
                         {set.event && (
-                          <p className="text-xs truncate" style={{ color: 'hsl(var(--c3))' }}>
+                          <p className="text-xs truncate" style={{ color: 'oklch(var(--c3))' }}>
                             {set.event}
                           </p>
                         )}
@@ -959,7 +959,7 @@ function SetsListTab({ editId }: { editId?: string }) {
                           {/* Hover tooltip */}
                           <div
                             className="absolute left-1/2 bottom-full mb-1 -translate-x-1/2 px-2 py-1.5 rounded-md text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50"
-                            style={{ background: 'hsl(var(--b3))', color: 'hsl(var(--c1))', boxShadow: 'var(--menu-shadow)' }}
+                            style={{ background: 'oklch(var(--b3))', color: 'oklch(var(--c1))', boxShadow: 'var(--menu-shadow)' }}
                           >
                             <div className="text-left">
                               <div>Event: {set.event_id ? '✓' : '✗'}</div>
@@ -970,12 +970,12 @@ function SetsListTab({ editId }: { editId?: string }) {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between text-xs" style={{ color: 'hsl(var(--c3))' }}>
+                      <div className="flex items-center justify-between text-xs" style={{ color: 'oklch(var(--c3))' }}>
                         <span className="font-mono">{formatDuration(set.duration_seconds)}</span>
                         <span>{sourceLabel}</span>
                         <span>{set.play_count > 0 ? `${set.play_count} plays` : '—'}</span>
                       </div>
-                      <div className="mt-3 pt-3" style={{ borderTop: '1px solid hsl(var(--b4) / 0.2)' }}>
+                      <div className="mt-3 pt-3" style={{ borderTop: '1px solid oklch(var(--b4) / 0.2)' }}>
                         <Button variant="ghost" size="sm" onClick={() => setEditingSet(set)} className="w-full justify-center">
                           Edit
                         </Button>
@@ -990,7 +990,7 @@ function SetsListTab({ editId }: { editId?: string }) {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-5">
-              <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
+              <p className="text-xs" style={{ color: 'oklch(var(--c3))' }}>
                 Page {page} of {totalPages} ({total} total)
               </p>
               <div className="flex items-center gap-1.5">
@@ -998,7 +998,7 @@ function SetsListTab({ editId }: { editId?: string }) {
                   onClick={() => setPage(1)}
                   disabled={page === 1}
                   className="px-2 py-1 rounded-md text-xs transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-default"
-                  style={{ color: 'hsl(var(--c2))', background: 'hsl(var(--b4) / 0.3)' }}
+                  style={{ color: 'oklch(var(--c2))', background: 'oklch(var(--b4) / 0.3)' }}
                 >
                   First
                 </button>
@@ -1006,7 +1006,7 @@ function SetsListTab({ editId }: { editId?: string }) {
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
                   className="px-2 py-1 rounded-md text-xs transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-default"
-                  style={{ color: 'hsl(var(--c2))', background: 'hsl(var(--b4) / 0.3)' }}
+                  style={{ color: 'oklch(var(--c2))', background: 'oklch(var(--b4) / 0.3)' }}
                 >
                   Prev
                 </button>
@@ -1029,8 +1029,8 @@ function SetsListTab({ editId }: { editId?: string }) {
                       onClick={() => setPage(p)}
                       className="w-7 h-7 rounded-md text-xs transition-colors cursor-pointer"
                       style={{
-                        background: p === page ? 'hsl(var(--h3) / 0.15)' : 'transparent',
-                        color: p === page ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
+                        background: p === page ? 'oklch(var(--h3) / 0.15)' : 'transparent',
+                        color: p === page ? 'oklch(var(--h3))' : 'oklch(var(--c3))',
                         fontWeight: p === page ? 'var(--font-weight-medium)' : undefined,
                       }}
                     >
@@ -1043,7 +1043,7 @@ function SetsListTab({ editId }: { editId?: string }) {
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
                   className="px-2 py-1 rounded-md text-xs transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-default"
-                  style={{ color: 'hsl(var(--c2))', background: 'hsl(var(--b4) / 0.3)' }}
+                  style={{ color: 'oklch(var(--c2))', background: 'oklch(var(--b4) / 0.3)' }}
                 >
                   Next
                 </button>
@@ -1051,7 +1051,7 @@ function SetsListTab({ editId }: { editId?: string }) {
                   onClick={() => setPage(totalPages)}
                   disabled={page === totalPages}
                   className="px-2 py-1 rounded-md text-xs transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-default"
-                  style={{ color: 'hsl(var(--c2))', background: 'hsl(var(--b4) / 0.3)' }}
+                  style={{ color: 'oklch(var(--c2))', background: 'oklch(var(--b4) / 0.3)' }}
                 >
                   Last
                 </button>
@@ -1164,7 +1164,7 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
-  const inputClass = 'w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none'
+  const inputClass = 'w-full px-3 py-2 bg-[oklch(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none'
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -1299,15 +1299,15 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
     <Modal isOpen onClose={onClose} title={`Edit: ${set.title}`}>
       <div className="min-w-0" style={{ maxHeight: '75vh', overflow: 'auto' }}>
         {/* Tabs */}
-        <div className="flex gap-1 mb-4 p-1 rounded-lg" style={{ background: 'hsl(var(--b5) / 0.5)' }}>
+        <div className="flex gap-1 mb-4 p-1 rounded-lg" style={{ background: 'oklch(var(--b5) / 0.5)' }}>
           {tabs.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
               className="flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all"
               style={{
-                background: tab === t.id ? 'hsl(var(--h3) / 0.15)' : 'transparent',
-                color: tab === t.id ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
+                background: tab === t.id ? 'oklch(var(--h3) / 0.15)' : 'transparent',
+                color: tab === t.id ? 'oklch(var(--h3))' : 'oklch(var(--c3))',
               }}
             >
               {t.label}
@@ -1321,7 +1321,7 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
             <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>Artist / DJ</label>
+                <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'oklch(var(--c2))' }}>Artist / DJ</label>
                 <AutocompleteInput
                   value={artist} onChange={setArtist}
                   onSelect={(opt) => setArtistId(opt.id)}
@@ -1335,7 +1335,7 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
                   <div className="flex flex-wrap gap-1 mt-1.5">
                     {additionalArtists.map(a => (
                       <span key={a.id} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs"
-                        style={{ background: 'hsl(var(--h3) / 0.12)', color: 'hsl(var(--h3))' }}>
+                        style={{ background: 'oklch(var(--h3) / 0.12)', color: 'oklch(var(--h3))' }}>
                         {a.name}
                         <button onClick={() => handleRemoveCoArtist(a.id)} className="opacity-60 hover:opacity-100 ml-0.5 leading-none cursor-pointer">×</button>
                       </span>
@@ -1361,7 +1361,7 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
                 </div>
               </div>
               <div>
-                <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>Event</label>
+                <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'oklch(var(--c2))' }}>Event</label>
                 <AutocompleteInput
                   value={event} onChange={setEvent}
                   onSelect={(opt) => setEventId(opt.id)}
@@ -1377,22 +1377,22 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
               <Input label="Subgenre" value={subgenre} onChange={(e) => setSubgenre(e.target.value)} placeholder="e.g. Dark Techno" />
             </div>
             <div>
-              <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>Genre</label>
+              <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'oklch(var(--c2))' }}>Genre</label>
               <select value={genre} onChange={(e) => setGenre(e.target.value)} className={inputClass}>
                 <option value="">None</option>
                 {GENRES.map((g) => <option key={g} value={g}>{g}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>1001Tracklists URL</label>
+              <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'oklch(var(--c2))' }}>1001Tracklists URL</label>
               <input value={tracklistUrl} onChange={(e) => setTracklistUrl(e.target.value)} placeholder="https://www.1001tracklists.com/tracklist/..." className={inputClass} />
             </div>
             <div>
-              <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>Description</label>
+              <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'oklch(var(--c2))' }}>Description</label>
               <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className={`${inputClass} resize-none`} />
             </div>
             {error && <p className="text-xs" style={{ color: 'hsl(0, 60%, 55%)' }}>{error}</p>}
-            {success && <p className="text-xs" style={{ color: 'hsl(var(--h3))' }}>{success}</p>}
+            {success && <p className="text-xs" style={{ color: 'oklch(var(--h3))' }}>{success}</p>}
             <div className="flex gap-3 pt-2">
               <Button variant="secondary" onClick={onClose} className="flex-1">Cancel</Button>
               <Button variant="primary" onClick={handleSave} disabled={isSaving || !title.trim() || !artist.trim()} className="flex-1">
@@ -1406,9 +1406,9 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
         {tab === 'tracklist' && (
           <div className="space-y-4">
             {/* Auto-detect section */}
-            <div className="rounded-xl p-4" style={{ background: 'hsl(var(--b5) / 0.5)', boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.3)' }}>
-              <p className="text-xs font-medium mb-2" style={{ color: 'hsl(var(--c1))' }}>Auto-detect from YouTube</p>
-              <p className="text-[10px] mb-3" style={{ color: 'hsl(var(--c3))' }}>
+            <div className="rounded-xl p-4" style={{ background: 'oklch(var(--b5) / 0.5)', boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.3)' }}>
+              <p className="text-xs font-medium mb-2" style={{ color: 'oklch(var(--c1))' }}>Auto-detect from YouTube</p>
+              <p className="text-[10px] mb-3" style={{ color: 'oklch(var(--c3))' }}>
                 Parses the YouTube description and comments via Invidious + AI. Falls back if no 1001tracklists data is available.
               </p>
               <div className="flex gap-2">
@@ -1420,17 +1420,17 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
                 </Button>
               </div>
               {detectMsg && (
-                <p className="text-[10px] mt-2" style={{ color: detectMsg.includes('Failed') || detectMsg.includes('failed') ? 'hsl(0, 60%, 55%)' : 'hsl(var(--h3))' }}>
+                <p className="text-[10px] mt-2" style={{ color: detectMsg.includes('Failed') || detectMsg.includes('failed') ? 'hsl(0, 60%, 55%)' : 'oklch(var(--h3))' }}>
                   {detectMsg}
                 </p>
               )}
             </div>
 
             {/* Manual 1001tracklists paste */}
-            <div className="rounded-xl p-4" style={{ background: 'hsl(var(--b5) / 0.5)', boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.3)' }}>
-              <p className="text-xs font-medium mb-1" style={{ color: 'hsl(var(--c1))' }}>Import from 1001Tracklists</p>
-              <p className="text-[10px] mb-3" style={{ color: 'hsl(var(--c3))' }}>
-                Open the 1001tracklists page → <kbd className="px-1 py-0.5 rounded text-[10px] font-mono" style={{ background: 'hsl(var(--b3))', color: 'hsl(var(--c2))' }}>Ctrl+U</kbd> → <kbd className="px-1 py-0.5 rounded text-[10px] font-mono" style={{ background: 'hsl(var(--b3))', color: 'hsl(var(--c2))' }}>Ctrl+A</kbd> → copy → paste below. This replaces all existing detections.
+            <div className="rounded-xl p-4" style={{ background: 'oklch(var(--b5) / 0.5)', boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.3)' }}>
+              <p className="text-xs font-medium mb-1" style={{ color: 'oklch(var(--c1))' }}>Import from 1001Tracklists</p>
+              <p className="text-[10px] mb-3" style={{ color: 'oklch(var(--c3))' }}>
+                Open the 1001tracklists page → <kbd className="px-1 py-0.5 rounded text-[10px] font-mono" style={{ background: 'oklch(var(--b3))', color: 'oklch(var(--c2))' }}>Ctrl+U</kbd> → <kbd className="px-1 py-0.5 rounded text-[10px] font-mono" style={{ background: 'oklch(var(--b3))', color: 'oklch(var(--c2))' }}>Ctrl+A</kbd> → copy → paste below. This replaces all existing detections.
               </p>
               <textarea
                 value={tracklistHtml}
@@ -1438,7 +1438,7 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
                 placeholder="Paste full page source HTML..."
                 rows={4}
                 className="w-full px-3 py-2 rounded-lg text-xs font-mono placeholder:text-text-muted focus:outline-none resize-none"
-                style={{ background: 'hsl(var(--b6))', color: 'hsl(var(--c2))', boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)' }}
+                style={{ background: 'oklch(var(--b6))', color: 'oklch(var(--c2))', boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.25)' }}
               />
               <div className="flex items-center gap-2 mt-2">
                 <Button size="sm" onClick={handleParse} disabled={isParsing || !tracklistHtml.trim()}>
@@ -1450,46 +1450,46 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
                   </Button>
                 )}
                 {tracklistHtml.trim() && (
-                  <span className="text-[10px] font-mono ml-auto" style={{ color: 'hsl(var(--c3))' }}>
+                  <span className="text-[10px] font-mono ml-auto" style={{ color: 'oklch(var(--c3))' }}>
                     {(tracklistHtml.length / 1024).toFixed(0)} KB
                   </span>
                 )}
               </div>
               {tracklistMsg && (
-                <p className="text-[10px] mt-2" style={{ color: tracklistMsg.type === 'error' ? 'hsl(0, 60%, 55%)' : 'hsl(var(--h3))' }}>
+                <p className="text-[10px] mt-2" style={{ color: tracklistMsg.type === 'error' ? 'hsl(0, 60%, 55%)' : 'oklch(var(--h3))' }}>
                   {tracklistMsg.text}
                 </p>
               )}
               {isImporting && importProgress && (
-                <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'hsl(var(--h3) / 0.06)' }}>
-                  <div className="w-3.5 h-3.5 border-2 rounded-full animate-spin shrink-0" style={{ borderColor: 'hsl(var(--h3) / 0.3)', borderTopColor: 'hsl(var(--h3))' }} />
-                  <span className="text-[11px]" style={{ color: 'hsl(var(--h3))' }}>{importProgress}</span>
+                <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'oklch(var(--h3) / 0.06)' }}>
+                  <div className="w-3.5 h-3.5 border-2 rounded-full animate-spin shrink-0" style={{ borderColor: 'oklch(var(--h3) / 0.3)', borderTopColor: 'oklch(var(--h3))' }} />
+                  <span className="text-[11px]" style={{ color: 'oklch(var(--h3))' }}>{importProgress}</span>
                 </div>
               )}
             </div>
 
             {/* Parsed tracks preview */}
             {parsedTracks.length > 0 && (
-              <div className="rounded-xl overflow-hidden" style={{ boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)' }}>
-                <div className="px-3 py-2 flex items-center justify-between" style={{ background: 'hsl(var(--b5) / 0.5)' }}>
-                  <span className="text-xs font-medium" style={{ color: 'hsl(var(--h3))' }}>{parsedTracks.length} tracks</span>
-                  <button className="text-[10px]" style={{ color: 'hsl(var(--c3))' }} onClick={() => { setParsedTracks([]); setTracklistHtml('') }}>Clear</button>
+              <div className="rounded-xl overflow-hidden" style={{ boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.25)' }}>
+                <div className="px-3 py-2 flex items-center justify-between" style={{ background: 'oklch(var(--b5) / 0.5)' }}>
+                  <span className="text-xs font-medium" style={{ color: 'oklch(var(--h3))' }}>{parsedTracks.length} tracks</span>
+                  <button className="text-[10px]" style={{ color: 'oklch(var(--c3))' }} onClick={() => { setParsedTracks([]); setTracklistHtml('') }}>Clear</button>
                 </div>
                 <div className="max-h-52 overflow-y-auto">
                   {parsedTracks.map((t, i) => (
-                    <div key={i} className="flex items-center gap-2 px-3 py-1.5 text-[11px]" style={{ borderTop: i > 0 ? '1px solid hsl(var(--b4) / 0.1)' : undefined }}>
+                    <div key={i} className="flex items-center gap-2 px-3 py-1.5 text-[11px]" style={{ borderTop: i > 0 ? '1px solid oklch(var(--b4) / 0.1)' : undefined }}>
                       {t.artwork_url ? (
                         <img src={t.artwork_url} alt="" className="w-7 h-7 rounded object-cover shrink-0" />
                       ) : (
-                        <div className="w-7 h-7 rounded shrink-0" style={{ background: 'hsl(var(--b4) / 0.4)' }} />
+                        <div className="w-7 h-7 rounded shrink-0" style={{ background: 'oklch(var(--b4) / 0.4)' }} />
                       )}
-                      <span className="w-8 text-right font-mono shrink-0" style={{ color: t.is_continuation ? 'hsl(var(--h3) / 0.5)' : 'hsl(var(--c3))' }}>
+                      <span className="w-8 text-right font-mono shrink-0" style={{ color: t.is_continuation ? 'oklch(var(--h3) / 0.5)' : 'oklch(var(--c3))' }}>
                         {t.is_continuation ? 'w/' : t.cue_time || String(t.position).padStart(2, '0')}
                       </span>
-                      <span className="truncate flex-1" style={{ color: 'hsl(var(--c1))' }}>
+                      <span className="truncate flex-1" style={{ color: 'oklch(var(--c1))' }}>
                         {t.artist} - {t.title}
                       </span>
-                      {t.label && <span className="shrink-0 truncate max-w-20" style={{ color: 'hsl(var(--c3))' }}>[{t.label}]</span>}
+                      {t.label && <span className="shrink-0 truncate max-w-20" style={{ color: 'oklch(var(--c3))' }}>[{t.label}]</span>}
                     </div>
                   ))}
                 </div>
@@ -1503,7 +1503,7 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
           <div className="space-y-4">
             <div className="rounded-xl p-4" style={{ background: 'hsl(0, 50%, 15% / 0.3)', boxShadow: 'inset 0 0 0 1px hsl(0, 50%, 30% / 0.3)' }}>
               <p className="text-xs font-medium mb-1" style={{ color: 'hsl(0, 60%, 65%)' }}>Delete this set</p>
-              <p className="text-[10px] mb-3" style={{ color: 'hsl(var(--c3))' }}>
+              <p className="text-[10px] mb-3" style={{ color: 'oklch(var(--c3))' }}>
                 Permanently removes this set, all detections, annotations, votes, and audio. This cannot be undone.
               </p>
               <div className="flex items-center gap-2">
@@ -1512,7 +1512,7 @@ function EditSetModal({ set, onClose, onSaved, onDeleted }: { set: DjSet; onClos
                   onChange={(e) => setConfirmDeleteText(e.target.value)}
                   placeholder={`Type "${set.id.slice(0, 6)}" to confirm`}
                   className="flex-1 px-3 py-1.5 rounded-lg text-xs font-mono focus:outline-none"
-                  style={{ background: 'hsl(var(--b6))', color: 'hsl(var(--c2))', boxShadow: 'inset 0 0 0 1px hsl(0, 50%, 30% / 0.3)' }}
+                  style={{ background: 'oklch(var(--b6))', color: 'oklch(var(--c2))', boxShadow: 'inset 0 0 0 1px hsl(0, 50%, 30% / 0.3)' }}
                 />
                 <Button
                   variant="danger"

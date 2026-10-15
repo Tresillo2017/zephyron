@@ -61,9 +61,9 @@ export function BrowsePage() {
         onClick={() => handleGenreChange(undefined)}
         className="px-4 py-2 text-sm rounded-lg transition-all shrink-0"
         style={{
-          background: !currentGenre ? 'hsl(var(--h3))' : 'hsl(var(--b4) / 0.3)',
-          color: !currentGenre ? 'white' : 'hsl(var(--c2))',
-          boxShadow: !currentGenre ? '0 2px 8px hsl(var(--h3) / 0.3)' : 'inset 0 0 0 1px hsl(var(--b4) / 0.3)',
+          background: !currentGenre ? 'oklch(var(--h3))' : 'oklch(var(--b4) / 0.3)',
+          color: !currentGenre ? 'white' : 'oklch(var(--c2))',
+          boxShadow: !currentGenre ? '0 2px 8px oklch(var(--h3) / 0.3)' : 'inset 0 0 0 1px oklch(var(--b4) / 0.3)',
           fontWeight: !currentGenre ? 'var(--font-weight-medium)' : 'var(--font-weight-default)',
         }}
       >
@@ -75,9 +75,9 @@ export function BrowsePage() {
           onClick={() => handleGenreChange(g.genre)}
           className="px-4 py-2 text-sm rounded-lg transition-all shrink-0"
           style={{
-            background: currentGenre === g.genre ? 'hsl(var(--h3))' : 'hsl(var(--b4) / 0.3)',
-            color: currentGenre === g.genre ? 'white' : 'hsl(var(--c2))',
-            boxShadow: currentGenre === g.genre ? '0 2px 8px hsl(var(--h3) / 0.3)' : 'inset 0 0 0 1px hsl(var(--b4) / 0.3)',
+            background: currentGenre === g.genre ? 'oklch(var(--h3))' : 'oklch(var(--b4) / 0.3)',
+            color: currentGenre === g.genre ? 'white' : 'oklch(var(--c2))',
+            boxShadow: currentGenre === g.genre ? '0 2px 8px oklch(var(--h3) / 0.3)' : 'inset 0 0 0 1px oklch(var(--b4) / 0.3)',
             fontWeight: currentGenre === g.genre ? 'var(--font-weight-medium)' : 'var(--font-weight-default)',
           }}
         >
@@ -93,11 +93,11 @@ export function BrowsePage() {
       <div className="mb-8">
         <h1
           className="text-2xl font-[var(--font-weight-bold)] mb-1"
-          style={{ color: 'hsl(var(--c1))' }}
+          style={{ color: 'oklch(var(--c1))' }}
         >
           Browse Sets
         </h1>
-        <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+        <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>
           Explore {sets.length > 0 && `${totalPages * 24}+`} DJ sets across all genres
         </p>
       </div>
@@ -108,7 +108,7 @@ export function BrowsePage() {
         <div>
           <h3
             className="text-xs font-mono tracking-wider mb-3 uppercase"
-            style={{ color: 'hsl(var(--c3))' }}
+            style={{ color: 'oklch(var(--c3))' }}
           >
             Filter by Genre
           </h3>
@@ -119,7 +119,7 @@ export function BrowsePage() {
 
         {/* Sort */}
         <div className="flex items-center gap-3">
-          <span className="text-xs font-mono tracking-wider uppercase" style={{ color: 'hsl(var(--c3))' }}>
+          <span className="text-xs font-mono tracking-wider uppercase" style={{ color: 'oklch(var(--c3))' }}>
             Sort:
           </span>
           <select
@@ -127,9 +127,9 @@ export function BrowsePage() {
             onChange={(e) => handleSortChange(e.target.value)}
             className="px-3 py-2 rounded-lg text-sm focus:outline-none"
             style={{
-              background: 'hsl(var(--b4) / 0.4)',
-              color: 'hsl(var(--c1))',
-              boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.3)',
+              background: 'oklch(var(--b4) / 0.4)',
+              color: 'oklch(var(--c1))',
+              boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.3)',
             }}
           >
             {SORT_OPTIONS.map((opt) => (
@@ -145,7 +145,7 @@ export function BrowsePage() {
       <div
         className="h-px mb-8"
         style={{
-          background: 'linear-gradient(to right, hsl(var(--b4) / 0) 0%, hsl(var(--b4) / 0.5) 50%, hsl(var(--b4) / 0) 100%)',
+          background: 'linear-gradient(to right, oklch(var(--b4) / 0) 0%, oklch(var(--b4) / 0.5) 50%, oklch(var(--b4) / 0) 100%)',
         }}
       />
 
@@ -162,7 +162,7 @@ export function BrowsePage() {
           >
             ← Previous
           </Button>
-          <span className="text-sm font-mono tabular-nums px-4" style={{ color: 'hsl(var(--c2))' }}>
+          <span className="text-sm font-mono tabular-nums px-4" style={{ color: 'oklch(var(--c2))' }}>
             Page {currentPage} of {totalPages}
           </span>
           <Button

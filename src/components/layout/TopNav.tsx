@@ -129,10 +129,10 @@ export function TopNav() {
       <div
         className="absolute inset-0 -z-10"
         style={{
-          background: `hsl(var(--b6) / ${glassOpacity})`,
+          background: `oklch(var(--b6) / ${glassOpacity})`,
           backdropFilter: `${blurAmount} saturate(180%)`,
           WebkitBackdropFilter: `${blurAmount} saturate(180%)`,
-          boxShadow: scrolled ? "0 1px 0 hsl(var(--b4) / 0.2)" : "none",
+          boxShadow: scrolled ? "0 1px 0 oklch(var(--b4) / 0.2)" : "none",
           transition:
             "background 0.3s ease, backdrop-filter 0.3s ease, box-shadow 0.3s ease",
         }}
@@ -144,15 +144,15 @@ export function TopNav() {
         <div className="hidden sm:flex items-center gap-2">
           <span
             className="text-sm font-[var(--font-weight-bold)] tracking-tight"
-            style={{ color: "hsl(var(--c1))" }}
+            style={{ color: "oklch(var(--c1))" }}
           >
             Zephyron
           </span>
           <span
             className="text-[9px] font-mono px-1.5 py-0.5 rounded"
             style={{
-              background: "hsl(var(--h3) / 0.12)",
-              color: "hsl(var(--h3))",
+              background: "oklch(var(--h3) / 0.12)",
+              color: "oklch(var(--h3))",
             }}
           >
             v{__APP_VERSION__}
@@ -177,8 +177,8 @@ export function TopNav() {
               to={link.to}
               className="px-3 py-1.5 rounded-lg text-sm no-underline transition-all"
               style={{
-                color: isActive ? "hsl(var(--c1))" : "hsl(var(--c3))",
-                background: isActive ? "hsl(var(--b4) / 0.4)" : "transparent",
+                color: isActive ? "oklch(var(--c1))" : "oklch(var(--c3))",
+                background: isActive ? "oklch(var(--b4) / 0.4)" : "transparent",
                 fontWeight: isActive
                   ? "var(--font-weight-medium)"
                   : "var(--font-weight-default)",
@@ -198,7 +198,7 @@ export function TopNav() {
         <div className="relative">
           <svg
             className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
-            style={{ color: "hsl(var(--c3) / 0.6)" }}
+            style={{ color: "oklch(var(--c3) / 0.6)" }}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -217,10 +217,10 @@ export function TopNav() {
             placeholder="Search sets, artists, events..."
             className="w-full pl-9 pr-4 py-1.5 rounded-lg text-sm focus:outline-none transition-all"
             style={{
-              background: scrolled ? "hsl(var(--b4) / 0.4)" : "transparent",
-              color: "hsl(var(--c1))",
+              background: scrolled ? "oklch(var(--b4) / 0.4)" : "transparent",
+              color: "oklch(var(--c1))",
               border: scrolled
-                ? "1px solid hsl(var(--b4) / 0.3)"
+                ? "1px solid oklch(var(--b4) / 0.3)"
                 : "1px solid transparent",
             }}
           />
@@ -233,7 +233,7 @@ export function TopNav() {
         <Link
           to="/app/search"
           className="md:hidden p-2 rounded-lg transition-colors"
-          style={{ color: "hsl(var(--c3))" }}
+          style={{ color: "oklch(var(--c3))" }}
           title="Search"
         >
           <svg
@@ -255,7 +255,7 @@ export function TopNav() {
           <Link
             to="/app/admin"
             className="p-2 rounded-lg transition-colors"
-            style={{ color: "hsl(var(--c3))" }}
+            style={{ color: "oklch(var(--c3))" }}
             title="Admin"
           >
             <svg
@@ -303,7 +303,7 @@ export function TopNav() {
                 }
               }}
               className="relative flex items-center justify-center w-9 h-9 rounded-full transition-colors"
-              style={{ color: 'hsl(var(--c2))' }}
+              style={{ color: 'oklch(var(--c2))' }}
               aria-label="Notifications"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -324,24 +324,24 @@ export function TopNav() {
               <div
                 className="absolute right-0 top-full mt-2 w-[320px] z-50 rounded-[var(--card-radius)] overflow-hidden"
                 style={{
-                  background: 'hsl(var(--b5) / 0.97)',
+                  background: 'oklch(var(--b5) / 0.97)',
                   backdropFilter: 'blur(24px) saturate(180%)',
                   WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 0 0 1px hsl(var(--b4) / 0.3)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 0 0 1px oklch(var(--b4) / 0.3)',
                   animation: notifExiting
                     ? 'solarium-out 0.15s ease-in forwards'
                     : 'solarium 0.2s var(--ease-out-custom)',
                 }}
               >
-                <div className="px-3 py-2.5" style={{ borderBottom: '1px solid hsl(var(--b4) / 0.3)' }}>
-                  <p className="text-xs font-mono uppercase tracking-wider" style={{ color: 'hsl(var(--c3))' }}>
+                <div className="px-3 py-2.5" style={{ borderBottom: '1px solid oklch(var(--b4) / 0.3)' }}>
+                  <p className="text-xs font-mono uppercase tracking-wider" style={{ color: 'oklch(var(--c3))' }}>
                     Notifications
                   </p>
                 </div>
 
                 {notifications.length === 0 ? (
                   <div className="px-3 py-6 text-center">
-                    <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>No notifications yet</p>
+                    <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>No notifications yet</p>
                   </div>
                 ) : (
                   <div className="max-h-[360px] overflow-y-auto">
@@ -357,26 +357,26 @@ export function TopNav() {
                         }}
                         className="flex items-start gap-3 px-3 py-2.5 no-underline transition-colors"
                         style={{
-                          background: n.is_read === 0 ? 'hsl(var(--h3) / 0.06)' : 'transparent',
-                          borderBottom: '1px solid hsl(var(--b4) / 0.15)',
+                          background: n.is_read === 0 ? 'oklch(var(--h3) / 0.06)' : 'transparent',
+                          borderBottom: '1px solid oklch(var(--b4) / 0.15)',
                         }}
                       >
                         <span className="text-base mt-0.5 shrink-0">
                           {n.type === 'new_set' ? '🎧' : n.type === 'annotation_approved' ? '✅' : '✗'}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium truncate" style={{ color: 'hsl(var(--c1))' }}>
+                          <p className="text-xs font-medium truncate" style={{ color: 'oklch(var(--c1))' }}>
                             {n.title}
                           </p>
-                          <p className="text-xs truncate mt-0.5" style={{ color: 'hsl(var(--c2))' }}>
+                          <p className="text-xs truncate mt-0.5" style={{ color: 'oklch(var(--c2))' }}>
                             {n.body}
                           </p>
-                          <p className="text-[10px] mt-1 font-mono" style={{ color: 'hsl(var(--c3))' }}>
+                          <p className="text-[10px] mt-1 font-mono" style={{ color: 'oklch(var(--c3))' }}>
                             {new Date(n.created_at).toLocaleDateString()}
                           </p>
                         </div>
                         {n.is_read === 0 && (
-                          <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: 'hsl(var(--h3))' }} />
+                          <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: 'oklch(var(--h3))' }} />
                         )}
                       </Link>
                     ))}
@@ -406,7 +406,7 @@ export function TopNav() {
               className="flex items-center gap-2 pl-2 pr-3 py-1 rounded-full transition-all"
               style={{
                 background: showUserMenu
-                  ? "hsl(var(--b4) / 0.4)"
+                  ? "oklch(var(--b4) / 0.4)"
                   : "transparent",
               }}
             >
@@ -417,14 +417,14 @@ export function TopNav() {
               />
               <span
                 className="text-sm hidden sm:inline"
-                style={{ color: "hsl(var(--c1))" }}
+                style={{ color: "oklch(var(--c1))" }}
               >
                 {session.user.name}
               </span>
               <svg
                 className="w-3 h-3 transition-transform"
                 style={{
-                  color: "hsl(var(--c3))",
+                  color: "oklch(var(--c3))",
                   transform: showUserMenu ? "rotate(180deg)" : "rotate(0deg)",
                 }}
                 fill="none"
@@ -445,11 +445,11 @@ export function TopNav() {
               <div
                 className="absolute right-0 top-full mt-2 w-[280px] p-2.5 z-50 rounded-[var(--card-radius)]"
                 style={{
-                  background: "hsl(var(--b5) / 0.97)",
+                  background: "oklch(var(--b5) / 0.97)",
                   backdropFilter: "blur(24px) saturate(180%)",
                   WebkitBackdropFilter: "blur(24px) saturate(180%)",
                   boxShadow:
-                    "0 8px 32px rgba(0,0,0,0.4), inset 0 0 0 1px hsl(var(--b4) / 0.3)",
+                    "0 8px 32px rgba(0,0,0,0.4), inset 0 0 0 1px oklch(var(--b4) / 0.3)",
                   animation: menuExiting
                     ? "solarium-out 0.15s ease-in forwards"
                     : "solarium 0.2s var(--ease-out-custom)",
@@ -466,14 +466,14 @@ export function TopNav() {
                   </div>
                   <p
                     className="text-sm font-[var(--font-weight-medium)]"
-                    style={{ color: "hsl(var(--c1))" }}
+                    style={{ color: "oklch(var(--c1))" }}
                   >
                     @{session.user.name}
                   </p>
                   {(session.user as any)?.email && (
                     <p
                       className="text-xs mt-0.5"
-                      style={{ color: "hsl(var(--c3))" }}
+                      style={{ color: "oklch(var(--c3))" }}
                     >
                       {(session.user as any).email}
                     </p>
@@ -483,7 +483,7 @@ export function TopNav() {
                 {/* Divider */}
                 <div
                   className="h-px my-2"
-                  style={{ background: "hsl(var(--b4) / 0.3)" }}
+                  style={{ background: "oklch(var(--b4) / 0.3)" }}
                 />
 
                 {/* Nav links */}
@@ -509,13 +509,13 @@ export function TopNav() {
                     to={item.to}
                     onClick={() => closeMenu()}
                     className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all no-underline"
-                    style={{ color: "hsl(var(--c2))" }}
+                    style={{ color: "oklch(var(--c2))" }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.color = "hsl(var(--c1))";
-                      e.currentTarget.style.background = "hsl(var(--b4) / 0.4)";
+                      e.currentTarget.style.color = "oklch(var(--c1))";
+                      e.currentTarget.style.background = "oklch(var(--b4) / 0.4)";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.color = "hsl(var(--c2))";
+                      e.currentTarget.style.color = "oklch(var(--c2))";
                       e.currentTarget.style.background = "transparent";
                     }}
                   >
@@ -543,13 +543,13 @@ export function TopNav() {
                     openChangelog();
                   }}
                   className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all w-full"
-                  style={{ color: "hsl(var(--c2))" }}
+                  style={{ color: "oklch(var(--c2))" }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "hsl(var(--c1))";
-                    e.currentTarget.style.background = "hsl(var(--b4) / 0.4)";
+                    e.currentTarget.style.color = "oklch(var(--c1))";
+                    e.currentTarget.style.background = "oklch(var(--b4) / 0.4)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "hsl(var(--c2))";
+                    e.currentTarget.style.color = "oklch(var(--c2))";
                     e.currentTarget.style.background = "transparent";
                   }}
                 >
@@ -572,7 +572,7 @@ export function TopNav() {
                 {/* Divider */}
                 <div
                   className="h-px my-2"
-                  style={{ background: "hsl(var(--b4) / 0.3)" }}
+                  style={{ background: "oklch(var(--b4) / 0.3)" }}
                 />
 
                 <a
@@ -581,13 +581,13 @@ export function TopNav() {
                   rel="noopener noreferrer"
                   onClick={() => setShowUserMenu(false)}
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all no-underline"
-                  style={{ color: "hsl(var(--c3))" }}
+                  style={{ color: "oklch(var(--c3))" }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "hsl(var(--c2))";
-                    e.currentTarget.style.background = "hsl(var(--b4) / 0.4)";
+                    e.currentTarget.style.color = "oklch(var(--c2))";
+                    e.currentTarget.style.background = "oklch(var(--b4) / 0.4)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "hsl(var(--c3))";
+                    e.currentTarget.style.color = "oklch(var(--c3))";
                     e.currentTarget.style.background = "transparent";
                   }}
                 >
@@ -609,13 +609,13 @@ export function TopNav() {
                 <button
                   onClick={handleSignOut}
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all"
-                  style={{ color: "hsl(var(--c3))" }}
+                  style={{ color: "oklch(var(--c3))" }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.color = "#ef4444";
-                    e.currentTarget.style.background = "hsl(var(--b4) / 0.4)";
+                    e.currentTarget.style.background = "oklch(var(--b4) / 0.4)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "hsl(var(--c3))";
+                    e.currentTarget.style.color = "oklch(var(--c3))";
                     e.currentTarget.style.background = "transparent";
                   }}
                 >

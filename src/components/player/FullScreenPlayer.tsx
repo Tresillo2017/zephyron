@@ -601,10 +601,10 @@ export function FullScreenPlayer() {
                   className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono tracking-wide transition-all"
                   style={{
                     background: !isVideoMode
-                      ? "hsl(var(--h3) / 0.2)"
+                      ? "oklch(var(--h3) / 0.2)"
                       : "transparent",
                     color: !isVideoMode
-                      ? "hsl(var(--h3))"
+                      ? "oklch(var(--h3))"
                       : "rgba(255,255,255,0.4)",
                   }}
                 >
@@ -622,10 +622,10 @@ export function FullScreenPlayer() {
                   className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono tracking-wide transition-all"
                   style={{
                     background: isVideoMode
-                      ? "hsl(var(--h3) / 0.2)"
+                      ? "oklch(var(--h3) / 0.2)"
                       : "transparent",
                     color: isVideoMode
-                      ? "hsl(var(--h3))"
+                      ? "oklch(var(--h3))"
                       : "rgba(255,255,255,0.4)",
                   }}
                 >
@@ -675,13 +675,13 @@ export function FullScreenPlayer() {
                 className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
                 style={{
                   color: isTheaterMode
-                    ? "hsl(var(--h3))"
+                    ? "oklch(var(--h3))"
                     : "rgba(255,255,255,0.4)",
                   background: isTheaterMode
-                    ? "hsl(var(--h3) / 0.12)"
+                    ? "oklch(var(--h3) / 0.12)"
                     : "transparent",
                   boxShadow: isTheaterMode
-                    ? "inset 0 0 0 1px hsl(var(--h3) / 0.3)"
+                    ? "inset 0 0 0 1px oklch(var(--h3) / 0.3)"
                     : "none",
                 }}
                 onMouseEnter={(e) => {
@@ -938,9 +938,9 @@ export function FullScreenPlayer() {
                             <span
                               className="text-[9px] font-mono tracking-wider px-1.5 py-0.5 rounded"
                               style={{
-                                background: "hsl(var(--h3) / 0.15)",
-                                color: "hsl(var(--h3))",
-                                border: "1px solid hsl(var(--h3) / 0.25)",
+                                background: "oklch(var(--h3) / 0.15)",
+                                color: "oklch(var(--h3))",
+                                border: "1px solid oklch(var(--h3) / 0.25)",
                               }}
                             >
                               {currentDetections.length} PLAYING
@@ -990,14 +990,14 @@ export function FullScreenPlayer() {
                                   gap: 10,
                                   borderRadius: "8px",
                                   background: isPrimaryPlaying
-                                    ? "hsl(var(--h3) / 0.12)"
+                                    ? "oklch(var(--h3) / 0.12)"
                                     : isPrimaryActive
-                                    ? "hsl(var(--h3) / 0.07)"
+                                    ? "oklch(var(--h3) / 0.07)"
                                     : "transparent",
                                   boxShadow: isPrimaryPlaying
-                                    ? "inset 1px 1px 0 hsl(var(--h3) / 0.25), inset -1px 0 0 hsl(var(--h3) / 0.25), inset 0 -1px 0 hsl(var(--h3) / 0.1)"
+                                    ? "inset 1px 1px 0 oklch(var(--h3) / 0.25), inset -1px 0 0 oklch(var(--h3) / 0.25), inset 0 -1px 0 oklch(var(--h3) / 0.1)"
                                     : isPrimaryActive
-                                    ? "inset 0 0 0 1px hsl(var(--h3) / 0.15)"
+                                    ? "inset 0 0 0 1px oklch(var(--h3) / 0.15)"
                                     : "none",
                                   transition: "background 0.2s ease",
                                 }}
@@ -1018,7 +1018,7 @@ export function FullScreenPlayer() {
                                     className="absolute left-0 top-1 bottom-1 rounded-full"
                                     style={{
                                       width: 2,
-                                      background: "hsl(var(--h3))",
+                                      background: "oklch(var(--h3))",
                                     }}
                                   />
                                 )}
@@ -1028,7 +1028,7 @@ export function FullScreenPlayer() {
                                   className="text-[10px] font-mono tabular-nums w-9 text-center shrink-0 pl-1"
                                   style={{
                                     color: isPrimaryActive
-                                      ? "hsl(var(--h3))"
+                                      ? "oklch(var(--h3))"
                                       : "rgba(255,255,255,0.3)",
                                   }}
                                 >
@@ -1038,7 +1038,7 @@ export function FullScreenPlayer() {
                                         <span
                                           className="w-[2px] rounded-sm"
                                           style={{
-                                            background: "hsl(var(--h3))",
+                                            background: "oklch(var(--h3))",
                                             animation:
                                               "eq-bar-1 0.8s ease-in-out infinite",
                                           }}
@@ -1046,7 +1046,7 @@ export function FullScreenPlayer() {
                                         <span
                                           className="w-[2px] rounded-sm"
                                           style={{
-                                            background: "hsl(var(--h3))",
+                                            background: "oklch(var(--h3))",
                                             animation:
                                               "eq-bar-2 0.6s ease-in-out infinite",
                                           }}
@@ -1054,7 +1054,7 @@ export function FullScreenPlayer() {
                                         <span
                                           className="w-[2px] rounded-sm"
                                           style={{
-                                            background: "hsl(var(--h3))",
+                                            background: "oklch(var(--h3))",
                                             animation:
                                               "eq-bar-3 0.7s ease-in-out infinite",
                                           }}
@@ -1076,7 +1076,7 @@ export function FullScreenPlayer() {
                                     className="w-8 h-8 rounded object-cover shrink-0"
                                     style={{
                                       boxShadow: isPrimaryPlaying
-                                        ? "0 0 0 1.5px hsl(var(--h3) / 0.6)"
+                                        ? "0 0 0 1.5px oklch(var(--h3) / 0.6)"
                                         : "none",
                                       opacity: isPrimaryActive ? 1 : 0.7,
                                       transition:
@@ -1088,10 +1088,10 @@ export function FullScreenPlayer() {
                                     className="w-8 h-8 rounded shrink-0"
                                     style={{
                                       background: isPrimaryActive
-                                        ? "hsl(var(--h3) / 0.1)"
+                                        ? "oklch(var(--h3) / 0.1)"
                                         : "rgba(255,255,255,0.04)",
                                       boxShadow: isPrimaryPlaying
-                                        ? "inset 0 0 0 1px hsl(var(--h3) / 0.4)"
+                                        ? "inset 0 0 0 1px oklch(var(--h3) / 0.4)"
                                         : "none",
                                     }}
                                   />
@@ -1103,7 +1103,7 @@ export function FullScreenPlayer() {
                                     className="text-[11px] truncate leading-tight"
                                     style={{
                                       color: isPrimaryActive
-                                        ? "hsl(var(--h3))"
+                                        ? "oklch(var(--h3))"
                                         : "rgba(255,255,255,0.75)",
                                     }}
                                   >
@@ -1114,7 +1114,7 @@ export function FullScreenPlayer() {
                                       className="text-[9px] truncate"
                                       style={{
                                         color: isPrimaryActive
-                                          ? "hsl(var(--h3) / 0.6)"
+                                          ? "oklch(var(--h3) / 0.6)"
                                           : "rgba(255,255,255,0.3)",
                                       }}
                                     >
@@ -1169,7 +1169,7 @@ export function FullScreenPlayer() {
                                           padding: "4px 6px",
                                           gap: 8,
                                           background: isSecActive
-                                            ? "hsl(var(--h3) / 0.06)"
+                                            ? "oklch(var(--h3) / 0.06)"
                                             : "transparent",
                                         }}
                                         onMouseEnter={(e) => {
@@ -1180,7 +1180,7 @@ export function FullScreenPlayer() {
                                         onMouseLeave={(e) => {
                                           e.currentTarget.style.background =
                                             isSecActive
-                                              ? "hsl(var(--h3) / 0.06)"
+                                              ? "oklch(var(--h3) / 0.06)"
                                               : "transparent";
                                         }}
                                       >
@@ -1189,7 +1189,7 @@ export function FullScreenPlayer() {
                                           className="text-[8px] font-mono shrink-0 w-5 text-center"
                                           style={{
                                             color: isSecActive
-                                              ? "hsl(var(--h3) / 0.5)"
+                                              ? "oklch(var(--h3) / 0.5)"
                                               : "rgba(255,255,255,0.2)",
                                           }}
                                         >
@@ -1216,7 +1216,7 @@ export function FullScreenPlayer() {
                                               width: 24,
                                               height: 24,
                                               background: isSecActive
-                                                ? "hsl(var(--h3) / 0.08)"
+                                                ? "oklch(var(--h3) / 0.08)"
                                                 : "rgba(255,255,255,0.03)",
                                             }}
                                           >
@@ -1239,7 +1239,7 @@ export function FullScreenPlayer() {
                                             className="text-[10px] truncate leading-tight"
                                             style={{
                                               color: isSecActive
-                                                ? "hsl(var(--h3) / 0.8)"
+                                                ? "oklch(var(--h3) / 0.8)"
                                                 : "rgba(255,255,255,0.45)",
                                             }}
                                           >
@@ -1250,7 +1250,7 @@ export function FullScreenPlayer() {
                                               className="text-[8px] truncate"
                                               style={{
                                                 color: isSecActive
-                                                  ? "hsl(var(--h3) / 0.45)"
+                                                  ? "oklch(var(--h3) / 0.45)"
                                                   : "rgba(255,255,255,0.2)",
                                               }}
                                             >
@@ -1357,7 +1357,7 @@ export function FullScreenPlayer() {
                 WebkitBackdropFilter: "blur(24px) saturate(180%)",
                 background: "rgba(0,0,0,0.6)",
                 boxShadow: nowPlayingFlash
-                  ? "inset 0 0 0 1.5px hsl(var(--h3) / 0.6), 0 8px 32px hsl(var(--h4) / 0.4)"
+                  ? "inset 0 0 0 1.5px oklch(var(--h3) / 0.6), 0 8px 32px oklch(var(--h4) / 0.4)"
                   : "inset 0 0 0 1px rgba(255,255,255,0.1), 0 12px 40px rgba(0,0,0,0.5)",
                 borderRadius: 14,
                 overflow: "hidden",
@@ -1422,7 +1422,7 @@ export function FullScreenPlayer() {
                       fontSize: 9,
                       fontFamily: "var(--font-mono, monospace)",
                       letterSpacing: "0.1em",
-                      color: "hsl(var(--h3) / 0.7)",
+                      color: "oklch(var(--h3) / 0.7)",
                       marginBottom: 2,
                       animation: nowPlayingFlash
                         ? "labelFlash 0.8s cubic-bezier(0.16, 1, 0.3, 1)"
@@ -1515,7 +1515,7 @@ export function FullScreenPlayer() {
                               fontSize: 8,
                               fontFamily: "var(--font-mono, monospace)",
                               letterSpacing: "0.08em",
-                              color: "hsl(var(--h3) / 0.5)",
+                              color: "oklch(var(--h3) / 0.5)",
                               marginBottom: 1,
                             }}
                           >
@@ -1724,8 +1724,8 @@ export function FullScreenPlayer() {
                               fontSize: 7,
                               fontFamily: "var(--font-mono, monospace)",
                               letterSpacing: "0.06em",
-                              color: "hsl(var(--h3) / 0.6)",
-                              background: "hsl(var(--h3) / 0.12)",
+                              color: "oklch(var(--h3) / 0.6)",
+                              background: "oklch(var(--h3) / 0.12)",
                               padding: "1px 4px",
                               borderRadius: 4,
                             }}
@@ -1851,7 +1851,7 @@ export function FullScreenPlayer() {
                     className="absolute top-0 left-0 h-full rounded-full pointer-events-none"
                     style={{
                       width: `${progress}%`,
-                      background: "hsl(var(--h3))",
+                      background: "oklch(var(--h3))",
                       transition: "width 0.1s linear",
                     }}
                   />
@@ -2015,8 +2015,8 @@ export function FullScreenPlayer() {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        background: "hsl(var(--h3))",
-                        boxShadow: "0 4px 20px hsl(var(--h4) / 0.45)",
+                        background: "oklch(var(--h3))",
+                        boxShadow: "0 4px 20px oklch(var(--h4) / 0.45)",
                       }}
                     >
                       {isPlaying ? (
@@ -2193,7 +2193,7 @@ export function FullScreenPlayer() {
                 className="absolute top-0 left-0 h-full rounded-full pointer-events-none"
                 style={{
                   width: `${progress}%`,
-                  background: "hsl(var(--h3))",
+                  background: "oklch(var(--h3))",
                   transition: "width 0.1s linear",
                 }}
               />
@@ -2324,8 +2324,8 @@ export function FullScreenPlayer() {
                   onClick={togglePlay}
                   className="w-12 h-12 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
                   style={{
-                    background: "hsl(var(--h3))",
-                    boxShadow: "0 4px 20px hsl(var(--h4) / 0.35)",
+                    background: "oklch(var(--h3))",
+                    boxShadow: "0 4px 20px oklch(var(--h4) / 0.35)",
                   }}
                 >
                   {isPlaying ? (
@@ -2413,12 +2413,12 @@ export function FullScreenPlayer() {
         }
         @keyframes nowPlayingFlash {
           0%   { background: rgba(0,0,0,0.6); transform: scale(1); }
-          20%  { background: hsl(var(--h3) / 0.25); transform: scale(1.026); }
+          20%  { background: oklch(var(--h3) / 0.25); transform: scale(1.026); }
           100% { background: rgba(0,0,0,0.6); transform: scale(1); }
         }
         @keyframes nowPlayingTextPop {
-          0%   { opacity: 0; transform: translateY(6px); filter: blur(3px); color: hsl(var(--h3)); }
-          55%  { opacity: 1; transform: translateY(-1px); filter: blur(0); color: hsl(var(--h3)); }
+          0%   { opacity: 0; transform: translateY(6px); filter: blur(3px); color: oklch(var(--h3)); }
+          55%  { opacity: 1; transform: translateY(-1px); filter: blur(0); color: oklch(var(--h3)); }
           100% { opacity: 1; transform: translateY(0); filter: blur(0); color: rgba(255,255,255,0.92); }
         }
         @keyframes coverPromote {
@@ -2427,9 +2427,9 @@ export function FullScreenPlayer() {
           100% { transform: scale(1);    filter: brightness(1) saturate(1); }
         }
         @keyframes labelFlash {
-          0%   { color: hsl(var(--h3) / 0.7); letter-spacing: 0.1em; }
-          30%  { color: hsl(var(--h3));        letter-spacing: 0.14em; }
-          100% { color: hsl(var(--h3) / 0.7); letter-spacing: 0.1em; }
+          0%   { color: oklch(var(--h3) / 0.7); letter-spacing: 0.1em; }
+          30%  { color: oklch(var(--h3));        letter-spacing: 0.14em; }
+          100% { color: oklch(var(--h3) / 0.7); letter-spacing: 0.1em; }
         }
         @keyframes upNextEntry {
           from { opacity: 0; transform: translateY(10px) scale(0.95); filter: blur(3px); }

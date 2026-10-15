@@ -42,7 +42,7 @@ export function WrappedPage() {
       <div className="px-6 lg:px-10 py-6">
         <div className="max-w-3xl mx-auto">
           <div className="card flex flex-col items-center justify-center py-12">
-            <p className="text-sm" style={{ color: 'hsl(var(--c2))' }}>
+            <p className="text-sm" style={{ color: 'oklch(var(--c2))' }}>
               {error}
             </p>
             <Link to="/app/profile" className="mt-4">
@@ -99,7 +99,7 @@ export function WrappedPage() {
       <div className="px-6 lg:px-10 py-6">
         <div className="max-w-3xl mx-auto">
           <div className="card flex flex-col items-center justify-center py-12">
-            <p className="text-sm" style={{ color: 'hsl(var(--c2))' }}>
+            <p className="text-sm" style={{ color: 'oklch(var(--c2))' }}>
               Unable to load Wrapped data
             </p>
             <Link to="/app/profile" className="mt-4">
@@ -122,10 +122,10 @@ export function WrappedPage() {
       <div className="max-w-3xl mx-auto space-y-8">
         {/* Hero Section */}
         <div className="card flex flex-col items-center justify-center py-12">
-          <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+          <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>
             Zephyron Wrapped
           </p>
-          <p className="text-6xl font-[var(--font-weight-bold)] mt-2" style={{ color: 'hsl(var(--c1))' }}>
+          <p className="text-6xl font-[var(--font-weight-bold)] mt-2" style={{ color: 'oklch(var(--c1))' }}>
             {wrapped.year}
           </p>
         </div>
@@ -133,13 +133,13 @@ export function WrappedPage() {
         {/* Main Stats */}
         <div className="card">
           <div className="flex flex-col items-center justify-center py-8">
-            <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+            <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>
               Total Hours Listened
             </p>
-            <p className="text-5xl font-[var(--font-weight-bold)] mt-2" style={{ color: 'hsl(var(--h3))' }}>
+            <p className="text-5xl font-[var(--font-weight-bold)] mt-2" style={{ color: 'oklch(var(--h3))' }}>
               {wrapped.total_hours}
             </p>
-            <p className="text-xs mt-2" style={{ color: 'hsl(var(--c2))' }}>
+            <p className="text-xs mt-2" style={{ color: 'oklch(var(--c2))' }}>
               hours of electronic music
             </p>
           </div>
@@ -149,14 +149,14 @@ export function WrappedPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Top Artist */}
           <div className="card">
-            <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
+            <p className="text-xs" style={{ color: 'oklch(var(--c3))' }}>
               TOP ARTIST
             </p>
-            <p className="text-lg font-[var(--font-weight-bold)] mt-2" style={{ color: 'hsl(var(--c1))' }}>
+            <p className="text-lg font-[var(--font-weight-bold)] mt-2" style={{ color: 'oklch(var(--c1))' }}>
               {wrapped.top_artist?.name || 'N/A'}
             </p>
             {wrapped.top_artist?.hours && (
-              <p className="text-xs mt-1" style={{ color: 'hsl(var(--c2))' }}>
+              <p className="text-xs mt-1" style={{ color: 'oklch(var(--c2))' }}>
                 {wrapped.top_artist.hours} hours
               </p>
             )}
@@ -164,26 +164,26 @@ export function WrappedPage() {
 
           {/* Longest Streak */}
           <div className="card">
-            <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
+            <p className="text-xs" style={{ color: 'oklch(var(--c3))' }}>
               LONGEST STREAK
             </p>
-            <p className="text-lg font-[var(--font-weight-bold)] mt-2" style={{ color: 'hsl(var(--h3))' }}>
+            <p className="text-lg font-[var(--font-weight-bold)] mt-2" style={{ color: 'oklch(var(--h3))' }}>
               {wrapped.longest_streak_days}
             </p>
-            <p className="text-xs mt-1" style={{ color: 'hsl(var(--c2))' }}>
+            <p className="text-xs mt-1" style={{ color: 'oklch(var(--c2))' }}>
               days
             </p>
           </div>
 
           {/* Discoveries */}
           <div className="card">
-            <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
+            <p className="text-xs" style={{ color: 'oklch(var(--c3))' }}>
               NEW DISCOVERIES
             </p>
-            <p className="text-lg font-[var(--font-weight-bold)] mt-2" style={{ color: 'hsl(var(--c1))' }}>
+            <p className="text-lg font-[var(--font-weight-bold)] mt-2" style={{ color: 'oklch(var(--c1))' }}>
               {wrapped.discoveries_count}
             </p>
-            <p className="text-xs mt-1" style={{ color: 'hsl(var(--c2))' }}>
+            <p className="text-xs mt-1" style={{ color: 'oklch(var(--c2))' }}>
               new tracks
             </p>
           </div>
@@ -191,15 +191,15 @@ export function WrappedPage() {
 
         {/* Top 5 Artists */}
         <div className="card">
-          <p className="text-xs font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c3))' }}>
+          <p className="text-xs font-[var(--font-weight-medium)]" style={{ color: 'oklch(var(--c3))' }}>
             TOP 5 ARTISTS
           </p>
           <div className="space-y-3 mt-4">
             {wrapped.top_artists && wrapped.top_artists.length > 0 ? (
               wrapped.top_artists.slice(0, 5).map((artist, index) => (
                 <div key={index} className="flex items-center justify-between">
-                  <span className="text-sm" style={{ color: 'hsl(var(--c1))' }}>
-                    <span style={{ color: 'hsl(var(--h3))' }} className="font-[var(--font-weight-medium)] mr-3">
+                  <span className="text-sm" style={{ color: 'oklch(var(--c1))' }}>
+                    <span style={{ color: 'oklch(var(--h3))' }} className="font-[var(--font-weight-medium)] mr-3">
                       #{index + 1}
                     </span>
                     {artist}
@@ -207,7 +207,7 @@ export function WrappedPage() {
                 </div>
               ))
             ) : (
-              <p className="text-xs" style={{ color: 'hsl(var(--c2))' }}>
+              <p className="text-xs" style={{ color: 'oklch(var(--c2))' }}>
                 No artist data available
               </p>
             )}
@@ -225,7 +225,7 @@ export function WrappedPage() {
               Download Wrapped Image
             </Button>
           ) : (
-            <div className="text-sm" style={{ color: 'hsl(var(--c2))' }}>
+            <div className="text-sm" style={{ color: 'oklch(var(--c2))' }}>
               Image generation in progress
             </div>
           )}
@@ -233,7 +233,7 @@ export function WrappedPage() {
 
         {/* Generated Date */}
         <div className="text-center pt-4">
-          <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
+          <p className="text-xs" style={{ color: 'oklch(var(--c3))' }}>
             Generated {new Date(wrapped.generated_at).toLocaleDateString()}
           </p>
         </div>

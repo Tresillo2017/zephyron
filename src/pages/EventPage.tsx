@@ -237,8 +237,8 @@ export function EventPage() {
                         onClick={() => { if (!isCurrent) navigate(`/app/events/${ed.slug || ed.id}`) }}
                         className="px-2.5 py-1 rounded-md text-xs font-mono transition-all cursor-pointer border-none"
                         style={{
-                          background: isCurrent ? 'hsl(var(--h3) / 0.2)' : 'hsl(var(--b3) / 0.4)',
-                          color: isCurrent ? 'hsl(var(--h2))' : 'hsl(var(--c3))',
+                          background: isCurrent ? 'oklch(var(--h3) / 0.2)' : 'oklch(var(--b3) / 0.4)',
+                          color: isCurrent ? 'oklch(var(--h2))' : 'oklch(var(--c3))',
                           fontWeight: isCurrent ? 'var(--font-weight-bold)' : 'var(--font-weight-default)',
                         }}
                       >
@@ -297,7 +297,7 @@ export function EventPage() {
                             className="h-full rounded-full"
                             style={{
                               width: `${(g.count / maxGenreCount) * 100}%`,
-                              background: 'hsl(var(--h3))',
+                              background: 'oklch(var(--h3))',
                               transition: 'width 0.4s ease-out',
                             }}
                           />
@@ -331,7 +331,7 @@ export function EventPage() {
                       >
                         <div
                           className="w-8 h-8 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
-                          style={{ background: 'hsl(var(--b3))', boxShadow: 'var(--card-border)' }}
+                          style={{ background: 'oklch(var(--b3))', boxShadow: 'var(--card-border)' }}
                         >
                           {artist.id ? (
                             <img src={getArtistImageUrl(artist.id)} alt="" className="w-full h-full object-cover" loading="lazy" />
@@ -437,7 +437,7 @@ export function EventPage() {
                     >
                       <div
                         className="w-10 h-10 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
-                        style={{ background: 'hsl(var(--b3))', boxShadow: 'var(--card-border)' }}
+                        style={{ background: 'oklch(var(--b3))', boxShadow: 'var(--card-border)' }}
                       >
                         {artist.id ? (
                           <img src={getArtistImageUrl(artist.id)} alt="" className="w-full h-full object-cover" loading="lazy" />
@@ -513,10 +513,10 @@ export function EventPage() {
                           onClick={() => { if (!isCurrent) navigate(`/app/events/${ed.slug || ed.id}`) }}
                           className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left border-none cursor-pointer"
                           style={{
-                            background: isCurrent ? 'hsl(var(--h3) / 0.1)' : 'transparent',
-                            color: isCurrent ? 'hsl(var(--h2))' : 'hsl(var(--c2))',
+                            background: isCurrent ? 'oklch(var(--h3) / 0.1)' : 'transparent',
+                            color: isCurrent ? 'oklch(var(--h2))' : 'oklch(var(--c2))',
                           }}
-                          onMouseEnter={(e) => { if (!isCurrent) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--b3) / 0.4)' }}
+                          onMouseEnter={(e) => { if (!isCurrent) (e.currentTarget as HTMLElement).style.background = 'oklch(var(--b3) / 0.4)' }}
                           onMouseLeave={(e) => { if (!isCurrent) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                         >
                           <span className="text-sm font-semibold">{ed.year || '?'}</span>

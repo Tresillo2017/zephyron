@@ -159,7 +159,7 @@ export function ProfilePictureUpload({
               alt="Current avatar"
               className="w-12 h-12 rounded-full object-cover"
             />
-            <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>Current picture</p>
+            <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>Current picture</p>
           </div>
         )}
 
@@ -167,8 +167,8 @@ export function ProfilePictureUpload({
         <div
           className={`relative border-2 border-dashed rounded-[var(--card-radius)] p-8 text-center cursor-pointer transition-colors ${
             isDragging
-              ? 'border-[hsl(var(--h3))] bg-[hsl(var(--h3)/0.1)]'
-              : 'border-[hsl(var(--b3))] hover:border-[hsl(var(--b4))] hover:bg-[hsl(var(--b4)/0.3)]'
+              ? 'border-[oklch(var(--h3))] bg-[oklch(var(--h3)/0.1)]'
+              : 'border-[oklch(var(--b3))] hover:border-[oklch(var(--b4))] hover:bg-[oklch(var(--b4)/0.3)]'
           }`}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
@@ -199,8 +199,8 @@ export function ProfilePictureUpload({
                 alt="Preview"
                 className="w-24 h-24 rounded-full object-cover mb-3"
               />
-              <p className="text-sm" style={{ color: 'hsl(var(--c2))' }}>{selectedFile?.name}</p>
-              <p className="text-xs mt-1" style={{ color: 'hsl(var(--c3))' }}>
+              <p className="text-sm" style={{ color: 'oklch(var(--c2))' }}>{selectedFile?.name}</p>
+              <p className="text-xs mt-1" style={{ color: 'oklch(var(--c3))' }}>
                 {selectedFile && (selectedFile.size / 1024 / 1024).toFixed(2)} MB
               </p>
             </div>
@@ -211,14 +211,14 @@ export function ProfilePictureUpload({
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
-                style={{ color: 'hsl(var(--c3))' }}
+                style={{ color: 'oklch(var(--c3))' }}
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
-              <p className="text-sm font-[var(--font-weight-medium)] mb-1" style={{ color: 'hsl(var(--c1))' }}>
+              <p className="text-sm font-[var(--font-weight-medium)] mb-1" style={{ color: 'oklch(var(--c1))' }}>
                 Drop an image here or click to browse
               </p>
-              <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>PNG, JPG, GIF up to 10MB</p>
+              <p className="text-xs" style={{ color: 'oklch(var(--c3))' }}>PNG, JPG, GIF up to 10MB</p>
             </>
           )}
         </div>
@@ -233,14 +233,14 @@ export function ProfilePictureUpload({
         {/* Upload Progress */}
         {uploading && (
           <div>
-            <div className="flex justify-between text-xs mb-1" style={{ color: 'hsl(var(--c2))' }}>
+            <div className="flex justify-between text-xs mb-1" style={{ color: 'oklch(var(--c2))' }}>
               <span>Uploading...</span>
               <span>{progress}%</span>
             </div>
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'hsl(var(--b3))' }}>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'oklch(var(--b3))' }}>
               <div
                 className="h-full rounded-full transition-all duration-300"
-                style={{ width: `${progress}%`, background: 'hsl(var(--h3))' }}
+                style={{ width: `${progress}%`, background: 'oklch(var(--h3))' }}
               />
             </div>
           </div>

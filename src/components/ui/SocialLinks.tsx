@@ -30,7 +30,7 @@ const LINK_DEFS: LinkDef[] = [
   // Social links
   { key: 'facebook_url', label: 'Facebook', color: '#1877F2', Icon: SiFacebook, category: 'social' },
   { key: 'instagram_url', label: 'Instagram', color: '#E4405F', Icon: SiInstagram, category: 'social' },
-  { key: 'x_url', label: 'X', color: 'hsl(var(--c2))', Icon: RiTwitterXFill, category: 'social' },
+  { key: 'x_url', label: 'X', color: 'oklch(var(--c2))', Icon: RiTwitterXFill, category: 'social' },
 ]
 
 function getFilteredLinks(data: Record<string, unknown>, categories?: ('music' | 'social')[]) {
@@ -64,7 +64,7 @@ export function SocialLinks({ data, categories, size = 16, heading }: SocialLink
   return (
     <div>
       {heading && (
-        <h3 className="text-[10px] font-mono tracking-wider mb-3" style={{ color: 'hsl(var(--c3))' }}>
+        <h3 className="text-[10px] font-mono tracking-wider mb-3" style={{ color: 'oklch(var(--c3))' }}>
           {heading}
         </h3>
       )}
@@ -81,12 +81,12 @@ export function SocialLinks({ data, categories, size = 16, heading }: SocialLink
               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs no-underline transition-all hover:brightness-125"
               style={{
                 color: def.color,
-                background: 'hsl(var(--b4) / 0.5)',
-                boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)',
+                background: 'oklch(var(--b4) / 0.5)',
+                boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.25)',
               }}
             >
               <def.Icon size={size} />
-              <span style={{ color: 'hsl(var(--c2))' }}>{def.label}</span>
+              <span style={{ color: 'oklch(var(--c2))' }}>{def.label}</span>
             </a>
           )
         })}

@@ -13,13 +13,13 @@ export function HomePage() {
         <div
           className="absolute inset-0"
           style={{
-            background: 'linear-gradient(135deg, hsl(var(--h3) / 0.12) 0%, hsl(var(--b6)) 40%, hsl(var(--h3) / 0.08) 100%)',
+            background: 'linear-gradient(135deg, oklch(var(--h3) / 0.12) 0%, oklch(var(--b6)) 40%, oklch(var(--h3) / 0.08) 100%)',
           }}
         />
         <div
           className="absolute inset-0"
           style={{
-            background: 'linear-gradient(to bottom, transparent 0%, hsl(var(--b6)) 100%)',
+            background: 'linear-gradient(to bottom, transparent 0%, oklch(var(--b6)) 100%)',
           }}
         />
 
@@ -27,20 +27,20 @@ export function HomePage() {
           <div className="max-w-4xl">
             <h1
               className="text-3xl sm:text-4xl lg:text-5xl font-[var(--font-weight-bold)] leading-[1.1] tracking-tight mb-4"
-              style={{ color: 'hsl(var(--c1))' }}
+              style={{ color: 'oklch(var(--c1))' }}
             >
               Curated sets from
               <br />
               <span
                 className="font-[var(--font-weight-default)]"
-                style={{ color: 'hsl(var(--c2))' }}
+                style={{ color: 'oklch(var(--c2))' }}
               >
                 the world's best DJs
               </span>
             </h1>
             <p
               className="text-sm sm:text-base max-w-2xl leading-relaxed"
-              style={{ color: 'hsl(var(--c3))' }}
+              style={{ color: 'oklch(var(--c3))' }}
             >
               AI-detected tracklists. Community-verified. Every set, every track.
             </p>
@@ -53,7 +53,7 @@ export function HomePage() {
         <section className="mb-12">
           <h2
             className="text-xs font-mono tracking-wider mb-5 uppercase"
-            style={{ color: 'hsl(var(--c3))' }}
+            style={{ color: 'oklch(var(--c3))' }}
           >
             Explore by Genre
           </h2>
@@ -64,19 +64,19 @@ export function HomePage() {
                 to={`/app/browse?genre=${encodeURIComponent(genre)}`}
                 className="px-4 py-2.5 text-sm rounded-lg transition-all no-underline"
                 style={{
-                  background: 'hsl(var(--b4) / 0.3)',
-                  color: 'hsl(var(--c2))',
-                  boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.3)',
+                  background: 'oklch(var(--b4) / 0.3)',
+                  color: 'oklch(var(--c2))',
+                  boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.3)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'hsl(var(--h3) / 0.1)'
-                  e.currentTarget.style.color = 'hsl(var(--h3))'
-                  e.currentTarget.style.boxShadow = 'inset 0 0 0 1px hsl(var(--h3) / 0.3)'
+                  e.currentTarget.style.background = 'oklch(var(--h3) / 0.1)'
+                  e.currentTarget.style.color = 'oklch(var(--h3))'
+                  e.currentTarget.style.boxShadow = 'inset 0 0 0 1px oklch(var(--h3) / 0.3)'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'hsl(var(--b4) / 0.3)'
-                  e.currentTarget.style.color = 'hsl(var(--c2))'
-                  e.currentTarget.style.boxShadow = 'inset 0 0 0 1px hsl(var(--b4) / 0.3)'
+                  e.currentTarget.style.background = 'oklch(var(--b4) / 0.3)'
+                  e.currentTarget.style.color = 'oklch(var(--c2))'
+                  e.currentTarget.style.boxShadow = 'inset 0 0 0 1px oklch(var(--b4) / 0.3)'
                 }}
               >
                 #{genre}
@@ -85,7 +85,7 @@ export function HomePage() {
             <Link
               to="/app/browse"
               className="px-4 py-2.5 text-sm transition-colors no-underline"
-              style={{ color: 'hsl(var(--h3))' }}
+              style={{ color: 'oklch(var(--h3))' }}
             >
               See all →
             </Link>
@@ -96,7 +96,7 @@ export function HomePage() {
         <div
           className="h-px mb-12"
           style={{
-            background: 'linear-gradient(to right, hsl(var(--b4) / 0) 0%, hsl(var(--b4) / 0.5) 50%, hsl(var(--b4) / 0) 100%)',
+            background: 'linear-gradient(to right, oklch(var(--b4) / 0) 0%, oklch(var(--b4) / 0.5) 50%, oklch(var(--b4) / 0) 100%)',
           }}
         />
 
@@ -105,19 +105,19 @@ export function HomePage() {
           <div className="flex items-center justify-between mb-7">
             <h2
               className="text-xl font-[var(--font-weight-medium)]"
-              style={{ color: 'hsl(var(--c1))' }}
+              style={{ color: 'oklch(var(--c1))' }}
             >
               Recent Sets
             </h2>
             <Link
               to="/app/browse"
               className="text-xs font-mono transition-colors no-underline uppercase tracking-wider"
-              style={{ color: 'hsl(var(--c3))' }}
+              style={{ color: 'oklch(var(--c3))' }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'hsl(var(--h3))'
+                e.currentTarget.style.color = 'oklch(var(--h3))'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'hsl(var(--c3))'
+                e.currentTarget.style.color = 'oklch(var(--c3))'
               }}
             >
               View All →

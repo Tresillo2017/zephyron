@@ -74,7 +74,7 @@ function VolumeButton({ volume, isMuted, onVolumeChange, onToggleMute }: {
       >
         <div
           className="absolute top-0 left-0 h-full rounded-full pointer-events-none"
-          style={{ width: `${effective * 100}%`, background: 'hsl(var(--h3))', transition: 'width 0.1s linear' }}
+          style={{ width: `${effective * 100}%`, background: 'oklch(var(--h3))', transition: 'width 0.1s linear' }}
         />
         <input
           type="range" min={0} max={1} step={0.01}
@@ -218,7 +218,7 @@ export function PlayerBar() {
           {isPlaying && (
             <div
               className="absolute top-0 left-0 right-0 h-px pointer-events-none"
-              style={{ background: 'linear-gradient(to right, transparent, hsl(var(--h3) / 0.5), transparent)' }}
+              style={{ background: 'linear-gradient(to right, transparent, oklch(var(--h3) / 0.5), transparent)' }}
             />
           )}
 
@@ -227,7 +227,7 @@ export function PlayerBar() {
             className="absolute left-0 right-0 top-0 flex items-center px-5 gap-4"
             style={{
               bottom: 5,
-              background: 'hsl(var(--b5) / 0.92)',
+              background: 'oklch(var(--b5) / 0.92)',
               backdropFilter: 'blur(16px) saturate(180%)',
               WebkitBackdropFilter: 'blur(16px) saturate(180%)',
             }}
@@ -236,7 +236,7 @@ export function PlayerBar() {
             <div className="flex items-center gap-3 shrink-0" style={{ width: 220 }}>
               <div
                 className="w-10 h-10 rounded-[10px] overflow-hidden shrink-0"
-                style={{ boxShadow: 'var(--card-border)', background: 'hsl(var(--b4))' }}
+                style={{ boxShadow: 'var(--card-border)', background: 'oklch(var(--b4))' }}
               >
                 {currentSet.cover_image_r2_key ? (
                   <img src={getCoverUrl(currentSet.id)} alt="" className="w-full h-full object-cover" />
@@ -332,18 +332,18 @@ export function PlayerBar() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'hsl(var(--h3))',
-              boxShadow: '0 2px 12px hsl(var(--h4) / 0.35)',
+              background: 'oklch(var(--h3))',
+              boxShadow: '0 2px 12px oklch(var(--h4) / 0.35)',
               transition: 'transform 0.15s ease, box-shadow 0.15s ease',
               zIndex: 10,
             }}
             onMouseEnter={e => {
               e.currentTarget.style.transform = 'scale(1.08)'
-              e.currentTarget.style.boxShadow = '0 4px 18px hsl(var(--h4) / 0.5)'
+              e.currentTarget.style.boxShadow = '0 4px 18px oklch(var(--h4) / 0.5)'
             }}
             onMouseLeave={e => {
               e.currentTarget.style.transform = ''
-              e.currentTarget.style.boxShadow = '0 2px 12px hsl(var(--h4) / 0.35)'
+              e.currentTarget.style.boxShadow = '0 2px 12px oklch(var(--h4) / 0.35)'
             }}
           >
             {isLoadingStream ? (
@@ -391,7 +391,7 @@ export function PlayerBar() {
             {/* Fill */}
             <div
               className="absolute top-0 left-0 h-full rounded-full pointer-events-none"
-              style={{ width: `${progress}%`, background: 'hsl(var(--h3))', transition: 'width 0.1s linear' }}
+              style={{ width: `${progress}%`, background: 'oklch(var(--h3))', transition: 'width 0.1s linear' }}
             />
 
             {/* Playhead thumb on hover */}
@@ -416,7 +416,7 @@ export function PlayerBar() {
             {hoverTime !== null && (
               <div
                 className="absolute top-0 bottom-0 w-px pointer-events-none opacity-40"
-                style={{ left: `${(hoverTime / duration) * 100}%`, background: 'hsl(var(--c2))' }}
+                style={{ left: `${(hoverTime / duration) * 100}%`, background: 'oklch(var(--c2))' }}
               />
             )}
 
@@ -442,7 +442,7 @@ export function PlayerBar() {
                     width: thumbnailInfo.thumbWidth,
                     height: thumbnailInfo.thumbHeight,
                     boxShadow: '0 8px 25px rgba(0,0,0,0.55)',
-                    border: '1px solid hsl(var(--b3) / 0.5)',
+                    border: '1px solid oklch(var(--b3) / 0.5)',
                   }}
                 >
                   <div
@@ -460,7 +460,7 @@ export function PlayerBar() {
                 </div>
                 <p
                   className="mt-1 text-center text-[10px] font-mono tabular-nums"
-                  style={{ color: 'hsl(var(--c2))' }}
+                  style={{ color: 'oklch(var(--c2))' }}
                 >
                   {formatTime(hoverTime)}
                 </p>

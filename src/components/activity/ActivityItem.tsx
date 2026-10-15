@@ -28,7 +28,7 @@ export function ActivityItem({ item, showUser = false }: ActivityItemProps) {
         return (
           <>
             <span className="font-[var(--font-weight-medium)]">{userName}</span> earned{' '}
-            <span className="font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--h3))' }}>
+            <span className="font-[var(--font-weight-medium)]" style={{ color: 'oklch(var(--h3))' }}>
               {metadata.badge_name}
             </span>{' '}
             badge
@@ -69,7 +69,7 @@ export function ActivityItem({ item, showUser = false }: ActivityItemProps) {
         return (
           <>
             <span className="font-[var(--font-weight-medium)]">{userName}</span> reached{' '}
-            <span className="font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--h3))' }}>
+            <span className="font-[var(--font-weight-medium)]" style={{ color: 'oklch(var(--h3))' }}>
               {metadata.milestone}
             </span>
           </>
@@ -104,10 +104,10 @@ export function ActivityItem({ item, showUser = false }: ActivityItemProps) {
     <div className="card p-4 flex items-start gap-3">
       <div className="text-2xl">{getActivityIcon()}</div>
       <div className="flex-1">
-        <div className="text-sm mb-1" style={{ color: 'hsl(var(--c1))' }}>
+        <div className="text-sm mb-1" style={{ color: 'oklch(var(--c1))' }}>
           {getActivityText()}
         </div>
-        <div className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
+        <div className="text-xs" style={{ color: 'oklch(var(--c3))' }}>
           {getTimeAgo(item.created_at)}
         </div>
       </div>

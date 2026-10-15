@@ -1,206 +1,77 @@
 @import "tailwindcss";
+@import "./styles/tokens.css";
+@import "./styles/themes.css";
+@import "./styles/base.css";
+@import "./styles/motion.css";
 @import "./styles/toast.css";
+@import "./components/bleh/bleh.css";
 
-/* Geist — Variable fonts */
-@font-face {
-  font-family: "Geist";
-  src: url("/fonts/Geist-Variable.woff2") format("woff2");
-  font-weight: 100 900;
-  font-display: swap;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "Geist Mono";
-  src: url("/fonts/GeistMono-Variable.woff2") format("woff2");
-  font-weight: 100 900;
-  font-display: swap;
-  font-style: normal;
-}
-
-/* ═══ HSL-parametric color system ═══
-   One --hue variable drives the entire palette.
-   Change it to shift the whole UI (e.g. per-artist, per-set theming). */
-
-:root {
-  --hue: 255;
-  --sat: 1;
-  --lit: 1;
-
-  /* Background scale — default "dark" theme */
-  --b7: 0, 0%, 0%;
-  --b6: var(--hue), calc(var(--sat) * 4%), calc(var(--lit) * 14%);
-  --b5: var(--hue), calc(var(--sat) * 5%), calc(var(--lit) * 18%);
-  --b4: var(--hue), calc(var(--sat) * 5%), calc(var(--lit) * 26%);
-  --b3: var(--hue), calc(var(--sat) * 6%), calc(var(--lit) * 30%);
-  --b2: var(--hue), calc(var(--sat) * 7%), calc(var(--lit) * 40%);
-
-  /* Text scale */
-  --c1: var(--hue), calc(var(--sat) * 40%), 100%;
-  --c2: var(--hue), calc(var(--sat) * 30%), 87%;
-  --c3: var(--hue), calc(var(--sat) * 7%), 60%;
-
-  /* Accent scale */
-  --h2: var(--hue), calc(var(--sat) * 50%), 83%;
-  --h3: var(--hue), calc(var(--sat) * 60%), 70%;
-  --h4: var(--hue), calc(var(--sat) * 70%), 50%;
-
-  /* Border scale */
-  --br1: var(--hue), calc(var(--sat) * 5%), calc(var(--lit) * 26%);
-  --br2: var(--hue), calc(var(--sat) * 6%), calc(var(--lit) * 30%);
-
-  /* Glass / blur */
-  --blur-saturate: 240%;
-  --blur-brightness: 0.7;
-  --card-blur: blur(6px) saturate(var(--blur-saturate))
-    brightness(var(--blur-brightness)) contrast(1);
-
-  /* Shadows */
-  --card-shadow: 0 8px 35px rgba(0, 0, 0, 0.35);
-  --card-border: inset 0 0 0 1px hsl(var(--b4) / 0.25);
-  --menu-shadow: 0 5px 15px 11px hsl(var(--b7) / 0.4);
-  --avatar-shadow: 0 6px 15px 10px hsl(var(--b7) / 0.05);
-  --subtle-shadow: 0 6px 20px 7px hsl(var(--b7) / 0.2);
-
-  /* Layout */
+/* ═══ Zephyron compatibility layer ═══
+   The app was written against an hsl-triplet palette (--b*, --c*, --h*, --br*). The bleh port
+   (src/styles/) supplies the same names as oklch triplets, so call sites use oklch(var(--b5)).
+   Names below only exist so older components keep resolving. */
+:root, .theme-scope {
+  --br1: var(--b4);
+  --br2: var(--b3);
+  --ease-out-custom: var(--trans-function);
+  --ease-spring: var(--trans-function-ani);
+  --font-weight: var(--fw-regular);
+  --font-weight-medium: var(--fw-medium);
+  --font-weight-bold: var(--fw-bold);
+  --font-weight-default: var(--fw-regular);
   --banner-height: 280px;
   --banner-offset: 240px;
-  --header-avatar-size: 180px;
-  --card-padding: 20px;
-  --card-radius: 12px;
-  --button-radius: 12px;
-  --button-height: 30px;
-  --font-weight: 480;
-  --font-weight-medium: 650;
-  --font-weight-bold: 730;
-
-  /* Transitions */
-  --ease-out-custom: cubic-bezier(0.095, 0.41, 0.055, 0.96);
-  --ease-spring: cubic-bezier(0.205, 0.06, 0.05, 0.965);
-  --trans: 0.2s;
-}
-
-/* ═══ Theme variants ═══ */
-
-/* Darker — deeper blacks, less contrast between levels */
-[data-theme="darker"] {
-  --b6: var(--hue), calc(var(--sat) * 3%), calc(var(--lit) * 6%);
-  --b5: var(--hue), calc(var(--sat) * 4%), calc(var(--lit) * 9%);
-  --b4: var(--hue), calc(var(--sat) * 4%), calc(var(--lit) * 14%);
-  --b3: var(--hue), calc(var(--sat) * 5%), calc(var(--lit) * 19%);
-  --b2: var(--hue), calc(var(--sat) * 6%), calc(var(--lit) * 29%);
-}
-
-/* OLED — true blacks for AMOLED screens */
-[data-theme="oled"] {
-  --b6: 0, 0%, 0%;
-  --b5: var(--hue), calc(var(--sat) * 3%), calc(var(--lit) * 4%);
-  --b4: var(--hue), calc(var(--sat) * 3%), calc(var(--lit) * 10%);
-  --b3: var(--hue), calc(var(--sat) * 4%), calc(var(--lit) * 11%);
-  --b2: var(--hue), calc(var(--sat) * 5%), calc(var(--lit) * 23%);
-  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-}
-
-/* Light — inverted for daytime use */
-[data-theme="light"] {
-  --b6: var(--hue), calc(var(--sat) * 5%), 94%;
-  --b5: var(--hue), calc(var(--sat) * 5%), 100%;
-  --b4: var(--hue), calc(var(--sat) * 5%), 91%;
-  --b3: var(--hue), calc(var(--sat) * 4%), 98%;
-  --b2: var(--hue), calc(var(--sat) * 3%), 82%;
-  --c1: var(--hue), calc(var(--sat) * 6%), 0%;
-  --c2: var(--hue), calc(var(--sat) * 4%), 6%;
-  --c3: var(--hue), calc(var(--sat) * 2%), 38%;
-  --blur-saturate: 130%;
-  --blur-brightness: 1.2;
-  --card-shadow: 0 1.5px 4px 0 hsl(var(--b7) / 0.05);
-}
-
-/* ═══ Preset accent hues ═══ */
-[data-accent="violet"] {
-  --hue: 255;
-}
-[data-accent="blue"] {
-  --hue: 220;
-}
-[data-accent="cyan"] {
-  --hue: 190;
-}
-[data-accent="teal"] {
-  --hue: 170;
-}
-[data-accent="green"] {
-  --hue: 145;
-}
-[data-accent="yellow"] {
-  --hue: 50;
-}
-[data-accent="orange"] {
-  --hue: 25;
-}
-[data-accent="red"] {
-  --hue: 0;
-}
-[data-accent="pink"] {
-  --hue: 330;
-}
-[data-accent="rose"] {
-  --hue: 350;
+  --header-avatar-size: var(--hero-avatar);
 }
 
 @theme {
-  /* Surface — derived from HSL scale */
-  --color-surface: hsl(var(--b6));
-  --color-surface-raised: hsl(var(--b5));
-  --color-surface-overlay: hsl(var(--b4));
-  --color-surface-hover: hsl(var(--b3));
+  /* Surface */
+  --color-surface: oklch(var(--b6));
+  --color-surface-raised: oklch(var(--b5));
+  --color-surface-overlay: oklch(var(--b4));
+  --color-surface-hover: oklch(var(--b3));
 
-  /* Accent — derived from hue */
-  --color-accent: hsl(var(--h3));
-  --color-accent-hover: hsl(var(--h2));
-  --color-accent-dim: hsl(var(--h4));
+  /* Accent */
+  --color-accent: oklch(var(--h3));
+  --color-accent-hover: oklch(var(--h2));
+  --color-accent-dim: oklch(var(--h4));
 
   /* Text */
-  --color-text-primary: hsl(var(--c1));
-  --color-text-secondary: hsl(var(--c2));
-  --color-text-muted: hsl(var(--c3));
+  --color-text-primary: oklch(var(--c1));
+  --color-text-secondary: oklch(var(--c2));
+  --color-text-muted: oklch(var(--c3));
 
   /* Borders */
-  --color-border: hsl(var(--br1));
-  --color-border-light: hsl(var(--br2));
+  --color-border: oklch(var(--br1));
+  --color-border-light: oklch(var(--br2));
 
   /* Semantic */
-  --color-danger: #ef4444;
-  --color-warning: #f59e0b;
-  --color-success: #22c55e;
+  --color-danger: var(--error);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
 
-  /* Typography */
-  --font-sans: "Geist", system-ui, -apple-system, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, monospace;
+  /* Typography (bleh: Hanken Grotesk body, Instrument Serif display) */
+  --font-sans: var(--font);
+  --font-head: var(--font-head);
+  --font-mono: var(--font-code);
+
+  --radius-ctl: var(--button-radius);
+  --radius-card: var(--item-big-radius);
+  --shadow-card: var(--card-shadow);
+  --shadow-menu: var(--menu-shadow);
+  --ease-bleh: var(--trans-function);
 }
 
-html,
-body,
-#root {
+html, body, #root {
   height: 100%;
-  margin: 0;
-  background-color: var(--color-surface);
-  color: var(--color-text-primary);
-  font-weight: var(--font-weight);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
+#root { min-height: 0; }
 
 #app-scroll-container {
   scroll-behavior: smooth;
 }
-
-@media (prefers-reduced-motion: reduce) {
-  #app-scroll-container {
-    scroll-behavior: auto;
-  }
-}
-.reduce-motion #app-scroll-container {
+.reduce-motion #app-scroll-container,
+[data-bleh--reduced_motion="true"] #app-scroll-container {
   scroll-behavior: auto;
 }
 
@@ -211,7 +82,7 @@ input[type="range"]::-webkit-slider-thumb {
   height: 16px;
   border-radius: 50%;
   background: white;
-  box-shadow: 0 1px 4px hsl(var(--b7) / 0.3);
+  box-shadow: 0 1px 4px oklch(var(--b7) / 0.3);
   cursor: pointer;
 }
 input[type="range"]::-moz-range-thumb {
@@ -220,83 +91,21 @@ input[type="range"]::-moz-range-thumb {
   border-radius: 50%;
   background: white;
   border: none;
-  box-shadow: 0 1px 4px hsl(var(--b7) / 0.3);
+  box-shadow: 0 1px 4px oklch(var(--b7) / 0.3);
   cursor: pointer;
 }
 
-/* ═══ Noise overlay ═══
-   Subtle film-grain texture for tactile depth.
-   Inspired by bleh's solarium noise system. */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 2147483647;
-  pointer-events: none;
-  opacity: 0.035;
-  mix-blend-mode: soft-light;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 128px 128px;
-}
-
-/* Scrollbar — refined to match design system */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--b3));
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--b2));
-}
-::-webkit-scrollbar-corner {
-  background: transparent;
-}
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--b3)) transparent;
-}
-
-/* Selection — uses accent hue with enough contrast across all themes */
-::selection {
-  background: hsl(var(--h3) / 0.35);
-  color: hsl(var(--c1));
-}
-/* Light theme: selection needs higher opacity + dark text to remain visible */
-[data-theme="light"] ::selection {
-  background: hsl(var(--h4) / 0.25);
-  color: hsl(var(--c1));
-}
-
 /* ═══ Global interactive element defaults ═══ */
-
-/* Buttons — always pointer, accessible focus ring */
 button,
 [role="button"] {
   cursor: pointer;
 }
-button:focus-visible,
-[role="button"]:focus-visible {
-  outline: 2px solid hsl(var(--h3) / 0.7);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* Text inputs — proper cursor, selection, caret */
 input,
 textarea {
   cursor: text;
   user-select: text;
   -webkit-user-select: text;
-  caret-color: hsl(var(--h3));
+  caret-color: oklch(var(--h3));
 }
 input:focus,
 textarea:focus {
@@ -309,31 +118,31 @@ select {
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
-  background-color: hsl(var(--b4) / 0.4);
+  background-color: oklch(var(--b4) / 0.4);
   background-repeat: no-repeat;
   background-position: right 10px center;
   padding: 6px 32px 6px 12px;
   border-radius: var(--button-radius);
   border: none;
-  box-shadow: inset 0 0 0 1px hsl(var(--b4) / 0.5);
-  color: hsl(var(--c2));
+  box-shadow: inset 0 0 0 1px oklch(var(--b4) / 0.5);
+  color: oklch(var(--c2));
   font-family: inherit;
   font-size: 13px;
   transition: background-color 0.2s var(--ease-out-custom),
     box-shadow 0.2s var(--ease-out-custom);
 }
 select:hover {
-  background-color: hsl(var(--b4) / 0.6);
-  box-shadow: inset 0 0 0 1px hsl(var(--b3) / 0.6);
+  background-color: oklch(var(--b4) / 0.6);
+  box-shadow: inset 0 0 0 1px oklch(var(--b3) / 0.6);
 }
 select:focus {
   outline: none;
-  box-shadow: inset 0 0 0 1px hsl(var(--h3) / 0.5);
-  color: hsl(var(--c1));
+  box-shadow: inset 0 0 0 1px oklch(var(--h3) / 0.5);
+  color: oklch(var(--c1));
 }
 select option {
-  background: hsl(var(--b5));
-  color: hsl(var(--c2));
+  background: oklch(var(--b5));
+  color: oklch(var(--c2));
 }
 
 /* Dark themes: white-tinted chevron */
@@ -347,24 +156,16 @@ select option {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(0,0,0,0.45)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
 }
 
-/* ═══ Glass card utility ═══ */
-.glass {
-  background: hsl(var(--b5) / 0.7);
+/* ═══ Legacy glass utilities (bleh .glass lives in base.css) ═══ */
+.glass-subtle {
+  background: oklch(var(--b5) / 0.5);
   backdrop-filter: var(--card-blur);
   -webkit-backdrop-filter: var(--card-blur);
-  box-shadow: inset 0 0 0 1px hsl(var(--br1) / 0.5),
-    0 8px 32px hsl(0 0% 0% / 0.3);
-}
-
-.glass-subtle {
-  background: hsl(var(--b5) / 0.5);
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
 }
 
 /* ═══ Card utility (bleh-matched) ═══ */
 .card {
-  background: hsl(var(--b5));
+  background: oklch(var(--b5));
   border-radius: var(--card-radius);
   box-shadow: var(--card-border), var(--card-shadow);
   padding: var(--card-padding);
@@ -375,14 +176,14 @@ select option {
     box-shadow var(--trans) var(--ease-out-custom);
 }
 .card-hover:hover {
-  background: hsl(var(--b4) / 0.8);
+  background: oklch(var(--b4) / 0.8);
 }
 
 /* ═══ Tab bar ═══ */
 .tab-bar {
   display: flex;
   gap: 2px;
-  border-bottom: 1px solid hsl(var(--br1));
+  border-bottom: 1px solid oklch(var(--br1));
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -396,7 +197,7 @@ select option {
   gap: 6px;
   padding: 10px 14px;
   font-size: 13px;
-  color: hsl(var(--c3));
+  color: oklch(var(--c3));
   white-space: nowrap;
   border-bottom: 2px solid transparent;
   transition: color var(--trans) var(--ease-out-custom),
@@ -404,11 +205,11 @@ select option {
   cursor: pointer;
 }
 .tab-item:hover {
-  color: hsl(var(--c2));
+  color: oklch(var(--c2));
 }
 .tab-item.active {
-  color: hsl(var(--c1));
-  border-bottom-color: hsl(var(--h3));
+  color: oklch(var(--c1));
+  border-bottom-color: oklch(var(--h3));
 }
 
 /* ═══ Tag pill (bleh-style) ═══ */
@@ -417,13 +218,13 @@ select option {
   align-items: center;
   padding: 3px 10px;
   font-size: 12px;
-  color: hsl(var(--c2));
-  background: hsl(var(--b4) / 0.4);
+  color: oklch(var(--c2));
+  background: oklch(var(--b4) / 0.4);
   border-radius: 6px;
   transition: background var(--trans) var(--ease-out-custom);
 }
 .tag:hover {
-  background: hsl(var(--b3) / 0.5);
+  background: oklch(var(--b3) / 0.5);
 }
 
 /* ═══ Stat block ═══ */
@@ -435,12 +236,12 @@ select option {
 .stat-value {
   font-size: 20px;
   font-weight: 700;
-  color: hsl(var(--c1));
+  color: oklch(var(--c1));
   line-height: 1.2;
 }
 .stat-label {
   font-size: 11px;
-  color: hsl(var(--c3));
+  color: oklch(var(--c3));
 }
 
 /* ═══ Banner text shadow for readability ═══ */
@@ -504,20 +305,6 @@ select option {
   }
 }
 
-/* Card/modal entrance — scale + blur reveal */
-@keyframes solarium {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-    filter: blur(3px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-    filter: blur(0);
-  }
-}
-
 /* List item stagger entrance */
 @keyframes slide-up {
   from {
@@ -547,20 +334,6 @@ select option {
   }
   to {
     opacity: 0;
-  }
-}
-
-/* Card/modal exit — reverse of solarium */
-@keyframes solarium-out {
-  from {
-    opacity: 1;
-    transform: scale(1);
-    filter: blur(0);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.96);
-    filter: blur(3px);
   }
 }
 
@@ -612,10 +385,13 @@ select option {
   }
 }
 
-/* User-requested reduced motion (toggle in Appearance settings) */
+/* User-requested reduced motion (Appearance settings) */
 .reduce-motion *,
 .reduce-motion *::before,
-.reduce-motion *::after {
+.reduce-motion *::after,
+[data-bleh--reduced_motion="true"] *,
+[data-bleh--reduced_motion="true"] *::before,
+[data-bleh--reduced_motion="true"] *::after {
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;

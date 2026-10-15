@@ -80,20 +80,20 @@ export function MonthlyWrappedPage() {
             {isNoData ? (
               <>
                 <div className="text-5xl mb-4">📊</div>
-                <p className="text-lg font-[var(--font-weight-bold)] mb-2" style={{ color: 'hsl(var(--c1))' }}>
+                <p className="text-lg font-[var(--font-weight-bold)] mb-2" style={{ color: 'oklch(var(--c1))' }}>
                   No Data Yet
                 </p>
-                <p className="text-sm text-center max-w-md mb-6" style={{ color: 'hsl(var(--c2))' }}>
+                <p className="text-sm text-center max-w-md mb-6" style={{ color: 'oklch(var(--c2))' }}>
                   You don't have enough listening activity for this month yet. Start listening to some sets to generate your monthly wrapped!
                 </p>
               </>
             ) : (
               <>
                 <div className="text-5xl mb-4">⚠️</div>
-                <p className="text-lg font-[var(--font-weight-bold)] mb-2" style={{ color: 'hsl(var(--c1))' }}>
+                <p className="text-lg font-[var(--font-weight-bold)] mb-2" style={{ color: 'oklch(var(--c1))' }}>
                   Unable to Load
                 </p>
-                <p className="text-sm text-center max-w-md mb-6" style={{ color: 'hsl(var(--c2))' }}>
+                <p className="text-sm text-center max-w-md mb-6" style={{ color: 'oklch(var(--c2))' }}>
                   {error}
                 </p>
               </>
@@ -153,7 +153,7 @@ export function MonthlyWrappedPage() {
       <div className="px-6 lg:px-10 py-6">
         <div className="max-w-3xl mx-auto">
           <div className="card flex flex-col items-center justify-center py-12">
-            <p className="text-sm" style={{ color: 'hsl(var(--c2))' }}>
+            <p className="text-sm" style={{ color: 'oklch(var(--c2))' }}>
               Unable to load monthly data
             </p>
             <Link to="/app/profile" className="mt-4">
@@ -172,10 +172,10 @@ export function MonthlyWrappedPage() {
       <div className="max-w-3xl mx-auto space-y-8">
         {/* Hero Section */}
         <div className="card flex flex-col items-center justify-center py-12">
-          <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+          <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>
             Your Monthly Summary
           </p>
-          <p className="text-5xl font-[var(--font-weight-bold)] mt-2" style={{ color: 'hsl(var(--c1))' }}>
+          <p className="text-5xl font-[var(--font-weight-bold)] mt-2" style={{ color: 'oklch(var(--c1))' }}>
             {monthName} {wrapped.year}
           </p>
         </div>
@@ -183,13 +183,13 @@ export function MonthlyWrappedPage() {
         {/* Main Stats */}
         <div className="card">
           <div className="flex flex-col items-center justify-center py-8">
-            <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+            <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>
               Total Hours Listened
             </p>
-            <p className="text-5xl font-[var(--font-weight-bold)] mt-2" style={{ color: 'hsl(var(--h3))' }}>
+            <p className="text-5xl font-[var(--font-weight-bold)] mt-2" style={{ color: 'oklch(var(--h3))' }}>
               {wrapped.total_hours}
             </p>
-            <p className="text-xs mt-2" style={{ color: 'hsl(var(--c2))' }}>
+            <p className="text-xs mt-2" style={{ color: 'oklch(var(--c2))' }}>
               hours of electronic music
             </p>
           </div>
@@ -199,33 +199,33 @@ export function MonthlyWrappedPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Top Artist */}
           <div className="card">
-            <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
+            <p className="text-xs" style={{ color: 'oklch(var(--c3))' }}>
               TOP ARTIST
             </p>
-            <p className="text-lg font-[var(--font-weight-bold)] mt-2" style={{ color: 'hsl(var(--c1))' }}>
+            <p className="text-lg font-[var(--font-weight-bold)] mt-2" style={{ color: 'oklch(var(--c1))' }}>
               {wrapped.top_artists && wrapped.top_artists.length > 0 ? wrapped.top_artists[0] : 'N/A'}
             </p>
           </div>
 
           {/* Top Genre */}
           <div className="card">
-            <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
+            <p className="text-xs" style={{ color: 'oklch(var(--c3))' }}>
               TOP GENRE
             </p>
-            <p className="text-lg font-[var(--font-weight-bold)] mt-2" style={{ color: 'hsl(var(--h3))' }}>
+            <p className="text-lg font-[var(--font-weight-bold)] mt-2" style={{ color: 'oklch(var(--h3))' }}>
               {wrapped.top_genre || 'N/A'}
             </p>
           </div>
 
           {/* Discoveries */}
           <div className="card">
-            <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
+            <p className="text-xs" style={{ color: 'oklch(var(--c3))' }}>
               NEW DISCOVERIES
             </p>
-            <p className="text-lg font-[var(--font-weight-bold)] mt-2" style={{ color: 'hsl(var(--c1))' }}>
+            <p className="text-lg font-[var(--font-weight-bold)] mt-2" style={{ color: 'oklch(var(--c1))' }}>
               {wrapped.discoveries_count}
             </p>
-            <p className="text-xs mt-1" style={{ color: 'hsl(var(--c2))' }}>
+            <p className="text-xs mt-1" style={{ color: 'oklch(var(--c2))' }}>
               new tracks
             </p>
           </div>
@@ -233,15 +233,15 @@ export function MonthlyWrappedPage() {
 
         {/* Top 3 Artists */}
         <div className="card">
-          <p className="text-xs font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c3))' }}>
+          <p className="text-xs font-[var(--font-weight-medium)]" style={{ color: 'oklch(var(--c3))' }}>
             TOP 3 ARTISTS
           </p>
           <div className="space-y-3 mt-4">
             {wrapped.top_artists && wrapped.top_artists.length > 0 ? (
               wrapped.top_artists.slice(0, 3).map((artist, index) => (
                 <div key={index} className="flex items-center justify-between">
-                  <span className="text-sm" style={{ color: 'hsl(var(--c1))' }}>
-                    <span style={{ color: 'hsl(var(--h3))' }} className="font-[var(--font-weight-medium)] mr-3">
+                  <span className="text-sm" style={{ color: 'oklch(var(--c1))' }}>
+                    <span style={{ color: 'oklch(var(--h3))' }} className="font-[var(--font-weight-medium)] mr-3">
                       #{index + 1}
                     </span>
                     {artist}
@@ -249,7 +249,7 @@ export function MonthlyWrappedPage() {
                 </div>
               ))
             ) : (
-              <p className="text-xs" style={{ color: 'hsl(var(--c2))' }}>
+              <p className="text-xs" style={{ color: 'oklch(var(--c2))' }}>
                 No artist data available
               </p>
             )}
@@ -259,20 +259,20 @@ export function MonthlyWrappedPage() {
         {/* Longest Set Link */}
         {wrapped.longest_set && (
           <div className="card">
-            <p className="text-xs font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c3))' }}>
+            <p className="text-xs font-[var(--font-weight-medium)]" style={{ color: 'oklch(var(--c3))' }}>
               LONGEST SET
             </p>
             <Link
               to={`/app/sets/${wrapped.longest_set.id}`}
               className="block mt-4 p-3 rounded-lg transition-colors"
               style={{
-                backgroundColor: 'hsl(var(--b4) / 0.5)',
+                backgroundColor: 'oklch(var(--b4) / 0.5)',
               }}
             >
-              <p className="text-sm font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c1))' }}>
+              <p className="text-sm font-[var(--font-weight-medium)]" style={{ color: 'oklch(var(--c1))' }}>
                 {wrapped.longest_set.title}
               </p>
-              <p className="text-xs mt-1" style={{ color: 'hsl(var(--c2))' }}>
+              <p className="text-xs mt-1" style={{ color: 'oklch(var(--c2))' }}>
                 by {wrapped.longest_set.artist}
               </p>
             </Link>
@@ -281,7 +281,7 @@ export function MonthlyWrappedPage() {
 
         {/* Generated Date */}
         <div className="text-center pt-4">
-          <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
+          <p className="text-xs" style={{ color: 'oklch(var(--c3))' }}>
             Generated {new Date(wrapped.generated_at).toLocaleDateString()}
           </p>
         </div>

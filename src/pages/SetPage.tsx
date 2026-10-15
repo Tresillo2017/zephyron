@@ -127,8 +127,8 @@ function SourceRequestPopover({
             className="px-3 py-1.5 rounded-lg text-xs transition-all"
             style={{
               background:
-                sourceType === type ? "hsl(var(--h3))" : "hsl(var(--b4) / 0.5)",
-              color: sourceType === type ? "white" : "hsl(var(--c2))",
+                sourceType === type ? "oklch(var(--h3))" : "oklch(var(--b4) / 0.5)",
+              color: sourceType === type ? "white" : "oklch(var(--c2))",
               fontWeight:
                 sourceType === type ? "var(--font-weight-medium)" : undefined,
             }}
@@ -155,9 +155,9 @@ function SourceRequestPopover({
         }
         className="w-full px-3 py-2 text-sm rounded-lg mb-2 outline-none focus:ring-2 focus:ring-accent/30"
         style={{
-          background: "hsl(var(--b4) / 0.4)",
-          color: "hsl(var(--c1))",
-          border: "1px solid hsl(var(--b4) / 0.3)",
+          background: "oklch(var(--b4) / 0.4)",
+          color: "oklch(var(--c1))",
+          border: "1px solid oklch(var(--b4) / 0.3)",
         }}
       />
 
@@ -168,9 +168,9 @@ function SourceRequestPopover({
         placeholder="Optional note..."
         className="w-full px-3 py-2 text-sm rounded-lg mb-3 outline-none focus:ring-2 focus:ring-accent/30"
         style={{
-          background: "hsl(var(--b4) / 0.4)",
-          color: "hsl(var(--c1))",
-          border: "1px solid hsl(var(--b4) / 0.3)",
+          background: "oklch(var(--b4) / 0.4)",
+          color: "oklch(var(--c1))",
+          border: "1px solid oklch(var(--b4) / 0.3)",
         }}
       />
 
@@ -357,8 +357,8 @@ export function SetPage() {
                   <span
                     className="text-[10px] font-mono px-2 py-0.5 rounded-md banner-text"
                     style={{
-                      background: "hsl(var(--b4) / 0.5)",
-                      color: "hsl(var(--c3))",
+                      background: "oklch(var(--b4) / 0.5)",
+                      color: "oklch(var(--c3))",
                     }}
                   >
                     No source
@@ -368,8 +368,8 @@ export function SetPage() {
                   <span
                     className="text-[10px] font-mono px-2 py-0.5 rounded-md banner-text"
                     style={{
-                      background: "hsl(var(--b4) / 0.5)",
-                      color: "hsl(var(--c3))",
+                      background: "oklch(var(--b4) / 0.5)",
+                      color: "oklch(var(--c3))",
                     }}
                   >
                     {externalSourceLabel}
@@ -641,21 +641,21 @@ export function SetPage() {
             <div className="card overflow-hidden">
               <div
                 className="flex items-center justify-between px-5 py-3"
-                style={{ borderBottom: "1px solid hsl(var(--b4) / 0.15)" }}
+                style={{ borderBottom: "1px solid oklch(var(--b4) / 0.15)" }}
               >
                 <div>
                   <h3
                     className="text-sm"
                     style={{
                       fontWeight: "var(--font-weight-medium)",
-                      color: "hsl(var(--c1))",
+                      color: "oklch(var(--c1))",
                     }}
                   >
                     Tracklist
                   </h3>
                   <p
                     className="text-[10px] mt-0.5"
-                    style={{ color: "hsl(var(--c3))" }}
+                    style={{ color: "oklch(var(--c3))" }}
                   >
                     {set.detections.length > 0
                       ? `${set.detections.length} tracks`
@@ -811,7 +811,7 @@ export function SetPage() {
               )}
 
               {/* Metadata section */}
-              <div className="p-5" style={{ background: "hsl(var(--b5))" }}>
+              <div className="p-5" style={{ background: "oklch(var(--b5))" }}>
                 <div className="flex items-center gap-2 flex-wrap mb-3">
                   {set.genre && set.genre.trim() && <Badge variant="accent">{set.genre}</Badge>}
                   {(set as any).subgenre && (set as any).subgenre.trim() && (

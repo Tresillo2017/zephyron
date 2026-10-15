@@ -51,21 +51,21 @@ export function LikedSongsPage() {
             <div className="flex justify-center mb-4">
               <div
                 className="w-16 h-16 rounded-full flex items-center justify-center"
-                style={{ background: 'hsl(var(--h3) / 0.1)' }}
+                style={{ background: 'oklch(var(--h3) / 0.1)' }}
               >
-                <FiHeart size={28} style={{ color: 'hsl(var(--h3))' }} />
+                <FiHeart size={28} style={{ color: 'oklch(var(--h3))' }} />
               </div>
             </div>
             <h2
               className="text-xl mb-2"
               style={{
-                color: 'hsl(var(--c1))',
+                color: 'oklch(var(--c1))',
                 fontWeight: 'var(--font-weight-bold)',
               }}
             >
               Sign in to see your liked songs
             </h2>
-            <p className="text-sm mb-6" style={{ color: 'hsl(var(--c3))' }}>
+            <p className="text-sm mb-6" style={{ color: 'oklch(var(--c3))' }}>
               Like tracks as you discover them to build your personal collection
             </p>
             <Link to="/login" className="button-primary inline-flex items-center gap-2">
@@ -100,21 +100,21 @@ export function LikedSongsPage() {
         <div className="flex items-center gap-3 mb-6">
           <div
             className="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
-            style={{ background: 'hsl(var(--h3) / 0.15)' }}
+            style={{ background: 'oklch(var(--h3) / 0.15)' }}
           >
-            <FiHeart size={22} style={{ color: 'hsl(var(--h3))' }} />
+            <FiHeart size={22} style={{ color: 'oklch(var(--h3))' }} />
           </div>
           <div>
             <h1
               className="text-2xl"
               style={{
-                color: 'hsl(var(--c1))',
+                color: 'oklch(var(--c1))',
                 fontWeight: 'var(--font-weight-bold)',
               }}
             >
               Liked Songs
             </h1>
-            <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+            <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>
               {total} track{total !== 1 ? 's' : ''} you've liked
             </p>
           </div>
@@ -124,18 +124,18 @@ export function LikedSongsPage() {
         {songs.length === 0 ? (
           <div className="card text-center py-16">
             <div className="flex justify-center mb-4">
-              <FiMusic size={48} style={{ color: 'hsl(var(--c3) / 0.3)' }} />
+              <FiMusic size={48} style={{ color: 'oklch(var(--c3) / 0.3)' }} />
             </div>
             <h2
               className="text-lg mb-2"
               style={{
-                color: 'hsl(var(--c1))',
+                color: 'oklch(var(--c1))',
                 fontWeight: 'var(--font-weight-medium)',
               }}
             >
               No liked songs yet
             </h2>
-            <p className="text-sm mb-6" style={{ color: 'hsl(var(--c3))' }}>
+            <p className="text-sm mb-6" style={{ color: 'oklch(var(--c3))' }}>
               Like tracks by clicking the heart icon next to any track in a set
             </p>
             <Link to="/" className="button-primary inline-flex items-center gap-2">
@@ -153,7 +153,7 @@ export function LikedSongsPage() {
                 const serviceLinks = getAvailableServices(song as unknown as Record<string, unknown>)
 
                 return (
-                  <div key={song.id} className="card !p-3 group hover:bg-[hsl(var(--b4)/0.3)] transition-colors">
+                  <div key={song.id} className="card !p-3 group hover:bg-[oklch(var(--b4)/0.3)] transition-colors">
                     <div className="flex items-center gap-3">
                       {/* Cover art */}
                       {coverUrl ? (
@@ -166,9 +166,9 @@ export function LikedSongsPage() {
                       ) : (
                         <div
                           className="w-12 h-12 rounded-lg shrink-0 flex items-center justify-center"
-                          style={{ background: 'hsl(var(--b4) / 0.4)' }}
+                          style={{ background: 'oklch(var(--b4) / 0.4)' }}
                         >
-                          <FiMusic size={20} style={{ color: 'hsl(var(--c3) / 0.3)' }} />
+                          <FiMusic size={20} style={{ color: 'oklch(var(--c3) / 0.3)' }} />
                         </div>
                       )}
 
@@ -177,22 +177,22 @@ export function LikedSongsPage() {
                         <p
                           className="text-sm truncate"
                           style={{
-                            color: 'hsl(var(--c1))',
+                            color: 'oklch(var(--c1))',
                             fontWeight: 'var(--font-weight-medium)',
                           }}
                         >
                           {song.title}
                         </p>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-xs truncate" style={{ color: 'hsl(var(--c2))' }}>
+                          <span className="text-xs truncate" style={{ color: 'oklch(var(--c2))' }}>
                             {song.artist}
                           </span>
                           {song.label && (
                             <>
-                              <span className="text-[10px]" style={{ color: 'hsl(var(--c3) / 0.4)' }}>
+                              <span className="text-[10px]" style={{ color: 'oklch(var(--c3) / 0.4)' }}>
                                 ·
                               </span>
-                              <span className="text-[10px] truncate" style={{ color: 'hsl(var(--c3))' }}>
+                              <span className="text-[10px] truncate" style={{ color: 'oklch(var(--c3))' }}>
                                 {song.label}
                               </span>
                             </>
@@ -221,7 +221,7 @@ export function LikedSongsPage() {
                             className="opacity-0 group-hover:opacity-100 transition-opacity"
                             title="Go to set"
                           >
-                            <FiExternalLink size={16} style={{ color: 'hsl(var(--c3))' }} />
+                            <FiExternalLink size={16} style={{ color: 'oklch(var(--c3))' }} />
                           </Link>
                         )}
                       </div>
@@ -242,7 +242,7 @@ export function LikedSongsPage() {
                 >
                   Previous
                 </button>
-                <span className="text-sm px-4" style={{ color: 'hsl(var(--c3))' }}>
+                <span className="text-sm px-4" style={{ color: 'oklch(var(--c3))' }}>
                   Page {page} of {totalPages}
                 </span>
                 <button

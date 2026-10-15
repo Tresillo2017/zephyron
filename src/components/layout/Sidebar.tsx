@@ -76,7 +76,7 @@ export function Sidebar() {
             onClick={() => setMobileOpen(false)}
             className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-200 no-underline ${
               isActive(item.to)
-                ? 'bg-accent/10 text-accent font-medium shadow-[inset_0_0_0_1px_hsl(var(--h3)/0.15)]'
+                ? 'bg-accent/10 text-accent font-medium shadow-[inset_0_0_0_1px_oklch(var(--h3)/0.15)]'
                 : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
             }`}
             style={{ transitionTimingFunction: 'var(--ease-out-custom)' }}
@@ -100,7 +100,7 @@ export function Sidebar() {
               onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-200 no-underline ${
                 isActive(item.to)
-                  ? 'bg-accent/10 text-accent font-medium shadow-[inset_0_0_0_1px_hsl(var(--h3)/0.15)]'
+                  ? 'bg-accent/10 text-accent font-medium shadow-[inset_0_0_0_1px_oklch(var(--h3)/0.15)]'
                   : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
               }`}
               style={{ transitionTimingFunction: 'var(--ease-out-custom)' }}
@@ -123,7 +123,7 @@ export function Sidebar() {
             onClick={() => setMobileOpen(false)}
             className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-200 no-underline ${
               isActive('/app/admin')
-                ? 'bg-accent/10 text-accent font-medium shadow-[inset_0_0_0_1px_hsl(var(--h3)/0.15)]'
+                ? 'bg-accent/10 text-accent font-medium shadow-[inset_0_0_0_1px_oklch(var(--h3)/0.15)]'
                 : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
             }`}
             style={{ transitionTimingFunction: 'var(--ease-out-custom)' }}
@@ -179,12 +179,12 @@ export function Sidebar() {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-60 lg:w-64 bg-[hsl(var(--b5)/0.8)] backdrop-blur-xl border-r border-[hsl(var(--br1)/0.5)] flex-col shrink-0 h-full overflow-y-auto">
+      <aside className="hidden md:flex w-60 lg:w-64 bg-[oklch(var(--b5)/0.8)] backdrop-blur-xl border-r border-[oklch(var(--br1)/0.5)] flex-col shrink-0 h-full overflow-y-auto">
         {sidebarContent}
       </aside>
 
       {/* Mobile: top bar with hamburger */}
-      <div className="md:hidden flex items-center justify-between h-14 px-4 bg-[hsl(var(--b5)/0.85)] backdrop-blur-xl border-b border-[hsl(var(--br1)/0.5)] shrink-0">
+      <div className="md:hidden flex items-center justify-between h-14 px-4 bg-[oklch(var(--b5)/0.85)] backdrop-blur-xl border-b border-[oklch(var(--br1)/0.5)] shrink-0">
         <Link to="/app" className="flex items-center gap-2 no-underline">
           <Logo size={28} />
           <span className="text-base font-semibold text-text-primary tracking-tight">Zephyron</span>
@@ -201,7 +201,7 @@ export function Sidebar() {
       {/* Mobile sidebar overlay */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 top-14 z-50 flex">
-          <div className="w-72 bg-[hsl(var(--b5)/0.9)] backdrop-blur-xl border-r border-[hsl(var(--br1)/0.5)] h-full overflow-y-auto">
+          <div className="w-72 bg-[oklch(var(--b5)/0.9)] backdrop-blur-xl border-r border-[oklch(var(--br1)/0.5)] h-full overflow-y-auto">
             {sidebarContent}
           </div>
           <div className="flex-1 bg-black/50" onClick={() => setMobileOpen(false)} />

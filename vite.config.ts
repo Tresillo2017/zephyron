@@ -28,7 +28,8 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    cloudflare(),
+    // LOCAL_ONLY=1 bun run dev keeps D1/R2 local instead of proxying the remote (production) bindings in wrangler.jsonc
+    cloudflare({ remoteBindings: !process.env.LOCAL_ONLY }),
     stubPlugin('@opentelemetry/api'),
     stubPlugin('@napi-rs/canvas'),
   ],

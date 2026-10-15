@@ -20,7 +20,7 @@ export function ListeningHeatmap({ data }: ListeningHeatmapProps) {
     <div className="mb-6">
       <h3
         className="text-lg font-[var(--font-weight-bold)] mb-3"
-        style={{ color: 'hsl(var(--c1))' }}
+        style={{ color: 'oklch(var(--c1))' }}
       >
         Listening Patterns
       </h3>
@@ -30,7 +30,7 @@ export function ListeningHeatmap({ data }: ListeningHeatmapProps) {
             <React.Fragment key={dayIndex}>
               <div
                 className="text-xs font-mono flex items-center justify-end pr-2"
-                style={{ color: 'hsl(var(--c3))' }}
+                style={{ color: 'oklch(var(--c3))' }}
               >
                 {dayLabels[dayIndex]}
               </div>
@@ -40,8 +40,8 @@ export function ListeningHeatmap({ data }: ListeningHeatmapProps) {
                     key={hourIndex}
                     className="aspect-square rounded-sm"
                     style={{
-                      backgroundColor: `hsl(var(--h3) / ${getOpacity(value)})`,
-                      border: value === 0 ? '1px solid hsl(var(--b4) / 0.25)' : 'none'
+                      backgroundColor: `oklch(var(--h3) / ${getOpacity(value)})`,
+                      border: value === 0 ? '1px solid oklch(var(--b4) / 0.25)' : 'none'
                     }}
                     title={`${dayLabels[dayIndex]} ${hourIndex}:00 - ${value} sessions`}
                   />
@@ -52,7 +52,7 @@ export function ListeningHeatmap({ data }: ListeningHeatmapProps) {
         </div>
         <div
           className="text-xs font-mono mt-2 text-center"
-          style={{ color: 'hsl(var(--c3))' }}
+          style={{ color: 'oklch(var(--c3))' }}
         >
           00:00 ────────────────────── 23:00
         </div>

@@ -1,8 +1,9 @@
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router'
 import { useSession } from './lib/auth-client'
-import { useThemeStore } from './stores/themeStore'
+import { useSettingsStore, LIGHT_THEMES } from './stores/settingsStore'
 import { TopNav } from './components/layout/TopNav'
+import { SolariumFilter } from './components/layout/SolariumFilter'
 import { PlayerBar } from './components/layout/PlayerBar'
 import { PageTransition } from './components/layout/PageTransition'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -98,15 +99,9 @@ function RedirectIfAuth({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  const theme = useThemeStore((state) => state.theme)
+  const theme = useSettingsStore((state) => state.settings.theme)
 
-  // Apply reduce-motion preference from localStorage on startup
-  React.useEffect(() => {
-    const reduce = localStorage.getItem('reduceMotion') === 'true'
-    document.documentElement.classList.toggle('reduce-motion', reduce)
-  }, [])
-
-  // Compute toast styles from CSS variables to match Zephyron's HSL-parametric system
+  // Compute toast styles from CSS variables to match Zephyron's oklch-parametric (bleh) system
   // Sileo uses SVG <rect> elements with fill attribute that CSS background can't override
   const toastOptions = React.useMemo(() => {
     if (typeof window === 'undefined') return undefined
@@ -116,16 +111,17 @@ function App() {
     const c1 = styles.getPropertyValue('--c1').trim()
 
     return {
-      fill: b5 ? `hsl(${b5})` : undefined,
+      fill: b5 ? `oklch(${b5})` : undefined,
       styles: {
-        title: c1 ? `color: hsl(${c1})` : 'color: white',
-        description: c1 ? `color: hsl(${c1} / 0.8)` : 'color: rgba(255, 255, 255, 0.8)',
+        title: c1 ? `color: oklch(${c1})` : 'color: white',
+        description: c1 ? `color: oklch(${c1} / 0.8)` : 'color: rgba(255, 255, 255, 0.8)',
       },
     }
   }, [theme])
 
   return (
     <ErrorBoundary>
+      <SolariumFilter />
       <CookieConsent />
       <Routes>
         {/* Public routes */}
@@ -167,7 +163,7 @@ function App() {
       </Routes>
       <Toaster
         position="top-center"
-        theme={theme === 'light' ? 'light' : 'dark'}
+        theme={LIGHT_THEMES.has(theme) ? 'light' : 'dark'}
         options={toastOptions}
       />
     </ErrorBoundary>

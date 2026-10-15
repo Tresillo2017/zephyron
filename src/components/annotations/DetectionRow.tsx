@@ -61,11 +61,11 @@ export function DetectionGroup({
     <>
       <div
         className="group relative transition-colors duration-150"
-        style={{ background: isActive ? 'hsl(var(--h3) / 0.06)' : 'transparent' }}
+        style={{ background: isActive ? 'oklch(var(--h3) / 0.06)' : 'transparent' }}
       >
         {/* Active indicator bar */}
         {isActive && (
-          <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-r-full" style={{ background: 'hsl(var(--h3))' }} />
+          <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-r-full" style={{ background: 'oklch(var(--h3))' }} />
         )}
 
         {/* ═══ PRIMARY TRACK ═══ */}
@@ -76,14 +76,14 @@ export function DetectionGroup({
           {/* Timestamp / equalizer */}
           <span
             className="w-10 text-center font-mono text-[11px] tabular-nums shrink-0"
-            style={{ color: isActive ? 'hsl(var(--h3))' : 'hsl(var(--c3) / 0.6)' }}
+            style={{ color: isActive ? 'oklch(var(--h3))' : 'oklch(var(--c3) / 0.6)' }}
           >
             {isActive && isPlaying ? (
               <span className="flex items-center justify-center">
                 <span className="flex gap-[2px] items-end h-3">
-                  <span className="w-[2.5px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-1 0.8s ease-in-out infinite' }} />
-                  <span className="w-[2.5px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-2 0.6s ease-in-out infinite' }} />
-                  <span className="w-[2.5px] rounded-sm" style={{ background: 'hsl(var(--h3))', animation: 'eq-bar-3 0.7s ease-in-out infinite' }} />
+                  <span className="w-[2.5px] rounded-sm" style={{ background: 'oklch(var(--h3))', animation: 'eq-bar-1 0.8s ease-in-out infinite' }} />
+                  <span className="w-[2.5px] rounded-sm" style={{ background: 'oklch(var(--h3))', animation: 'eq-bar-2 0.6s ease-in-out infinite' }} />
+                  <span className="w-[2.5px] rounded-sm" style={{ background: 'oklch(var(--h3))', animation: 'eq-bar-3 0.7s ease-in-out infinite' }} />
                 </span>
               </span>
             ) : (
@@ -99,7 +99,7 @@ export function DetectionGroup({
             <p
               className="text-[13px] leading-tight truncate"
               style={{
-                color: isActive ? 'hsl(var(--h3))' : 'hsl(var(--c1))',
+                color: isActive ? 'oklch(var(--h3))' : 'oklch(var(--c1))',
                 fontWeight: isActive ? 'var(--font-weight-medium)' : 'var(--font-weight-default)',
               }}
             >
@@ -107,12 +107,12 @@ export function DetectionGroup({
             </p>
             <div className="flex items-center gap-1.5 mt-0.5">
               {primary.track_artist && (
-                <span className="text-xs truncate" style={{ color: 'hsl(var(--c2))' }}>{primary.track_artist}</span>
+                <span className="text-xs truncate" style={{ color: 'oklch(var(--c2))' }}>{primary.track_artist}</span>
               )}
               {song?.label && (
                 <>
-                  <span className="text-[10px]" style={{ color: 'hsl(var(--c3) / 0.4)' }}>·</span>
-                  <span className="text-[10px] truncate" style={{ color: 'hsl(var(--c3))' }}>{song.label}</span>
+                  <span className="text-[10px]" style={{ color: 'oklch(var(--c3) / 0.4)' }}>·</span>
+                  <span className="text-[10px] truncate" style={{ color: 'oklch(var(--c3))' }}>{song.label}</span>
                 </>
               )}
             </div>
@@ -146,12 +146,12 @@ export function DetectionGroup({
                 <button
                   key={wt.id}
                   onClick={() => onClickTrack(wt)}
-                  className="w-full flex items-center gap-2.5 py-1.5 px-2 rounded-lg text-left transition-colors hover:bg-[hsl(var(--b4)/0.2)]"
+                  className="w-full flex items-center gap-2.5 py-1.5 px-2 rounded-lg text-left transition-colors hover:bg-[oklch(var(--b4)/0.2)]"
                 >
                   {/* w/ connector */}
                   <span
                     className="text-[9px] font-mono shrink-0 w-6 text-center"
-                    style={{ color: 'hsl(var(--c3) / 0.4)' }}
+                    style={{ color: 'oklch(var(--c3) / 0.4)' }}
                   >
                     w/
                   </span>
@@ -161,17 +161,17 @@ export function DetectionGroup({
 
                   {/* Track info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] leading-tight truncate" style={{ color: 'hsl(var(--c2))' }}>
+                    <p className="text-[12px] leading-tight truncate" style={{ color: 'oklch(var(--c2))' }}>
                       {wt.track_title}
                     </p>
                     <div className="flex items-center gap-1.5">
                       {wt.track_artist && (
-                        <span className="text-[10px] truncate" style={{ color: 'hsl(var(--c3))' }}>{wt.track_artist}</span>
+                        <span className="text-[10px] truncate" style={{ color: 'oklch(var(--c3))' }}>{wt.track_artist}</span>
                       )}
                       {wtSong?.label && (
                         <>
-                          <span className="text-[9px]" style={{ color: 'hsl(var(--c3) / 0.3)' }}>·</span>
-                          <span className="text-[9px] truncate" style={{ color: 'hsl(var(--c3) / 0.6)' }}>{wtSong.label}</span>
+                          <span className="text-[9px]" style={{ color: 'oklch(var(--c3) / 0.3)' }}>·</span>
+                          <span className="text-[9px] truncate" style={{ color: 'oklch(var(--c3) / 0.6)' }}>{wtSong.label}</span>
                         </>
                       )}
                     </div>
@@ -198,7 +198,7 @@ export function DetectionGroup({
         )}
 
         {/* Separator */}
-        <div className="mx-4" style={{ borderBottom: '1px solid hsl(var(--b4) / 0.15)' }} />
+        <div className="mx-4" style={{ borderBottom: '1px solid oklch(var(--b4) / 0.15)' }} />
       </div>
     </>
   )
@@ -237,7 +237,7 @@ function TrackArtwork({ coverUrl, size }: { coverUrl: string | null; size: numbe
         style={{
           width: size,
           height: size,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15), inset 0 0 0 1px hsl(var(--b4) / 0.2)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15), inset 0 0 0 1px oklch(var(--b4) / 0.2)',
         }}
       >
         <img src={coverUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
@@ -251,13 +251,13 @@ function TrackArtwork({ coverUrl, size }: { coverUrl: string | null; size: numbe
       style={{
         width: size,
         height: size,
-        background: 'linear-gradient(135deg, hsl(var(--b4) / 0.5), hsl(var(--b4) / 0.3))',
-        boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)',
+        background: 'linear-gradient(135deg, oklch(var(--b4) / 0.5), oklch(var(--b4) / 0.3))',
+        boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.25)',
       }}
     >
       <svg
         className="w-4 h-4"
-        style={{ color: 'hsl(var(--c3) / 0.25)' }}
+        style={{ color: 'oklch(var(--c3) / 0.25)' }}
         fill="currentColor"
         viewBox="0 0 24 24"
       >

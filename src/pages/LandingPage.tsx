@@ -47,7 +47,7 @@ function WaveformDecoration() {
           className="flex-1 rounded-sm"
           style={{
             height: `${12 + Math.abs(Math.sin(i * 0.4) * 32)}px`,
-            background: 'hsl(var(--h3))',
+            background: 'oklch(var(--h3))',
             opacity: 0.4 + Math.abs(Math.sin(i * 0.3)) * 0.6,
           }}
         />
@@ -59,17 +59,17 @@ function WaveformDecoration() {
 function HeroSkeleton() {
   return (
     <section className="relative h-[560px] sm:h-[600px] overflow-hidden flex items-end">
-      <div className="absolute inset-0 animate-pulse" style={{ background: 'hsl(var(--b5))' }} />
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, hsl(var(--b6)) 0%, hsl(var(--b6) / 0.7) 30%, transparent 100%)' }} />
+      <div className="absolute inset-0 animate-pulse" style={{ background: 'oklch(var(--b5))' }} />
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, oklch(var(--b6)) 0%, oklch(var(--b6) / 0.7) 30%, transparent 100%)' }} />
       <div className="relative z-10 px-5 sm:px-8 lg:px-16 pb-12 w-full flex items-end justify-between gap-8">
         <div className="max-w-xl space-y-4">
-          <div className="h-3 w-32 rounded-full animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
-          <div className="h-10 w-80 rounded-xl animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
-          <div className="h-10 w-64 rounded-xl animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
-          <div className="h-5 w-96 rounded-lg animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
+          <div className="h-3 w-32 rounded-full animate-pulse" style={{ background: 'oklch(var(--b4))' }} />
+          <div className="h-10 w-80 rounded-xl animate-pulse" style={{ background: 'oklch(var(--b4))' }} />
+          <div className="h-10 w-64 rounded-xl animate-pulse" style={{ background: 'oklch(var(--b4))' }} />
+          <div className="h-5 w-96 rounded-lg animate-pulse" style={{ background: 'oklch(var(--b4))' }} />
           <div className="flex gap-3 pt-2">
-            <div className="h-11 w-36 rounded-xl animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
-            <div className="h-11 w-24 rounded-xl animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
+            <div className="h-11 w-36 rounded-xl animate-pulse" style={{ background: 'oklch(var(--b4))' }} />
+            <div className="h-11 w-24 rounded-xl animate-pulse" style={{ background: 'oklch(var(--b4))' }} />
           </div>
         </div>
       </div>
@@ -85,8 +85,8 @@ function LandingSetCard({ set }: { set: DjSet }) {
       to={`/app/sets/${set.id}`}
       className="group flex flex-col no-underline rounded-xl overflow-hidden transition-all duration-200"
       style={{
-        background: 'hsl(var(--b5))',
-        boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)',
+        background: 'oklch(var(--b5))',
+        boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.25)',
       }}
     >
       {/* Cover */}
@@ -107,7 +107,7 @@ function LandingSetCard({ set }: { set: DjSet }) {
         {/* Hover overlay */}
         <div
           className="absolute inset-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
-          style={{ background: 'hsl(var(--b6) / 0.5)' }}
+          style={{ background: 'oklch(var(--b6) / 0.5)' }}
         >
           <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
             <path d="M8 5v14l11-7z" />
@@ -117,10 +117,10 @@ function LandingSetCard({ set }: { set: DjSet }) {
 
       {/* Info */}
       <div className="p-3.5 flex flex-col gap-1.5">
-        <p className="text-sm font-semibold truncate" style={{ color: 'hsl(var(--c1))' }}>
+        <p className="text-sm font-semibold truncate" style={{ color: 'oklch(var(--c1))' }}>
           {set.title}
         </p>
-        <div className="flex items-center gap-2 text-xs" style={{ color: 'hsl(var(--c3))' }}>
+        <div className="flex items-center gap-2 text-xs" style={{ color: 'oklch(var(--c3))' }}>
           <span className="truncate">{set.artist}</span>
           <span>·</span>
           {durationMin > 0 && <span className="shrink-0">{durationMin}m</span>}
@@ -128,7 +128,7 @@ function LandingSetCard({ set }: { set: DjSet }) {
         {set.genre && (
           <span
             className="self-start px-1.5 py-0.5 text-xs font-mono rounded mt-0.5"
-            style={{ background: 'hsl(var(--h3) / 0.1)', color: 'hsl(var(--h2) / 0.8)' }}
+            style={{ background: 'oklch(var(--h3) / 0.1)', color: 'oklch(var(--h2) / 0.8)' }}
           >
             #{set.genre.toLowerCase().replace(/[\s/&]+/g, '-')}
           </span>
@@ -142,14 +142,14 @@ function GridSkeleton() {
   return (
     <section className="px-5 sm:px-8 lg:px-16 py-16">
       <div className="max-w-6xl mx-auto">
-        <div className="h-3 w-32 rounded-full mb-6 animate-pulse" style={{ background: 'hsl(var(--b4))' }} />
+        <div className="h-3 w-32 rounded-full mb-6 animate-pulse" style={{ background: 'oklch(var(--b4))' }} />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }, (_, i) => (
-            <div key={i} className="rounded-xl overflow-hidden animate-pulse" style={{ background: 'hsl(var(--b5))' }}>
-              <div className="aspect-video" style={{ background: 'hsl(var(--b4))' }} />
+            <div key={i} className="rounded-xl overflow-hidden animate-pulse" style={{ background: 'oklch(var(--b5))' }}>
+              <div className="aspect-video" style={{ background: 'oklch(var(--b4))' }} />
               <div className="p-3.5 space-y-2">
-                <div className="h-3 rounded-full w-3/4" style={{ background: 'hsl(var(--b4))' }} />
-                <div className="h-3 rounded-full w-1/2" style={{ background: 'hsl(var(--b4))' }} />
+                <div className="h-3 rounded-full w-3/4" style={{ background: 'oklch(var(--b4))' }} />
+                <div className="h-3 rounded-full w-1/2" style={{ background: 'oklch(var(--b4))' }} />
               </div>
             </div>
           ))}
@@ -166,10 +166,10 @@ function CatalogGrid({ sets }: { sets: DjSet[] }) {
     <section className="px-5 sm:px-8 lg:px-16 py-16">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <span className="text-xs font-mono tracking-widest uppercase" style={{ color: 'hsl(var(--c3))' }}>
+          <span className="text-xs font-mono tracking-widest uppercase" style={{ color: 'oklch(var(--c3))' }}>
             Recently Added
           </span>
-          <Link to="/register" className="text-xs no-underline transition-colors" style={{ color: 'hsl(var(--h2))' }}>
+          <Link to="/register" className="text-xs no-underline transition-colors" style={{ color: 'oklch(var(--h2))' }}>
             Browse all →
           </Link>
         </div>
@@ -210,33 +210,33 @@ function FeaturesSection() {
   ]
 
   return (
-    <section className="px-5 sm:px-8 lg:px-16 py-16" style={{ borderTop: '1px solid hsl(var(--b4) / 0.25)' }}>
+    <section className="px-5 sm:px-8 lg:px-16 py-16" style={{ borderTop: '1px solid oklch(var(--b4) / 0.25)' }}>
       <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
         {features.map((f) => (
           <div
             key={f.title}
             className="rounded-xl p-6"
             style={{
-              background: 'hsl(var(--b5))',
-              boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)',
+              background: 'oklch(var(--b5))',
+              boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.25)',
             }}
           >
             <div
               className="w-9 h-9 rounded-lg flex items-center justify-center mb-4"
-              style={{ background: 'hsl(var(--h3) / 0.12)', color: 'hsl(var(--h2))' }}
+              style={{ background: 'oklch(var(--h3) / 0.12)', color: 'oklch(var(--h2))' }}
             >
               {f.icon}
             </div>
-            <h3 className="text-base font-semibold mb-2" style={{ color: 'hsl(var(--c1))' }}>
+            <h3 className="text-base font-semibold mb-2" style={{ color: 'oklch(var(--c1))' }}>
               {f.title}
             </h3>
-            <p className="text-sm leading-relaxed mb-4" style={{ color: 'hsl(var(--c2))' }}>
+            <p className="text-sm leading-relaxed mb-4" style={{ color: 'oklch(var(--c2))' }}>
               {f.description}
             </p>
-            <p className="text-2xl font-bold font-mono" style={{ color: 'hsl(var(--h2))' }}>
+            <p className="text-2xl font-bold font-mono" style={{ color: 'oklch(var(--h2))' }}>
               {f.stat}
             </p>
-            <p className="text-xs font-mono uppercase tracking-wider mt-0.5" style={{ color: 'hsl(var(--c3))' }}>
+            <p className="text-xs font-mono uppercase tracking-wider mt-0.5" style={{ color: 'oklch(var(--c3))' }}>
               {f.statLabel}
             </p>
           </div>
@@ -248,32 +248,32 @@ function FeaturesSection() {
 
 function CtaSection() {
   return (
-    <section className="px-5 sm:px-8 lg:px-16 py-20 sm:py-28" style={{ borderTop: '1px solid hsl(var(--b4) / 0.25)' }}>
+    <section className="px-5 sm:px-8 lg:px-16 py-20 sm:py-28" style={{ borderTop: '1px solid oklch(var(--b4) / 0.25)' }}>
       <div className="relative max-w-2xl mx-auto text-center">
         <div
           className="absolute inset-0 -z-10 flex items-center justify-center pointer-events-none"
         >
-          <div className="w-[300px] h-[200px] rounded-full mx-auto" style={{ background: 'hsl(var(--h3) / 0.06)', filter: 'blur(100px)' }} />
+          <div className="w-[300px] h-[200px] rounded-full mx-auto" style={{ background: 'oklch(var(--h3) / 0.06)', filter: 'blur(100px)' }} />
         </div>
 
-        <h2 className="text-2xl sm:text-3xl font-bold mb-4 tracking-tight" style={{ color: 'hsl(var(--c1))' }}>
+        <h2 className="text-2xl sm:text-3xl font-bold mb-4 tracking-tight" style={{ color: 'oklch(var(--c1))' }}>
           Ready to listen?
         </h2>
-        <p className="leading-relaxed mb-10 max-w-md mx-auto text-sm sm:text-base" style={{ color: 'hsl(var(--c2))' }}>
+        <p className="leading-relaxed mb-10 max-w-md mx-auto text-sm sm:text-base" style={{ color: 'oklch(var(--c2))' }}>
           Join the community building the most complete database of DJ set tracklists.
         </p>
         <div className="flex items-center justify-center gap-3">
           <Link
             to="/register"
             className="px-6 py-3 text-white font-medium rounded-xl no-underline transition-all active:scale-[0.98] text-sm"
-            style={{ background: 'hsl(var(--h3))', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)' }}
+            style={{ background: 'oklch(var(--h3))', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)' }}
           >
             Request Access
           </Link>
           <Link
             to="/login"
             className="px-6 py-3 rounded-xl no-underline transition-all active:scale-[0.98] text-sm"
-            style={{ border: '1px solid hsl(var(--b3) / 0.5)', color: 'hsl(var(--c2))' }}
+            style={{ border: '1px solid oklch(var(--b3) / 0.5)', color: 'oklch(var(--c2))' }}
           >
             Sign In
           </Link>
@@ -300,14 +300,14 @@ function Hero({ featured }: { featured: DjSet | null }) {
       ) : (
         <div
           className="absolute inset-0"
-          style={{ background: featured ? idToGradient(featured.id) : 'linear-gradient(135deg, hsl(var(--b5)), hsl(var(--b6)))' }}
+          style={{ background: featured ? idToGradient(featured.id) : 'linear-gradient(135deg, oklch(var(--b5)), oklch(var(--b6)))' }}
         />
       )}
 
       {/* Ambient glow */}
       <div
         className="absolute top-1/4 -left-32 w-[600px] h-[600px] rounded-full pointer-events-none"
-        style={{ background: 'hsl(var(--h3) / 0.12)', filter: 'blur(150px)' }}
+        style={{ background: 'oklch(var(--h3) / 0.12)', filter: 'blur(150px)' }}
       />
 
       {/* Waveform decoration */}
@@ -316,7 +316,7 @@ function Hero({ featured }: { featured: DjSet | null }) {
       {/* Dark overlay */}
       <div
         className="absolute inset-0"
-        style={{ background: 'linear-gradient(to top, hsl(var(--b6)) 0%, hsl(var(--b6) / 0.75) 30%, hsl(var(--b6) / 0.2) 70%, transparent 100%)' }}
+        style={{ background: 'linear-gradient(to top, oklch(var(--b6)) 0%, oklch(var(--b6) / 0.75) 30%, oklch(var(--b6) / 0.2) 70%, transparent 100%)' }}
       />
 
       {/* Content */}
@@ -327,23 +327,23 @@ function Hero({ featured }: { featured: DjSet | null }) {
           {/* Beta badge */}
           <div
             className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-mono tracking-wider rounded-full mb-6"
-            style={{ background: 'hsl(var(--h3) / 0.12)', border: '1px solid hsl(var(--h3) / 0.25)', color: 'hsl(var(--h2))' }}
+            style={{ background: 'oklch(var(--h3) / 0.12)', border: '1px solid oklch(var(--h3) / 0.25)', color: 'oklch(var(--h2))' }}
           >
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'hsl(var(--h2))' }} />
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'oklch(var(--h2))' }} />
             INVITE-ONLY BETA
           </div>
 
           <h1
             className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.08] tracking-tight mb-5"
-            style={{ color: 'hsl(var(--c1))' }}
+            style={{ color: 'oklch(var(--c1))' }}
           >
             Every DJ set,<br />
-            <span style={{ color: 'hsl(var(--h2))', textShadow: '0 0 80px hsl(var(--h3) / 0.4)' }}>
+            <span style={{ color: 'oklch(var(--h2))', textShadow: '0 0 80px oklch(var(--h3) / 0.4)' }}>
               every track
             </span>{' '}identified.
           </h1>
 
-          <p className="text-base sm:text-lg leading-relaxed mb-8 max-w-lg" style={{ color: 'hsl(var(--c2))' }}>
+          <p className="text-base sm:text-lg leading-relaxed mb-8 max-w-lg" style={{ color: 'oklch(var(--c2))' }}>
             Curated festival and club mixes with community-verified tracklists. Find sets by artist, event, or track.
           </p>
 
@@ -351,14 +351,14 @@ function Hero({ featured }: { featured: DjSet | null }) {
             <Link
               to="/register"
               className="px-6 py-3 text-white font-medium rounded-xl no-underline transition-all active:scale-[0.98] text-sm"
-              style={{ background: 'hsl(var(--h3))', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 0 40px hsl(var(--h4) / 0.3)' }}
+              style={{ background: 'oklch(var(--h3))', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 0 40px oklch(var(--h4) / 0.3)' }}
             >
               Request Access
             </Link>
             <Link
               to="/login"
               className="px-6 py-3 rounded-xl no-underline transition-all active:scale-[0.98] text-sm"
-              style={{ border: '1px solid hsl(var(--b3) / 0.5)', color: 'hsl(var(--c2))' }}
+              style={{ border: '1px solid oklch(var(--b3) / 0.5)', color: 'oklch(var(--c2))' }}
             >
               Sign In
             </Link>
@@ -371,20 +371,20 @@ function Hero({ featured }: { featured: DjSet | null }) {
             to={`/app/sets/${featured.id}`}
             className="hidden lg:block text-right no-underline group shrink-0"
           >
-            <p className="text-xs font-mono tracking-widest uppercase mb-1.5" style={{ color: 'hsl(var(--c3))' }}>
+            <p className="text-xs font-mono tracking-widest uppercase mb-1.5" style={{ color: 'oklch(var(--c3))' }}>
               Most Played
             </p>
-            <p className="text-base font-semibold group-hover:underline" style={{ color: 'hsl(var(--c1))' }}>
+            <p className="text-base font-semibold group-hover:underline" style={{ color: 'oklch(var(--c1))' }}>
               {featured.title}
             </p>
-            <p className="text-sm mt-0.5" style={{ color: 'hsl(var(--c2))' }}>
+            <p className="text-sm mt-0.5" style={{ color: 'oklch(var(--c2))' }}>
               {featured.artist}
             </p>
             {featured.genre && (
               <div className="flex justify-end mt-2">
                 <span
                   className="px-2 py-0.5 text-xs font-mono rounded"
-                  style={{ background: 'hsl(var(--h3) / 0.15)', color: 'hsl(var(--h2))' }}
+                  style={{ background: 'oklch(var(--h3) / 0.15)', color: 'oklch(var(--h2))' }}
                 >
                   #{featured.genre.toLowerCase().replace(/[\s/&]+/g, '-')}
                 </span>
@@ -401,19 +401,19 @@ export function LandingPage() {
   const { featured, recent, loading } = useLandingData()
 
   return (
-    <div className="min-h-screen flex flex-col overflow-hidden" style={{ background: 'hsl(var(--b6))' }}>
+    <div className="min-h-screen flex flex-col overflow-hidden" style={{ background: 'oklch(var(--b6))' }}>
 
       {/* ── NAV ── */}
       <header className="flex items-center justify-between px-5 sm:px-8 lg:px-16 py-5 relative z-20">
         <div className="flex items-center gap-2.5">
           <Logo size={32} />
-          <span className="text-lg font-semibold tracking-tight" style={{ color: 'hsl(var(--c1))' }}>Zephyron</span>
+          <span className="text-lg font-semibold tracking-tight" style={{ color: 'oklch(var(--c1))' }}>Zephyron</span>
         </div>
         <nav className="flex items-center gap-5">
           <Link
             to="/login"
             className="text-sm no-underline transition-colors"
-            style={{ color: 'hsl(var(--c2))' }}
+            style={{ color: 'oklch(var(--c2))' }}
           >
             Sign In
           </Link>
@@ -421,8 +421,8 @@ export function LandingPage() {
             to="/register"
             className="px-4 py-2 text-white text-sm font-medium rounded-xl no-underline transition-all active:scale-[0.98]"
             style={{
-              background: 'hsl(var(--h3))',
-              boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.1), 0 0 20px hsl(var(--h3) / 0.35)',
+              background: 'oklch(var(--h3))',
+              boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.1), 0 0 20px oklch(var(--h3) / 0.35)',
             }}
           >
             Get Access
@@ -436,16 +436,16 @@ export function LandingPage() {
       <CtaSection />
 
       {/* ── FOOTER ── */}
-      <footer className="px-5 sm:px-8 lg:px-16 py-6 relative z-10" style={{ boxShadow: 'inset 0 1px 0 0 hsl(var(--b4) / 0.25)' }}>
+      <footer className="px-5 sm:px-8 lg:px-16 py-6 relative z-10" style={{ boxShadow: 'inset 0 1px 0 0 oklch(var(--b4) / 0.25)' }}>
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
+          <p className="text-xs" style={{ color: 'oklch(var(--c3))' }}>
             &copy; {new Date().getFullYear()} Zephyron
           </p>
           <div className="flex items-center gap-5 text-xs">
-            <Link to="/app/profile?tab=about" className="no-underline transition-colors" style={{ color: 'hsl(var(--c3))' }}>About</Link>
-            <Link to="/privacy" className="no-underline transition-colors" style={{ color: 'hsl(var(--c3))' }}>Privacy</Link>
-            <Link to="/terms" className="no-underline transition-colors" style={{ color: 'hsl(var(--c3))' }}>Terms</Link>
-            <a href="https://github.com/tresillo2017/zephyron" target="_blank" rel="noopener noreferrer" className="no-underline transition-colors" style={{ color: 'hsl(var(--c3))' }}>GitHub</a>
+            <Link to="/app/profile?tab=about" className="no-underline transition-colors" style={{ color: 'oklch(var(--c3))' }}>About</Link>
+            <Link to="/privacy" className="no-underline transition-colors" style={{ color: 'oklch(var(--c3))' }}>Privacy</Link>
+            <Link to="/terms" className="no-underline transition-colors" style={{ color: 'oklch(var(--c3))' }}>Terms</Link>
+            <a href="https://github.com/tresillo2017/zephyron" target="_blank" rel="noopener noreferrer" className="no-underline transition-colors" style={{ color: 'oklch(var(--c3))' }}>GitHub</a>
           </div>
         </div>
       </footer>

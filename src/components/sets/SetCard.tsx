@@ -53,7 +53,7 @@ export function SetCard({ set }: SetCardProps) {
         {/* Play button overlay */}
         <button
           onClick={handlePlay}
-          className={`absolute bottom-2 right-2 w-10 h-10 bg-accent rounded-full flex items-center justify-center shadow-[0_3px_12px_hsl(var(--h4)/0.35)] transition-all duration-200 cursor-pointer ${
+          className={`absolute bottom-2 right-2 w-10 h-10 bg-accent rounded-full flex items-center justify-center shadow-[0_3px_12px_oklch(var(--h4)/0.35)] transition-all duration-200 cursor-pointer ${
             isCurrentlyPlaying
               ? 'opacity-100 translate-y-0'
               : 'opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0'
@@ -76,7 +76,7 @@ export function SetCard({ set }: SetCardProps) {
         <p className="text-sm font-medium text-text-primary truncate leading-snug">{set.title}</p>
         <p className="text-xs text-text-secondary truncate mt-1">{set.artist}</p>
         {set.event && (
-          <p className="text-[11px] truncate mt-0.5" style={{ color: 'hsl(var(--h3) / 0.7)' }}>{set.event}</p>
+          <p className="text-[11px] truncate mt-0.5" style={{ color: 'oklch(var(--h3) / 0.7)' }}>{set.event}</p>
         )}
         <div className="flex items-center gap-2 mt-2">
           {set.genre && <Badge variant="muted">{set.genre}</Badge>}

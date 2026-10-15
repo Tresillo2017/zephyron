@@ -176,13 +176,13 @@ export function ProfilePage() {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <p className="text-sm" style={{ color: "hsl(var(--c3))" }}>
+          <p className="text-sm" style={{ color: "oklch(var(--c3))" }}>
             Not signed in.
           </p>
           <Link
             to="/login"
             className="text-sm mt-2 inline-block no-underline hover:underline"
-            style={{ color: "hsl(var(--h3))" }}
+            style={{ color: "oklch(var(--h3))" }}
           >
             Sign in
           </Link>
@@ -268,8 +268,8 @@ export function ProfilePage() {
           position: 'sticky',
           top: 'calc(20px + var(--button-height))',
           height: 'calc(100vh - 20px - var(--button-height))',
-          borderRight: "1px solid hsl(var(--b4) / 0.25)",
-          background: "hsl(var(--b6))",
+          borderRight: "1px solid oklch(var(--b4) / 0.25)",
+          background: "oklch(var(--b6))",
         }}
       >
         <nav className="space-y-1 flex-1">
@@ -314,9 +314,9 @@ export function ProfilePage() {
               }`}
               style={{
                 color:
-                  activeTab === tab.id ? "hsl(var(--c1))" : "hsl(var(--c2))",
+                  activeTab === tab.id ? "oklch(var(--c1))" : "oklch(var(--c2))",
                 background:
-                  activeTab === tab.id ? "hsl(var(--b4) / 0.5)" : "transparent",
+                  activeTab === tab.id ? "oklch(var(--b4) / 0.5)" : "transparent",
               }}
             >
               <svg
@@ -347,10 +347,10 @@ export function ProfilePage() {
               }`}
               style={{
                 color: ["privacy", "appearance", "security", "account", "about"].includes(activeTab)
-                  ? "hsl(var(--c1))"
-                  : "hsl(var(--c2))",
+                  ? "oklch(var(--c1))"
+                  : "oklch(var(--c2))",
                 background: ["privacy", "appearance", "security", "account", "about"].includes(activeTab)
-                  ? "hsl(var(--b4) / 0.5)"
+                  ? "oklch(var(--b4) / 0.5)"
                   : "transparent",
               }}
             >
@@ -438,11 +438,11 @@ export function ProfilePage() {
                     style={{
                       color:
                         activeTab === subTab.id
-                          ? "hsl(var(--c1))"
-                          : "hsl(var(--c2))",
+                          ? "oklch(var(--c1))"
+                          : "oklch(var(--c2))",
                       background:
                         activeTab === subTab.id
-                          ? "hsl(var(--b4) / 0.5)"
+                          ? "oklch(var(--b4) / 0.5)"
                           : "transparent",
                     }}
                   >
@@ -476,21 +476,21 @@ export function ProfilePage() {
             <div className="card">
               <h3
                 className="text-sm font-[var(--font-weight-medium)] mb-4"
-                style={{ color: "hsl(var(--c1))" }}
+                style={{ color: "oklch(var(--c1))" }}
               >
                 This Month
               </h3>
               <div className="flex items-end gap-2">
                 <div
                   className="text-4xl font-[var(--font-weight-bold)]"
-                  style={{ color: "hsl(var(--h3))" }}
+                  style={{ color: "oklch(var(--h3))" }}
                 >
                   <NumberFlow
                     value={Math.round(currentMonthStats.total_hours * 10) / 10}
                     format={{ maximumFractionDigits: 1 }}
                   />
                 </div>
-                <p className="text-sm mb-1" style={{ color: "hsl(var(--c2))" }}>
+                <p className="text-sm mb-1" style={{ color: "oklch(var(--c2))" }}>
                   hours listened
                 </p>
               </div>
@@ -508,11 +508,11 @@ export function ProfilePage() {
               <div className="card">
                 <h3
                   className="text-sm font-[var(--font-weight-medium)] mb-2"
-                  style={{ color: "hsl(var(--c1))" }}
+                  style={{ color: "oklch(var(--c1))" }}
                 >
                   Your {currentYear} Wrapped
                 </h3>
-                <p className="text-sm mb-4" style={{ color: "hsl(var(--c2))" }}>
+                <p className="text-sm mb-4" style={{ color: "oklch(var(--c2))" }}>
                   See your year in electronic music
                 </p>
                 <Link
@@ -557,13 +557,13 @@ export function ProfilePage() {
                   <div key={stat.label} className="card !p-4">
                     <div
                       className="text-2xl font-[var(--font-weight-bold)]"
-                      style={{ color: "hsl(var(--c1))" }}
+                      style={{ color: "oklch(var(--c1))" }}
                     >
                       <NumberFlow value={stat.value} />
                     </div>
                     <p
                       className="text-[11px] mt-1"
-                      style={{ color: "hsl(var(--c3))" }}
+                      style={{ color: "oklch(var(--c3))" }}
                     >
                       {stat.label}
                     </p>
@@ -579,7 +579,7 @@ export function ProfilePage() {
                 <div className="flex items-center justify-between mb-3">
                   <h3
                     className="text-sm font-[var(--font-weight-medium)]"
-                    style={{ color: "hsl(var(--c1))" }}
+                    style={{ color: "oklch(var(--c1))" }}
                   >
                     Recent Activity
                   </h3>
@@ -606,7 +606,7 @@ export function ProfilePage() {
               <div className="flex items-center justify-between mb-6">
                 <h2
                   className="text-2xl font-[var(--font-weight-bold)]"
-                  style={{ color: "hsl(var(--c1))" }}
+                  style={{ color: "oklch(var(--c1))" }}
                 >
                   Your Playlists
                 </h2>
@@ -668,13 +668,13 @@ export function ProfilePage() {
                     className="w-16 h-16 mx-auto mb-4"
                     fill="currentColor"
                     viewBox="0 0 24 24"
-                    style={{ color: "hsl(var(--c3) / 0.3)" }}
+                    style={{ color: "oklch(var(--c3) / 0.3)" }}
                   >
                     <path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z" />
                   </svg>
                   <p
                     className="text-sm"
-                    style={{ color: "hsl(var(--c3))" }}
+                    style={{ color: "oklch(var(--c3))" }}
                   >
                     No playlists yet
                   </p>
@@ -685,17 +685,17 @@ export function ProfilePage() {
                     <Link
                       key={pl.id}
                       to={`/playlists/${pl.id}`}
-                      className="flex items-center gap-4 card !p-4 hover:bg-[hsl(var(--b4)/0.3)] transition-colors no-underline"
+                      className="flex items-center gap-4 card !p-4 hover:bg-[oklch(var(--b4)/0.3)] transition-colors no-underline"
                     >
                       <div
                         className="w-12 h-12 rounded flex items-center justify-center flex-shrink-0"
-                        style={{ background: "hsl(var(--b4) / 0.4)" }}
+                        style={{ background: "oklch(var(--b4) / 0.4)" }}
                       >
                         <svg
                           className="w-6 h-6"
                           fill="currentColor"
                           viewBox="0 0 24 24"
-                          style={{ color: "hsl(var(--c3))" }}
+                          style={{ color: "oklch(var(--c3))" }}
                         >
                           <path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z" />
                         </svg>
@@ -703,13 +703,13 @@ export function ProfilePage() {
                       <div className="flex-1 min-w-0">
                         <p
                           className="text-sm font-[var(--font-weight-medium)] truncate"
-                          style={{ color: "hsl(var(--c1))" }}
+                          style={{ color: "oklch(var(--c1))" }}
                         >
                           {pl.title}
                         </p>
                         <p
                           className="text-xs"
-                          style={{ color: "hsl(var(--c3))" }}
+                          style={{ color: "oklch(var(--c3))" }}
                         >
                           {pl.item_count ?? 0}{" "}
                           {(pl.item_count ?? 0) === 1 ? "set" : "sets"}
@@ -723,7 +723,7 @@ export function ProfilePage() {
                         viewBox="0 0 24 24"
                         stroke="currentColor"
                         strokeWidth={2}
-                        style={{ color: "hsl(var(--c3))" }}
+                        style={{ color: "oklch(var(--c3))" }}
                       >
                         <path
                           strokeLinecap="round"
@@ -743,18 +743,18 @@ export function ProfilePage() {
               <div className="flex items-center gap-3 mb-6">
                 <div
                   className="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
-                  style={{ background: "hsl(var(--h3) / 0.15)" }}
+                  style={{ background: "oklch(var(--h3) / 0.15)" }}
                 >
-                  <FiHeart size={22} style={{ color: "hsl(var(--h3))" }} />
+                  <FiHeart size={22} style={{ color: "oklch(var(--h3))" }} />
                 </div>
                 <div>
                   <h2
                     className="text-2xl font-[var(--font-weight-bold)]"
-                    style={{ color: "hsl(var(--c1))" }}
+                    style={{ color: "oklch(var(--c1))" }}
                   >
                     Liked Songs
                   </h2>
-                  <p className="text-sm" style={{ color: "hsl(var(--c3))" }}>
+                  <p className="text-sm" style={{ color: "oklch(var(--c3))" }}>
                     {likedSongsTotal} track{likedSongsTotal !== 1 ? "s" : ""}{" "}
                     you've liked
                   </p>
@@ -772,18 +772,18 @@ export function ProfilePage() {
                   <div className="flex justify-center mb-4">
                     <FiMusic
                       size={48}
-                      style={{ color: "hsl(var(--c3) / 0.3)" }}
+                      style={{ color: "oklch(var(--c3) / 0.3)" }}
                     />
                   </div>
                   <h3
                     className="text-lg mb-2 font-[var(--font-weight-medium)]"
-                    style={{ color: "hsl(var(--c1))" }}
+                    style={{ color: "oklch(var(--c1))" }}
                   >
                     No liked songs yet
                   </h3>
                   <p
                     className="text-sm mb-6"
-                    style={{ color: "hsl(var(--c3))" }}
+                    style={{ color: "oklch(var(--c3))" }}
                   >
                     Like tracks by clicking the heart icon next to any track in
                     a set
@@ -809,7 +809,7 @@ export function ProfilePage() {
                       return (
                         <div
                           key={song.id}
-                          className="card !p-3 group hover:bg-[hsl(var(--b4)/0.3)] transition-colors"
+                          className="card !p-3 group hover:bg-[oklch(var(--b4)/0.3)] transition-colors"
                         >
                           <div className="flex items-center gap-3">
                             {coverUrl ? (
@@ -822,11 +822,11 @@ export function ProfilePage() {
                             ) : (
                               <div
                                 className="w-12 h-12 rounded-lg shrink-0 flex items-center justify-center"
-                                style={{ background: "hsl(var(--b4) / 0.4)" }}
+                                style={{ background: "oklch(var(--b4) / 0.4)" }}
                               >
                                 <FiMusic
                                   size={20}
-                                  style={{ color: "hsl(var(--c3) / 0.3)" }}
+                                  style={{ color: "oklch(var(--c3) / 0.3)" }}
                                 />
                               </div>
                             )}
@@ -834,14 +834,14 @@ export function ProfilePage() {
                             <div className="flex-1 min-w-0">
                               <p
                                 className="text-sm truncate font-[var(--font-weight-medium)]"
-                                style={{ color: "hsl(var(--c1))" }}
+                                style={{ color: "oklch(var(--c1))" }}
                               >
                                 {song.title}
                               </p>
                               <div className="flex items-center gap-1.5 mt-0.5">
                                 <span
                                   className="text-xs truncate"
-                                  style={{ color: "hsl(var(--c2))" }}
+                                  style={{ color: "oklch(var(--c2))" }}
                                 >
                                   {song.artist}
                                 </span>
@@ -849,13 +849,13 @@ export function ProfilePage() {
                                   <>
                                     <span
                                       className="text-[10px]"
-                                      style={{ color: "hsl(var(--c3) / 0.4)" }}
+                                      style={{ color: "oklch(var(--c3) / 0.4)" }}
                                     >
                                       ·
                                     </span>
                                     <span
                                       className="text-[10px] truncate"
-                                      style={{ color: "hsl(var(--c3))" }}
+                                      style={{ color: "oklch(var(--c3))" }}
                                     >
                                       {song.label}
                                     </span>
@@ -895,7 +895,7 @@ export function ProfilePage() {
                                 >
                                   <FiExternalLink
                                     size={16}
-                                    style={{ color: "hsl(var(--c3))" }}
+                                    style={{ color: "oklch(var(--c3))" }}
                                   />
                                 </Link>
                               )}
@@ -920,7 +920,7 @@ export function ProfilePage() {
                       </button>
                       <span
                         className="text-sm px-4"
-                        style={{ color: "hsl(var(--c3))" }}
+                        style={{ color: "oklch(var(--c3))" }}
                       >
                         Page {likedSongsPage} of {likedSongsTotalPages}
                       </span>
@@ -950,7 +950,7 @@ export function ProfilePage() {
             <div>
               <h2
                 className="text-2xl font-[var(--font-weight-bold)] mb-6"
-                style={{ color: "hsl(var(--c1))" }}
+                style={{ color: "oklch(var(--c1))" }}
               >
                 Listening History
               </h2>
@@ -963,20 +963,20 @@ export function ProfilePage() {
                     className="w-16 h-16 mx-auto mb-4"
                     fill="currentColor"
                     viewBox="0 0 24 24"
-                    style={{ color: "hsl(var(--c3) / 0.3)" }}
+                    style={{ color: "oklch(var(--c3) / 0.3)" }}
                   >
                     <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z" />
                   </svg>
                   <p
                     className="text-sm mb-4"
-                    style={{ color: "hsl(var(--c3))" }}
+                    style={{ color: "oklch(var(--c3))" }}
                   >
                     No listening history yet.
                   </p>
                   <Link
                     to="/app/browse"
                     className="text-sm no-underline hover:underline"
-                    style={{ color: "hsl(var(--h3))" }}
+                    style={{ color: "oklch(var(--h3))" }}
                   >
                     Start listening
                   </Link>
@@ -995,15 +995,15 @@ export function ProfilePage() {
                     return (
                       <div
                         key={item.id}
-                        className="card !p-3 group hover:bg-[hsl(var(--b4)/0.3)] transition-colors"
+                        className="card !p-3 group hover:bg-[oklch(var(--b4)/0.3)] transition-colors"
                       >
                         <div className="flex items-center gap-4">
                           <button
                             onClick={() => handleResume(item)}
                             className="w-10 h-10 rounded-full flex items-center justify-center hover:scale-105 transition-transform flex-shrink-0"
                             style={{
-                              background: "hsl(var(--h3) / 0.15)",
-                              color: "hsl(var(--h3))",
+                              background: "oklch(var(--h3) / 0.15)",
+                              color: "oklch(var(--h3))",
                             }}
                             title={`Resume at ${formatTime(
                               item.last_position_seconds
@@ -1024,14 +1024,14 @@ export function ProfilePage() {
                           >
                             <p
                               className="text-sm truncate hover:underline font-[var(--font-weight-medium)]"
-                              style={{ color: "hsl(var(--c1))" }}
+                              style={{ color: "oklch(var(--c1))" }}
                             >
                               {item.title || "Untitled"}
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
                               <p
                                 className="text-xs truncate"
-                                style={{ color: "hsl(var(--c2))" }}
+                                style={{ color: "oklch(var(--c2))" }}
                               >
                                 {item.artist || "Unknown"}
                               </p>
@@ -1044,19 +1044,19 @@ export function ProfilePage() {
                                 <div className="mt-1.5 flex items-center gap-2">
                                   <div
                                     className="flex-1 h-1 rounded-full overflow-hidden"
-                                    style={{ background: "hsl(var(--b4))" }}
+                                    style={{ background: "oklch(var(--b4))" }}
                                   >
                                     <div
                                       className="h-full rounded-full"
                                       style={{
                                         width: `${progressPct}%`,
-                                        background: "hsl(var(--h3))",
+                                        background: "oklch(var(--h3))",
                                       }}
                                     />
                                   </div>
                                   <span
                                     className="text-[10px]"
-                                    style={{ color: "hsl(var(--c3))" }}
+                                    style={{ color: "oklch(var(--c3))" }}
                                   >
                                     {formatTime(item.last_position_seconds)} /{" "}
                                     {formatDuration(item.duration_seconds)}
@@ -1068,14 +1068,14 @@ export function ProfilePage() {
                           <div className="flex flex-col items-end flex-shrink-0">
                             <span
                               className="text-xs"
-                              style={{ color: "hsl(var(--c3))" }}
+                              style={{ color: "oklch(var(--c3))" }}
                             >
                               {formatRelativeTime(item.last_listened_at)}
                             </span>
                             {item.listen_count > 1 && (
                               <span
                                 className="text-[10px] mt-0.5"
-                                style={{ color: "hsl(var(--c3))" }}
+                                style={{ color: "oklch(var(--c3))" }}
                               >
                                 {item.listen_count}x played
                               </span>
@@ -1148,7 +1148,7 @@ export function ProfilePage() {
               ) : (
                 <div
                   className="w-full h-full"
-                  style={{ background: 'linear-gradient(135deg, hsl(var(--h3) / 0.1), hsl(var(--b4)))' }}
+                  style={{ background: 'linear-gradient(135deg, oklch(var(--h3) / 0.1), oklch(var(--b4)))' }}
                 />
               )}
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1170,7 +1170,7 @@ export function ProfilePage() {
             <div className="absolute left-5 bottom-0 translate-y-1/2">
               <div
                 className="relative w-16 h-16 rounded-xl overflow-hidden cursor-pointer group/av"
-                style={{ boxShadow: '0 0 0 3px hsl(var(--b5)), var(--subtle-shadow)' }}
+                style={{ boxShadow: '0 0 0 3px oklch(var(--b5)), var(--subtle-shadow)' }}
                 onClick={() => { setShowEditModal(false); setShowAvatarUpload(true); }}
               >
                 {avatarUrl ? (
@@ -1178,7 +1178,7 @@ export function ProfilePage() {
                 ) : (
                   <div
                     className="w-full h-full flex items-center justify-center text-xl font-[var(--font-weight-bold)]"
-                    style={{ background: 'hsl(var(--h3) / 0.15)', color: 'hsl(var(--h3))' }}
+                    style={{ background: 'oklch(var(--h3) / 0.15)', color: 'oklch(var(--h3))' }}
                   >
                     {user.name?.charAt(0).toUpperCase() || '?'}
                   </div>
@@ -1219,14 +1219,14 @@ export function ProfilePage() {
               onUpdate={(name) => setEditDisplayName(name)}
             />
 
-            <div style={{ borderTop: '1px solid hsl(var(--b4) / 0.25)', paddingTop: 16 }}>
+            <div style={{ borderTop: '1px solid oklch(var(--b4) / 0.25)', paddingTop: 16 }}>
               <BioEditor
                 initialBio={editBio ?? (user as any).bio ?? ''}
                 onUpdate={(bio) => setEditBio(bio)}
               />
             </div>
 
-            <div className="flex justify-end pt-2" style={{ borderTop: '1px solid hsl(var(--b4) / 0.25)' }}>
+            <div className="flex justify-end pt-2" style={{ borderTop: '1px solid oklch(var(--b4) / 0.25)' }}>
               <Button variant="primary" size="sm" onClick={() => setShowEditModal(false)}>
                 Done
               </Button>
@@ -1253,11 +1253,11 @@ function SettingSection({
   return (
     <div className="card space-y-4">
       <div>
-        <h3 className="text-sm font-[var(--font-weight-medium)]" style={{ color: "hsl(var(--c1))" }}>
+        <h3 className="text-sm font-[var(--font-weight-medium)]" style={{ color: "oklch(var(--c1))" }}>
           {title}
         </h3>
         {description && (
-          <p className="text-xs mt-0.5" style={{ color: "hsl(var(--c3))" }}>{description}</p>
+          <p className="text-xs mt-0.5" style={{ color: "oklch(var(--c3))" }}>{description}</p>
         )}
       </div>
       {children}
@@ -1276,10 +1276,10 @@ function SettingRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-6 py-3" style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)" }}>
+    <div className="flex items-center justify-between gap-6 py-3" style={{ borderTop: "1px solid oklch(var(--b4) / 0.25)" }}>
       <div className="min-w-0">
-        <p className="text-sm font-[var(--font-weight-medium)]" style={{ color: "hsl(var(--c1))" }}>{label}</p>
-        {description && <p className="text-xs mt-0.5" style={{ color: "hsl(var(--c3))" }}>{description}</p>}
+        <p className="text-sm font-[var(--font-weight-medium)]" style={{ color: "oklch(var(--c1))" }}>{label}</p>
+        {description && <p className="text-xs mt-0.5" style={{ color: "oklch(var(--c3))" }}>{description}</p>}
       </div>
       <div className="shrink-0">{children}</div>
     </div>
@@ -1308,8 +1308,8 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
         border: 'none',
         flexShrink: 0,
         cursor: disabled ? 'not-allowed' : 'pointer',
-        background: checked ? 'hsl(var(--h3))' : 'hsl(var(--b3))',
-        boxShadow: checked ? '0 0 0 1px hsl(var(--h3) / 0.4)' : 'inset 0 0 0 1px hsl(var(--b4) / 0.5)',
+        background: checked ? 'oklch(var(--h3))' : 'oklch(var(--b3))',
+        boxShadow: checked ? '0 0 0 1px oklch(var(--h3) / 0.4)' : 'inset 0 0 0 1px oklch(var(--b4) / 0.5)',
         transform: pressing ? 'scale(0.93)' : 'scale(1)',
         transition: 'background 0.2s var(--ease-out-custom), box-shadow 0.2s var(--ease-out-custom), transform 0.1s var(--ease-out-custom)',
         position: 'relative',
@@ -1422,7 +1422,7 @@ function AppearanceTab() {
               >
                 Aa
               </div>
-              <span className="text-[11px]" style={{ color: theme === t.id ? "hsl(var(--c1))" : "hsl(var(--c3))" }}>
+              <span className="text-[11px]" style={{ color: theme === t.id ? "oklch(var(--c1))" : "oklch(var(--c3))" }}>
                 {t.label}
               </span>
             </button>
@@ -1449,10 +1449,10 @@ function AppearanceTab() {
           ))}
         </div>
 
-        <div className="py-3" style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)" }}>
+        <div className="py-3" style={{ borderTop: "1px solid oklch(var(--b4) / 0.25)" }}>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-[var(--font-weight-medium)]" style={{ color: "hsl(var(--c1))" }}>Custom hue</p>
-            <span className="text-xs font-mono" style={{ color: "hsl(var(--c3))" }}>{customHue ?? 255}</span>
+            <p className="text-sm font-[var(--font-weight-medium)]" style={{ color: "oklch(var(--c1))" }}>Custom hue</p>
+            <span className="text-xs font-mono" style={{ color: "oklch(var(--c3))" }}>{customHue ?? 255}</span>
           </div>
           <input
             type="range"
@@ -1463,7 +1463,7 @@ function AppearanceTab() {
             className="w-full h-[6px] rounded-full appearance-none cursor-pointer block"
             style={{ background: "linear-gradient(to right, hsl(0,70%,55%), hsl(60,70%,55%), hsl(120,70%,55%), hsl(180,70%,55%), hsl(240,70%,55%), hsl(300,70%,55%), hsl(360,70%,55%))" }}
           />
-          <p className="text-xs mt-1.5" style={{ color: "hsl(var(--c3))" }}>Fine-tune the exact hue value (0–360)</p>
+          <p className="text-xs mt-1.5" style={{ color: "oklch(var(--c3))" }}>Fine-tune the exact hue value (0–360)</p>
         </div>
       </SettingSection>
     </div>
@@ -1477,9 +1477,9 @@ function FeedbackBanner({ type, text }: { type: "success" | "error"; text: strin
     <div
       className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg text-xs"
       style={{
-        background: isSuccess ? "hsl(var(--h3) / 0.08)" : "hsl(0 60% 55% / 0.08)",
-        border: `1px solid ${isSuccess ? "hsl(var(--h3) / 0.25)" : "hsl(0 60% 55% / 0.25)"}`,
-        color: isSuccess ? "hsl(var(--h3))" : "hsl(0 60% 60%)",
+        background: isSuccess ? "oklch(var(--h3) / 0.08)" : "hsl(0 60% 55% / 0.08)",
+        border: `1px solid ${isSuccess ? "oklch(var(--h3) / 0.25)" : "hsl(0 60% 55% / 0.25)"}`,
+        color: isSuccess ? "oklch(var(--h3))" : "hsl(0 60% 60%)",
       }}
     >
       <svg className="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -1595,8 +1595,8 @@ function TwoFactorSection() {
       {/* Status row */}
       <div className="flex items-center justify-between py-1">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full" style={{ background: is2FAEnabled ? "hsl(var(--h3))" : "hsl(var(--c3))" }} />
-          <span className="text-sm" style={{ color: "hsl(var(--c2))" }}>
+          <div className="w-2 h-2 rounded-full" style={{ background: is2FAEnabled ? "oklch(var(--h3))" : "oklch(var(--c3))" }} />
+          <span className="text-sm" style={{ color: "oklch(var(--c2))" }}>
             {is2FAEnabled ? "Enabled" : "Not enabled"}
           </span>
         </div>
@@ -1609,8 +1609,8 @@ function TwoFactorSection() {
 
       {/* Step: confirm password to enable */}
       {step === "enabling" && (
-        <form onSubmit={handleEnable2FA} className="space-y-3 pt-2" style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)" }}>
-          <p className="text-xs" style={{ color: "hsl(var(--c3))" }}>Confirm your password to continue.</p>
+        <form onSubmit={handleEnable2FA} className="space-y-3 pt-2" style={{ borderTop: "1px solid oklch(var(--b4) / 0.25)" }}>
+          <p className="text-xs" style={{ color: "oklch(var(--c3))" }}>Confirm your password to continue.</p>
           <Input type="password" label="Password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" autoComplete="current-password" />
           {error && <FeedbackBanner type="error" text={error} />}
           <div className="flex gap-2">
@@ -1622,8 +1622,8 @@ function TwoFactorSection() {
 
       {/* Step: QR + verify */}
       {step === "qr" && (
-        <div className="space-y-4 pt-2" style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)" }}>
-          <p className="text-xs" style={{ color: "hsl(var(--c3))" }}>
+        <div className="space-y-4 pt-2" style={{ borderTop: "1px solid oklch(var(--b4) / 0.25)" }}>
+          <p className="text-xs" style={{ color: "oklch(var(--c3))" }}>
             Scan with Google Authenticator, Authy, 1Password, or any TOTP app.
           </p>
           <div className="flex justify-center">
@@ -1652,12 +1652,12 @@ function TwoFactorSection() {
 
       {/* Step: backup codes */}
       {step === "backup" && (
-        <div className="space-y-4 pt-2" style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)" }}>
+        <div className="space-y-4 pt-2" style={{ borderTop: "1px solid oklch(var(--b4) / 0.25)" }}>
           <FeedbackBanner type="success" text="2FA is now enabled. Save these backup codes — each can only be used once." />
           <div className="grid grid-cols-2 gap-2">
             {backupCodes.map((code, i) => (
               <code key={i} className="rounded-lg px-3 py-2 text-xs font-mono text-center tracking-wider"
-                style={{ background: "hsl(var(--b4) / 0.4)", color: "hsl(var(--c1))", boxShadow: "inset 0 0 0 1px hsl(var(--b4) / 0.25)" }}>
+                style={{ background: "oklch(var(--b4) / 0.4)", color: "oklch(var(--c1))", boxShadow: "inset 0 0 0 1px oklch(var(--b4) / 0.25)" }}>
                 {code}
               </code>
             ))}
@@ -1668,8 +1668,8 @@ function TwoFactorSection() {
 
       {/* Step: confirm password to disable */}
       {step === "disabling" && (
-        <form onSubmit={handleDisable2FA} className="space-y-3 pt-2" style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)" }}>
-          <p className="text-xs" style={{ color: "hsl(var(--c3))" }}>Enter your password to disable two-factor authentication.</p>
+        <form onSubmit={handleDisable2FA} className="space-y-3 pt-2" style={{ borderTop: "1px solid oklch(var(--b4) / 0.25)" }}>
+          <p className="text-xs" style={{ color: "oklch(var(--c3))" }}>Enter your password to disable two-factor authentication.</p>
           <Input type="password" label="Password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" autoComplete="current-password" />
           {error && <FeedbackBanner type="error" text={error} />}
           <div className="flex gap-2">
@@ -1729,13 +1729,13 @@ function ApiKeysSection() {
     <SettingSection title="API keys" description="Keys for the browser extension and external integrations.">
       {/* New key reveal */}
       {newKey && (
-        <div className="space-y-3 p-3 rounded-lg" style={{ background: "hsl(var(--h3) / 0.06)", border: "1px solid hsl(var(--h3) / 0.2)" }}>
-          <p className="text-xs font-[var(--font-weight-medium)]" style={{ color: "hsl(var(--h3))" }}>
+        <div className="space-y-3 p-3 rounded-lg" style={{ background: "oklch(var(--h3) / 0.06)", border: "1px solid oklch(var(--h3) / 0.2)" }}>
+          <p className="text-xs font-[var(--font-weight-medium)]" style={{ color: "oklch(var(--h3))" }}>
             Copy your key now — it won't be shown again
           </p>
           <div className="flex items-center gap-2">
             <code className="flex-1 text-xs font-mono rounded-lg px-3 py-2 select-all break-all"
-              style={{ background: "hsl(var(--b4) / 0.5)", color: "hsl(var(--c1))", boxShadow: "inset 0 0 0 1px hsl(var(--b4) / 0.3)" }}>
+              style={{ background: "oklch(var(--b4) / 0.5)", color: "oklch(var(--c1))", boxShadow: "inset 0 0 0 1px oklch(var(--b4) / 0.3)" }}>
               {newKey}
             </code>
             <Button variant="secondary" size="sm" onClick={handleCopy}>{copied ? "Copied!" : "Copy"}</Button>
@@ -1746,7 +1746,7 @@ function ApiKeysSection() {
 
       {/* Create form */}
       {showCreate && !newKey && (
-        <div className="flex items-end gap-2 pt-1" style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)" }}>
+        <div className="flex items-end gap-2 pt-1" style={{ borderTop: "1px solid oklch(var(--b4) / 0.25)" }}>
           <div className="flex-1">
             <Input label="Key name" value={newKeyName} onChange={(e) => setNewKeyName(e.target.value)} placeholder="e.g. Browser Extension" />
           </div>
@@ -1759,21 +1759,21 @@ function ApiKeysSection() {
 
       {/* Keys list */}
       {loading ? (
-        <p className="text-xs" style={{ color: "hsl(var(--c3))" }}>Loading…</p>
+        <p className="text-xs" style={{ color: "oklch(var(--c3))" }}>Loading…</p>
       ) : keys.length > 0 ? (
         <div className="space-y-2">
           {keys.map((key) => (
             <div key={key.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
-              style={{ background: "hsl(var(--b4) / 0.2)", boxShadow: "inset 0 0 0 1px hsl(var(--b4) / 0.3)" }}>
+              style={{ background: "oklch(var(--b4) / 0.2)", boxShadow: "inset 0 0 0 1px oklch(var(--b4) / 0.3)" }}>
               {/* Key icon */}
-              <svg className="w-3.5 h-3.5 shrink-0" style={{ color: "hsl(var(--c3))" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-3.5 h-3.5 shrink-0" style={{ color: "oklch(var(--c3))" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
               </svg>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-[var(--font-weight-medium)] truncate" style={{ color: "hsl(var(--c1))" }}>
+                <p className="text-sm font-[var(--font-weight-medium)] truncate" style={{ color: "oklch(var(--c1))" }}>
                   {key.name || "Unnamed key"}
                 </p>
-                <p className="text-[10px] font-mono mt-0.5" style={{ color: "hsl(var(--c3))" }}>
+                <p className="text-[10px] font-mono mt-0.5" style={{ color: "oklch(var(--c3))" }}>
                   {key.start ? `${key.start}••••••••` : "••••••••"}
                   {" · "}
                   {new Date(key.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
@@ -1793,12 +1793,12 @@ function ApiKeysSection() {
           ))}
         </div>
       ) : !showCreate && !newKey ? (
-        <p className="text-xs" style={{ color: "hsl(var(--c3))" }}>No API keys yet.</p>
+        <p className="text-xs" style={{ color: "oklch(var(--c3))" }}>No API keys yet.</p>
       ) : null}
 
       {/* Add key button */}
       {!showCreate && !newKey && (
-        <div style={{ borderTop: "1px solid hsl(var(--b4) / 0.25)", paddingTop: 12 }}>
+        <div style={{ borderTop: "1px solid oklch(var(--b4) / 0.25)", paddingTop: 12 }}>
           <Button variant="secondary" size="sm" onClick={() => setShowCreate(true)}>
             <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -1832,18 +1832,18 @@ function AccountTab() {
       <SettingSection title="Account Information" description="Details about your Zephyron account.">
         <div className="space-y-2 text-sm">
           <div className="flex justify-between items-center py-1">
-            <span className="text-sm" style={{ color: "hsl(var(--c3))" }}>Role</span>
+            <span className="text-sm" style={{ color: "oklch(var(--c3))" }}>Role</span>
             <Badge variant="accent">{user?.role || "user"}</Badge>
           </div>
           <div className="flex justify-between items-center py-1">
-            <span className="text-sm" style={{ color: "hsl(var(--c3))" }}>Member since</span>
-            <span className="text-sm" style={{ color: "hsl(var(--c2))" }}>
+            <span className="text-sm" style={{ color: "oklch(var(--c3))" }}>Member since</span>
+            <span className="text-sm" style={{ color: "oklch(var(--c2))" }}>
               {user?.createdAt ? new Date(user.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "Unknown"}
             </span>
           </div>
           <div className="flex justify-between items-center py-1">
-            <span className="text-sm" style={{ color: "hsl(var(--c3))" }}>App version</span>
-            <Link to="/app/changelog" className="font-mono text-xs hover:underline no-underline" style={{ color: "hsl(var(--h3))" }}>
+            <span className="text-sm" style={{ color: "oklch(var(--c3))" }}>App version</span>
+            <Link to="/app/changelog" className="font-mono text-xs hover:underline no-underline" style={{ color: "oklch(var(--h3))" }}>
               v{__APP_VERSION__}
             </Link>
           </div>
@@ -1860,7 +1860,7 @@ function AccountTab() {
         <h3 className="text-sm font-[var(--font-weight-medium)] mb-1" style={{ color: "hsl(0 60% 55%)" }}>
           Danger Zone
         </h3>
-        <p className="text-xs mb-4" style={{ color: "hsl(var(--c3))" }}>
+        <p className="text-xs mb-4" style={{ color: "oklch(var(--c3))" }}>
           Permanently delete your account and all associated data. This action cannot be undone.
         </p>
         <Button variant="danger" size="sm" onClick={() => navigate("/delete-account")}>
@@ -1876,14 +1876,14 @@ function AboutTab() {
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-3 mb-3">
-          <h2 className="text-xl font-bold" style={{ color: "hsl(var(--c1))" }}>
-            The platform built for <span style={{ color: "hsl(var(--h3))" }}>DJ sets</span>
+          <h2 className="text-xl font-bold" style={{ color: "oklch(var(--c1))" }}>
+            The platform built for <span style={{ color: "oklch(var(--h3))" }}>DJ sets</span>
           </h2>
-          <Link to="/app/changelog" className="px-2 py-0.5 rounded-md text-[10px] font-mono no-underline hover:opacity-80 transition-opacity" style={{ background: "hsl(var(--b4) / 0.5)", color: "hsl(var(--c3))", border: "1px solid hsl(var(--b4))" }}>
+          <Link to="/app/changelog" className="px-2 py-0.5 rounded-md text-[10px] font-mono no-underline hover:opacity-80 transition-opacity" style={{ background: "oklch(var(--b4) / 0.5)", color: "oklch(var(--c3))", border: "1px solid oklch(var(--b4))" }}>
             v{__APP_VERSION__}
           </Link>
         </div>
-        <div className="space-y-3 text-sm leading-relaxed" style={{ color: "hsl(var(--c2))" }}>
+        <div className="space-y-3 text-sm leading-relaxed" style={{ color: "oklch(var(--c2))" }}>
           <p>
             Zephyron exists because DJ sets deserve better. Festival mixes, club recordings,
             and radio shows are some of the most exciting music experiences out there, yet
@@ -1905,8 +1905,8 @@ function AboutTab() {
             { title: "Self-Improving ML", desc: "Every correction feeds back into our detection prompts. The system gets smarter with every listen and every vote." },
           ].map((item) => (
             <div key={item.title} className="card p-3">
-              <h4 className="text-xs font-[var(--font-weight-medium)] mb-1" style={{ color: "hsl(var(--c1))" }}>{item.title}</h4>
-              <p className="text-xs leading-relaxed" style={{ color: "hsl(var(--c3))" }}>{item.desc}</p>
+              <h4 className="text-xs font-[var(--font-weight-medium)] mb-1" style={{ color: "oklch(var(--c1))" }}>{item.title}</h4>
+              <p className="text-xs leading-relaxed" style={{ color: "oklch(var(--c3))" }}>{item.desc}</p>
             </div>
           ))}
         </div>
@@ -1925,8 +1925,8 @@ function AboutTab() {
             { label: "Auth", value: "Better Auth" },
           ].map((item) => (
             <div key={item.label}>
-              <p className="text-xs" style={{ color: "hsl(var(--c3))" }}>{item.label}</p>
-              <p className="text-xs font-[var(--font-weight-medium)]" style={{ color: "hsl(var(--c1))" }}>{item.value}</p>
+              <p className="text-xs" style={{ color: "oklch(var(--c3))" }}>{item.label}</p>
+              <p className="text-xs font-[var(--font-weight-medium)]" style={{ color: "oklch(var(--c1))" }}>{item.value}</p>
             </div>
           ))}
         </div>
@@ -1938,7 +1938,7 @@ function AboutTab() {
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs no-underline transition-colors"
-          style={{ background: "hsl(var(--b4) / 0.5)", color: "hsl(var(--c1))", border: "1px solid hsl(var(--b4))" }}
+          style={{ background: "oklch(var(--b4) / 0.5)", color: "oklch(var(--c1))", border: "1px solid oklch(var(--b4))" }}
         >
           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />

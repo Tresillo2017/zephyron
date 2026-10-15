@@ -21,15 +21,15 @@ const ArtistCard = memo(({ artist }: { artist: any }) => {
       to={`/app/artists/${artist.slug || artist.id}`}
       className="group flex items-center gap-4 px-4 py-4 rounded-[var(--card-radius)] no-underline transition-all"
       style={{
-        background: 'hsl(var(--b5))',
-        boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25), 0 2px 8px rgba(0,0,0,0.1)',
+        background: 'oklch(var(--b5))',
+        boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.25), 0 2px 8px rgba(0,0,0,0.1)',
       }}
     >
       {/* Artist image */}
       <div
         className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0"
         style={{
-          background: 'hsl(var(--b4) / 0.3)',
+          background: 'oklch(var(--b4) / 0.3)',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         }}
       >
@@ -54,23 +54,23 @@ const ArtistCard = memo(({ artist }: { artist: any }) => {
       <div className="flex-1 min-w-0">
         <p
           className="text-sm font-[var(--font-weight-medium)] truncate transition-colors"
-          style={{ color: 'hsl(var(--c1))' }}
+          style={{ color: 'oklch(var(--c1))' }}
         >
           {artist.name}
         </p>
         {tags.length > 0 && (
-          <p className="text-xs truncate mt-0.5" style={{ color: 'hsl(var(--c3))' }}>
+          <p className="text-xs truncate mt-0.5" style={{ color: 'oklch(var(--c3))' }}>
             {tags.slice(0, 3).join(' · ')}
           </p>
         )}
         <div className="flex items-center gap-3 mt-1.5">
           {artist.listeners > 0 && (
-            <span className="text-[10px] font-mono tabular-nums" style={{ color: 'hsl(var(--c3))' }}>
+            <span className="text-[10px] font-mono tabular-nums" style={{ color: 'oklch(var(--c3))' }}>
               {formatPlayCount(artist.listeners)} listeners
             </span>
           )}
           {artist.set_count > 0 && (
-            <span className="text-[10px] font-mono tabular-nums" style={{ color: 'hsl(var(--c2))' }}>
+            <span className="text-[10px] font-mono tabular-nums" style={{ color: 'oklch(var(--c2))' }}>
               {artist.set_count} {artist.set_count === 1 ? 'set' : 'sets'}
             </span>
           )}
@@ -78,7 +78,7 @@ const ArtistCard = memo(({ artist }: { artist: any }) => {
       </div>
 
       {/* Arrow */}
-      <svg className="w-4 h-4 shrink-0 transition-colors" style={{ color: 'hsl(var(--c3))' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <svg className="w-4 h-4 shrink-0 transition-colors" style={{ color: 'oklch(var(--c3))' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
       </svg>
     </Link>
@@ -118,10 +118,10 @@ export function ArtistsPage() {
     return (
       <div className="px-6 lg:px-10 py-6">
         <div className="mb-8">
-          <h1 className="text-2xl font-[var(--font-weight-bold)] mb-1" style={{ color: 'hsl(var(--c1))' }}>
+          <h1 className="text-2xl font-[var(--font-weight-bold)] mb-1" style={{ color: 'oklch(var(--c1))' }}>
             Artists
           </h1>
-          <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+          <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>
             DJs and producers on Zephyron
           </p>
         </div>
@@ -140,11 +140,11 @@ export function ArtistsPage() {
       <div className="mb-8">
         <h1
           className="text-2xl font-[var(--font-weight-bold)] mb-1"
-          style={{ color: 'hsl(var(--c1))' }}
+          style={{ color: 'oklch(var(--c1))' }}
         >
           Artists
         </h1>
-        <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+        <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>
           {artists.length > 0 ? `${artists.length} DJs and producers` : 'DJs and producers on Zephyron'}
         </p>
       </div>
@@ -154,15 +154,15 @@ export function ArtistsPage() {
           <div
             className="w-12 h-12 mx-auto mb-4 rounded-lg flex items-center justify-center"
             style={{
-              background: 'hsl(var(--b4) / 0.3)',
-              boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)',
+              background: 'oklch(var(--b4) / 0.3)',
+              boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.25)',
             }}
           >
-            <svg className="w-6 h-6" style={{ color: 'hsl(var(--c3))' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg className="w-6 h-6" style={{ color: 'oklch(var(--c3))' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
             </svg>
           </div>
-          <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+          <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>
             No artists yet. Artists are created when DJ sets are added and detected.
           </p>
         </div>
@@ -184,7 +184,7 @@ export function ArtistsPage() {
               >
                 ← Previous
               </Button>
-              <span className="text-sm font-mono tabular-nums px-4" style={{ color: 'hsl(var(--c2))' }}>
+              <span className="text-sm font-mono tabular-nums px-4" style={{ color: 'oklch(var(--c2))' }}>
                 Page {currentPage} of {totalPages}
               </span>
               <Button

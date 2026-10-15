@@ -108,7 +108,7 @@ export function SongsTab() {
     <>
       {/* Header */}
       <div className="flex items-center justify-between mb-5 gap-4">
-        <p className="text-sm shrink-0" style={{ color: "hsl(var(--c3))" }}>
+        <p className="text-sm shrink-0" style={{ color: "oklch(var(--c3))" }}>
           {total} song{total !== 1 ? "s" : ""}
         </p>
         <input
@@ -120,17 +120,17 @@ export function SongsTab() {
           placeholder="Search songs..."
           className="flex-1 max-w-xs px-3 py-1.5 rounded-lg text-sm placeholder:text-text-muted focus:outline-none"
           style={{
-            background: "hsl(var(--b4) / 0.4)",
-            color: "hsl(var(--c1))",
+            background: "oklch(var(--b4) / 0.4)",
+            color: "oklch(var(--c1))",
           }}
         />
-        <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid hsl(var(--b4) / 0.4)' }}>
+        <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid oklch(var(--b4) / 0.4)' }}>
           <button
             onClick={() => setViewMode('list')}
             className="px-2 py-1 transition-colors"
             style={{
-              background: viewMode === 'list' ? 'hsl(var(--b4) / 0.5)' : 'transparent',
-              color: viewMode === 'list' ? 'hsl(var(--c1))' : 'hsl(var(--c3))',
+              background: viewMode === 'list' ? 'oklch(var(--b4) / 0.5)' : 'transparent',
+              color: viewMode === 'list' ? 'oklch(var(--c1))' : 'oklch(var(--c3))',
             }}
             title="List view"
           >
@@ -142,8 +142,8 @@ export function SongsTab() {
             onClick={() => setViewMode('grid')}
             className="px-2 py-1 transition-colors"
             style={{
-              background: viewMode === 'grid' ? 'hsl(var(--b4) / 0.5)' : 'transparent',
-              color: viewMode === 'grid' ? 'hsl(var(--c1))' : 'hsl(var(--c3))',
+              background: viewMode === 'grid' ? 'oklch(var(--b4) / 0.5)' : 'transparent',
+              color: viewMode === 'grid' ? 'oklch(var(--c1))' : 'oklch(var(--c3))',
             }}
             title="Grid view"
           >
@@ -157,7 +157,7 @@ export function SongsTab() {
       {/* List */}
       {songs.length === 0 ? (
         <div className="card text-center py-12">
-          <p className="text-sm" style={{ color: "hsl(var(--c3))" }}>
+          <p className="text-sm" style={{ color: "oklch(var(--c3))" }}>
             {search
               ? "No songs match your search."
               : "No songs in the database yet."}
@@ -184,11 +184,11 @@ export function SongsTab() {
                 ) : (
                   <div
                     className="w-10 h-10 rounded-lg shrink-0 flex items-center justify-center"
-                    style={{ background: "hsl(var(--b4) / 0.4)" }}
+                    style={{ background: "oklch(var(--b4) / 0.4)" }}
                   >
                     <svg
                       className="w-4 h-4"
-                      style={{ color: "hsl(var(--c3) / 0.3)" }}
+                      style={{ color: "oklch(var(--c3) / 0.3)" }}
                       fill="currentColor"
                       viewBox="0 0 24 24"
                     >
@@ -202,7 +202,7 @@ export function SongsTab() {
                   <p
                     className="text-sm truncate"
                     style={{
-                      color: "hsl(var(--c1))",
+                      color: "oklch(var(--c1))",
                       fontWeight: "var(--font-weight-medium)",
                     }}
                   >
@@ -211,7 +211,7 @@ export function SongsTab() {
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span
                       className="text-xs truncate"
-                      style={{ color: "hsl(var(--c2))" }}
+                      style={{ color: "oklch(var(--c2))" }}
                     >
                       {song.artist}
                     </span>
@@ -219,13 +219,13 @@ export function SongsTab() {
                       <>
                         <span
                           className="text-[10px]"
-                          style={{ color: "hsl(var(--c3) / 0.4)" }}
+                          style={{ color: "oklch(var(--c3) / 0.4)" }}
                         >
                           ·
                         </span>
                         <span
                           className="text-[10px] truncate"
-                          style={{ color: "hsl(var(--c3))" }}
+                          style={{ color: "oklch(var(--c3))" }}
                         >
                           {song.label}
                         </span>
@@ -255,8 +255,8 @@ export function SongsTab() {
                   <span
                     className="text-[10px] font-mono px-1.5 py-0.5 rounded flex items-center gap-1"
                     style={{
-                      background: "hsl(var(--h3) / 0.1)",
-                      color: "hsl(var(--h3))",
+                      background: "oklch(var(--h3) / 0.1)",
+                      color: "oklch(var(--h3))",
                     }}
                     title={`${song.like_count} like${song.like_count !== 1 ? 's' : ''}`}
                   >
@@ -272,8 +272,8 @@ export function SongsTab() {
                   <span
                     className="text-[10px] font-mono px-1.5 py-0.5 rounded"
                     style={{
-                      background: "hsl(var(--b4) / 0.4)",
-                      color: "hsl(var(--c3))",
+                      background: "oklch(var(--b4) / 0.4)",
+                      color: "oklch(var(--c3))",
                     }}
                   >
                     {song.detection_count} use
@@ -288,7 +288,7 @@ export function SongsTab() {
                 {actionMsg[song.id] && (
                   <span
                     className="text-[10px]"
-                    style={{ color: "hsl(var(--h3))" }}
+                    style={{ color: "oklch(var(--h3))" }}
                   >
                     {actionMsg[song.id]}
                   </span>
@@ -374,7 +374,7 @@ export function SongsTab() {
           {songs.map((song) => (
             <div key={song.id} className="card !p-4">
               {/* Cover art */}
-              <div className="aspect-square rounded-lg overflow-hidden mb-3" style={{ background: 'hsl(var(--b4) / 0.4)' }}>
+              <div className="aspect-square rounded-lg overflow-hidden mb-3" style={{ background: 'oklch(var(--b4) / 0.4)' }}>
                 {song.cover_art_r2_key || song.cover_art_url || song.lastfm_album_art ? (
                   <img
                     src={
@@ -389,7 +389,7 @@ export function SongsTab() {
                   <div className="w-full h-full flex items-center justify-center">
                     <svg
                       className="w-12 h-12"
-                      style={{ color: "hsl(var(--c3) / 0.3)" }}
+                      style={{ color: "oklch(var(--c3) / 0.3)" }}
                       fill="currentColor"
                       viewBox="0 0 24 24"
                     >
@@ -402,11 +402,11 @@ export function SongsTab() {
               {/* Info */}
               <p
                 className="text-sm truncate font-[var(--font-weight-medium)] mb-1"
-                style={{ color: "hsl(var(--c1))" }}
+                style={{ color: "oklch(var(--c1))" }}
               >
                 {song.title}
               </p>
-              <p className="text-xs truncate mb-3" style={{ color: "hsl(var(--c2))" }}>
+              <p className="text-xs truncate mb-3" style={{ color: "oklch(var(--c2))" }}>
                 {song.artist}
                 {song.label && ` · ${song.label}`}
               </p>
@@ -440,13 +440,13 @@ export function SongsTab() {
 
               {/* Action message */}
               {actionMsg[song.id] && (
-                <p className="text-[10px] mb-2" style={{ color: "hsl(var(--h3))" }}>
+                <p className="text-[10px] mb-2" style={{ color: "oklch(var(--h3))" }}>
                   {actionMsg[song.id]}
                 </p>
               )}
 
               {/* Actions */}
-              <div className="flex gap-1 pt-3" style={{ borderTop: '1px solid hsl(var(--b4) / 0.2)' }}>
+              <div className="flex gap-1 pt-3" style={{ borderTop: '1px solid oklch(var(--b4) / 0.2)' }}>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -538,7 +538,7 @@ export function SongsTab() {
           </Button>
           <span
             className="text-xs font-mono"
-            style={{ color: "hsl(var(--c3))" }}
+            style={{ color: "oklch(var(--c3))" }}
           >
             {page} / {totalPages}
           </span>
@@ -559,14 +559,14 @@ export function SongsTab() {
         onClose={() => setConfirmDelete(null)}
         title="Delete Song"
       >
-        <p className="text-sm mb-2" style={{ color: "hsl(var(--c2))" }}>
+        <p className="text-sm mb-2" style={{ color: "oklch(var(--c2))" }}>
           Delete{" "}
           <strong>
             {confirmDelete?.artist} - {confirmDelete?.title}
           </strong>
           ?
         </p>
-        <p className="text-xs mb-4" style={{ color: "hsl(var(--c3))" }}>
+        <p className="text-xs mb-4" style={{ color: "oklch(var(--c3))" }}>
           This will unlink the song from all detections. The detections will
           remain but without song metadata.
         </p>
@@ -633,7 +633,7 @@ function EditSongModal({
   const [error, setError] = useState<string | null>(null);
 
   const inputClass =
-    "w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none";
+    "w-full px-3 py-2 bg-[oklch(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none";
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -675,7 +675,7 @@ function EditSongModal({
               src={coverPreview}
               alt=""
               className="w-24 h-24 rounded-xl object-cover"
-              style={{ boxShadow: "0 4px 20px hsl(var(--b7) / 0.4)" }}
+              style={{ boxShadow: "0 4px 20px oklch(var(--b7) / 0.4)" }}
             />
           </div>
         )}
@@ -710,7 +710,7 @@ function EditSongModal({
         <div>
           <label
             className="text-sm font-[var(--font-weight-medium)] block mb-1.5"
-            style={{ color: "hsl(var(--c2))" }}
+            style={{ color: "oklch(var(--c2))" }}
           >
             Cover Art URL
           </label>
@@ -726,7 +726,7 @@ function EditSongModal({
         <div>
           <p
             className="text-sm font-[var(--font-weight-medium)] mb-2"
-            style={{ color: "hsl(var(--c2))" }}
+            style={{ color: "oklch(var(--c2))" }}
           >
             Streaming Links
           </p>
@@ -736,7 +736,7 @@ function EditSongModal({
                 <ServiceIcon service={svc} size={16} className="shrink-0" />
                 <span
                   className="text-[11px] w-20 shrink-0"
-                  style={{ color: "hsl(var(--c3))" }}
+                  style={{ color: "oklch(var(--c3))" }}
                 >
                   {svc.label}
                 </span>
@@ -757,21 +757,21 @@ function EditSongModal({
         {(song.lastfm_album || song.lastfm_tags || song.lastfm_listeners) && (
           <div
             className="rounded-lg p-3"
-            style={{ background: "hsl(var(--b5) / 0.5)" }}
+            style={{ background: "oklch(var(--b5) / 0.5)" }}
           >
             <p
               className="text-[10px] font-mono mb-1"
-              style={{ color: "hsl(var(--c3))" }}
+              style={{ color: "oklch(var(--c3))" }}
             >
               LAST.FM DATA
             </p>
             {song.lastfm_album && (
-              <p className="text-xs" style={{ color: "hsl(var(--c2))" }}>
+              <p className="text-xs" style={{ color: "oklch(var(--c2))" }}>
                 Album: {song.lastfm_album}
               </p>
             )}
             {song.lastfm_tags && (
-              <p className="text-xs" style={{ color: "hsl(var(--c2))" }}>
+              <p className="text-xs" style={{ color: "oklch(var(--c2))" }}>
                 Tags:{" "}
                 {typeof song.lastfm_tags === "string"
                   ? JSON.parse(song.lastfm_tags).join(", ")
@@ -779,7 +779,7 @@ function EditSongModal({
               </p>
             )}
             {song.lastfm_listeners && (
-              <p className="text-xs" style={{ color: "hsl(var(--c2))" }}>
+              <p className="text-xs" style={{ color: "oklch(var(--c2))" }}>
                 Listeners: {song.lastfm_listeners.toLocaleString()}
               </p>
             )}

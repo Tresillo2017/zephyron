@@ -91,7 +91,7 @@ export function ArtistPage() {
         {/* Left gradient — ensures name legibility over any photo */}
         <div
           className="absolute inset-0"
-          style={{ background: 'linear-gradient(to right, hsl(var(--b6) / 0.85) 25%, transparent 65%)' }}
+          style={{ background: 'linear-gradient(to right, oklch(var(--b6) / 0.85) 25%, transparent 65%)' }}
         />
       </div>
 
@@ -117,7 +117,7 @@ export function ArtistPage() {
 
             {/* Name + tags */}
             <div className="pb-2 flex-1 min-w-0">
-              <p className="text-sm banner-text mb-1" style={{ color: 'hsl(var(--c3))' }}>Artist</p>
+              <p className="text-sm banner-text mb-1" style={{ color: 'oklch(var(--c3))' }}>Artist</p>
               <h1 className="text-2xl sm:text-3xl font-bold text-text-primary leading-tight banner-text mb-2">
                 {artist.name}
               </h1>
@@ -154,39 +154,39 @@ export function ArtistPage() {
           <div
             className="flex items-center px-6 lg:px-10"
             style={{
-              background: 'hsl(var(--b6) / 0.5)',
-              borderBottom: '1px solid hsl(var(--b4) / 0.3)',
-              borderTop: '1px solid hsl(var(--b4) / 0.15)',
+              background: 'oklch(var(--b6) / 0.5)',
+              borderBottom: '1px solid oklch(var(--b4) / 0.3)',
+              borderTop: '1px solid oklch(var(--b4) / 0.15)',
             }}
           >
             {artist.listeners > 0 && (
               <div
                 className="py-3 pr-6 mr-6"
-                style={{ borderRight: '1px solid hsl(var(--b4) / 0.3)' }}
+                style={{ borderRight: '1px solid oklch(var(--b4) / 0.3)' }}
               >
-                <div className="text-lg font-bold" style={{ color: 'hsl(var(--c1))' }}>
+                <div className="text-lg font-bold" style={{ color: 'oklch(var(--c1))' }}>
                   <NumberFlow value={artist.listeners} format={{ notation: 'compact' }} />
                 </div>
-                <div className="text-[10px] mt-0.5" style={{ color: 'hsl(var(--c3))' }}>Monthly Listeners</div>
+                <div className="text-[10px] mt-0.5" style={{ color: 'oklch(var(--c3))' }}>Monthly Listeners</div>
               </div>
             )}
             {artist.playcount > 0 && (
               <div
                 className="py-3 pr-6 mr-6"
-                style={{ borderRight: sets.length > 0 ? '1px solid hsl(var(--b4) / 0.3)' : 'none' }}
+                style={{ borderRight: sets.length > 0 ? '1px solid oklch(var(--b4) / 0.3)' : 'none' }}
               >
-                <div className="text-lg font-bold" style={{ color: 'hsl(var(--c1))' }}>
+                <div className="text-lg font-bold" style={{ color: 'oklch(var(--c1))' }}>
                   <NumberFlow value={artist.playcount} format={{ notation: 'compact' }} />
                 </div>
-                <div className="text-[10px] mt-0.5" style={{ color: 'hsl(var(--c3))' }}>Scrobbles</div>
+                <div className="text-[10px] mt-0.5" style={{ color: 'oklch(var(--c3))' }}>Scrobbles</div>
               </div>
             )}
             {sets.length > 0 && (
               <div className="py-3">
-                <div className="text-lg font-bold" style={{ color: 'hsl(var(--c1))' }}>
+                <div className="text-lg font-bold" style={{ color: 'oklch(var(--c1))' }}>
                   <NumberFlow value={sets.length} />
                 </div>
-                <div className="text-[10px] mt-0.5" style={{ color: 'hsl(var(--c3))' }}>
+                <div className="text-[10px] mt-0.5" style={{ color: 'oklch(var(--c3))' }}>
                   {sets.length === 1 ? 'Set' : 'Sets'} on Zephyron
                 </div>
               </div>
@@ -215,18 +215,18 @@ export function ArtistPage() {
                   {bio && (
                     <div className="card p-5 mb-5">
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-semibold" style={{ color: 'hsl(var(--c1))' }}>About</h3>
+                        <h3 className="text-sm font-semibold" style={{ color: 'oklch(var(--c1))' }}>About</h3>
                         {hasLongBio && (
                           <button
                             onClick={() => setShowFullBio(!showFullBio)}
                             className="text-xs transition-colors"
-                            style={{ color: 'hsl(var(--h3))' }}
+                            style={{ color: 'oklch(var(--h3))' }}
                           >
                             {showFullBio ? 'show less' : 'read more'}
                           </button>
                         )}
                       </div>
-                      <p className="text-sm leading-relaxed" style={{ color: 'hsl(var(--c2))' }}>{bio}</p>
+                      <p className="text-sm leading-relaxed" style={{ color: 'oklch(var(--c2))' }}>{bio}</p>
                     </div>
                   )}
 
@@ -234,8 +234,8 @@ export function ArtistPage() {
                   {sets.length > 0 && (
                     <div className="card p-5 mb-5">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold" style={{ color: 'hsl(var(--c1))' }}>Live Sets</h3>
-                        <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>
+                        <h3 className="text-sm font-semibold" style={{ color: 'oklch(var(--c1))' }}>Live Sets</h3>
+                        <span className="text-xs font-mono" style={{ color: 'oklch(var(--c3))' }}>
                           {sets.length} {sets.length === 1 ? 'set' : 'sets'}
                         </span>
                       </div>
@@ -246,7 +246,7 @@ export function ArtistPage() {
                   {/* Similar artists — horizontal scroll row */}
                   {similarArtists.length > 0 && (
                     <div className="card p-5 mb-5">
-                      <h3 className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: 'hsl(var(--c3))' }}>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: 'oklch(var(--c3))' }}>
                         Similar Artists
                       </h3>
                       <div
@@ -272,7 +272,7 @@ export function ArtistPage() {
                             <span
                               className="text-[10px] text-center leading-tight"
                               style={{
-                                color: 'hsl(var(--c3))',
+                                color: 'oklch(var(--c3))',
                                 maxWidth: 64,
                                 overflow: 'hidden',
                                 display: '-webkit-box',
@@ -295,8 +295,8 @@ export function ArtistPage() {
                 sets.length > 0 ? (
                   <div className="card p-5 mb-5">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-sm font-semibold" style={{ color: 'hsl(var(--c1))' }}>Live Sets</h3>
-                      <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>
+                      <h3 className="text-sm font-semibold" style={{ color: 'oklch(var(--c1))' }}>Live Sets</h3>
+                      <span className="text-xs font-mono" style={{ color: 'oklch(var(--c3))' }}>
                         {sets.length} {sets.length === 1 ? 'set' : 'sets'}
                       </span>
                     </div>
@@ -304,7 +304,7 @@ export function ArtistPage() {
                   </div>
                 ) : (
                   <div className="card p-8 text-center">
-                    <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+                    <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>
                       No sets from {artist.name} on Zephyron yet.
                     </p>
                   </div>
@@ -317,23 +317,23 @@ export function ArtistPage() {
                   {bio && (
                     <div className="card p-5 mb-5">
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-semibold" style={{ color: 'hsl(var(--c1))' }}>Biography</h3>
+                        <h3 className="text-sm font-semibold" style={{ color: 'oklch(var(--c1))' }}>Biography</h3>
                         {hasLongBio && (
                           <button
                             onClick={() => setShowFullBio(!showFullBio)}
                             className="text-xs transition-colors"
-                            style={{ color: 'hsl(var(--h3))' }}
+                            style={{ color: 'oklch(var(--h3))' }}
                           >
                             {showFullBio ? 'show less' : 'read more'}
                           </button>
                         )}
                       </div>
-                      <p className="text-sm leading-relaxed" style={{ color: 'hsl(var(--c2))' }}>{bio}</p>
+                      <p className="text-sm leading-relaxed" style={{ color: 'oklch(var(--c2))' }}>{bio}</p>
                     </div>
                   )}
                   {tags.length > 0 && (
                     <div className="card p-5 mb-5">
-                      <h3 className="text-sm font-semibold mb-3" style={{ color: 'hsl(var(--c1))' }}>Tags</h3>
+                      <h3 className="text-sm font-semibold mb-3" style={{ color: 'oklch(var(--c1))' }}>Tags</h3>
                       <div className="flex flex-wrap gap-2">
                         {tags.map((tag: string) => <Badge key={tag} variant="tag">{tag}</Badge>)}
                       </div>

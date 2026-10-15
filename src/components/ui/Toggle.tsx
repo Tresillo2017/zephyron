@@ -12,7 +12,7 @@ export function Toggle({ checked, onChange, disabled }: ToggleProps) {
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`relative w-[42px] h-[24px] rounded-full cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ${
-        checked ? 'bg-accent' : 'bg-[hsl(var(--b3))]'
+        checked ? 'bg-accent' : 'bg-[oklch(var(--b3))]'
       }`}
       style={{ transitionDuration: 'var(--trans)', transitionTimingFunction: 'var(--ease-out-custom)' }}
     >

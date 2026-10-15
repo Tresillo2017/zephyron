@@ -92,27 +92,27 @@ export function ArtistsTab({ editId }: { editId?: string } = {}) {
     <>
       {/* Header */}
       <div className="flex items-center justify-between mb-5 gap-4">
-        <p className="text-sm shrink-0" style={{ color: 'hsl(var(--c3))' }}>{filtered.length} artist{filtered.length !== 1 ? 's' : ''}</p>
+        <p className="text-sm shrink-0" style={{ color: 'oklch(var(--c3))' }}>{filtered.length} artist{filtered.length !== 1 ? 's' : ''}</p>
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search artists..."
           className="flex-1 max-w-xs px-3 py-1.5 rounded-lg text-sm placeholder:text-text-muted focus:outline-none transition-all duration-200"
           style={{
-            background: 'hsl(var(--b4) / 0.4)',
-            color: 'hsl(var(--c1))',
+            background: 'oklch(var(--b4) / 0.4)',
+            color: 'oklch(var(--c1))',
           }}
-          onFocus={(e) => { e.currentTarget.style.boxShadow = 'inset 0 0 0 1px hsl(var(--h3) / 0.5)' }}
+          onFocus={(e) => { e.currentTarget.style.boxShadow = 'inset 0 0 0 1px oklch(var(--h3) / 0.5)' }}
           onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
         />
         {/* View toggle */}
-        <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid hsl(var(--b4) / 0.4)' }}>
+        <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid oklch(var(--b4) / 0.4)' }}>
           <button
             onClick={() => setViewMode('list')}
             className="px-2.5 py-1.5 transition-all"
             style={{
-              background: viewMode === 'list' ? 'hsl(var(--h3) / 0.15)' : 'transparent',
-              color: viewMode === 'list' ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
+              background: viewMode === 'list' ? 'oklch(var(--h3) / 0.15)' : 'transparent',
+              color: viewMode === 'list' ? 'oklch(var(--h3))' : 'oklch(var(--c3))',
             }}
             title="List view"
           >
@@ -124,8 +124,8 @@ export function ArtistsTab({ editId }: { editId?: string } = {}) {
             onClick={() => setViewMode('grid')}
             className="px-2.5 py-1.5 transition-all"
             style={{
-              background: viewMode === 'grid' ? 'hsl(var(--h3) / 0.15)' : 'transparent',
-              color: viewMode === 'grid' ? 'hsl(var(--h3))' : 'hsl(var(--c3))',
+              background: viewMode === 'grid' ? 'oklch(var(--h3) / 0.15)' : 'transparent',
+              color: viewMode === 'grid' ? 'oklch(var(--h3))' : 'oklch(var(--c3))',
             }}
             title="Grid view"
           >
@@ -142,7 +142,7 @@ export function ArtistsTab({ editId }: { editId?: string } = {}) {
       {/* List/Grid */}
       {filtered.length === 0 ? (
         <div className="card text-center py-12">
-          <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+          <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>
             {search ? 'No artists match your search.' : 'No artists yet. Artists are created when you run detection on sets, or use "Import from 1001TL" above.'}
           </p>
         </div>
@@ -155,12 +155,12 @@ export function ArtistsTab({ editId }: { editId?: string } = {}) {
                 {/* Avatar */}
                 <div
                   className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center"
-                  style={{ background: 'hsl(var(--b4) / 0.6)' }}
+                  style={{ background: 'oklch(var(--b4) / 0.6)' }}
                 >
                   {artist.id ? (
                     <img src={getArtistImageUrl(artist.id)} alt={artist.name} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-sm font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c3))' }}>
+                    <span className="text-sm font-[var(--font-weight-bold)]" style={{ color: 'oklch(var(--c3))' }}>
                       {artist.name.charAt(0)}
                     </span>
                   )}
@@ -168,25 +168,25 @@ export function ArtistsTab({ editId }: { editId?: string } = {}) {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-[var(--font-weight-medium)] truncate" style={{ color: 'hsl(var(--c1))' }}>{artist.name}</p>
+                  <p className="text-sm font-[var(--font-weight-medium)] truncate" style={{ color: 'oklch(var(--c1))' }}>{artist.name}</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     {tags.slice(0, 3).map((tag: string) => (
                       <Badge key={tag} variant="muted">{tag}</Badge>
                     ))}
                     {artist.listeners > 0 && (
-                      <span className="text-xs" style={{ color: 'hsl(var(--c3))' }}>{formatPlayCount(artist.listeners)} listeners</span>
+                      <span className="text-xs" style={{ color: 'oklch(var(--c3))' }}>{formatPlayCount(artist.listeners)} listeners</span>
                     )}
                     {artist.source_1001_id && (
-                      <span className="text-xs font-mono" style={{ color: 'hsl(var(--h3) / 0.7)' }}>1001TL:{artist.source_1001_id}</span>
+                      <span className="text-xs font-mono" style={{ color: 'oklch(var(--h3) / 0.7)' }}>1001TL:{artist.source_1001_id}</span>
                     )}
                     {artist.last_synced_at && (
-                      <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>synced {formatRelativeTime(artist.last_synced_at)}</span>
+                      <span className="text-xs font-mono" style={{ color: 'oklch(var(--c3))' }}>synced {formatRelativeTime(artist.last_synced_at)}</span>
                     )}
                   </div>
                 </div>
 
                 {/* Set count */}
-                <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>
+                <span className="text-xs font-mono" style={{ color: 'oklch(var(--c3))' }}>
                   {artist.set_count} set{artist.set_count !== 1 ? 's' : ''}
                 </span>
 
@@ -216,25 +216,25 @@ export function ArtistsTab({ editId }: { editId?: string } = {}) {
                 {/* Artist image */}
                 <div
                   className="aspect-square rounded-lg overflow-hidden mb-3 flex items-center justify-center"
-                  style={{ background: 'hsl(var(--b4) / 0.6)' }}
+                  style={{ background: 'oklch(var(--b4) / 0.6)' }}
                 >
                   {artist.id ? (
                     <img src={getArtistImageUrl(artist.id)} alt={artist.name} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-4xl font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c3))' }}>
+                    <span className="text-4xl font-[var(--font-weight-bold)]" style={{ color: 'oklch(var(--c3))' }}>
                       {artist.name.charAt(0)}
                     </span>
                   )}
                 </div>
 
                 {/* Name */}
-                <h3 className="text-sm font-[var(--font-weight-medium)] truncate mb-2" style={{ color: 'hsl(var(--c1))' }}>
+                <h3 className="text-sm font-[var(--font-weight-medium)] truncate mb-2" style={{ color: 'oklch(var(--c1))' }}>
                   {artist.name}
                 </h3>
 
                 {/* Bio summary */}
                 {artist.bio_summary && (
-                  <p className="text-xs mb-2 line-clamp-2" style={{ color: 'hsl(var(--c3))' }}>
+                  <p className="text-xs mb-2 line-clamp-2" style={{ color: 'oklch(var(--c3))' }}>
                     {artist.bio_summary}
                   </p>
                 )}
@@ -249,7 +249,7 @@ export function ArtistsTab({ editId }: { editId?: string } = {}) {
                 )}
 
                 {/* Stats */}
-                <div className="flex items-center gap-2 mb-3 text-xs" style={{ color: 'hsl(var(--c3))' }}>
+                <div className="flex items-center gap-2 mb-3 text-xs" style={{ color: 'oklch(var(--c3))' }}>
                   {artist.listeners > 0 && (
                     <span>{formatPlayCount(artist.listeners)} listeners</span>
                   )}
@@ -262,10 +262,10 @@ export function ArtistsTab({ editId }: { editId?: string } = {}) {
                 {/* Source & sync info */}
                 <div className="flex items-center gap-2 mb-3 text-xs">
                   {artist.source_1001_id && (
-                    <span className="font-mono" style={{ color: 'hsl(var(--h3) / 0.7)' }}>1001TL:{artist.source_1001_id}</span>
+                    <span className="font-mono" style={{ color: 'oklch(var(--h3) / 0.7)' }}>1001TL:{artist.source_1001_id}</span>
                   )}
                   {artist.last_synced_at && (
-                    <span className="font-mono" style={{ color: 'hsl(var(--c3))' }}>synced {formatRelativeTime(artist.last_synced_at)}</span>
+                    <span className="font-mono" style={{ color: 'oklch(var(--c3))' }}>synced {formatRelativeTime(artist.last_synced_at)}</span>
                   )}
                 </div>
 
@@ -312,7 +312,7 @@ export function ArtistsTab({ editId }: { editId?: string } = {}) {
 
       {/* Delete confirmation */}
       <Modal isOpen={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Delete Artist">
-        <p className="text-sm mb-4" style={{ color: 'hsl(var(--c2))' }}>
+        <p className="text-sm mb-4" style={{ color: 'oklch(var(--c2))' }}>
           This will delete the artist record. Their sets will remain but will be unlinked. This cannot be undone.
         </p>
         <div className="flex gap-3">
@@ -394,14 +394,14 @@ export function ImportArtistModal({ onClose, onImported, onCreated }: { onClose:
   return (
     <Modal isOpen onClose={onClose} title="Import Artist from 1001Tracklists">
       <div className="space-y-4">
-        <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+        <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>
           Go to any artist page on 1001tracklists.com (e.g. <code className="font-mono text-xs">/dj/johnsummit/</code>),
           right-click &rarr; "View Page Source", select all, and paste below.
         </p>
 
         {/* HTML paste area */}
         <div>
-          <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>
+          <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'oklch(var(--c2))' }}>
             Page HTML
           </label>
           <textarea
@@ -410,7 +410,7 @@ export function ImportArtistModal({ onClose, onImported, onCreated }: { onClose:
             rows={6}
             placeholder="Paste the full DJ page HTML here..."
             className="w-full px-3 py-2 rounded-lg text-xs font-mono resize-none focus:outline-none"
-            style={{ background: 'hsl(var(--b4) / 0.4)', color: 'hsl(var(--c1))' }}
+            style={{ background: 'oklch(var(--b4) / 0.4)', color: 'oklch(var(--c1))' }}
           />
         </div>
 
@@ -424,7 +424,7 @@ export function ImportArtistModal({ onClose, onImported, onCreated }: { onClose:
 
         {/* Parsed preview */}
         {parsed && (
-          <div className="rounded-lg p-4 space-y-3" style={{ background: 'hsl(var(--b5) / 0.6)', boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.3)' }}>
+          <div className="rounded-lg p-4 space-y-3" style={{ background: 'oklch(var(--b5) / 0.6)', boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.3)' }}>
             <div className="flex items-center gap-3">
               {parsed.image_url && (
                 <img
@@ -435,24 +435,24 @@ export function ImportArtistModal({ onClose, onImported, onCreated }: { onClose:
                 />
               )}
               <div>
-                <p className="font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c1))' }}>{parsed.name}</p>
+                <p className="font-[var(--font-weight-medium)]" style={{ color: 'oklch(var(--c1))' }}>{parsed.name}</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  {parsed.country && <span className="text-xs" style={{ color: 'hsl(var(--c3))' }}>{parsed.country}</span>}
+                  {parsed.country && <span className="text-xs" style={{ color: 'oklch(var(--c3))' }}>{parsed.country}</span>}
                   {parsed.tracklist_count && (
-                    <span className="text-xs" style={{ color: 'hsl(var(--c3))' }}>{parsed.tracklist_count.toLocaleString()} tracklists</span>
+                    <span className="text-xs" style={{ color: 'oklch(var(--c3))' }}>{parsed.tracklist_count.toLocaleString()} tracklists</span>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Service links summary */}
-            <div className="text-xs space-y-1" style={{ color: 'hsl(var(--c2))' }}>
+            <div className="text-xs space-y-1" style={{ color: 'oklch(var(--c2))' }}>
               {parsed.image_url && <div>Photo: found</div>}
               {serviceCount > 0 && <div>{serviceCount} service link{serviceCount !== 1 ? 's' : ''} found (Spotify, SoundCloud, Beatport, etc.)</div>}
               {parsed.facebook_url && <div>Facebook: found</div>}
               {parsed.instagram_url && <div>Instagram: found</div>}
               {parsed.youtube_url && <div>YouTube: found</div>}
-              <div className="text-xs mt-1" style={{ color: 'hsl(var(--c3))' }}>
+              <div className="text-xs mt-1" style={{ color: 'oklch(var(--c3))' }}>
                 Last.fm bio and listener counts will be fetched automatically after import.
               </div>
             </div>
@@ -584,26 +584,26 @@ function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose
     <Modal isOpen onClose={onClose} title={`Edit: ${artist.name}`}>
       <div className="space-y-3">
         {/* 1001TL Enrichment section */}
-        <div className="rounded-lg overflow-hidden" style={{ boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.2)' }}>
+        <div className="rounded-lg overflow-hidden" style={{ boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.2)' }}>
           <button
             onClick={() => setShowEnrich(!showEnrich)}
             className="w-full flex items-center justify-between px-3 py-2 text-left cursor-pointer"
-            style={{ background: 'hsl(var(--b5) / 0.4)' }}
+            style={{ background: 'oklch(var(--b5) / 0.4)' }}
           >
-            <span className="text-xs font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c2))' }}>
+            <span className="text-xs font-[var(--font-weight-medium)]" style={{ color: 'oklch(var(--c2))' }}>
               Enrich from 1001Tracklists
             </span>
             <svg
               className="w-3.5 h-3.5 transition-transform"
-              style={{ color: 'hsl(var(--c3))', transform: showEnrich ? 'rotate(180deg)' : 'rotate(0deg)' }}
+              style={{ color: 'oklch(var(--c3))', transform: showEnrich ? 'rotate(180deg)' : 'rotate(0deg)' }}
               fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
             </svg>
           </button>
           {showEnrich && (
-            <div className="px-3 pb-3 pt-2 space-y-2" style={{ background: 'hsl(var(--b5) / 0.2)' }}>
-              <p className="text-xs" style={{ color: 'hsl(var(--c3))' }}>
+            <div className="px-3 pb-3 pt-2 space-y-2" style={{ background: 'oklch(var(--b5) / 0.2)' }}>
+              <p className="text-xs" style={{ color: 'oklch(var(--c3))' }}>
                 Paste the DJ page HTML to fill in missing social links, profile image, and source ID. Existing values are preserved.
               </p>
               <textarea
@@ -612,7 +612,7 @@ function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose
                 rows={3}
                 placeholder="Paste /dj/... page HTML here..."
                 className="w-full px-3 py-2 rounded-lg text-xs font-mono resize-none focus:outline-none"
-                style={{ background: 'hsl(var(--b4) / 0.4)', color: 'hsl(var(--c1))' }}
+                style={{ background: 'oklch(var(--b4) / 0.4)', color: 'oklch(var(--c1))' }}
                 disabled={isEnriching}
               />
               <Button variant="secondary" size="sm" onClick={handleEnrich} disabled={!enrichHtml.trim() || isEnriching}>
@@ -626,13 +626,13 @@ function EditArtistModal({ artist, onClose, onSaved }: { artist: Artist; onClose
 
         <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} />
         <div>
-          <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'hsl(var(--c2))' }}>Bio</label>
+          <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'oklch(var(--c2))' }}>Bio</label>
           <textarea
             value={bioSummary}
             onChange={(e) => setBioSummary(e.target.value)}
             rows={4}
             className="w-full px-3 py-2 rounded-lg text-sm resize-none focus:outline-none"
-            style={{ background: 'hsl(var(--b4) / 0.4)', color: 'hsl(var(--c1))' }}
+            style={{ background: 'oklch(var(--b4) / 0.4)', color: 'oklch(var(--c1))' }}
           />
         </div>
         <Input

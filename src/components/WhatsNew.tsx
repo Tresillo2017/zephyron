@@ -6,7 +6,7 @@ const LS_KEY = 'zephyron_last_seen_version'
 const OPEN_CHANGELOG_EVENT = 'zephyron:open-changelog'
 
 const categoryConfig: Record<string, { color: string }> = {
-  'New': { color: 'hsl(var(--h3))' },
+  'New': { color: 'oklch(var(--h3))' },
   'Improved': { color: 'hsl(180 60% 60%)' },
   'Fixed': { color: 'hsl(140 50% 55%)' },
   'Changed': { color: 'hsl(40 70% 60%)' },
@@ -66,19 +66,19 @@ export function WhatsNew() {
     >
       <div className="space-y-4">
         {/* Header with date and change count */}
-        <div className="flex items-center gap-3 pb-3" style={{ borderBottom: '1px solid hsl(var(--b4) / 0.3)' }}>
+        <div className="flex items-center gap-3 pb-3" style={{ borderBottom: '1px solid oklch(var(--b4) / 0.3)' }}>
           {section.date && (
             <span
               className="text-xs font-mono px-2 py-1 rounded-md"
               style={{
-                background: 'hsl(var(--b4))',
-                color: 'hsl(var(--c2))',
+                background: 'oklch(var(--b4))',
+                color: 'oklch(var(--c2))',
               }}
             >
               {section.date}
             </span>
           )}
-          <span className="text-xs font-mono" style={{ color: 'hsl(var(--c3))' }}>
+          <span className="text-xs font-mono" style={{ color: 'oklch(var(--c3))' }}>
             {section.categories.reduce((sum, cat) => sum + cat.items.length, 0)} changes
           </span>
         </div>
@@ -100,8 +100,8 @@ export function WhatsNew() {
                   <span
                     className="text-xs font-mono ml-auto px-2 py-0.5 rounded"
                     style={{
-                      background: 'hsl(var(--b4))',
-                      color: 'hsl(var(--c3))',
+                      background: 'oklch(var(--b4))',
+                      color: 'oklch(var(--c3))',
                     }}
                   >
                     {cat.items.length}
@@ -115,10 +115,10 @@ export function WhatsNew() {
                       <span
                         className="shrink-0 mt-2 w-1 h-1 rounded-full"
                         style={{
-                          background: 'hsl(var(--c3))',
+                          background: 'oklch(var(--c3))',
                         }}
                       />
-                      <span style={{ color: 'hsl(var(--c2))' }}>{item}</span>
+                      <span style={{ color: 'oklch(var(--c2))' }}>{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -133,19 +133,19 @@ export function WhatsNew() {
             onClick={handleDismiss}
             className="w-full h-[var(--button-height)] rounded-[var(--button-radius)] text-sm font-[var(--font-weight-medium)] cursor-pointer transition-all"
             style={{
-              background: 'hsl(var(--h3))',
+              background: 'oklch(var(--h3))',
               color: 'white',
-              boxShadow: '0 0 20px hsl(var(--h3) / 0.3)',
+              boxShadow: '0 0 20px oklch(var(--h3) / 0.3)',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'hsl(var(--h2))'
+              e.currentTarget.style.background = 'oklch(var(--h2))'
               e.currentTarget.style.transform = 'scale(0.98)'
-              e.currentTarget.style.boxShadow = '0 0 25px hsl(var(--h3) / 0.4)'
+              e.currentTarget.style.boxShadow = '0 0 25px oklch(var(--h3) / 0.4)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'hsl(var(--h3))'
+              e.currentTarget.style.background = 'oklch(var(--h3))'
               e.currentTarget.style.transform = ''
-              e.currentTarget.style.boxShadow = '0 0 20px hsl(var(--h3) / 0.3)'
+              e.currentTarget.style.boxShadow = '0 0 20px oklch(var(--h3) / 0.3)'
             }}
           >
             Got it

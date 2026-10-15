@@ -26,7 +26,7 @@ function RequestsPanel() {
   return (
     <div
       className="mt-5 rounded-xl overflow-hidden"
-      style={{ boxShadow: "inset 0 0 0 1px hsl(var(--b4) / 0.25)" }}
+      style={{ boxShadow: "inset 0 0 0 1px oklch(var(--b4) / 0.25)" }}
     ></div>
   );
 }
@@ -330,7 +330,7 @@ export function SetsUploadTab({
   };
 
   const inputClass =
-    "w-full px-3 py-2 bg-[hsl(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-colors";
+    "w-full px-3 py-2 bg-[oklch(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-colors";
 
   const identifiedCount = parsedTracks.filter(
     (t) => t.is_identified || (t.artist !== "ID" && t.title !== "ID")
@@ -347,7 +347,7 @@ export function SetsUploadTab({
           <div className="flex items-center gap-2 mb-1.5">
             <label
               className="text-sm font-medium"
-              style={{ color: "hsl(var(--c2))" }}
+              style={{ color: "oklch(var(--c2))" }}
             >
               1001Tracklists source
             </label>
@@ -365,14 +365,14 @@ export function SetsUploadTab({
           <div
             className="rounded-xl p-3 mb-2"
             style={{
-              background: "hsl(var(--b5) / 0.5)",
-              boxShadow: "inset 0 0 0 1px hsl(var(--b4) / 0.3)",
+              background: "oklch(var(--b5) / 0.5)",
+              boxShadow: "inset 0 0 0 1px oklch(var(--b4) / 0.3)",
             }}
           >
             <div className="flex items-start gap-2 mb-2">
               <svg
                 className="w-3.5 h-3.5 mt-0.5 shrink-0"
-                style={{ color: "hsl(var(--h3))" }}
+                style={{ color: "oklch(var(--h3))" }}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -384,13 +384,13 @@ export function SetsUploadTab({
                   d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
                 />
               </svg>
-              <p className="text-[11px]" style={{ color: "hsl(var(--c3))" }}>
+              <p className="text-[11px]" style={{ color: "oklch(var(--c3))" }}>
                 Open the 1001tracklists page, press{" "}
                 <kbd
                   className="px-1 py-0.5 rounded text-[10px] font-mono"
                   style={{
-                    background: "hsl(var(--b3))",
-                    color: "hsl(var(--c2))",
+                    background: "oklch(var(--b3))",
+                    color: "oklch(var(--c2))",
                   }}
                 >
                   Ctrl+U
@@ -406,9 +406,9 @@ export function SetsUploadTab({
               rows={3}
               className="w-full px-3 py-2 rounded-lg text-xs font-mono placeholder:text-text-muted focus:outline-none resize-none"
               style={{
-                background: "hsl(var(--b6))",
-                color: "hsl(var(--c2))",
-                boxShadow: "inset 0 0 0 1px hsl(var(--b4) / 0.25)",
+                background: "oklch(var(--b6))",
+                color: "oklch(var(--c2))",
+                boxShadow: "inset 0 0 0 1px oklch(var(--b4) / 0.25)",
               }}
             />
 
@@ -427,7 +427,7 @@ export function SetsUploadTab({
               {tracklistHtml.trim() && (
                 <span
                   className="text-[10px] font-mono"
-                  style={{ color: "hsl(var(--c3))" }}
+                  style={{ color: "oklch(var(--c3))" }}
                 >
                   {(tracklistHtml.length / 1024).toFixed(0)} KB
                 </span>
@@ -435,7 +435,7 @@ export function SetsUploadTab({
               {parsedTracks.length > 0 && (
                 <button
                   className="text-[10px] ml-auto transition-colors"
-                  style={{ color: "hsl(var(--c3))" }}
+                  style={{ color: "oklch(var(--c3))" }}
                   onClick={() => {
                     setParsedTracks([]);
                     setTracklistHtml("");
@@ -460,16 +460,16 @@ export function SetsUploadTab({
           {parsedTracks.length > 0 && (
             <div
               className="flex-1 min-h-0 rounded-xl overflow-hidden flex flex-col"
-              style={{ boxShadow: "inset 0 0 0 1px hsl(var(--b4) / 0.25)" }}
+              style={{ boxShadow: "inset 0 0 0 1px oklch(var(--b4) / 0.25)" }}
             >
               <div
                 className="flex items-center justify-between px-3 py-2 shrink-0"
-                style={{ background: "hsl(var(--b5) / 0.5)" }}
+                style={{ background: "oklch(var(--b5) / 0.5)" }}
               >
                 <div className="flex items-center gap-2">
                   <span
                     className="text-xs font-medium"
-                    style={{ color: "hsl(var(--h3))" }}
+                    style={{ color: "oklch(var(--h3))" }}
                   >
                     {parsedTracks.filter((t) => !t.is_continuation).length}{" "}
                     tracks
@@ -477,7 +477,7 @@ export function SetsUploadTab({
                   {identifiedCount > 0 && (
                     <span
                       className="text-[10px]"
-                      style={{ color: "hsl(var(--c3))" }}
+                      style={{ color: "oklch(var(--c3))" }}
                     >
                       {identifiedCount} ID'd
                     </span>
@@ -506,8 +506,8 @@ export function SetsUploadTab({
                       className="flex items-center gap-2 px-3 py-1.5 text-xs"
                       style={{
                         background:
-                          i % 2 === 0 ? "transparent" : "hsl(var(--b5) / 0.2)",
-                        borderBottom: "1px solid hsl(var(--b4) / 0.1)",
+                          i % 2 === 0 ? "transparent" : "oklch(var(--b5) / 0.2)",
+                        borderBottom: "1px solid oklch(var(--b4) / 0.1)",
                       }}
                     >
                       {t.artwork_url ? (
@@ -522,7 +522,7 @@ export function SetsUploadTab({
                           style={{
                             background: isId
                               ? "hsl(0, 30%, 20%)"
-                              : "hsl(var(--b4) / 0.5)",
+                              : "oklch(var(--b4) / 0.5)",
                           }}
                         >
                           {isId && (
@@ -539,10 +539,10 @@ export function SetsUploadTab({
                         className="w-5 text-right font-mono tabular-nums shrink-0 text-[10px]"
                         style={{
                           color: t.is_continuation
-                            ? "hsl(var(--h3) / 0.5)"
+                            ? "oklch(var(--h3) / 0.5)"
                             : isId
                             ? "hsl(0, 40%, 50%)"
-                            : "hsl(var(--c3))",
+                            : "oklch(var(--c3))",
                         }}
                       >
                         {t.is_continuation
@@ -552,7 +552,7 @@ export function SetsUploadTab({
                       {t.cue_time && (
                         <span
                           className="font-mono tabular-nums shrink-0 text-[10px]"
-                          style={{ color: "hsl(var(--c3))" }}
+                          style={{ color: "oklch(var(--c3))" }}
                         >
                           {t.cue_time}
                         </span>
@@ -567,19 +567,19 @@ export function SetsUploadTab({
                           </span>
                         ) : (
                           <>
-                            <span style={{ color: "hsl(var(--c2))" }}>
+                            <span style={{ color: "oklch(var(--c2))" }}>
                               {t.artist}
                             </span>
-                            <span style={{ color: "hsl(var(--c3))" }}> — </span>
-                            <span style={{ color: "hsl(var(--c1))" }}>
+                            <span style={{ color: "oklch(var(--c3))" }}> — </span>
+                            <span style={{ color: "oklch(var(--c1))" }}>
                               {t.title}
                             </span>
                             {t.is_mashup && (
                               <span
                                 className="ml-1 text-[9px] px-1 py-0.5 rounded font-mono"
                                 style={{
-                                  background: "hsl(var(--b4) / 0.4)",
-                                  color: "hsl(var(--c3))",
+                                  background: "oklch(var(--b4) / 0.4)",
+                                  color: "oklch(var(--c3))",
                                 }}
                               >
                                 mashup
@@ -626,7 +626,7 @@ export function SetsUploadTab({
         <div className="w-72 shrink-0 flex flex-col">
           <label
             className="text-sm font-medium mb-1.5"
-            style={{ color: "hsl(var(--c2))" }}
+            style={{ color: "oklch(var(--c2))" }}
           >
             Set metadata
           </label>
@@ -635,7 +635,7 @@ export function SetsUploadTab({
             <div>
               <label
                 className="text-xs font-medium block mb-1"
-                style={{ color: "hsl(var(--c2))" }}
+                style={{ color: "oklch(var(--c2))" }}
               >
                 Title *
               </label>
@@ -650,7 +650,7 @@ export function SetsUploadTab({
             <div>
               <label
                 className="text-xs font-medium block mb-1"
-                style={{ color: "hsl(var(--c2))" }}
+                style={{ color: "oklch(var(--c2))" }}
               >
                 Artist / DJ *
               </label>
@@ -673,8 +673,8 @@ export function SetsUploadTab({
                       key={a.id}
                       className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs"
                       style={{
-                        background: "hsl(var(--h3) / 0.12)",
-                        color: "hsl(var(--h3))",
+                        background: "oklch(var(--h3) / 0.12)",
+                        color: "oklch(var(--h3))",
                       }}
                     >
                       {a.name}
@@ -715,7 +715,7 @@ export function SetsUploadTab({
             <div>
               <label
                 className="text-xs font-medium block mb-1"
-                style={{ color: "hsl(var(--c2))" }}
+                style={{ color: "oklch(var(--c2))" }}
               >
                 Venue
               </label>
@@ -730,7 +730,7 @@ export function SetsUploadTab({
             <div>
               <label
                 className="text-xs font-medium block mb-1"
-                style={{ color: "hsl(var(--c2))" }}
+                style={{ color: "oklch(var(--c2))" }}
               >
                 Event
               </label>
@@ -749,7 +749,7 @@ export function SetsUploadTab({
               <div>
                 <label
                   className="text-xs font-medium block mb-1"
-                  style={{ color: "hsl(var(--c2))" }}
+                  style={{ color: "oklch(var(--c2))" }}
                 >
                   Genre
                 </label>
@@ -769,7 +769,7 @@ export function SetsUploadTab({
               <div>
                 <label
                   className="text-xs font-medium block mb-1"
-                  style={{ color: "hsl(var(--c2))" }}
+                  style={{ color: "oklch(var(--c2))" }}
                 >
                   Subgenre
                 </label>
@@ -786,7 +786,7 @@ export function SetsUploadTab({
               <div>
                 <label
                   className="text-xs font-medium block mb-1"
-                  style={{ color: "hsl(var(--c2))" }}
+                  style={{ color: "oklch(var(--c2))" }}
                 >
                   Date
                 </label>
@@ -800,7 +800,7 @@ export function SetsUploadTab({
               <div>
                 <label
                   className="text-xs font-medium block mb-1"
-                  style={{ color: "hsl(var(--c2))" }}
+                  style={{ color: "oklch(var(--c2))" }}
                 >
                   Duration *
                 </label>
@@ -817,7 +817,7 @@ export function SetsUploadTab({
             <div>
               <label
                 className="text-xs font-medium block mb-1"
-                style={{ color: "hsl(var(--c2))" }}
+                style={{ color: "oklch(var(--c2))" }}
               >
                 Description
               </label>
@@ -834,7 +834,7 @@ export function SetsUploadTab({
             <div>
               <label
                 className="text-xs font-medium block mb-1.5"
-                style={{ color: "hsl(var(--c2))" }}
+                style={{ color: "oklch(var(--c2))" }}
               >
                 Stream source
               </label>
@@ -848,10 +848,10 @@ export function SetsUploadTab({
                       style={{
                         background:
                           streamSource === type
-                            ? "hsl(var(--h3))"
-                            : "hsl(var(--b4) / 0.5)",
+                            ? "oklch(var(--h3))"
+                            : "oklch(var(--b4) / 0.5)",
                         color:
-                          streamSource === type ? "white" : "hsl(var(--c3))",
+                          streamSource === type ? "white" : "oklch(var(--c3))",
                       }}
                     >
                       {type === "youtube"
@@ -878,7 +878,7 @@ export function SetsUploadTab({
                   {videoId && (
                     <div
                       className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg mt-1.5"
-                      style={{ background: "hsl(var(--b4) / 0.3)" }}
+                      style={{ background: "oklch(var(--b4) / 0.3)" }}
                     >
                       <svg
                         className="w-3 h-3 shrink-0"
@@ -890,7 +890,7 @@ export function SetsUploadTab({
                       </svg>
                       <span
                         className="text-[10px] font-mono"
-                        style={{ color: "hsl(var(--c3))" }}
+                        style={{ color: "oklch(var(--c3))" }}
                       >
                         {videoId}
                       </span>
@@ -916,7 +916,7 @@ export function SetsUploadTab({
 
               {/* None: just a note */}
               {streamSource === "none" && (
-                <p className="text-[10px]" style={{ color: "hsl(var(--c3))" }}>
+                <p className="text-[10px]" style={{ color: "oklch(var(--c3))" }}>
                   Set will be added without a stream source. Users can suggest
                   sources later.
                 </p>
@@ -930,7 +930,7 @@ export function SetsUploadTab({
             </p>
           )}
           {success && (
-            <p className="text-xs mt-2" style={{ color: "hsl(var(--h3))" }}>
+            <p className="text-xs mt-2" style={{ color: "oklch(var(--h3))" }}>
               {success}
             </p>
           )}

@@ -33,7 +33,7 @@ export function ActivityFeed({ feed, userId, limit, showLoadMore = false }: Acti
   if (activityError) {
     return (
       <div className="card p-8 text-center">
-        <div className="text-sm" style={{ color: 'hsl(var(--c2))' }}>
+        <div className="text-sm" style={{ color: 'oklch(var(--c2))' }}>
           Activity feed unavailable
         </div>
       </div>
@@ -44,10 +44,10 @@ export function ActivityFeed({ feed, userId, limit, showLoadMore = false }: Acti
     return (
       <div className="card p-8 text-center">
         <div className="text-4xl mb-4">📭</div>
-        <div className="text-lg font-[var(--font-weight-medium)] mb-2" style={{ color: 'hsl(var(--c1))' }}>
+        <div className="text-lg font-[var(--font-weight-medium)] mb-2" style={{ color: 'oklch(var(--c1))' }}>
           No activity yet
         </div>
-        <div className="text-sm" style={{ color: 'hsl(var(--c2))' }}>
+        <div className="text-sm" style={{ color: 'oklch(var(--c2))' }}>
           Start listening and creating!
         </div>
       </div>
@@ -70,8 +70,8 @@ export function ActivityFeed({ feed, userId, limit, showLoadMore = false }: Acti
           disabled={activityLoading}
           className="w-full py-3 rounded font-[var(--font-weight-medium)] text-sm transition-colors"
           style={{
-            backgroundColor: 'hsl(var(--b4))',
-            color: 'hsl(var(--c1))'
+            backgroundColor: 'oklch(var(--b4))',
+            color: 'oklch(var(--c1))'
           }}
         >
           {activityLoading ? 'Loading...' : 'Load More'}

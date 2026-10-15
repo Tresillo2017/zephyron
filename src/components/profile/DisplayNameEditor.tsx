@@ -74,10 +74,10 @@ export function DisplayNameEditor({ initialName, onUpdate }: DisplayNameEditorPr
     return (
       <div className="flex items-center justify-between">
         <div className="flex flex-col">
-          <label className="text-sm font-[var(--font-weight-medium)] text-[hsl(var(--c1))] mb-1">
+          <label className="text-sm font-[var(--font-weight-medium)] text-[oklch(var(--c1))] mb-1">
             Display Name
           </label>
-          <span className="text-sm font-[var(--font-weight-medium)] text-[hsl(var(--c1))]">
+          <span className="text-sm font-[var(--font-weight-medium)] text-[oklch(var(--c1))]">
             {name}
           </span>
         </div>
@@ -85,7 +85,7 @@ export function DisplayNameEditor({ initialName, onUpdate }: DisplayNameEditorPr
           onClick={handleEdit}
           variant="ghost"
           size="sm"
-          className="text-xs text-[hsl(var(--h3))]"
+          className="text-xs text-[oklch(var(--h3))]"
         >
           Edit
         </Button>
@@ -97,7 +97,7 @@ export function DisplayNameEditor({ initialName, onUpdate }: DisplayNameEditorPr
     <div className="space-y-2">
       <label
         htmlFor="display-name-input"
-        className="text-sm font-[var(--font-weight-medium)] text-[hsl(var(--c1))]"
+        className="text-sm font-[var(--font-weight-medium)] text-[oklch(var(--c1))]"
       >
         Display Name
       </label>
@@ -113,9 +113,9 @@ export function DisplayNameEditor({ initialName, onUpdate }: DisplayNameEditorPr
         disabled={saving}
         autoFocus
         placeholder="Enter your display name"
-        className="w-full px-3 py-2 rounded-lg text-sm bg-[hsl(var(--b4))] text-[hsl(var(--c1))] placeholder:text-[hsl(var(--c3))] disabled:opacity-50"
+        className="w-full px-3 py-2 rounded-lg text-sm bg-[oklch(var(--b4))] text-[oklch(var(--c1))] placeholder:text-[oklch(var(--c3))] disabled:opacity-50"
         style={{
-          boxShadow: 'inset 0 0 0 1px hsl(var(--b3) / 0.5)',
+          boxShadow: 'inset 0 0 0 1px oklch(var(--b3) / 0.5)',
           transition: 'box-shadow 0.2s var(--ease-out-custom)',
         }}
       />

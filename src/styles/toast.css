@@ -9,7 +9,7 @@
 
 /* Base toast styling - applies to all variants */
 [data-sileo-toast] {
-  background: hsl(var(--b5));
+  background: oklch(var(--b5));
   border-radius: var(--card-radius);
   box-shadow: var(--card-border), var(--card-shadow);
   padding: 16px 20px;
@@ -20,7 +20,7 @@
 
 /* Variant-specific accent colors */
 [data-sileo-toast][data-type="success"] {
-  --toast-accent: hsl(var(--h3));
+  --toast-accent: oklch(var(--h3));
 }
 [data-sileo-toast][data-type="error"] {
   --toast-accent: var(--color-danger);
@@ -29,7 +29,7 @@
   --toast-accent: var(--color-warning);
 }
 [data-sileo-toast][data-type="info"] {
-  --toast-accent: hsl(var(--c2));
+  --toast-accent: oklch(var(--c2));
 }
 
 /* Icon styling */
@@ -43,7 +43,7 @@
 /* Title text */
 [data-sileo-toast] [data-title] {
   font-weight: var(--font-weight-medium);
-  color: hsl(var(--c1));
+  color: oklch(var(--c1));
   font-size: 14px;
   line-height: 1.4;
 }
@@ -51,7 +51,7 @@
 /* Description text */
 [data-sileo-toast] [data-description] {
   font-weight: var(--font-weight);
-  color: hsl(var(--c2));
+  color: oklch(var(--c2));
   font-size: 13px;
   line-height: 1.5;
   margin-top: 4px;
@@ -59,21 +59,21 @@
 
 /* Close button */
 [data-sileo-toast] [data-close-button] {
-  color: hsl(var(--c3));
+  color: oklch(var(--c3));
   background: transparent;
   border-radius: 6px;
   padding: 4px;
   transition: background-color 0.2s var(--ease-out-custom), color 0.2s var(--ease-out-custom);
 }
 [data-sileo-toast] [data-close-button]:hover {
-  background: hsl(var(--b3) / 0.5);
-  color: hsl(var(--c1));
+  background: oklch(var(--b3) / 0.5);
+  color: oklch(var(--c1));
 }
 
 /* Action button */
 [data-sileo-toast] [data-action-button] {
-  background: hsl(var(--b3));
-  color: hsl(var(--c2));
+  background: oklch(var(--b3));
+  color: oklch(var(--c2));
   border-radius: var(--button-radius);
   padding: 8px 12px;
   font-size: 13px;
@@ -81,7 +81,7 @@
   transition: transform 0.2s var(--ease-out-custom), background-color 0.2s var(--ease-out-custom);
 }
 [data-sileo-toast] [data-action-button]:hover {
-  background: hsl(var(--b2));
+  background: oklch(var(--b2));
 }
 [data-sileo-toast] [data-action-button]:active {
   transform: scale(0.98);

@@ -35,12 +35,12 @@ const EventCard = memo(({ event }: { event: any }) => {
       style={{ boxShadow: 'var(--card-border), var(--card-shadow)' }}
     >
       {/* Cover image */}
-      <div className="relative h-44 overflow-hidden" style={{ background: 'hsl(var(--b4))' }}>
+      <div className="relative h-44 overflow-hidden" style={{ background: 'oklch(var(--b4))' }}>
         {event.cover_image_r2_key ? (
           <img src={getEventCoverUrl(event.id)} alt={event.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(var(--h3) / 0.15), hsl(var(--b4)))' }}>
-            <span className="text-4xl font-[var(--font-weight-bold)]" style={{ color: 'hsl(var(--c3) / 0.3)' }}>{event.name?.charAt(0)}</span>
+          <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, oklch(var(--h3) / 0.15), oklch(var(--b4)))' }}>
+            <span className="text-4xl font-[var(--font-weight-bold)]" style={{ color: 'oklch(var(--c3) / 0.3)' }}>{event.name?.charAt(0)}</span>
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
@@ -48,7 +48,7 @@ const EventCard = memo(({ event }: { event: any }) => {
         {year && (
           <span
             className="absolute top-3 right-3 text-[10px] font-mono font-[var(--font-weight-bold)] px-2.5 py-1 rounded-md text-white/95"
-            style={{ background: 'hsl(var(--h3) / 0.8)', backdropFilter: 'blur(8px)' }}
+            style={{ background: 'oklch(var(--h3) / 0.8)', backdropFilter: 'blur(8px)' }}
           >
             {year}
           </span>
@@ -61,21 +61,21 @@ const EventCard = memo(({ event }: { event: any }) => {
         </div>
       </div>
       {/* Info */}
-      <div className="px-4 py-3.5" style={{ background: 'hsl(var(--b5))' }}>
+      <div className="px-4 py-3.5" style={{ background: 'oklch(var(--b5))' }}>
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs font-mono min-w-0" style={{ color: 'hsl(var(--c3))' }}>
+          <div className="flex items-center gap-2 text-xs font-mono min-w-0" style={{ color: 'oklch(var(--c3))' }}>
             {event.start_date && <span className="truncate">{formatDate(event.start_date)}</span>}
             {event.series && (
               <>
-                <span style={{ color: 'hsl(var(--c3) / 0.4)' }}>·</span>
-                <span className="truncate" style={{ color: 'hsl(var(--h3))' }}>{event.series}</span>
+                <span style={{ color: 'oklch(var(--c3) / 0.4)' }}>·</span>
+                <span className="truncate" style={{ color: 'oklch(var(--h3))' }}>{event.series}</span>
               </>
             )}
           </div>
-          <div className="flex items-center gap-2.5 text-xs font-mono shrink-0" style={{ color: 'hsl(var(--c3))' }}>
+          <div className="flex items-center gap-2.5 text-xs font-mono shrink-0" style={{ color: 'oklch(var(--c3))' }}>
             {event.total_duration > 0 && <span>{formatTotalDuration(event.total_duration)}</span>}
             {event.set_count > 0 && (
-              <span className="font-[var(--font-weight-medium)]" style={{ color: 'hsl(var(--c1))' }}>
+              <span className="font-[var(--font-weight-medium)]" style={{ color: 'oklch(var(--c1))' }}>
                 {event.set_count} {event.set_count === 1 ? 'set' : 'sets'}
               </span>
             )}
@@ -119,18 +119,18 @@ export function EventsPage() {
         <div>
           <h1
             className="text-2xl font-[var(--font-weight-bold)] mb-1"
-            style={{ color: 'hsl(var(--c1))' }}
+            style={{ color: 'oklch(var(--c1))' }}
           >
             Festivals & Events
           </h1>
-          <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+          <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>
             {events.length > 0 ? `${events.length} events · ${totalSets} sets` : 'Major electronic music festivals and events'}
           </p>
         </div>
         <div className="relative">
           <svg
             className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
-            style={{ color: 'hsl(var(--c3))' }}
+            style={{ color: 'oklch(var(--c3))' }}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -145,9 +145,9 @@ export function EventsPage() {
             placeholder="Search events..."
             className="pl-10 pr-4 py-2 rounded-lg text-sm w-full sm:w-64 focus:outline-none transition-all"
             style={{
-              background: 'hsl(var(--b4) / 0.4)',
-              color: 'hsl(var(--c1))',
-              boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.3)',
+              background: 'oklch(var(--b4) / 0.4)',
+              color: 'oklch(var(--c1))',
+              boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.3)',
             }}
           />
         </div>
@@ -162,15 +162,15 @@ export function EventsPage() {
           <div
             className="w-12 h-12 mx-auto mb-4 rounded-lg flex items-center justify-center"
             style={{
-              background: 'hsl(var(--b4) / 0.3)',
-              boxShadow: 'inset 0 0 0 1px hsl(var(--b4) / 0.25)',
+              background: 'oklch(var(--b4) / 0.3)',
+              boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.25)',
             }}
           >
-            <svg className="w-6 h-6" style={{ color: 'hsl(var(--c3))' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg className="w-6 h-6" style={{ color: 'oklch(var(--c3))' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
             </svg>
           </div>
-          <p className="text-sm" style={{ color: 'hsl(var(--c3))' }}>
+          <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>
             {search ? `No events matching "${search}"` : 'No events yet. Events are created from the admin dashboard.'}
           </p>
         </div>
