@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
+import { Headphone2Filled } from '@mingcute/react/core-filled'
 import { useProfileStore } from '../../stores/profileStore'
 import { ActivityItem } from './ActivityItem'
-import { ActivityFeedSkeleton } from '../ui/Skeleton'
+import { Button, Card, EmptyState, Skeleton } from '../bleh'
 
 interface ActivityFeedProps {
   feed: 'me' | 'user' | 'community'
@@ -27,55 +28,56 @@ export function ActivityFeed({ feed, userId, limit, showLoadMore = false }: Acti
   const displayItems = limit ? activityFeed.slice(0, limit) : activityFeed
 
   if (activityLoading && activityFeed.length === 0) {
-    return <ActivityFeedSkeleton count={limit || 5} />
+    return (
+      <div className="flex flex-col gap-2" aria-busy="true" aria-label="Loading activity">
+        {Array.from({ length: limit || 5 }, (_, i) => (
+          <Skeleton key={i} height={56} />
+        ))}
+      </div>
+    )
   }
 
   if (activityError) {
     return (
-      <div className="card p-8 text-center">
-        <div className="text-sm" style={{ color: 'oklch(var(--c2))' }}>
-          Activity feed unavailable
-        </div>
-      </div>
+      <Card>
+        <EmptyState title="Activity feed unavailable" />
+      </Card>
     )
   }
 
   if (displayItems.length === 0) {
     return (
-      <div className="card p-8 text-center">
-        <div className="text-4xl mb-4">📭</div>
-        <div className="text-lg font-[var(--font-weight-medium)] mb-2" style={{ color: 'oklch(var(--c1))' }}>
-          No activity yet
-        </div>
-        <div className="text-sm" style={{ color: 'oklch(var(--c2))' }}>
-          Start listening and creating!
-        </div>
-      </div>
+      <Card>
+        <EmptyState
+          icon={<Headphone2Filled />}
+          title="No activity yet"
+          description="Start listening and creating!"
+        />
+      </Card>
     )
   }
 
   return (
-    <div className="space-y-3">
-      {displayItems.map(item => (
-        <ActivityItem
-          key={item.id}
-          item={item}
-          showUser={feed === 'community'}
-        />
-      ))}
+    <div className="flex flex-col gap-2">
+      <ul className="m-0 flex list-none flex-col gap-1 p-0">
+        {displayItems.map((item, i) => (
+          <li key={item.id}>
+            <ActivityItem
+              item={item}
+              showUser={feed === 'community'}
+              index={i}
+            />
+          </li>
+        ))}
+      </ul>
 
       {showLoadMore && activityHasMore && (
-        <button
+        <Button
+          label={activityLoading ? 'Loading...' : 'Load More'}
           onClick={loadMoreActivity}
           disabled={activityLoading}
-          className="w-full py-3 rounded font-[var(--font-weight-medium)] text-sm transition-colors"
-          style={{
-            backgroundColor: 'oklch(var(--b4))',
-            color: 'oklch(var(--c1))'
-          }}
-        >
-          {activityLoading ? 'Loading...' : 'Load More'}
-        </button>
+          className="mt-2 w-full"
+        />
       )}
     </div>
   )
