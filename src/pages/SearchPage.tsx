@@ -257,6 +257,7 @@ export function SearchPage() {
 
   return (
     <PageFrame>
+      <h1 className="sr-only">Search results for “{query}”</h1>
       <ContentCard
         toolbar={
           <ToolbarTabs tabs={tabs} active={activeTab} onChange={setTab} />

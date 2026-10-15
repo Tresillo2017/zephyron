@@ -102,7 +102,7 @@
   white-space: nowrap;
   font-size: 12px;
   line-height: 16px;
-  color: var(--accent);
+  color: var(--text-muted);
 }
 .zl-set-meta {
   display: flex;

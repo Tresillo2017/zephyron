@@ -234,8 +234,8 @@ a.zl-round { text-decoration: none; }
   font-size: 11px;
   font-weight: var(--fw-bold);
   font-family: var(--font-code);
-  color: oklch(var(--l3-c, var(--l3)));
-  background: oklch(var(--h4) / 80%);
+  color: var(--on-accent);
+  background: var(--accent);
   backdrop-filter: blur(8px);
   font-variant-numeric: tabular-nums;
 }
@@ -244,7 +244,7 @@ a.zl-round { text-decoration: none; }
 .zl-event-loc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; line-height: 16px; color: var(--text); }
 .zl-event-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; font-size: 12px; line-height: 16px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .zl-event-meta { display: flex; min-width: 0; gap: 8px; }
-.zl-event-series { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--accent); }
+.zl-event-series { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
 .zl-event-counts { display: flex; flex: none; align-items: center; gap: 10px; }
 .zl-event-counts strong { font-weight: 500; color: var(--text); }
 
