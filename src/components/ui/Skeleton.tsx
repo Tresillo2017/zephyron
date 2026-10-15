@@ -5,7 +5,7 @@ interface SkeletonProps {
 export function Skeleton({ className = '' }: SkeletonProps) {
   return (
     <div
-      className={`animate-pulse bg-surface-raised rounded ${className}`}
+      className={`ui-skeleton rounded-[10px] ${className}`}
     />
   )
 }
@@ -153,7 +153,7 @@ export function SearchResultSkeleton() {
 export function ArtistBannerSkeleton() {
   return (
     <div>
-      <div className="h-[280px] bg-surface-raised animate-pulse" />
+      <div className="h-[280px] ui-skeleton" />
       <div className="px-6 lg:px-10 -mt-[100px] relative z-10">
         <div className="flex items-end gap-5 mb-6">
           <Skeleton className="w-[130px] h-[130px] sm:w-[160px] sm:h-[160px] rounded-xl flex-shrink-0" />
@@ -175,7 +175,7 @@ export function ArtistBannerSkeleton() {
 export function SetBannerSkeleton() {
   return (
     <div>
-      <div className="h-[280px] bg-surface-raised animate-pulse" />
+      <div className="h-[280px] ui-skeleton" />
       <div className="px-6 lg:px-10 -mt-[100px] relative z-10">
         <div className="flex items-end gap-5 mb-6">
           <Skeleton className="w-[130px] h-[130px] sm:w-[160px] sm:h-[160px] rounded-xl flex-shrink-0" />

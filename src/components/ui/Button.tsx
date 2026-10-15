@@ -1,50 +1,41 @@
 import type { ButtonHTMLAttributes } from 'react'
+import { cn } from '../../lib/cn'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
   size?: 'sm' | 'md' | 'lg'
 }
 
-const variantClasses: Record<string, string> = {
-  primary: 'bg-accent text-white font-[var(--font-weight-medium)] shadow-[0_3px_12px_oklch(var(--h4)/0.32)]',
-  secondary: 'bg-[oklch(var(--b3))] text-text-secondary',
-  ghost: 'bg-transparent text-text-secondary hover:bg-[oklch(var(--b4)/0.6)]',
-  danger: 'bg-danger/10 text-danger hover:bg-danger/20',
+/** Legacy variant names mapped onto the bleh button appearances (see components/bleh/Button.tsx). */
+const APPEARANCE: Record<NonNullable<ButtonProps['variant']>, string> = {
+  primary: 'primary',
+  secondary: 'default',
+  ghost: 'ghost',
+  danger: 'danger',
 }
 
-const sizeClasses: Record<string, string> = {
-  sm: 'px-[9px] py-[5px] text-xs h-[26px]',
-  md: 'px-[9px] py-[6px] text-sm h-[var(--button-height)]',
-  lg: 'px-4 py-[8px] text-sm h-[36px]',
+const HUE: Partial<Record<NonNullable<ButtonProps['variant']>, string>> = {
+  danger: 'hue-neg',
 }
 
+/**
+ * Legacy Zephyron button. Same props as before; renders the bleh `ui-btn` recipe
+ * (b3 fill, 9px radius, press scale .98, accent glow on primary).
+ */
 export function Button({
   variant = 'secondary',
   size = 'md',
-  className = '',
+  className,
+  type = 'button',
   ...props
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-[var(--button-radius)] cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
-      style={{
-        transitionProperty: 'background-color, transform, box-shadow, color, opacity',
-        transitionDuration: 'var(--trans)',
-        transitionTimingFunction: 'var(--ease-out-custom)',
-      }}
-      onMouseDown={(e) => {
-        (e.currentTarget as HTMLElement).style.transform = 'scale(0.98)'
-        props.onMouseDown?.(e)
-      }}
-      onMouseUp={(e) => {
-        (e.currentTarget as HTMLElement).style.transform = ''
-        props.onMouseUp?.(e)
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.transform = ''
-        props.onMouseLeave?.(e)
-      }}
       {...props}
+      type={type}
+      className={cn('ui-btn', HUE[variant], className)}
+      data-appearance={APPEARANCE[variant]}
+      data-size={size === 'sm' ? 'sm' : 'md'}
     />
   )
 }

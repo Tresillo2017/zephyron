@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
+import { CheckCircleFilled, DeviceFilled } from '@mingcute/react/core-filled'
 import { authClient } from '../lib/auth-client'
+import { Button, Input } from '../components/bleh'
+import { AuthShell } from '../components/auth/AuthShell'
+import { AuthBadge, AuthHeading, AuthNotice } from '../components/auth/AuthParts'
 
 export function DevicePage() {
   const [searchParams] = useSearchParams()
@@ -41,55 +45,67 @@ export function DevicePage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface">
-        <div className="text-center space-y-4">
-          <p className="text-text-primary text-lg">You need to be logged in to authorize a device.</p>
-          <Link to="/login?redirect=/device" className="text-accent underline">Log in</Link>
+      <AuthShell width={420} eyebrow="Device authorization">
+        <div className="animate-item">
+          <AuthNotice
+            icon={<DeviceFilled />}
+            title="Log in to authorize a device"
+            body="You need to be logged in to authorize a device."
+          >
+            <Link to="/login?redirect=/device" className="as-link text-sm">Log in</Link>
+          </AuthNotice>
         </div>
-      </div>
+      </AuthShell>
+    )
+  }
+
+  if (status === 'success') {
+    return (
+      <AuthShell width={420} eyebrow="Device authorization">
+        <div className="animate-item">
+          <AuthNotice
+            icon={<CheckCircleFilled />}
+            hue="hue-pos"
+            title="Device authorized"
+            body="You can return to your TV."
+          />
+        </div>
+      </AuthShell>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface">
-      <div className="w-full max-w-md space-y-6 p-8 rounded-2xl bg-surface-2 shadow-lg">
-        <h1 className="text-2xl font-bold text-text-primary">Authorize your TV</h1>
-        <p className="text-text-secondary text-sm">
-          Enter the code shown on your TV screen.
-        </p>
-
-        {status === 'success' ? (
-          <div className="text-center space-y-2">
-            <p className="text-green-500 text-lg font-semibold">✓ Device authorized!</p>
-            <p className="text-text-secondary text-sm">You can return to your TV.</p>
-          </div>
-        ) : (
-          <form onSubmit={handleApprove} className="space-y-4">
-            <label htmlFor="device-code" className="sr-only">Device code</label>
-            <input
-              id="device-code"
-              type="text"
-              value={rawCode}
-              onChange={e => setRawCode(e.target.value)}
-              placeholder="ABCD-1234"
-              maxLength={9}
-              aria-label="Device code shown on TV"
-              className="w-full px-4 py-3 rounded-lg bg-surface text-text-primary text-center text-2xl tracking-widest font-mono border border-border focus:outline-none focus:ring-2 focus:ring-accent uppercase"
-              autoFocus
-            />
-            {status === 'error' && (
-              <p className="text-red-500 text-sm text-center">{error}</p>
-            )}
-            <button
-              type="submit"
-              disabled={normalizedCode.length < 8 || status === 'loading'}
-              className="w-full py-3 rounded-lg bg-accent text-white font-semibold disabled:opacity-50"
-            >
-              {status === 'loading' ? 'Authorizing…' : 'Authorize'}
-            </button>
-          </form>
-        )}
+    <AuthShell width={420} eyebrow="Device authorization">
+      <div className="animate-item">
+        <div className="mb-5">
+          <AuthBadge><DeviceFilled /></AuthBadge>
+        </div>
+        <AuthHeading title="Authorize your TV" subtitle="Enter the code shown on your TV screen." />
+        <form onSubmit={handleApprove} className="flex flex-col gap-3">
+          <Input
+            label="Device code"
+            name="userCode"
+            value={rawCode}
+            onChange={e => setRawCode(e.target.value)}
+            placeholder="ABCD-1234"
+            maxLength={9}
+            autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            className="text-center font-mono text-2xl uppercase tracking-[0.2em]"
+            autoFocus
+          />
+          {status === 'error' && <p role="alert" className="ui-field-msg" data-error>{error}</p>}
+          <Button
+            appearance="primary"
+            label={status === 'loading' ? 'Authorizing…' : 'Authorize'}
+            htmlButtonType="submit"
+            loading={status === 'loading'}
+            disabled={normalizedCode.length < 8 || status === 'loading'}
+            className="mt-1 w-full"
+          />
+        </form>
       </div>
-    </div>
+    </AuthShell>
   )
 }

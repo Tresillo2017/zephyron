@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
-import { FiHeart } from 'react-icons/fi'
-import { FaHeart } from 'react-icons/fa'
+import { useState, useEffect, type CSSProperties } from 'react'
+import { HeartFilled } from '@mingcute/react/core-filled'
+import { HeartRegular } from '@mingcute/react/core-regular'
 import { likeSong, unlikeSong, getSongLikeStatus } from '../../lib/api'
 import { useSession } from '../../lib/auth-client'
 import { sileo } from 'sileo'
+import './LikeButton.css'
 
 interface LikeButtonProps {
   songId: string
@@ -84,20 +85,14 @@ export function LikeButton({ songId, size = 16, className = '', showCount = fals
     <button
       onClick={handleToggle}
       disabled={isAnimating}
-      className={`group relative flex items-center gap-1.5 ${className}`}
-      style={{
-        cursor: isAnimating ? 'default' : 'pointer',
-      }}
+      className={`lk-button group relative flex items-center gap-1.5 ${className}`}
+      data-animating={isAnimating ? '' : undefined}
       title={liked ? 'Unlike' : 'Like this track'}
     >
       {/* Heart icon container with animation */}
       <span
-        className="relative flex items-center justify-center"
-        style={{
-          animation: isAnimating && liked
-            ? 'likeHeartBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
-            : undefined,
-        }}
+        className="lk-icon relative flex items-center justify-center"
+        data-bounce={isAnimating && liked ? '' : undefined}
       >
         {/* Particles burst effect */}
         {showParticles && (
@@ -105,17 +100,12 @@ export function LikeButton({ songId, size = 16, className = '', showCount = fals
             {[...Array(6)].map((_, i) => (
               <span
                 key={i}
-                className="absolute"
+                className="lk-particle"
                 style={{
-                  width: 3,
-                  height: 3,
-                  borderRadius: '50%',
-                  background: 'oklch(var(--h3))',
-                  animation: `particleBurst 0.5s cubic-bezier(0, 0.5, 0.5, 1) forwards`,
+                  '--rot': `${i * 60}deg`,
+                  '--dist': `${size * 1.5}px`,
                   animationDelay: `${i * 0.02}s`,
-                  transform: `rotate(${i * 60}deg) translateY(0)`,
-                  opacity: 0,
-                }}
+                } as CSSProperties}
               />
             ))}
           </>
@@ -123,23 +113,14 @@ export function LikeButton({ songId, size = 16, className = '', showCount = fals
 
         {/* Heart icons */}
         {liked ? (
-          <FaHeart
+          <HeartFilled
             size={size}
-            style={{
-              color: 'oklch(var(--h3))',
-              filter: 'drop-shadow(0 0 6px oklch(var(--h3) / 0.6))',
-              transition: 'filter 0.3s ease',
-            }}
+            className="lk-heart lk-heart-on"
           />
         ) : (
-          <FiHeart
+          <HeartRegular
             size={size}
-            style={{
-              color: 'oklch(var(--c3))',
-              transition: 'color 0.2s ease, transform 0.2s ease',
-              transform: 'scale(1)',
-            }}
-            className="group-hover:scale-110 group-hover:!text-[oklch(var(--h3)/0.7)]"
+            className="lk-heart"
           />
         )}
       </span>
@@ -147,11 +128,8 @@ export function LikeButton({ songId, size = 16, className = '', showCount = fals
       {/* Like count with smooth transition */}
       {showCount && count > 0 && (
         <span
-          className="text-[10px] font-mono tabular-nums"
-          style={{
-            color: liked ? 'oklch(var(--h3))' : 'oklch(var(--c3))',
-            transition: 'color 0.3s ease',
-          }}
+          className="lk-count"
+          data-liked={liked ? '' : undefined}
         >
           {count}
         </span>
@@ -160,60 +138,12 @@ export function LikeButton({ songId, size = 16, className = '', showCount = fals
       {/* Error tooltip */}
       {error && (
         <span
-          className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-[10px] whitespace-nowrap pointer-events-none z-50"
-          style={{
-            background: 'oklch(var(--b5))',
-            color: 'oklch(var(--c1))',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            animation: 'tooltipSlideIn 0.2s ease-out',
-          }}
+          className="lk-error"
         >
           {error}
         </span>
       )}
 
-      {/* Inline animations */}
-      <style>{`
-        @keyframes likeHeartBounce {
-          0% {
-            transform: scale(1);
-          }
-          25% {
-            transform: scale(1.3);
-          }
-          50% {
-            transform: scale(0.9);
-          }
-          75% {
-            transform: scale(1.1);
-          }
-          100% {
-            transform: scale(1);
-          }
-        }
-
-        @keyframes particleBurst {
-          0% {
-            transform: rotate(var(--rotation, 0deg)) translateY(0) scale(1);
-            opacity: 1;
-          }
-          100% {
-            transform: rotate(var(--rotation, 0deg)) translateY(-${size * 1.5}px) scale(0);
-            opacity: 0;
-          }
-        }
-
-        @keyframes tooltipSlideIn {
-          from {
-            opacity: 0;
-            transform: translate(-50%, 4px);
-          }
-          to {
-            opacity: 1;
-            transform: translate(-50%, 0);
-          }
-        }
-      `}</style>
     </button>
   )
 }
