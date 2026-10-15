@@ -2,7 +2,7 @@ import React from 'react'
 import { Routes, Route, Navigate } from 'react-router'
 import { useSession } from './lib/auth-client'
 import { useSettingsStore, LIGHT_THEMES } from './stores/settingsStore'
-import { TopNav } from './components/layout/TopNav'
+import { Masthead, MobileBar, Footer } from './components/shell'
 import { SolariumFilter } from './components/layout/SolariumFilter'
 import { PlayerBar } from './components/layout/PlayerBar'
 import { PageTransition } from './components/layout/PageTransition'
@@ -45,13 +45,17 @@ import { MonthlyWrappedPage } from './pages/MonthlyWrappedPage'
 import { ActivityPage } from './pages/ActivityPage'
 import { CommunityPage } from './pages/CommunityPage'
 
-/** Layout for authenticated app pages — top nav over content + player */
+/** Layout for authenticated app pages: glass masthead + scrolling page, mobile bar and player docked at the bottom */
 function AppLayout() {
   return (
     <div className="h-screen flex flex-col bg-surface text-text-primary">
       <div id="app-scroll-container" className="flex-1 overflow-y-auto relative">
-        <TopNav />
+        <Masthead />
         <PageTransition />
+        <Footer />
+      </div>
+      <div className="md:hidden">
+        <MobileBar />
       </div>
       <PlayerBar />
       <WhatsNew />

@@ -6,7 +6,7 @@ export interface ShellNavItem {
   end?: boolean
 }
 
-/** Same four links TopNav exposed before the port. */
+/** The four links the masthead exposed before the port. */
 export const PRIMARY_NAV: readonly ShellNavItem[] = [
   { to: '/app', label: 'Home', end: true },
   { to: '/app/browse', label: 'Browse' },

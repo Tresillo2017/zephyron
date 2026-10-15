@@ -338,3 +338,9 @@
 :root[data-bleh--reduced_motion='true'] .sh-glass,
 :root[data-bleh--reduced_motion='true'] .sh-tab::after,
 :root[data-bleh--reduced_motion='true'] .sh-mctl::after { transition: none; }
+
+/* ── masthead extras: bell, desktop-only account slot ── */
+.sh-bell { position: relative; }
+.sh-bell-count { position: absolute; top: 0; right: 0; }
+.sh-account-desktop { display: none; }
+@media (min-width: 768px) { .sh-account-desktop { display: block; } }

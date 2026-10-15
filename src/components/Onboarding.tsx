@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Modal } from './ui/Modal'
+import { Modal, Button } from './bleh'
+import './shell/dialogs.css'
 
 const LS_KEY = 'zephyron_onboarding_done'
 const LS_WHATS_NEW_KEY = 'zephyron_last_seen_version'
@@ -22,6 +23,7 @@ const FEATURES = [
   },
 ]
 
+/** First-run welcome dialog (bleh Modal). Shown once, after the changelog dialog has been seen. */
 export function Onboarding() {
   const [open, setOpen] = useState(false)
 
@@ -40,56 +42,26 @@ export function Onboarding() {
     setOpen(false)
   }
 
+  if (!open) return null
+
   return (
     <Modal
-      isOpen={open}
-      onClose={handleDismiss}
       title="Welcome to Zephyron"
-      className="max-w-sm"
+      onClose={handleDismiss}
+      width={400}
+      footer={<Button appearance="primary" label="Let's go →" onClick={handleDismiss} />}
     >
-      <div className="space-y-1 mb-6">
+      <div className="ob-list">
         {FEATURES.map((f) => (
-          <div key={f.title} className="flex items-start gap-3 py-3">
-            <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0"
-              style={{ background: 'oklch(var(--h3) / 0.12)' }}
-            >
-              {f.icon}
-            </div>
+          <div key={f.title} className="ob-row">
+            <div className="ob-icon" aria-hidden="true">{f.icon}</div>
             <div>
-              <p className="text-sm font-[var(--font-weight-medium)]" style={{ color: 'oklch(var(--c1))' }}>
-                {f.title}
-              </p>
-              <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'oklch(var(--c2))' }}>
-                {f.description}
-              </p>
+              <p className="ob-title">{f.title}</p>
+              <p className="ob-desc">{f.description}</p>
             </div>
           </div>
         ))}
       </div>
-
-      <button
-        type="button"
-        onClick={handleDismiss}
-        className="w-full h-[var(--button-height)] rounded-[var(--button-radius)] text-sm font-[var(--font-weight-medium)] cursor-pointer transition-all"
-        style={{
-          background: 'oklch(var(--h3))',
-          color: 'white',
-          boxShadow: '0 0 20px oklch(var(--h3) / 0.3)',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'oklch(var(--h2))'
-          e.currentTarget.style.transform = 'scale(0.98)'
-          e.currentTarget.style.boxShadow = '0 0 25px oklch(var(--h3) / 0.4)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'oklch(var(--h3))'
-          e.currentTarget.style.transform = ''
-          e.currentTarget.style.boxShadow = '0 0 20px oklch(var(--h3) / 0.3)'
-        }}
-      >
-        Let's go →
-      </button>
     </Modal>
   )
 }
