@@ -23,6 +23,7 @@ import { formatDuration } from '../../lib/formatTime'
 import { GENRES } from '../../lib/constants'
 import type { DjSet } from '../../lib/types'
 import { EditSetModal } from './EditSetModal'
+import { safeUrl } from './adminUi'
 import { SetsUploadTab } from './SetsUploadTab'
 
 // ═══════════════════════════════════════════
@@ -461,9 +462,13 @@ export function SetsListTab({ editId }: { editId?: string }) {
                         </p>
                         <p className="text-xs mt-0.5 truncate" style={{ color: 'oklch(var(--c3))' }}>
                           <span className="uppercase font-mono mr-1">{req.source_type}</span>
-                          <a href={req.source_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
-                            {req.source_url.length > 60 ? req.source_url.slice(0, 60) + '…' : req.source_url}
-                          </a>
+                          {safeUrl(req.source_url) ? (
+                            <a href={safeUrl(req.source_url)} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+                              {req.source_url.length > 60 ? req.source_url.slice(0, 60) + '…' : req.source_url}
+                            </a>
+                          ) : (
+                            <span>{req.source_url.length > 60 ? req.source_url.slice(0, 60) + '…' : req.source_url}</span>
+                          )}
                         </p>
                         {req.user_name && (
                           <p className="text-xs mt-0.5" style={{ color: 'oklch(var(--c3))' }}>by {req.user_name}</p>
@@ -500,9 +505,13 @@ export function SetsListTab({ editId }: { editId?: string }) {
                         {req.source_url && (
                           <p className="text-xs mt-0.5 truncate" style={{ color: 'oklch(var(--c3))' }}>
                             <span className="uppercase font-mono mr-1">{req.source_type}</span>
-                            <a href={req.source_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
-                              {req.source_url}
-                            </a>
+                            {safeUrl(req.source_url) ? (
+                              <a href={safeUrl(req.source_url)} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+                                {req.source_url}
+                              </a>
+                            ) : (
+                              <span>{req.source_url}</span>
+                            )}
                           </p>
                         )}
                         <div className="flex gap-2 mt-0.5">
