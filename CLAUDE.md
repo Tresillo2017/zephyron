@@ -8,71 +8,26 @@ Core features: audio streaming from R2, AI-powered tracklist detection (YouTube 
 
 ## Design Context
 
-### Users
-The full spectrum of electronic music culture — DJs, producers, festival/club fans, and casual enthusiasts. Usage contexts range from late-night listening sessions to commuting to active discovery. The interface must serve both lean-back passive listening and engaged active browsing.
+Zephyron's UI is a 1:1 port of the bleh Last.fm redesign (https://github.com/katelyynn/bleh, GPL-3.0), via the user's sc-dashboard port (`../SafeCircle/sc-dashboard`). When in doubt about a visual detail, copy sc-dashboard, then check bleh.
 
-### Brand Personality
-**Futuristic. Technical. Immersive.** Confident and knowledgeable without pretension. Speaks electronic music culture. Respects both underground credibility and mainstream appeal.
+### Users & brand
+DJs, producers, festival/club fans and casual listeners; lean-back listening and active browsing. **Futuristic. Technical. Immersive.** Music first, chrome second; dense but breathable; progressive disclosure; community corrections feel like natural listening extensions.
 
-### Aesthetic Direction
-Dark-first design inspired by the bleh Last.fm redesign. Full-bleed hero banners with real photography (not blurred), bottom-only gradients. HSL-parametric color system driven by a single `--hue` variable. Glass/blur effects on overlays and menus. Inset shadow borders on cards instead of CSS borders. No visible white borders anywhere.
+### Design system (`src/styles/`)
+- `tokens.css`: oklch colour model. Palette values are bare `L C H` triplets used as `oklch(var(--b5))` / `oklch(var(--b5) / 40%)`. One accent triplet (hue/sat/lit, default hue 285 violet) feeds `--h2..h4`, `--l2..l4`, `--k4`, `--f4`. Never use `hsl(var(--x))`.
+- `themes.css`: 8 themes (Ash `dark`, Darker, Void `oled`, Light, Ink, Rosé Pine, Rosé Pine Dawn, Kanagawa Dragon) keyed by `data-bleh--theme` on `<html>`; surfaces `--b2..b8`, text `--c1..c3`, glass tokens, shadows.
+- `base.css`: reset, grain overlay, `.glass*` classes; `motion.css`: keyframes, entrances written as `animation: var(--motion, <name> ...)` (reduced motion unsets `--motion`).
+- Settings: `src/stores/settingsStore.ts` (theme, accent, glass, grain, serif, font, avatar shape, compact, reduced motion...) mirrored as `data-bleh--*` attributes; `index.html` has a prepaint script that must stay in sync with `applySettings`. `themeStore.ts` is a legacy facade.
+- Compat layer at the top of `src/index.css` keeps legacy names (`--br1`, `--ease-out-custom`, Tailwind `surface`/`accent`/`text-primary`).
+- Primitives: `src/components/bleh/` (`ui-*`, `cc-*` classes, ContentCard/Section/Toolbar), shell in `src/components/shell/` (Masthead, Hero, HeaderTabs, PageFrame, Footer), admin adapters in `src/components/admin/adminUi.tsx`. Icons: `@mingcute/react/core-filled` (verify the icon name exists). Fonts: Hanken Grotesk, Instrument Serif for display (`.font-head`), Inconsolata for code.
+- Layout: top masthead (transparent over banners, glass otherwise), 280px full-bleed real-photo banners with bottom-only gradient, tab rows with underline indicator, main + 400px side column cards, glass player bar 72px, inset-shadow borders (no CSS borders).
+- WCAG AA target. The audio player stays mounted outside the route outlet.
 
-References: bleh for Last.fm (HSL color system, card styling, banner treatment, glass menus), Mixcloud (DJ-focused, tracklist-centric), SoundCloud (waveform-forward). NOT corporate/sterile, NOT playful/childish, NOT cluttered/busy.
-
-### Design Principles
-
-1. **Music First, Chrome Second** — UI recedes when music plays. Content is the star.
-2. **Dense but Breathable** — Show tracklist richness with intentional spacing and hierarchy.
-3. **Expressive Restraint** — Dark canvas with earned moments of energy (waveform animation, accent pulse).
-4. **Progressive Disclosure** — Essential info immediately, technical depth on interaction.
-5. **Community as a Feature** — Corrections and votes feel like natural listening extensions.
-
-### Navigation Pattern
-- **Top navigation bar** (not sidebar) — transparent on banner pages, glass backdrop on others
-- **User dropdown menu** from top-right avatar (glass blur, menu shadow, solarium animation)
-- **Tab bars** on detail pages (Artist, Settings) with bottom-border active indicator
-- **Full-width banners** on Artist and Set pages with overlapping cover art/avatar
-
-### Color System (HSL-Parametric)
-All colors derived from a single `--hue` CSS variable (default: 255 violet). Changing `--hue` shifts the entire UI.
-
-**4 theme variants**: Dark (default, 14% root), Darker (6% root), OLED (0% root), Light (94% root)
-**10 accent presets**: Violet, Blue, Cyan, Teal, Green, Yellow, Orange, Red, Pink, Rose
-**Custom hue slider**: 0-360 degree fine-tuning
-
-Background scale: `--b6` (root) through `--b2` (highlights) — all hue-tinted
-Text scale: `--c1` (primary) through `--c3` (muted) — hue-tinted
-Accent scale: `--h2` (light) through `--h4` (dark)
-
-### Design Tokens
-- Surfaces: HSL-derived from `--b6` (root bg, ~14% L) through `--b2` (bright, ~40% L)
-- Accent: HSL-derived from `--h3` (~70% L, 60% S at current hue)
-- Text: HSL-derived `--c1` (near white), `--c2` (67%), `--c3` (36%)
-- Card border: `inset 0 0 0 1px hsl(var(--b4) / 0.25)` — NO visible CSS borders
-- Card shadow: `0 8px 35px rgba(0,0,0,0.35)`
-- Card radius: 12px, Button radius: 12px
-- Font: Geist (variable, weight 480 default), Geist Mono for data
-- Font weights: 480 (body), 650 (medium), 730 (bold)
-- Transitions: 0.2s with `cubic-bezier(0.095, 0.41, 0.055, 0.96)`
-- WCAG AA accessibility target
-
-### Component Patterns
-- **Buttons**: 12px radius, 30px height, `scale(0.98)` on active, accent glow shadow on primary
-- **Cards**: `.card` utility — `hsl(var(--b5))` bg, inset shadow border, 12px radius, 20px padding
-- **Tags**: `#` prefixed, low-opacity bg, 6px radius, no border
-- **Badges**: accent/default/muted variants, no inset shadow borders
-- **Toggles**: 42x24px switch with white knob, accent when checked
-- **Sliders**: Accent-filled track, white 16px thumb
-
-### Layout
-- **Top nav bar**: Transparent, `h-[calc(20px + var(--button-height))]`, glass backdrop on non-banner pages
-- **Player bar**: Glass backdrop, 72px height, accent play button with glow shadow, centered controls
-- **Banner pages**: 280px full-bleed hero, bottom-only gradient, -100px content overlap, cover art with `var(--subtle-shadow)`
-- **Content pages**: `px-6 lg:px-10 py-6` padding, no max-width constraint
-- **Settings**: Vertical tab nav on left (200px), content on right
+### Local development
+`bun run dev` uses PRODUCTION D1/R2 (`remote: true` in wrangler.jsonc). Use `LOCAL_ONLY=1 bun run dev` for a local database, `bash scripts/seed-local.sh` for fixtures and `node .playwright-mcp/shoot.mjs` for screenshots (QA login in `scripts/seed-local.sql`).
 
 ### Tech Stack
-React 19, Vite 7, Tailwind CSS 4 (`@theme` + CSS custom properties), Zustand 5, Cloudflare Workers + D1 + R2, Better Auth, custom UI primitives (no external component library).
+React 19, Vite 8, Tailwind CSS 4, Zustand 5, React Router 8, Cloudflare Workers + D1 + R2, Better Auth 1.7, custom primitives (no external component library).
 
 ## Package manager
 Remember to always use bun for package management to ensure consistency across the team. Run `bun install` to install dependencies and `bun run <script>` for running scripts defined in package.json. Avoid using npm or yarn to prevent potential issues with lockfiles and node_modules structure.
