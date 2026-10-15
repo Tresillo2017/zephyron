@@ -937,7 +937,7 @@ export async function import1001Tracklists(
     return errorResponse('Set not found', 404)
   }
 
-  let body: { tracks: Track1001[] }
+  let body: { tracks: Track1001[]; source_hash?: string }
   try {
     body = await request.json()
   } catch {
@@ -1066,6 +1066,13 @@ export async function import1001Tracklists(
       }
     }
     console.log(`[1001tl] Queued ${queueMessages.length} background tasks for set ${id}`)
+  }
+
+  // Remember which tracklist content was imported so the crawler can skip unchanged re-syncs.
+  if (body.source_hash) {
+    await env.DB.prepare(
+      'UPDATE sets SET tracklist_1001_hash = ?, tracklist_1001_synced_at = CURRENT_TIMESTAMP WHERE id = ?'
+    ).bind(body.source_hash, id).run()
   }
 
   return json({
