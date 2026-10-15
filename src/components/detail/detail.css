@@ -1,0 +1,213 @@
+/* Detail pages (Set / Artist / Event): hero media, actions bar, tracklist, side cards. */
+
+/* ── hero media (bottom-only gradient comes from .sh-hero-banner::after) ── */
+/* The banner sits at z-index -1; isolating the hero keeps it above the page background. */
+.sh-hero { isolation: isolate; }
+.dt-hero-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.dt-hero-media[data-dim] { opacity: 0.4; }
+.dt-hero-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dt-chip {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: oklch(var(--b4) / 50%);
+  color: oklch(var(--c3));
+  font-family: var(--font-code, monospace);
+  font-size: 10px;
+  line-height: 16px;
+}
+
+/* ── artist line under the title ── */
+.dt-artist-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 16px; line-height: 22px; color: oklch(var(--c2)); }
+.dt-artist-item { display: inline-flex; align-items: center; gap: 8px; }
+.sh-hero-art > img[data-dim] { opacity: 0.6; }
+.dt-card-title { margin: 0; font-size: 14px; font-weight: var(--fw-medium); color: oklch(var(--c1)); }
+.dt-unavailable { opacity: 0.4; cursor: not-allowed; }
+.dt-artist-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: oklch(var(--c2));
+  text-decoration: none;
+  transition: color 0.2s var(--trans-function);
+}
+.dt-artist-link:hover,
+.dt-artist-link:focus-visible { color: oklch(var(--h3)); text-decoration: none; }
+.dt-artist-link:focus-visible { outline: 2px solid oklch(var(--h3)); outline-offset: 2px; border-radius: 4px; }
+.dt-chev { width: 12px; height: 12px; opacity: 0; transition: opacity 0.2s var(--trans-function); }
+.dt-artist-link:is(:hover, :focus-visible) .dt-chev { opacity: 1; }
+.dt-amp { color: oklch(var(--c3)); font-size: 14px; }
+
+/* ── main column: actions bar + stacked cards ── */
+.dt-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.dt-main > * { min-width: 0; }
+.dt-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.dt-stats-inline {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding-right: 12px;
+  font-family: var(--font-code, monospace);
+  font-size: 12px;
+  color: oklch(var(--c3));
+  font-variant-numeric: tabular-nums;
+}
+.dt-live { display: inline-flex; align-items: center; gap: 6px; color: oklch(var(--h3)); }
+.dt-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: var(--motion, pulse-dot 1.6s ease-in-out infinite);
+}
+.dt-source-note { font-size: 12px; color: oklch(var(--c3)); }
+.dt-source-note a { color: oklch(var(--h3)); text-decoration: none; }
+.dt-source-note a:hover,
+.dt-source-note a:focus-visible { text-decoration: underline; }
+.dt-ico { width: 16px; height: 16px; margin-right: 8px; flex: none; }
+.dt-ico--sm { width: 14px; height: 14px; margin-right: 6px; }
+
+.dt-card {
+  overflow: hidden;
+  border-radius: var(--card-radius);
+  background: oklch(var(--b5));
+  box-shadow: var(--card-border), var(--card-shadow);
+}
+.dt-wave { padding: 16px; border-radius: var(--card-radius); background: oklch(var(--b5)); box-shadow: var(--card-border), var(--card-shadow); }
+
+/* ── source suggestion popover ── */
+.dt-popover { padding: 20px; border-radius: var(--card-radius); background: oklch(var(--b5)); box-shadow: var(--card-border), var(--card-shadow); }
+.dt-popover-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.dt-popover-title { margin: 0; font-size: 14px; font-weight: var(--fw-medium); color: oklch(var(--c1)); }
+.dt-popover-sub { margin: 2px 0 0; font-size: 12px; color: oklch(var(--c3)); }
+.dt-popover-error { margin: 0 0 12px; font-size: 12px; color: var(--error); }
+.dt-popover-types { display: flex; gap: 8px; margin-bottom: 12px; }
+.dt-seg {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: oklch(var(--b4) / 50%);
+  color: oklch(var(--c2));
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s var(--trans-function), color 0.2s var(--trans-function), transform 0.2s var(--trans-function);
+}
+.dt-seg[aria-pressed='true'] { background: oklch(var(--h3)); color: oklch(var(--b6)); font-weight: var(--fw-medium); }
+.dt-seg:active { transform: scale(0.98); }
+.dt-input {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: oklch(var(--b4) / 40%);
+  color: oklch(var(--c1));
+  font: inherit;
+  font-size: 14px;
+  box-shadow: inset 0 0 0 1px oklch(var(--b4) / 30%);
+}
+.dt-input::placeholder { color: oklch(var(--c3)); }
+.dt-input:focus-visible { outline: 2px solid oklch(var(--h3)); outline-offset: 1px; }
+.dt-seg:focus-visible,
+.dt-icon-btn:focus-visible { outline: 2px solid oklch(var(--h3)); outline-offset: 2px; }
+.dt-popover-success { display: flex; align-items: flex-start; gap: 12px; }
+.dt-popover-success svg { width: 20px; height: 20px; flex: none; margin-top: 2px; color: oklch(var(--h3)); }
+.dt-popover-success p { margin: 0; }
+.dt-icon-btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: oklch(var(--c3));
+  cursor: pointer;
+  transition: color 0.2s var(--trans-function);
+}
+.dt-icon-btn:hover { color: oklch(var(--c1)); }
+.dt-icon-btn svg { width: 16px; height: 16px; }
+
+/* ── tracklist ── */
+.dt-tracklist-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  box-shadow: inset 0 -1px 0 oklch(var(--b4) / 15%);
+}
+.dt-sub { margin: 2px 0 0; font-size: 10px; color: oklch(var(--c3)); font-family: var(--font-code, monospace); }
+.dt-tracklist { display: flex; flex-direction: column; }
+.dt-track { position: relative; transition: background-color 0.2s var(--trans-function); }
+.dt-track:nth-child(odd) { background: var(--tracklist-odd); }
+.dt-track:hover { background: var(--tracklist-hover); }
+.dt-track[data-active] { background: oklch(var(--h3) / 10%); color: oklch(var(--h3)); }
+.dt-empty { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 64px 20px; text-align: center; }
+.dt-empty p { margin: 0; font-size: 14px; color: oklch(var(--c3)); }
+
+/* ── side column ── */
+.dt-side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.dt-side-card { overflow: hidden; border-radius: var(--card-radius); box-shadow: var(--card-border), var(--card-shadow); }
+.dt-event { position: relative; display: block; height: 110px; overflow: hidden; text-decoration: none; }
+.dt-event-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s var(--trans-function);
+}
+.dt-event:is(:hover, :focus-visible) .dt-event-media { transform: scale(1.05); }
+.dt-event:focus-visible { outline: 2px solid oklch(var(--h3)); outline-offset: -2px; }
+.dt-event-media[data-dim] { opacity: 0.3; }
+.dt-event-scrim { position: absolute; inset: 0; background: linear-gradient(0deg, oklch(var(--b6) / 85%) 0%, oklch(var(--b6) / 30%) 60%, oklch(var(--b6) / 10%) 100%); }
+.dt-event-meta { position: absolute; left: 16px; right: 16px; bottom: 12px; display: flex; align-items: flex-end; gap: 12px; min-width: 0; }
+.dt-event-logo { width: 40px; height: 40px; flex: none; border-radius: 8px; overflow: hidden; box-shadow: var(--subtle-shadow); }
+.dt-event-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dt-event-text { min-width: 0; }
+.dt-event-text > *,
+.dt-dj-text > * { display: block; }
+.dt-about > .dt-card-title { margin-bottom: 12px; }
+.dt-eyebrow { margin: 0 0 2px; font-family: var(--font-code, monospace); font-size: 10px; letter-spacing: 0.08em; color: oklch(var(--c2)); }
+.dt-event-name { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; line-height: 18px; font-weight: var(--fw-bold); color: oklch(var(--c1)); }
+.dt-event-loc { margin: 2px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: oklch(var(--c3)); }
+.dt-meta-block { padding: 20px; background: oklch(var(--b5)); }
+.dt-meta-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+.dt-meta-venue { margin: 0 0 8px; font-size: 14px; color: oklch(var(--c2)); }
+.dt-meta-date { margin: 0; font-family: var(--font-code, monospace); font-size: 12px; color: oklch(var(--c3)); }
+
+.dt-stats { display: flex; gap: 24px; padding: 20px; border-radius: var(--card-radius); background: oklch(var(--b5)); box-shadow: var(--card-border), var(--card-shadow); }
+.dt-stat-block { display: flex; flex-direction: column; gap: 2px; }
+.dt-stat-value { font-size: 20px; line-height: 24px; font-weight: var(--fw-bold); color: oklch(var(--c1)); font-variant-numeric: tabular-nums; }
+.dt-stat-label { font-size: 11px; color: oklch(var(--c3)); }
+
+.dt-about { padding: 20px; border-radius: var(--card-radius); background: oklch(var(--b5)); box-shadow: var(--card-border), var(--card-shadow); }
+.dt-about p { margin: 0; font-size: 14px; line-height: 1.6; color: oklch(var(--c2)); }
+.dt-dj-link { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; text-decoration: none; color: inherit; }
+.dt-dj-link:focus-visible { outline: 2px solid oklch(var(--h3)); outline-offset: 2px; border-radius: 8px; }
+.dt-dj-avatar { width: 40px; height: 40px; flex: none; border-radius: 8px; overflow: hidden; background: oklch(var(--b4)); display: flex; align-items: center; justify-content: center; }
+.dt-dj-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dt-dj-initial { font-weight: var(--fw-bold); color: oklch(var(--c3)); }
+.dt-dj-name { margin: 0; font-size: 14px; font-weight: var(--fw-medium); color: oklch(var(--c1)); }
+.dt-dj-link:hover .dt-dj-name { color: oklch(var(--h3)); }
+.dt-dj-listeners { margin: 2px 0 0; font-family: var(--font-code, monospace); font-size: 10px; color: oklch(var(--c3)); }
+.dt-dj-bio { margin: 0; font-size: 12px; line-height: 1.6; color: oklch(var(--c3)); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.dt-dj-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dt-live-dot,
+  .dt-event-media { animation: none; transition: none; }
+}
