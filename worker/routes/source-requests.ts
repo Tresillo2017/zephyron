@@ -43,9 +43,10 @@ export async function createSourceRequest(
 
   // Basic URL validation
   try {
-    new URL(body.source_url.trim())
+    const { protocol } = new URL(body.source_url.trim())
+    if (protocol !== 'https:' && protocol !== 'http:') throw new Error('scheme')
   } catch {
-    return errorResponse('source_url must be a valid URL', 400)
+    return errorResponse('source_url must be a valid http(s) URL', 400)
   }
 
   // Get user from session
