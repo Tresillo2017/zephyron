@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, type ReactNode } from "react";
 import {
   adminCreateSet,
   fetchArtists,
@@ -6,9 +6,8 @@ import {
   import1001Tracklists,
   type Track1001Preview,
 } from "../../lib/api";
-import { Button } from "../ui/Button";
-import { Input } from "../ui/Input";
-import { Badge } from "../ui/Badge";
+import { Input, textareaClass, inputClass } from "../bleh";
+import { AdminButton, AdminBadge } from "./adminUi";
 import {
   AutocompleteInput,
   type AutocompleteOption,
@@ -19,15 +18,129 @@ import {
   parse1001TracklistMetadata,
 } from "../../lib/parse-1001tracklists";
 import { GENRES } from "../../lib/constants";
+import { cn } from "../../lib/cn";
+
+const STREAM_SOURCES = ["youtube", "soundcloud", "hearthis", "none"] as const;
+const STREAM_SOURCE_LABEL: Record<(typeof STREAM_SOURCES)[number], string> = {
+  youtube: "YouTube",
+  soundcloud: "SoundCloud",
+  hearthis: "HearThis",
+  none: "None",
+};
+
+const FIELD_LABEL = "mb-1 block text-xs font-medium text-text";
+const HAIRLINE = "shadow-[inset_0_0_0_1px_color-mix(in_oklch,var(--b4),transparent_75%)]";
+
+// ─── Form field label ─────────────────────────────────────────────────────────
+
+function FieldLabel({ htmlFor, children }: { htmlFor?: string; children: ReactNode }) {
+  return (
+    <label htmlFor={htmlFor} className={FIELD_LABEL}>
+      {children}
+    </label>
+  );
+}
 
 // ─── Inline Requests Panel ────────────────────────────────────────────────────
 
 function RequestsPanel() {
+  return <div className={cn("mt-5 overflow-hidden rounded-card", HAIRLINE)}></div>;
+}
+
+// ─── Parsed tracklist preview ─────────────────────────────────────────────────
+
+/** Brand dots shown per track for each linked streaming service. */
+function PlatformDots({ track }: { track: Track1001Preview }) {
+  return (
+    <div className="flex shrink-0 gap-1">
+      {track.spotify_url && <span aria-hidden className="size-1.5 rounded-full bg-[#1DB954]" />}
+      {track.apple_music_url && <span aria-hidden className="size-1.5 rounded-full bg-[#FA243C]" />}
+      {track.soundcloud_url && <span aria-hidden className="size-1.5 rounded-full bg-[#FF6100]" />}
+      {track.beatport_url && <span aria-hidden className="size-1.5 rounded-full bg-[#94D500]" />}
+    </div>
+  );
+}
+
+function ParsedTrackRow({ track: t, index: i }: { track: Track1001Preview; index: number }) {
+  const isId = !t.is_identified && t.artist === "ID" && t.title === "ID";
   return (
     <div
-      className="mt-5 rounded-xl overflow-hidden"
-      style={{ boxShadow: "inset 0 0 0 1px oklch(var(--b4) / 0.25)" }}
-    ></div>
+      className={cn(
+        "flex items-center gap-2 px-3 py-1.5 text-xs shadow-[inset_0_-1px_0_color-mix(in_oklch,var(--b4),transparent_90%)]",
+        i % 2 === 1 && "bg-b5/20",
+      )}
+    >
+      {t.artwork_url ? (
+        <img src={t.artwork_url} alt="" className="size-6 shrink-0 rounded object-cover" />
+      ) : (
+        <div
+          className={cn(
+            "flex size-6 shrink-0 items-center justify-center rounded",
+            isId ? "bg-error/20" : "bg-b4/50",
+          )}
+        >
+          {isId && <span className="text-[8px] text-error">?</span>}
+        </div>
+      )}
+      <span
+        className={cn(
+          "w-5 shrink-0 text-right font-mono text-[10px] tabular-nums",
+          t.is_continuation ? "text-accent-2/50" : isId ? "text-error/80" : "text-muted",
+        )}
+      >
+        {t.is_continuation ? "w/" : String(t.position).padStart(2, "0")}
+      </span>
+      {t.cue_time && (
+        <span className="shrink-0 font-mono text-[10px] tabular-nums text-muted">{t.cue_time}</span>
+      )}
+      <div className="min-w-0 flex-1 truncate">
+        {isId ? (
+          <span className="italic text-error/80">ID - ID</span>
+        ) : (
+          <>
+            <span className="text-text">{t.artist}</span>
+            <span className="text-muted"> — </span>
+            <span className="text-heading">{t.title}</span>
+            {t.is_mashup && (
+              <span className="ml-1 rounded bg-b4/40 px-1 py-0.5 font-mono text-[9px] text-muted">
+                mashup
+              </span>
+            )}
+          </>
+        )}
+      </div>
+      <PlatformDots track={t} />
+    </div>
+  );
+}
+
+function ParsedTracksPreview({
+  parsedTracks,
+  identifiedCount,
+  idCount,
+}: {
+  parsedTracks: Track1001Preview[];
+  identifiedCount: number;
+  idCount: number;
+}) {
+  return (
+    <div className={cn("flex min-h-0 flex-1 flex-col overflow-hidden rounded-card", HAIRLINE)}>
+      <div className="flex shrink-0 items-center justify-between bg-b5/50 px-3 py-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-accent-2">
+            {parsedTracks.filter((t) => !t.is_continuation).length} tracks
+          </span>
+          {identifiedCount > 0 && <span className="text-[10px] text-muted">{identifiedCount} ID'd</span>}
+          {idCount > 0 && <span className="text-[10px] text-error">{idCount} unknown</span>}
+        </div>
+        <AdminBadge variant="accent">1001Tracklists</AdminBadge>
+      </div>
+      <div className="max-h-[340px] flex-1 overflow-y-auto">
+        {parsedTracks.map((t, i) => (
+          <ParsedTrackRow key={i} track={t} index={i} />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -329,9 +442,6 @@ export function SetsUploadTab({
     await doCreate(artistId);
   };
 
-  const inputClass =
-    "w-full px-3 py-2 bg-[oklch(var(--b4)/0.4)] rounded-[var(--button-radius)] text-sm text-text-primary placeholder:text-text-muted focus:outline-none transition-colors";
-
   const identifiedCount = parsedTracks.filter(
     (t) => t.is_identified || (t.artist !== "ID" && t.title !== "ID")
   ).length;
@@ -341,16 +451,11 @@ export function SetsUploadTab({
 
   return (
     <div className="flex flex-col gap-0">
-      <div className="flex gap-5" style={{ minHeight: "420px" }}>
+      <div className="flex min-h-[420px] gap-5">
         {/* ═══ LEFT COLUMN: 1001TL source + tracklist ═══ */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <div className="flex items-center gap-2 mb-1.5">
-            <label
-              className="text-sm font-medium"
-              style={{ color: "oklch(var(--c2))" }}
-            >
-              1001Tracklists source
-            </label>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="mb-1.5 flex items-center gap-2">
+            <span className="text-[16px] font-medium text-heading">1001Tracklists source</span>
           </div>
 
           {/* URL */}
@@ -358,25 +463,20 @@ export function SetsUploadTab({
             value={tracklistUrl}
             onChange={(e) => setTracklistUrl(e.target.value)}
             placeholder="https://www.1001tracklists.com/tracklist/..."
-            className="w-full mb-2"
+            aria-label="1001Tracklists URL"
+            className="mb-2 w-full"
           />
 
           {/* HTML paste */}
-          <div
-            className="rounded-xl p-3 mb-2"
-            style={{
-              background: "oklch(var(--b5) / 0.5)",
-              boxShadow: "inset 0 0 0 1px oklch(var(--b4) / 0.3)",
-            }}
-          >
-            <div className="flex items-start gap-2 mb-2">
+          <div className={cn("mb-2 rounded-card bg-b5/50 p-3", HAIRLINE)}>
+            <div className="mb-2 flex items-start gap-2">
               <svg
-                className="w-3.5 h-3.5 mt-0.5 shrink-0"
-                style={{ color: "oklch(var(--h3))" }}
+                className="mt-0.5 size-3.5 shrink-0 text-accent-2"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
                 strokeWidth={1.5}
+                aria-hidden
               >
                 <path
                   strokeLinecap="round"
@@ -384,15 +484,9 @@ export function SetsUploadTab({
                   d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
                 />
               </svg>
-              <p className="text-[11px]" style={{ color: "oklch(var(--c3))" }}>
+              <p className="text-[11px] text-muted">
                 Open the 1001tracklists page, press{" "}
-                <kbd
-                  className="px-1 py-0.5 rounded text-[10px] font-mono"
-                  style={{
-                    background: "oklch(var(--b3))",
-                    color: "oklch(var(--c2))",
-                  }}
-                >
+                <kbd className="rounded bg-b3 px-1 py-0.5 font-mono text-[10px] text-text">
                   Ctrl+U
                 </kbd>{" "}
                 to view source, select all, copy, and paste below.
@@ -403,18 +497,15 @@ export function SetsUploadTab({
               value={tracklistHtml}
               onChange={(e) => setTracklistHtml(e.target.value)}
               placeholder="Paste the full page source HTML here..."
+              aria-label="Page source HTML"
               rows={3}
-              className="w-full px-3 py-2 rounded-lg text-xs font-mono placeholder:text-text-muted focus:outline-none resize-none"
-              style={{
-                background: "oklch(var(--b6))",
-                color: "oklch(var(--c2))",
-                boxShadow: "inset 0 0 0 1px oklch(var(--b4) / 0.25)",
-              }}
+              className={cn(textareaClass, "font-mono text-xs")}
             />
 
-            <div className="flex items-center gap-2 mt-2">
-              <Button
+            <div className="mt-2 flex items-center gap-2">
+              <AdminButton
                 size="sm"
+                variant="secondary"
                 onClick={handleParse}
                 disabled={isParsing || !tracklistHtml.trim()}
               >
@@ -423,19 +514,17 @@ export function SetsUploadTab({
                   : parsedTracks.length > 0
                   ? "Re-parse"
                   : "Parse"}
-              </Button>
+              </AdminButton>
               {tracklistHtml.trim() && (
-                <span
-                  className="text-[10px] font-mono"
-                  style={{ color: "oklch(var(--c3))" }}
-                >
+                <span className="font-mono text-[10px] text-muted">
                   {(tracklistHtml.length / 1024).toFixed(0)} KB
                 </span>
               )}
               {parsedTracks.length > 0 && (
-                <button
-                  className="text-[10px] ml-auto transition-colors"
-                  style={{ color: "oklch(var(--c3))" }}
+                <AdminButton
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto"
                   onClick={() => {
                     setParsedTracks([]);
                     setTracklistHtml("");
@@ -443,14 +532,11 @@ export function SetsUploadTab({
                   }}
                 >
                   Clear
-                </button>
+                </AdminButton>
               )}
             </div>
             {parseError && (
-              <p
-                className="text-[10px] mt-1.5"
-                style={{ color: "hsl(0, 60%, 55%)" }}
-              >
+              <p role="alert" className="mt-1.5 text-[11px] text-error">
                 {parseError}
               </p>
             )}
@@ -458,202 +544,32 @@ export function SetsUploadTab({
 
           {/* Parsed tracks preview */}
           {parsedTracks.length > 0 && (
-            <div
-              className="flex-1 min-h-0 rounded-xl overflow-hidden flex flex-col"
-              style={{ boxShadow: "inset 0 0 0 1px oklch(var(--b4) / 0.25)" }}
-            >
-              <div
-                className="flex items-center justify-between px-3 py-2 shrink-0"
-                style={{ background: "oklch(var(--b5) / 0.5)" }}
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className="text-xs font-medium"
-                    style={{ color: "oklch(var(--h3))" }}
-                  >
-                    {parsedTracks.filter((t) => !t.is_continuation).length}{" "}
-                    tracks
-                  </span>
-                  {identifiedCount > 0 && (
-                    <span
-                      className="text-[10px]"
-                      style={{ color: "oklch(var(--c3))" }}
-                    >
-                      {identifiedCount} ID'd
-                    </span>
-                  )}
-                  {idCount > 0 && (
-                    <span
-                      className="text-[10px]"
-                      style={{ color: "hsl(0, 50%, 55%)" }}
-                    >
-                      {idCount} unknown
-                    </span>
-                  )}
-                </div>
-                <Badge variant="accent">1001Tracklists</Badge>
-              </div>
-              <div
-                className="flex-1 overflow-y-auto"
-                style={{ maxHeight: "340px" }}
-              >
-                {parsedTracks.map((t, i) => {
-                  const isId =
-                    !t.is_identified && t.artist === "ID" && t.title === "ID";
-                  return (
-                    <div
-                      key={i}
-                      className="flex items-center gap-2 px-3 py-1.5 text-xs"
-                      style={{
-                        background:
-                          i % 2 === 0 ? "transparent" : "oklch(var(--b5) / 0.2)",
-                        borderBottom: "1px solid oklch(var(--b4) / 0.1)",
-                      }}
-                    >
-                      {t.artwork_url ? (
-                        <img
-                          src={t.artwork_url}
-                          alt=""
-                          className="w-6 h-6 rounded object-cover shrink-0"
-                        />
-                      ) : (
-                        <div
-                          className="w-6 h-6 rounded shrink-0 flex items-center justify-center"
-                          style={{
-                            background: isId
-                              ? "hsl(0, 30%, 20%)"
-                              : "oklch(var(--b4) / 0.5)",
-                          }}
-                        >
-                          {isId && (
-                            <span
-                              className="text-[8px]"
-                              style={{ color: "hsl(0, 50%, 55%)" }}
-                            >
-                              ?
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      <span
-                        className="w-5 text-right font-mono tabular-nums shrink-0 text-[10px]"
-                        style={{
-                          color: t.is_continuation
-                            ? "oklch(var(--h3) / 0.5)"
-                            : isId
-                            ? "hsl(0, 40%, 50%)"
-                            : "oklch(var(--c3))",
-                        }}
-                      >
-                        {t.is_continuation
-                          ? "w/"
-                          : String(t.position).padStart(2, "0")}
-                      </span>
-                      {t.cue_time && (
-                        <span
-                          className="font-mono tabular-nums shrink-0 text-[10px]"
-                          style={{ color: "oklch(var(--c3))" }}
-                        >
-                          {t.cue_time}
-                        </span>
-                      )}
-                      <div className="flex-1 min-w-0 truncate">
-                        {isId ? (
-                          <span
-                            className="italic"
-                            style={{ color: "hsl(0, 40%, 50%)" }}
-                          >
-                            ID - ID
-                          </span>
-                        ) : (
-                          <>
-                            <span style={{ color: "oklch(var(--c2))" }}>
-                              {t.artist}
-                            </span>
-                            <span style={{ color: "oklch(var(--c3))" }}> — </span>
-                            <span style={{ color: "oklch(var(--c1))" }}>
-                              {t.title}
-                            </span>
-                            {t.is_mashup && (
-                              <span
-                                className="ml-1 text-[9px] px-1 py-0.5 rounded font-mono"
-                                style={{
-                                  background: "oklch(var(--b4) / 0.4)",
-                                  color: "oklch(var(--c3))",
-                                }}
-                              >
-                                mashup
-                              </span>
-                            )}
-                          </>
-                        )}
-                      </div>
-                      <div className="flex gap-1 shrink-0">
-                        {t.spotify_url && (
-                          <div
-                            className="w-1.5 h-1.5 rounded-full"
-                            style={{ background: "#1DB954" }}
-                          />
-                        )}
-                        {t.apple_music_url && (
-                          <div
-                            className="w-1.5 h-1.5 rounded-full"
-                            style={{ background: "#FA243C" }}
-                          />
-                        )}
-                        {t.soundcloud_url && (
-                          <div
-                            className="w-1.5 h-1.5 rounded-full"
-                            style={{ background: "#FF6100" }}
-                          />
-                        )}
-                        {t.beatport_url && (
-                          <div
-                            className="w-1.5 h-1.5 rounded-full"
-                            style={{ background: "#94D500" }}
-                          />
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            <ParsedTracksPreview
+              parsedTracks={parsedTracks}
+              identifiedCount={identifiedCount}
+              idCount={idCount}
+            />
           )}
         </div>
 
         {/* ═══ RIGHT COLUMN: Set metadata + actions ═══ */}
-        <div className="w-72 shrink-0 flex flex-col">
-          <label
-            className="text-sm font-medium mb-1.5"
-            style={{ color: "oklch(var(--c2))" }}
-          >
-            Set metadata
-          </label>
+        <div className="flex w-72 shrink-0 flex-col">
+          <span className="mb-1.5 text-[16px] font-medium text-heading">Set metadata</span>
 
-          <div className="space-y-3 flex-1">
+          <div className="flex flex-1 flex-col gap-3">
             <div>
-              <label
-                className="text-xs font-medium block mb-1"
-                style={{ color: "oklch(var(--c2))" }}
-              >
-                Title *
-              </label>
-              <input
+              <FieldLabel htmlFor="set-title">Title *</FieldLabel>
+              <Input
+                id="set-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Set title"
-                className={inputClass}
+                className="w-full"
               />
             </div>
 
             <div>
-              <label
-                className="text-xs font-medium block mb-1"
-                style={{ color: "oklch(var(--c2))" }}
-              >
-                Artist / DJ *
-              </label>
+              <FieldLabel>Artist / DJ *</FieldLabel>
               <AutocompleteInput
                 value={artist}
                 onChange={setArtist}
@@ -667,20 +583,18 @@ export function SetsUploadTab({
               />
               {/* Co-artists */}
               {additionalArtists.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1.5">
+                <div className="mt-1.5 flex flex-wrap gap-1">
                   {additionalArtists.map((a) => (
                     <span
                       key={a.id}
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs"
-                      style={{
-                        background: "oklch(var(--h3) / 0.12)",
-                        color: "oklch(var(--h3))",
-                      }}
+                      className="flex items-center gap-1 rounded-md bg-accent-2/12 px-2 py-0.5 text-xs text-accent-2"
                     >
                       {a.name}
                       <button
+                        type="button"
                         onClick={() => handleRemoveCoArtist(a.id)}
-                        className="opacity-60 hover:opacity-100 ml-0.5 leading-none"
+                        aria-label={`Remove ${a.name}`}
+                        className="ml-0.5 leading-none opacity-60 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-2"
                       >
                         ×
                       </button>
@@ -689,8 +603,8 @@ export function SetsUploadTab({
                 </div>
               )}
               {/* Co-artist picker */}
-              <div className="flex gap-1.5 mt-1.5">
-                <div className="flex-1">
+              <div className="mt-1.5 flex gap-1.5">
+                <div className="min-w-0 flex-1">
                   <AutocompleteInput
                     value={coArtistValue}
                     onChange={setCoArtistValue}
@@ -701,39 +615,30 @@ export function SetsUploadTab({
                     placeholder="Add co-artist..."
                   />
                 </div>
-                <Button
+                <AdminButton
                   size="sm"
                   variant="secondary"
                   onClick={handleAddCoArtist}
                   disabled={!coArtistId}
                 >
                   Add
-                </Button>
+                </AdminButton>
               </div>
             </div>
 
             <div>
-              <label
-                className="text-xs font-medium block mb-1"
-                style={{ color: "oklch(var(--c2))" }}
-              >
-                Venue
-              </label>
-              <input
+              <FieldLabel htmlFor="set-venue">Venue</FieldLabel>
+              <Input
+                id="set-venue"
                 value={venue}
                 onChange={(e) => setVenue(e.target.value)}
                 placeholder="Club / Festival stage"
-                className={inputClass}
+                className="w-full"
               />
             </div>
 
             <div>
-              <label
-                className="text-xs font-medium block mb-1"
-                style={{ color: "oklch(var(--c2))" }}
-              >
-                Event
-              </label>
+              <FieldLabel>Event</FieldLabel>
               <AutocompleteInput
                 value={event}
                 onChange={setEvent}
@@ -747,16 +652,12 @@ export function SetsUploadTab({
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label
-                  className="text-xs font-medium block mb-1"
-                  style={{ color: "oklch(var(--c2))" }}
-                >
-                  Genre
-                </label>
+                <FieldLabel htmlFor="set-genre">Genre</FieldLabel>
                 <select
+                  id="set-genre"
                   value={genre}
                   onChange={(e) => setGenre(e.target.value)}
-                  className={inputClass}
+                  className={cn(inputClass, "w-full")}
                 >
                   <option value="">Select...</option>
                   {GENRES.map((g) => (
@@ -767,133 +668,91 @@ export function SetsUploadTab({
                 </select>
               </div>
               <div>
-                <label
-                  className="text-xs font-medium block mb-1"
-                  style={{ color: "oklch(var(--c2))" }}
-                >
-                  Subgenre
-                </label>
-                <input
+                <FieldLabel htmlFor="set-subgenre">Subgenre</FieldLabel>
+                <Input
+                  id="set-subgenre"
                   value={subgenre}
                   onChange={(e) => setSubgenre(e.target.value)}
                   placeholder="Dark Techno"
-                  className={inputClass}
+                  className="w-full"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label
-                  className="text-xs font-medium block mb-1"
-                  style={{ color: "oklch(var(--c2))" }}
-                >
-                  Date
-                </label>
-                <input
+                <FieldLabel htmlFor="set-date">Date</FieldLabel>
+                <Input
+                  id="set-date"
                   type="date"
                   value={recordedDate}
                   onChange={(e) => setRecordedDate(e.target.value)}
-                  className={inputClass}
+                  className="w-full"
                 />
               </div>
               <div>
-                <label
-                  className="text-xs font-medium block mb-1"
-                  style={{ color: "oklch(var(--c2))" }}
-                >
-                  Duration *
-                </label>
-                <input
+                <FieldLabel htmlFor="set-duration">Duration *</FieldLabel>
+                <Input
+                  id="set-duration"
                   type="number"
                   value={durationMinutes}
                   onChange={(e) => setDurationMinutes(e.target.value)}
                   placeholder="90 min"
-                  className={inputClass}
+                  className="w-full"
                 />
               </div>
             </div>
 
             <div>
-              <label
-                className="text-xs font-medium block mb-1"
-                style={{ color: "oklch(var(--c2))" }}
-              >
-                Description
-              </label>
+              <FieldLabel htmlFor="set-description">Description</FieldLabel>
               <textarea
+                id="set-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Set description..."
                 rows={2}
-                className={`${inputClass} resize-none`}
+                className={cn(textareaClass, "w-full")}
               />
             </div>
 
             {/* ─── Source section ─── */}
             <div>
-              <label
-                className="text-xs font-medium block mb-1.5"
-                style={{ color: "oklch(var(--c2))" }}
-              >
-                Stream source
-              </label>
-              <div className="flex gap-1.5 mb-2">
-                {(["youtube", "soundcloud", "hearthis", "none"] as const).map(
-                  (type) => (
-                    <button
-                      key={type}
-                      onClick={() => setStreamSource(type)}
-                      className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all"
-                      style={{
-                        background:
-                          streamSource === type
-                            ? "oklch(var(--h3))"
-                            : "oklch(var(--b4) / 0.5)",
-                        color:
-                          streamSource === type ? "white" : "oklch(var(--c3))",
-                      }}
-                    >
-                      {type === "youtube"
-                        ? "YouTube"
-                        : type === "soundcloud"
-                        ? "SoundCloud"
-                        : type === "hearthis"
-                        ? "HearThis"
-                        : "None"}
-                    </button>
-                  )
-                )}
+              <span className="mb-1.5 block text-xs font-medium text-text">Stream source</span>
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {STREAM_SOURCES.map((type) => (
+                  <AdminButton
+                    key={type}
+                    size="sm"
+                    variant={streamSource === type ? "primary" : "secondary"}
+                    aria-pressed={streamSource === type}
+                    onClick={() => setStreamSource(type)}
+                  >
+                    {STREAM_SOURCE_LABEL[type]}
+                  </AdminButton>
+                ))}
               </div>
 
               {/* YouTube: show video ID (manual or parsed) */}
               {streamSource === "youtube" && (
                 <div>
-                  <input
+                  <Input
                     value={videoId}
                     onChange={(e) => setVideoId(e.target.value)}
                     placeholder="YouTube video ID (optional)"
-                    className={`${inputClass} font-mono text-xs`}
+                    aria-label="YouTube video ID"
+                    className="w-full font-mono text-xs"
                   />
                   {videoId && (
-                    <div
-                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg mt-1.5"
-                      style={{ background: "oklch(var(--b4) / 0.3)" }}
-                    >
+                    <div className={cn("mt-1.5 flex items-center gap-2 rounded-item bg-b4/30 px-2.5 py-1.5", HAIRLINE)}>
                       <svg
-                        className="w-3 h-3 shrink-0"
-                        style={{ color: "hsl(0, 70%, 55%)" }}
+                        className="size-3 shrink-0 text-error"
                         fill="currentColor"
                         viewBox="0 0 24 24"
+                        aria-hidden
                       >
                         <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
                       </svg>
-                      <span
-                        className="text-[10px] font-mono"
-                        style={{ color: "oklch(var(--c3))" }}
-                      >
-                        {videoId}
-                      </span>
+                      <span className="font-mono text-[10px] text-muted">{videoId}</span>
                     </div>
                   )}
                 </div>
@@ -902,7 +761,7 @@ export function SetsUploadTab({
               {/* SoundCloud / HearThis: URL input */}
               {(streamSource === "soundcloud" ||
                 streamSource === "hearthis") && (
-                <input
+                <Input
                   value={sourceUrl}
                   onChange={(e) => setSourceUrl(e.target.value)}
                   placeholder={
@@ -910,13 +769,14 @@ export function SetsUploadTab({
                       ? "https://soundcloud.com/..."
                       : "https://hearthis.at/..."
                   }
-                  className={inputClass}
+                  aria-label="Stream source URL"
+                  className="w-full"
                 />
               )}
 
               {/* None: just a note */}
               {streamSource === "none" && (
-                <p className="text-[10px]" style={{ color: "oklch(var(--c3))" }}>
+                <p className="text-[10px] text-muted">
                   Set will be added without a stream source. Users can suggest
                   sources later.
                 </p>
@@ -925,23 +785,23 @@ export function SetsUploadTab({
           </div>
 
           {error && (
-            <p className="text-xs mt-2" style={{ color: "hsl(0, 60%, 55%)" }}>
+            <p role="alert" className="mt-2 text-xs text-error">
               {error}
             </p>
           )}
           {success && (
-            <p className="text-xs mt-2" style={{ color: "oklch(var(--h3))" }}>
+            <p role="status" className="mt-2 text-xs text-success">
               {success}
             </p>
           )}
 
-          <div className="flex gap-3 pt-3 mt-auto">
+          <div className="mt-auto flex gap-3 pt-3">
             {onClose && (
-              <Button variant="secondary" onClick={onClose} className="flex-1">
+              <AdminButton variant="secondary" onClick={onClose} className="flex-1">
                 Cancel
-              </Button>
+              </AdminButton>
             )}
-            <Button
+            <AdminButton
               variant="primary"
               onClick={handleCreate}
               disabled={
@@ -953,7 +813,7 @@ export function SetsUploadTab({
               className="flex-1"
             >
               {isCreating ? "Creating..." : "Create DJ Set"}
-            </Button>
+            </AdminButton>
           </div>
         </div>
       </div>
