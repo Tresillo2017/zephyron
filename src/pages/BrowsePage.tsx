@@ -1,9 +1,18 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback } from 'react'
 import { useSearchParams } from 'react-router'
+import { TagFilled } from '@mingcute/react/core-filled'
 import { useSets, useGenres } from '../hooks/useSets'
 import { SetGrid } from '../components/sets/SetGrid'
-import { Button } from '../components/ui/Button'
+import {
+  ContentCard, Pagination, Section, Select, SideAction, SideActions, Toolbar,
+} from '../components/bleh'
+import { PageFrame } from '../components/shell'
 import { SORT_OPTIONS } from '../lib/constants'
+import './library.css'
+
+const PAGE_SIZE = 24
+
+const SORT_CHOICES = SORT_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))
 
 export function BrowsePage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -15,9 +24,9 @@ export function BrowsePage() {
   const [currentSort, setCurrentSort] = useState(sortParam)
   const [currentPage, setCurrentPage] = useState(pageParam)
 
-  const { sets, totalPages, isLoading } = useSets({
+  const { sets, total, isLoading } = useSets({
     page: currentPage,
-    pageSize: 24,
+    pageSize: PAGE_SIZE,
     genre: currentGenre,
     sort: currentSort,
   })
@@ -54,126 +63,53 @@ export function BrowsePage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [updateParams])
 
-  // Memoize genre buttons to prevent re-renders
-  const genreButtons = useMemo(() => (
-    <>
-      <button
-        onClick={() => handleGenreChange(undefined)}
-        className="px-4 py-2 text-sm rounded-lg transition-all shrink-0"
-        style={{
-          background: !currentGenre ? 'oklch(var(--h3))' : 'oklch(var(--b4) / 0.3)',
-          color: !currentGenre ? 'white' : 'oklch(var(--c2))',
-          boxShadow: !currentGenre ? '0 2px 8px oklch(var(--h3) / 0.3)' : 'inset 0 0 0 1px oklch(var(--b4) / 0.3)',
-          fontWeight: !currentGenre ? 'var(--font-weight-medium)' : 'var(--font-weight-default)',
-        }}
-      >
-        All
-      </button>
-      {genres.map((g) => (
-        <button
-          key={g.genre}
-          onClick={() => handleGenreChange(g.genre)}
-          className="px-4 py-2 text-sm rounded-lg transition-all shrink-0"
-          style={{
-            background: currentGenre === g.genre ? 'oklch(var(--h3))' : 'oklch(var(--b4) / 0.3)',
-            color: currentGenre === g.genre ? 'white' : 'oklch(var(--c2))',
-            boxShadow: currentGenre === g.genre ? '0 2px 8px oklch(var(--h3) / 0.3)' : 'inset 0 0 0 1px oklch(var(--b4) / 0.3)',
-            fontWeight: currentGenre === g.genre ? 'var(--font-weight-medium)' : 'var(--font-weight-default)',
-          }}
-        >
-          #{g.genre} <span style={{ opacity: 0.6 }}>({g.count})</span>
-        </button>
-      ))}
-    </>
-  ), [genres, currentGenre, handleGenreChange])
-
   return (
-    <div className="px-6 lg:px-10 py-6">
-      {/* Header */}
-      <div className="mb-8">
-        <h1
-          className="text-2xl font-[var(--font-weight-bold)] mb-1"
-          style={{ color: 'oklch(var(--c1))' }}
-        >
-          Browse Sets
-        </h1>
-        <p className="text-sm" style={{ color: 'oklch(var(--c3))' }}>
-          Explore {sets.length > 0 && `${totalPages * 24}+`} DJ sets across all genres
-        </p>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col gap-4 mb-8">
-        {/* Genre filter */}
-        <div>
-          <h3
-            className="text-xs font-mono tracking-wider mb-3 uppercase"
-            style={{ color: 'oklch(var(--c3))' }}
-          >
-            Filter by Genre
-          </h3>
-          <div className="flex items-center gap-2 flex-wrap">
-            {genreButtons}
-          </div>
-        </div>
-
-        {/* Sort */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-mono tracking-wider uppercase" style={{ color: 'oklch(var(--c3))' }}>
-            Sort:
-          </span>
-          <select
-            value={currentSort}
-            onChange={(e) => handleSortChange(e.target.value)}
-            className="px-3 py-2 rounded-lg text-sm focus:outline-none"
-            style={{
-              background: 'oklch(var(--b4) / 0.4)',
-              color: 'oklch(var(--c1))',
-              boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.3)',
-            }}
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Divider */}
-      <div
-        className="h-px mb-8"
-        style={{
-          background: 'linear-gradient(to right, oklch(var(--b4) / 0) 0%, oklch(var(--b4) / 0.5) 50%, oklch(var(--b4) / 0) 100%)',
-        }}
+    <PageFrame>
+      <ContentCard
+        toolbar={
+          <Toolbar>
+            <h1 className="zl-toolbar-title">Browse sets</h1>
+            {!isLoading && <span className="zl-toolbar-meta">{total} sets</span>}
+            <div className="cc-toolbar-fill" />
+            <div className="zl-toolbar-trail">
+              <Select label="Sort sets" value={currentSort} options={SORT_CHOICES} onChange={handleSortChange} />
+            </div>
+          </Toolbar>
+        }
+        main={
+          <Section>
+            <SetGrid sets={sets} isLoading={isLoading} />
+            <Pagination
+              page={currentPage - 1}
+              pageSize={PAGE_SIZE}
+              total={total}
+              onChange={(page) => handlePageChange(page + 1)}
+            />
+          </Section>
+        }
+        side={
+          <Section title="Genres">
+            <SideActions>
+              <SideAction
+                icon={<TagFilled />}
+                label="All genres"
+                on={!currentGenre}
+                onClick={() => handleGenreChange(undefined)}
+              />
+              {genres.map((g) => (
+                <SideAction
+                  key={g.genre}
+                  icon={<TagFilled />}
+                  label={g.genre}
+                  note={g.count}
+                  on={currentGenre === g.genre}
+                  onClick={() => handleGenreChange(g.genre)}
+                />
+              ))}
+            </SideActions>
+          </Section>
+        }
       />
-
-      {/* Grid */}
-      <SetGrid sets={sets} isLoading={isLoading} />
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 mt-12">
-          <Button
-            size="sm"
-            disabled={currentPage <= 1}
-            onClick={() => handlePageChange(currentPage - 1)}
-          >
-            ← Previous
-          </Button>
-          <span className="text-sm font-mono tabular-nums px-4" style={{ color: 'oklch(var(--c2))' }}>
-            Page {currentPage} of {totalPages}
-          </span>
-          <Button
-            size="sm"
-            disabled={currentPage >= totalPages}
-            onClick={() => handlePageChange(currentPage + 1)}
-          >
-            Next →
-          </Button>
-        </div>
-      )}
-    </div>
+    </PageFrame>
   )
 }

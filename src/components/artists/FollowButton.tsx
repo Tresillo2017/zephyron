@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
+import { CheckFilled } from '@mingcute/react/core-filled'
 import { useSession } from '../../lib/auth-client'
 import { followArtist, unfollowArtist, getFollowStatus } from '../../lib/api'
-import { Button } from '../ui/Button'
+import { Button } from '../bleh'
 
 interface Props {
   artistId: string
@@ -44,21 +45,13 @@ export function FollowButton({ artistId }: Props) {
 
   return (
     <Button
-      variant={following === true ? 'primary' : 'secondary'}
       size="sm"
+      appearance={following ? 'primary' : 'default'}
+      label={following ? 'Following' : 'Follow'}
+      icon={following ? <CheckFilled /> : undefined}
+      aria-pressed={following}
       onClick={handleToggle}
       disabled={inFlight}
-    >
-      {following === true ? (
-        <>
-          <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-          </svg>
-          Following
-        </>
-      ) : (
-        'Follow'
-      )}
-    </Button>
+    />
   )
 }

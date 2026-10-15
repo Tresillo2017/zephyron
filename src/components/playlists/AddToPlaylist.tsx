@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react'
-import { fetchPlaylists, addToPlaylist } from '../../lib/api'
-import { Modal } from '../ui/Modal'
-import { Button } from '../ui/Button'
-import { Input } from '../ui/Input'
-import { createPlaylist } from '../../lib/api'
+import { useState, useEffect, type FormEvent } from 'react'
+import { AddFilled, CheckFilled, PlaylistFilled } from '@mingcute/react/core-filled'
+import { fetchPlaylists, addToPlaylist, createPlaylist } from '../../lib/api'
+import { Button, InlineAlert, Input, Modal, Skeleton } from '../bleh'
 import type { Playlist } from '../../lib/types'
+import './playlists.css'
 
 interface AddToPlaylistProps {
   setId: string
@@ -30,6 +29,8 @@ export function AddToPlaylist({ setId, isOpen, onClose }: AddToPlaylistProps) {
       .finally(() => setIsLoading(false))
   }, [isOpen])
 
+  if (!isOpen) return null
+
   const handleAdd = async (playlistId: string) => {
     if (addingTo) return
     setAddingTo(playlistId)
@@ -44,7 +45,8 @@ export function AddToPlaylist({ setId, isOpen, onClose }: AddToPlaylistProps) {
     }
   }
 
-  const handleCreate = async () => {
+  const handleCreate = async (e?: FormEvent) => {
+    e?.preventDefault()
     if (!newTitle.trim() || isCreating) return
     setIsCreating(true)
     setError(null)
@@ -66,71 +68,69 @@ export function AddToPlaylist({ setId, isOpen, onClose }: AddToPlaylistProps) {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add to Playlist">
+    <Modal title="Add to playlist" icon={<PlaylistFilled />} onClose={onClose} width={420}>
       {/* Create new */}
-      <div className="flex gap-2 mb-4">
+      <form className="zl-add-create" onSubmit={handleCreate}>
         <Input
+          aria-label="New playlist name"
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="New playlist name..."
-          onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-          className="flex-1"
+          className="zl-add-input"
         />
         <Button
-          variant="primary"
           size="sm"
-          onClick={handleCreate}
+          appearance="primary"
+          htmlButtonType="submit"
+          label={isCreating ? 'Creating...' : 'Create'}
           disabled={!newTitle.trim() || isCreating}
-        >
-          {isCreating ? '...' : 'Create'}
-        </Button>
-      </div>
+        />
+      </form>
 
-      {error && <p className="text-xs text-danger mb-3">{error}</p>}
+      {error && <InlineAlert tone="error">{error}</InlineAlert>}
 
       {/* Existing playlists */}
       {isLoading ? (
-        <div className="space-y-2">
+        <div className="zl-add-list" role="status" aria-label="Loading playlists">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-12 bg-surface-overlay rounded animate-pulse" />
+            <Skeleton key={i} height={48} borderRadius="var(--card-radius)" />
           ))}
         </div>
       ) : playlists.length === 0 ? (
-        <p className="text-sm text-text-muted text-center py-4">
-          No playlists yet. Create one above.
-        </p>
+        <p className="zl-add-empty">No playlists yet. Create one above.</p>
       ) : (
-        <div className="space-y-1 max-h-64 overflow-y-auto">
-          {playlists.map((pl) => (
-            <button
-              key={pl.id}
-              onClick={() => handleAdd(pl.id)}
-              disabled={added.has(pl.id) || addingTo === pl.id}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-colors ${
-                added.has(pl.id)
-                  ? 'bg-accent/10 text-accent'
-                  : 'hover:bg-surface-hover text-text-primary'
-              } disabled:opacity-60`}
-            >
-              <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{pl.title}</p>
-                <p className="text-xs text-text-muted">
-                  {pl.item_count ?? 0} {(pl.item_count ?? 0) === 1 ? 'set' : 'sets'}
-                </p>
-              </div>
-              {added.has(pl.id) ? (
-                <svg className="w-5 h-5 text-accent flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                </svg>
-              ) : addingTo === pl.id ? (
-                <span className="text-xs text-text-muted">Adding...</span>
-              ) : (
-                <svg className="w-5 h-5 text-text-muted flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-                </svg>
-              )}
-            </button>
-          ))}
+        <div className="zl-add-list">
+          {playlists.map((pl) => {
+            const isAdded = added.has(pl.id)
+            const isBusy = addingTo === pl.id
+            return (
+              <button
+                key={pl.id}
+                type="button"
+                className="zl-row zl-add-row"
+                onClick={() => handleAdd(pl.id)}
+                disabled={isAdded || isBusy}
+                data-added={isAdded ? '' : undefined}
+              >
+                <span className="zl-row-main">
+                  <span className="zl-row-title">{pl.title}</span>
+                  <span className="zl-row-sub">
+                    {pl.item_count ?? 0} {(pl.item_count ?? 0) === 1 ? 'set' : 'sets'}
+                  </span>
+                </span>
+                {isAdded ? (
+                  <>
+                    <CheckFilled className="zl-add-icon" aria-hidden="true" />
+                    <span className="sr-only">Added</span>
+                  </>
+                ) : isBusy ? (
+                  <span className="zl-row-sub">Adding...</span>
+                ) : (
+                  <AddFilled className="zl-add-icon" aria-hidden="true" />
+                )}
+              </button>
+            )
+          })}
         </div>
       )}
     </Modal>

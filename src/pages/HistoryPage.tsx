@@ -1,11 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type CSSProperties } from 'react'
 import { Link } from 'react-router'
+import { HistoryFilled, PlayFilled } from '@mingcute/react/core-filled'
 import { fetchHistory } from '../lib/api'
 import { usePlayerStore } from '../stores/playerStore'
-import { HistoryListSkeleton } from '../components/ui/Skeleton'
-import { Badge } from '../components/ui/Badge'
+import { Badge, Button, ContentCard, EmptyState, Section, Skeleton, Toolbar } from '../components/bleh'
+import { PageFrame } from '../components/shell'
 import { formatTime, formatDuration, formatRelativeTime } from '../lib/formatTime'
 import type { ListenHistoryItem } from '../lib/types'
+import './library.css'
+
+const SKELETON_ROWS = 5
+const SEEK_DELAY_MS = 200
+const MAX_STAGGER = 12
+const STAGGER_MS = 30
 
 export function HistoryPage() {
   const [history, setHistory] = useState<ListenHistoryItem[]>([])
@@ -32,93 +39,94 @@ export function HistoryPage() {
       } as any)
       // Seek to last position after a brief delay for audio to load
       if (item.last_position_seconds > 0) {
-        setTimeout(() => seek(item.last_position_seconds), 200)
+        setTimeout(() => seek(item.last_position_seconds), SEEK_DELAY_MS)
       }
     }
   }
 
-  return (
-    <div className="px-6 lg:px-10 py-6">
-      <h1 className="text-2xl font-bold text-text-primary mb-6">Listening History</h1>
+  let body
+  if (isLoading) {
+    body = (
+      <div className="zl-body" role="status" aria-label="Loading history">
+        {Array.from({ length: SKELETON_ROWS }).map((_, i) => (
+          <Skeleton key={i} height={60} borderRadius="var(--card-radius)" />
+        ))}
+      </div>
+    )
+  } else if (history.length === 0) {
+    body = (
+      <EmptyState
+        icon={<HistoryFilled />}
+        title="No listening history yet"
+        description="Sets you play show up here so you can pick up where you left off."
+        action={<Button appearance="primary" to="/app/browse" label="Start listening" />}
+      />
+    )
+  } else {
+    body = (
+      <div className="zl-rows">
+        {history.map((item, index) => {
+          const progressPct = item.duration_seconds
+            ? Math.min(100, (item.last_position_seconds / item.duration_seconds) * 100)
+            : 0
+          const canResume = Boolean(item.title && item.duration_seconds)
 
-      {isLoading ? (
-        <HistoryListSkeleton count={5} />
-      ) : history.length === 0 ? (
-        <div className="text-center py-16">
-          <svg className="w-16 h-16 text-text-muted/30 mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z" />
-          </svg>
-          <p className="text-text-muted text-sm">No listening history yet.</p>
-          <Link to="/app/browse" className="text-accent text-sm mt-2 inline-block no-underline hover:underline">
-            Start listening
-          </Link>
-        </div>
-      ) : (
-        <div className="border border-border rounded-xl overflow-hidden">
-          {history.map((item, index) => {
-            const progressPct = item.duration_seconds
-              ? Math.min(100, (item.last_position_seconds / item.duration_seconds) * 100)
-              : 0
-
-            return (
-              <div
-                key={item.id}
-                className={`flex items-center gap-4 px-4 py-3 hover:bg-surface-hover transition-colors ${
-                  index > 0 ? 'border-t border-border' : ''
-                }`}
+          return (
+            <div
+              key={item.id}
+              className="zl-row animate-item"
+              style={{ '--delay': `${Math.min(index, MAX_STAGGER) * STAGGER_MS}ms` } as CSSProperties}
+            >
+              <button
+                type="button"
+                className="zl-round"
+                disabled={!canResume}
+                onClick={() => handleResume(item)}
+                aria-label={`Resume ${item.title || 'set'} at ${formatTime(item.last_position_seconds)}`}
               >
-                {/* Resume button */}
-                <button
-                  onClick={() => handleResume(item)}
-                  className="w-10 h-10 bg-surface-overlay rounded-full flex items-center justify-center hover:bg-accent hover:text-white transition-colors flex-shrink-0"
-                  title={`Resume at ${formatTime(item.last_position_seconds)}`}
-                >
-                  <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </button>
+                <PlayFilled />
+              </button>
 
-                {/* Info */}
-                <Link to={`/app/sets/${item.set_id}`} className="flex-1 min-w-0 no-underline">
-                  <p className="text-sm text-text-primary truncate hover:underline">
-                    {item.title || 'Untitled'}
-                  </p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <p className="text-xs text-text-secondary truncate">{item.artist || 'Unknown'}</p>
-                    {item.genre && <Badge variant="muted">{item.genre}</Badge>}
-                  </div>
-                  {/* Progress bar */}
-                  {item.duration_seconds && item.last_position_seconds > 0 && (
-                    <div className="mt-1.5 flex items-center gap-2">
-                      <div className="flex-1 h-1 bg-border rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-accent rounded-full"
-                          style={{ width: `${progressPct}%` }}
-                        />
-                      </div>
-                      <span className="text-[10px] text-text-muted">
-                        {formatTime(item.last_position_seconds)} / {formatDuration(item.duration_seconds)}
-                      </span>
-                    </div>
-                  )}
-                </Link>
-
-                {/* Meta */}
-                <div className="flex flex-col items-end flex-shrink-0">
-                  <span className="text-xs text-text-muted">
-                    {formatRelativeTime(item.last_listened_at)}
-                  </span>
-                  {item.listen_count > 1 && (
-                    <span className="text-[10px] text-text-muted mt-0.5">
-                      {item.listen_count}x played
+              <Link to={`/app/sets/${item.set_id}`} className="zl-row-main">
+                <span className="zl-row-title">{item.title || 'Untitled'}</span>
+                <span className="zl-row-sub zl-row-line">
+                  <span className="zl-row-ellipsis">{item.artist || 'Unknown'}</span>
+                  {item.genre && <Badge>{item.genre}</Badge>}
+                </span>
+                {item.duration_seconds && item.last_position_seconds > 0 && (
+                  <span className="zl-progress-row">
+                    <span className="zl-progress" aria-hidden="true">
+                      <span style={{ width: `${progressPct}%` }} />
                     </span>
-                  )}
-                </div>
+                    <span className="zl-row-sub">
+                      {formatTime(item.last_position_seconds)} / {formatDuration(item.duration_seconds)}
+                    </span>
+                  </span>
+                )}
+              </Link>
+
+              <div className="zl-row-end">
+                <span>{formatRelativeTime(item.last_listened_at)}</span>
+                {item.listen_count > 1 && <span>{item.listen_count}× played</span>}
               </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  return (
+    <PageFrame>
+      <ContentCard
+        toolbar={
+          <Toolbar>
+            <h1 className="zl-toolbar-title">Listening history</h1>
+            {!isLoading && history.length > 0 && <span className="zl-toolbar-meta">{history.length} sets</span>}
+          </Toolbar>
+        }
+        main={<Section>{body}</Section>}
+      />
+    </PageFrame>
   )
 }

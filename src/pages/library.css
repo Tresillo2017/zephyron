@@ -66,7 +66,11 @@ a.zl-row:hover, button.zl-row:hover { background: oklch(var(--b4) / 60%); text-d
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
-.zl-row-main { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
+.zl-row-main { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; color: inherit; text-decoration: none; }
+.zl-row-line { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.zl-row-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.zl-progress-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 12px; line-height: 16px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.zl-progress-row > .zl-progress { flex: 1; }
 .zl-row-title {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -126,6 +130,7 @@ a.zl-row:hover, button.zl-row:hover { background: oklch(var(--b4) / 60%); text-d
   transition: background-color 0.2s var(--trans-function), color 0.2s var(--trans-function), scale 0.2s var(--trans-function);
 }
 .zl-round:hover { background: var(--accent); color: var(--on-accent); }
+a.zl-round { text-decoration: none; }
 .zl-round:active { scale: 0.96; }
 .zl-round:focus-visible { outline: 2px solid oklch(var(--l3-c, var(--l3)) / 60%); outline-offset: 2px; }
 .zl-round > svg { width: 14px; height: 14px; }
@@ -238,7 +243,8 @@ a.zl-row:hover, button.zl-row:hover { background: oklch(var(--b4) / 60%); text-d
 .zl-event-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; line-height: 20px; font-weight: var(--fw-bold); color: var(--text-heading); }
 .zl-event-loc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; line-height: 16px; color: var(--text); }
 .zl-event-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; font-size: 12px; line-height: 16px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-.zl-event-series { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: oklch(var(--h3)); }
+.zl-event-meta { display: flex; min-width: 0; gap: 8px; }
+.zl-event-series { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--accent); }
 .zl-event-counts { display: flex; flex: none; align-items: center; gap: 10px; }
 .zl-event-counts strong { font-weight: 500; color: var(--text); }
 
@@ -256,6 +262,8 @@ a.zl-row:hover, button.zl-row:hover { background: oklch(var(--b4) / 60%); text-d
 .zl-top { display: flex; flex-direction: column; gap: 16px; height: 100%; padding: 20px; border-radius: var(--card-radius); background: oklch(var(--b4) / 60%); color: var(--text); text-decoration: none; transition: background-color 0.2s var(--trans-function); }
 .zl-top:hover { background: oklch(var(--b4)); }
 .zl-top:focus-visible { outline: 2px solid oklch(var(--l3-c, var(--l3)) / 60%); outline-offset: 2px; }
+.zl-top-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.zl-square-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--card-gap); margin: 0; padding: 0; list-style: none; }
 .zl-top-art { width: 96px; height: 96px; overflow: hidden; border-radius: var(--card-radius); box-shadow: var(--card-shadow); background: oklch(var(--b4)); }
 .zl-top-art[data-round] { border-radius: 50%; }
 .zl-top-art > img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -270,16 +278,32 @@ a.zl-row:hover, button.zl-row:hover { background: oklch(var(--b4) / 60%); text-d
   .zl-two { grid-template-columns: minmax(0, 1fr); }
 }
 
+/* ── hero cover + back link (playlist detail) ─────────────── */
+.zl-hero-cover {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, oklch(var(--h3) / 25%), oklch(var(--b4)));
+  color: var(--accent);
+}
+.zl-hero-cover > svg { width: 56px; height: 56px; }
+.zl-back { font-size: 13px; font-weight: 500; color: var(--accent); text-decoration: none; white-space: nowrap; }
+.zl-back:hover { text-decoration: underline; }
+.zl-back:focus-visible { outline: 2px solid oklch(var(--l3-c, var(--l3)) / 60%); outline-offset: 2px; border-radius: 4px; }
+
 /* ── forms (playlists create, request set) ─────────────────── */
+.zl-create { padding: 20px var(--card-padding); }
 .zl-form { display: flex; flex-direction: column; gap: 15px; }
+.zl-form-field { display: flex; flex-direction: column; gap: 8px; }
 .zl-form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--card-gap); }
-.zl-form-label { font-size: 13px; line-height: 17px; font-weight: 500; color: var(--text-heading); }
 .zl-form-hint { font-size: 12px; line-height: 16px; color: var(--text-muted); }
 .zl-form-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .zl-source-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .zl-center { text-align: center; }
 @media (max-width: 600px) {
   .zl-form-row { grid-template-columns: minmax(0, 1fr); }
+  .zl-hide-sm { display: none; }
 }
 
 /* ── pager ─────────────────────────────────────────────────── */
