@@ -69,9 +69,19 @@ export function DetectionGroup({
         )}
 
         {/* ═══ PRIMARY TRACK ═══ */}
-        <button
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label={`Play ${primary.track_title}`}
           onClick={() => onClickTrack(primary)}
-          className="w-full flex items-center gap-3 px-4 py-2.5 text-left"
+          onKeyDown={(e) => {
+            if (e.target !== e.currentTarget) return
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              onClickTrack(primary)
+            }
+          }}
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[oklch(var(--h3))]"
         >
           {/* Timestamp / equalizer */}
           <span
@@ -132,7 +142,7 @@ export function DetectionGroup({
               </div>
             )}
           </div>
-        </button>
+        </div>
 
         {/* ═══ "W/" TRACKS — nested underneath ═══ */}
         {hasWithTracks && (
