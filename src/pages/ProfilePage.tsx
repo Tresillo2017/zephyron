@@ -1564,9 +1564,9 @@ function TwoFactorSection() {
   const handleEnable2FA = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true); setError("");
     try {
-      const { data, error: err } = await authClient.twoFactor.enable({ password });
+      const { data, error: err } = await authClient.twoFactor.enable({ password, method: "totp" });
       if (err) { setError(err.message || "Failed to enable 2FA"); return; }
-      if (data) { setTotpURI(data.totpURI); setBackupCodes(data.backupCodes); setStep("qr"); }
+      if (data && data.method === "totp") { setTotpURI(data.totpURI); setBackupCodes(data.backupCodes); setStep("qr"); }
     } catch { setError("Something went wrong"); } finally { setLoading(false); }
   };
 

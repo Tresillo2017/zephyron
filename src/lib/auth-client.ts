@@ -1,5 +1,4 @@
 import { createAuthClient } from 'better-auth/react'
-import type { BetterAuthClientPlugin } from 'better-auth/client'
 import { adminClient, twoFactorClient, deviceAuthorizationClient } from 'better-auth/client/plugins'
 import { apiKeyClient, type ApiKeyClientPlugin } from '@better-auth/api-key/client'
 
@@ -22,7 +21,7 @@ const _authClient = createAuthClient({
         window.location.href = '/2fa'
       },
     }),
-    apiKeyClient() as unknown as BetterAuthClientPlugin,
+    apiKeyClient(),
     deviceAuthorizationClient(),
   ],
 })
