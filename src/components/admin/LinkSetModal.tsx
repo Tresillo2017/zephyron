@@ -1,16 +1,108 @@
 import { useState, useEffect } from 'react'
+import { AddFilled } from '@mingcute/react/core-filled'
 import { fetchSets, fetchEvent, linkSetToEvent, unlinkSetFromEvent } from '../../lib/api'
-import { Modal } from '../ui/Modal'
+import { cn } from '../../lib/cn'
+import { inputClass } from '../bleh'
+import { AdminButton, AdminModal } from './adminUi'
+
+type LinkSection = 'linked' | 'add'
+
+function SetLine({ title, artist }: { title: string; artist: string }) {
+  return (
+    <div className="min-w-0 flex-1">
+      <p className="truncate text-[14px] text-heading">{title}</p>
+      <p className="truncate text-[12px] text-muted">{artist}</p>
+    </div>
+  )
+}
+
+function matchesSearch(set: { title?: string; artist?: string }, search: string): boolean {
+  if (!search) return true
+  const q = search.toLowerCase()
+  return !!set.title?.toLowerCase().includes(q) || !!set.artist?.toLowerCase().includes(q)
+}
+
+function SectionToggle({ active, counts, onChange }: {
+  active: LinkSection; counts: Record<LinkSection, number>; onChange: (section: LinkSection) => void
+}) {
+  const labels: Record<LinkSection, string> = { linked: 'Linked', add: 'Add Sets' }
+  return (
+    <div className="flex gap-1 rounded-lg bg-b4/30 p-1">
+      {(['linked', 'add'] as const).map((section) => (
+        <button
+          key={section}
+          type="button"
+          aria-pressed={active === section}
+          onClick={() => onChange(section)}
+          className={cn(
+            'flex-1 cursor-pointer rounded-md py-1.5 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-2',
+            active === section ? 'bg-b3 text-heading' : 'text-muted hover:text-text',
+          )}
+        >
+          {labels[section]} ({counts[section]})
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function LinkedSetRows({ sets, search, working, onUnlink }: {
+  sets: any[]; search: string; working: string | null; onUnlink: (setId: string) => void
+}) {
+  const visible = sets.filter((s) => matchesSearch(s, search))
+  if (visible.length === 0) {
+    return <p className="py-4 text-center text-[13px] text-muted">{search ? 'No linked sets match.' : 'No sets linked yet.'}</p>
+  }
+  return (
+    <>
+      {visible.map((set: any) => (
+        <div key={set.id} className="flex items-center gap-3 rounded-lg bg-b4/20 px-3 py-2.5">
+          <SetLine title={set.title} artist={set.artist} />
+          <AdminButton variant="danger" size="sm" onClick={() => onUnlink(set.id)} disabled={working === set.id}>
+            {working === set.id ? '...' : 'Unlink'}
+          </AdminButton>
+        </div>
+      ))}
+    </>
+  )
+}
+
+function UnlinkedSetRows({ sets, search, working, onLink }: {
+  sets: any[]; search: string; working: string | null; onLink: (setId: string) => void
+}) {
+  const visible = sets.filter((s) => matchesSearch(s, search))
+  if (visible.length === 0) {
+    return <p className="py-4 text-center text-[13px] text-muted">{search ? 'No sets match.' : 'All sets are already linked.'}</p>
+  }
+  return (
+    <>
+      {visible.map((set) => (
+        <button
+          key={set.id}
+          type="button"
+          onClick={() => onLink(set.id)}
+          disabled={working === set.id}
+          className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-b3/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-2 disabled:cursor-default disabled:opacity-60"
+        >
+          <SetLine title={set.title} artist={set.artist} />
+          {working === set.id ? (
+            <span className="shrink-0 text-[12px] text-muted">Linking...</span>
+          ) : (
+            <AddFilled size={16} aria-hidden="true" className="shrink-0 text-muted" />
+          )}
+        </button>
+      ))}
+    </>
+  )
+}
 
 export function LinkSetModal({ eventId, onClose, onChanged }: { eventId: string; onClose: () => void; onChanged: () => void }) {
-   
   const [allSets, setAllSets] = useState<any[]>([])
-   
   const [linkedSets, setLinkedSets] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [working, setWorking] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [activeSection, setActiveSection] = useState<'linked' | 'add'>('linked')
+  const [activeSection, setActiveSection] = useState<LinkSection>('linked')
 
   const load = () => {
     Promise.all([
@@ -22,18 +114,10 @@ export function LinkSetModal({ eventId, onClose, onChanged }: { eventId: string;
     }).catch(() => {}).finally(() => setIsLoading(false))
   }
 
-   
   useEffect(() => { load() }, [eventId])
 
   const linkedIds = new Set(linkedSets.map((s: any) => s.id))
   const unlinkedSets = allSets.filter((s) => !linkedIds.has(s.id))
-
-  const filteredLinked = linkedSets.filter((s: any) =>
-    !search || s.title?.toLowerCase().includes(search.toLowerCase()) || s.artist?.toLowerCase().includes(search.toLowerCase())
-  )
-  const filteredUnlinked = unlinkedSets.filter((s) =>
-    !search || s.title?.toLowerCase().includes(search.toLowerCase()) || s.artist?.toLowerCase().includes(search.toLowerCase())
-  )
 
   const handleLink = async (setId: string) => {
     setWorking(setId)
@@ -46,101 +130,35 @@ export function LinkSetModal({ eventId, onClose, onChanged }: { eventId: string;
   }
 
   return (
-    <Modal isOpen onClose={onClose} title="Manage Linked Sets">
-      <div className="space-y-3">
-        {/* Search */}
+    <AdminModal isOpen onClose={onClose} title="Manage Linked Sets" size="md">
+      <div className="flex flex-col gap-3">
         <input
+          type="search"
+          aria-label="Search sets"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search sets..."
-          className="w-full px-3 py-2 rounded-lg text-sm placeholder:text-text-muted focus:outline-none"
-          style={{ background: 'oklch(var(--b4) / 0.4)', color: 'oklch(var(--c1))' }}
-          onFocus={(e) => { e.currentTarget.style.boxShadow = 'inset 0 0 0 1px oklch(var(--h3) / 0.5)' }}
-          onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
+          className={inputClass}
         />
 
-        {/* Section toggle */}
-        <div className="flex gap-1 p-1 rounded-lg" style={{ background: 'oklch(var(--b4) / 0.3)' }}>
-          {(['linked', 'add'] as const).map((section) => (
-            <button
-              key={section}
-              onClick={() => setActiveSection(section)}
-              className="flex-1 py-1.5 rounded-md text-xs font-medium transition-all border-none cursor-pointer"
-              style={{
-                background: activeSection === section ? 'oklch(var(--b3))' : 'transparent',
-                color: activeSection === section ? 'oklch(var(--c1))' : 'oklch(var(--c3))',
-              }}
-            >
-              {section === 'linked' ? `Linked (${linkedSets.length})` : `Add Sets (${unlinkedSets.length})`}
-            </button>
-          ))}
-        </div>
+        <SectionToggle
+          active={activeSection}
+          counts={{ linked: linkedSets.length, add: unlinkedSets.length }}
+          onChange={setActiveSection}
+        />
 
         {isLoading ? (
-          <p className="text-sm py-4 text-center" style={{ color: 'oklch(var(--c3))' }}>Loading...</p>
+          <p className="py-4 text-center text-[13px] text-muted">Loading...</p>
         ) : (
-          <div className="space-y-1 max-h-72 overflow-y-auto">
-            {activeSection === 'linked' && (
-              <>
-                {filteredLinked.length === 0 ? (
-                  <p className="text-sm py-4 text-center" style={{ color: 'oklch(var(--c3))' }}>
-                    {search ? 'No linked sets match.' : 'No sets linked yet.'}
-                  </p>
-                ) : filteredLinked.map((set: any) => (
-                  <div key={set.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ background: 'oklch(var(--b4) / 0.2)' }}>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate" style={{ color: 'oklch(var(--c1))' }}>{set.title}</p>
-                      <p className="text-xs truncate" style={{ color: 'oklch(var(--c3))' }}>{set.artist}</p>
-                    </div>
-                    <button
-                      onClick={() => handleUnlink(set.id)}
-                      disabled={working === set.id}
-                      className="shrink-0 px-2 py-1 rounded-md text-xs transition-colors border-none cursor-pointer"
-                      style={{ background: 'hsl(0 60% 50% / 0.15)', color: 'hsl(0 60% 65%)' }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'hsl(0 60% 50% / 0.25)' }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'hsl(0 60% 50% / 0.15)' }}
-                    >
-                      {working === set.id ? '...' : 'Unlink'}
-                    </button>
-                  </div>
-                ))}
-              </>
-            )}
-
-            {activeSection === 'add' && (
-              <>
-                {filteredUnlinked.length === 0 ? (
-                  <p className="text-sm py-4 text-center" style={{ color: 'oklch(var(--c3))' }}>
-                    {search ? 'No sets match.' : 'All sets are already linked.'}
-                  </p>
-                ) : filteredUnlinked.map((set) => (
-                  <button
-                    key={set.id}
-                    onClick={() => handleLink(set.id)}
-                    disabled={working === set.id}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors border-none cursor-pointer"
-                    style={{ color: 'oklch(var(--c2))' }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'oklch(var(--b3) / 0.4)' }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '' }}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate" style={{ color: 'oklch(var(--c1))' }}>{set.title}</p>
-                      <p className="text-xs truncate" style={{ color: 'oklch(var(--c3))' }}>{set.artist}</p>
-                    </div>
-                    {working === set.id ? (
-                      <span className="text-xs shrink-0" style={{ color: 'oklch(var(--c3))' }}>Linking...</span>
-                    ) : (
-                      <svg className="w-4 h-4 shrink-0" style={{ color: 'oklch(var(--c3))' }} fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-                      </svg>
-                    )}
-                  </button>
-                ))}
-              </>
+          <div className="flex max-h-72 flex-col gap-1 overflow-y-auto">
+            {activeSection === 'linked' ? (
+              <LinkedSetRows sets={linkedSets} search={search} working={working} onUnlink={handleUnlink} />
+            ) : (
+              <UnlinkedSetRows sets={unlinkedSets} search={search} working={working} onLink={handleLink} />
             )}
           </div>
         )}
       </div>
-    </Modal>
+    </AdminModal>
   )
 }

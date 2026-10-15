@@ -1,10 +1,47 @@
-import { useState } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
+import { Upload2Filled, ArrowDownFilled } from '@mingcute/react/core-filled'
 import { createEventAdmin, updateEventAdmin, uploadEventLogoAdmin, uploadEventCoverAdmin, getEventCoverUrl, getEventLogoUrl } from '../../lib/api'
-import { Button } from '../ui/Button'
-import { Input } from '../ui/Input'
-import { Modal } from '../ui/Modal'
+import { cn } from '../../lib/cn'
 import { parseEventSourceHtml, type Event1001Parsed } from '../../lib/parse-1001tracklists-source'
+import { Input, InlineAlert, Textarea, textareaClass } from '../bleh'
+import { AdminButton, AdminModal } from './adminUi'
 import type { Event } from './eventTypes'
+
+const IMAGE_ACCEPT = 'image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp'
+
+function ImageDropField({ label, hint, preview, fileName, uploadLabel, onPick }: {
+  label: string; hint: string; preview: string | null; fileName: string | null
+  uploadLabel: string; onPick: (e: ChangeEvent<HTMLInputElement>) => void
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  return (
+    <div>
+      <span className="mb-1.5 block text-[13px] font-medium text-text">
+        {label} <span className="text-[11px] font-normal text-muted">{hint}</span>
+      </span>
+      <button
+        type="button"
+        aria-label={`Upload ${label.toLowerCase()}`}
+        onClick={() => inputRef.current?.click()}
+        className="group relative mb-2 flex aspect-square w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl bg-b4 shadow-[inset_0_0_0_1px_color-mix(in_oklch,var(--b4),transparent_75%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-2"
+      >
+        {preview ? (
+          <img src={preview} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span className="flex flex-col items-center gap-1 text-muted/60">
+            <Upload2Filled size={20} aria-hidden="true" />
+            <span className="text-[11px]">{uploadLabel}</span>
+          </span>
+        )}
+        <span className="absolute inset-0 flex items-center justify-center bg-black/40 text-[12px] text-white/80 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+          Change
+        </span>
+      </button>
+      <input ref={inputRef} type="file" accept={IMAGE_ACCEPT} onChange={onPick} className="hidden" />
+      {fileName && <p className="text-[11px] text-muted">{fileName}</p>}
+    </div>
+  )
+}
 
 export function EventFormModal({ event, onClose, onSaved }: { event?: Event; onClose: () => void; onSaved: () => void }) {
   const [name, setName] = useState(event?.name || '')
@@ -73,7 +110,7 @@ export function EventFormModal({ event, onClose, onSaved }: { event?: Event; onC
   const [saving, setSaving] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<string | null>(null)
 
-  const handleFileSelect = (setter: (f: File) => void, previewSetter: (url: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (setter: (f: File) => void, previewSetter: (url: string) => void) => (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     setter(file)
@@ -132,32 +169,36 @@ export function EventFormModal({ event, onClose, onSaved }: { event?: Event; onC
     }
   }
 
+  const footer = (
+    <>
+      <AdminButton variant="ghost" onClick={onClose}>Cancel</AdminButton>
+      <AdminButton variant="primary" onClick={handleSave} disabled={saving || !name.trim()}>
+        {saving ? 'Saving...' : event ? 'Save' : 'Create'}
+      </AdminButton>
+    </>
+  )
+
   return (
-    <Modal isOpen onClose={onClose} title={event ? `Edit: ${event.name}` : 'Create Event'}>
-      <div className="space-y-3">
+    <AdminModal isOpen onClose={onClose} title={event ? `Edit: ${event.name}` : 'Create Event'} size="lg" footer={footer}>
+      <div className="flex flex-col gap-4">
 
         {/* 1001TL Import/Enrich section — available in both create and edit */}
-        <div className="rounded-lg overflow-hidden" style={{ boxShadow: 'inset 0 0 0 1px oklch(var(--b4) / 0.2)' }}>
+        <div className="overflow-hidden rounded-lg shadow-[inset_0_0_0_1px_color-mix(in_oklch,var(--b4),transparent_80%)]">
           <button
+            type="button"
+            aria-expanded={importHtml !== ''}
             onClick={() => setImportHtml(importHtml || ' ')}
-            className="w-full flex items-center justify-between px-3 py-2 text-left cursor-pointer"
-            style={{ background: 'oklch(var(--b5) / 0.4)' }}
+            className="flex w-full cursor-pointer items-center justify-between bg-b5/40 px-3 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-2"
           >
-            <span className="text-xs font-[var(--font-weight-medium)]" style={{ color: 'oklch(var(--c2))' }}>
+            <span className="text-[13px] font-medium text-text">
               {event ? 'Enrich from 1001Tracklists' : 'Import from 1001Tracklists (optional)'}
             </span>
-            <svg
-              className="w-3.5 h-3.5 transition-transform"
-              style={{ color: 'oklch(var(--c3))', transform: importHtml ? 'rotate(180deg)' : 'rotate(0deg)' }}
-              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-            </svg>
+            <ArrowDownFilled size={14} aria-hidden="true" className={cn('text-muted transition-transform duration-200', importHtml && 'rotate-180')} />
           </button>
           {importHtml !== '' && (
-            <div className="px-3 pb-3 pt-2 space-y-2" style={{ background: 'oklch(var(--b5) / 0.2)' }}>
-              <p className="text-xs" style={{ color: 'oklch(var(--c3))' }}>
-                Go to the event source page (e.g. <code className="font-mono">/source/u8bf5c/</code>), view page source, paste below.
+            <div className="flex flex-col gap-2 bg-b5/20 px-3 pb-3 pt-2">
+              <p className="text-[12px] text-muted">
+                Go to the event source page (e.g. <code className="font-mono text-accent-2">/source/u8bf5c/</code>), view page source, paste below.
                 {event && ' Existing values are preserved — only empty fields will be filled.'}
               </p>
               <textarea
@@ -165,17 +206,16 @@ export function EventFormModal({ event, onClose, onSaved }: { event?: Event; onC
                 onChange={(e) => { setImportHtml(e.target.value); setImportParsed(null); setImportError(null) }}
                 rows={3}
                 placeholder="Paste source page HTML here..."
-                className="w-full px-3 py-2 rounded-lg text-xs font-mono resize-none focus:outline-none"
-                style={{ background: 'oklch(var(--b4) / 0.4)', color: 'oklch(var(--c1))' }}
+                className={textareaClass + ' resize-none font-mono text-[12px]'}
               />
-              <Button variant="secondary" size="sm" onClick={handleParse1001TL} disabled={!importHtml.trim()}>
+              <AdminButton variant="secondary" size="sm" onClick={handleParse1001TL} disabled={!importHtml.trim()}>
                 Parse &amp; {event ? 'Fill Missing' : 'Autofill'}
-              </Button>
-              {importError && <p className="text-xs" style={{ color: 'hsl(0, 60%, 55%)' }}>{importError}</p>}
+              </AdminButton>
+              {importError && <InlineAlert tone="error">{importError}</InlineAlert>}
               {importParsed && (
-                <div className="text-xs space-y-0.5" style={{ color: 'oklch(var(--c2))' }}>
-                  <p>Parsed: <strong style={{ color: 'oklch(var(--c1))' }}>{importParsed.name}</strong></p>
-                  {importParsed.source_id && <p>Source ID: <code className="font-mono">{importParsed.source_id}</code></p>}
+                <div className="flex flex-col gap-0.5 text-[12px] text-muted">
+                  <p>Parsed: <strong className="font-medium text-heading">{importParsed.name}</strong></p>
+                  {importParsed.source_id && <p>Source ID: <code className="font-mono text-text">{importParsed.source_id}</code></p>}
                   {importParsed.tracklist_count && <p>{importParsed.tracklist_count.toLocaleString()} tracklists on 1001TL</p>}
                   {importParsed.cover_image_url && <p>Cover image: found {event ? '' : '(will be cached to R2)'}</p>}
                   {importParsed.website && <p>Website: {importParsed.website}</p>}
@@ -190,73 +230,22 @@ export function EventFormModal({ event, onClose, onSaved }: { event?: Event; onC
 
         {/* Images: Logo + Cover side by side */}
         <div className="grid grid-cols-2 gap-4">
-          {/* Logo upload (square) */}
-          <div>
-            <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'oklch(var(--c2))' }}>
-              Logo <span className="text-[10px] font-normal" style={{ color: 'oklch(var(--c3))' }}>(square)</span>
-            </label>
-            <div
-              className="w-full aspect-square rounded-xl overflow-hidden mb-2 flex items-center justify-center cursor-pointer relative group"
-              style={{ background: 'oklch(var(--b4))', boxShadow: 'var(--card-border)' }}
-              onClick={() => document.getElementById('logo-input')?.click()}
-            >
-              {logoPreview ? (
-                <img src={logoPreview} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="flex flex-col items-center gap-1">
-                  <svg className="w-6 h-6" style={{ color: 'oklch(var(--c3) / 0.3)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                  </svg>
-                  <span className="text-[10px]" style={{ color: 'oklch(var(--c3) / 0.4)' }}>Upload logo</span>
-                </div>
-              )}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="text-xs text-white/80">Change</span>
-              </div>
-            </div>
-            <input
-              id="logo-input"
-              type="file"
-              accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
-              onChange={handleFileSelect(setLogoFile, setLogoPreview)}
-              className="hidden"
-            />
-            {logoFile && <p className="text-[10px]" style={{ color: 'oklch(var(--c3))' }}>{logoFile.name}</p>}
-          </div>
-
-          {/* Cover upload (wide) */}
-          <div>
-            <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'oklch(var(--c2))' }}>
-              Cover <span className="text-[10px] font-normal" style={{ color: 'oklch(var(--c3))' }}>(background)</span>
-            </label>
-            <div
-              className="w-full aspect-square rounded-xl overflow-hidden mb-2 flex items-center justify-center cursor-pointer relative group"
-              style={{ background: 'oklch(var(--b4))', boxShadow: 'var(--card-border)' }}
-              onClick={() => document.getElementById('cover-input')?.click()}
-            >
-              {coverPreview ? (
-                <img src={coverPreview} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="flex flex-col items-center gap-1">
-                  <svg className="w-6 h-6" style={{ color: 'oklch(var(--c3) / 0.3)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
-                  </svg>
-                  <span className="text-[10px]" style={{ color: 'oklch(var(--c3) / 0.4)' }}>Upload cover</span>
-                </div>
-              )}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="text-xs text-white/80">Change</span>
-              </div>
-            </div>
-            <input
-              id="cover-input"
-              type="file"
-              accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
-              onChange={handleFileSelect(setCoverFile, setCoverPreview)}
-              className="hidden"
-            />
-            {coverFile && <p className="text-[10px]" style={{ color: 'oklch(var(--c3))' }}>{coverFile.name}</p>}
-          </div>
+          <ImageDropField
+            label="Logo"
+            hint="(square)"
+            preview={logoPreview}
+            fileName={logoFile?.name ?? null}
+            uploadLabel="Upload logo"
+            onPick={handleFileSelect(setLogoFile, setLogoPreview)}
+          />
+          <ImageDropField
+            label="Cover"
+            hint="(background)"
+            preview={coverPreview}
+            fileName={coverFile?.name ?? null}
+            uploadLabel="Upload cover"
+            onPick={handleFileSelect(setCoverFile, setCoverPreview)}
+          />
         </div>
 
         <Input label="Event Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Tomorrowland 2025" />
@@ -274,10 +263,7 @@ export function EventFormModal({ event, onClose, onSaved }: { event?: Event; onC
           <Input label="Start Date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           <Input label="End Date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         </div>
-        <div>
-          <label className="text-sm font-[var(--font-weight-medium)] block mb-1.5" style={{ color: 'oklch(var(--c2))' }}>Description</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full px-3 py-2 rounded-lg text-sm resize-none focus:outline-none" style={{ background: 'oklch(var(--b4) / 0.4)', color: 'oklch(var(--c1))' }} />
-        </div>
+        <Textarea label="Description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
 
         <Input
           label="1001Tracklists Source ID"
@@ -296,14 +282,9 @@ export function EventFormModal({ event, onClose, onSaved }: { event?: Event; onC
         </div>
 
         {uploadProgress && (
-          <p className="text-xs animate-pulse" style={{ color: 'oklch(var(--h3))' }}>{uploadProgress}</p>
+          <p className="text-[12px] text-accent-2" role="status">{uploadProgress}</p>
         )}
-
-        <div className="flex gap-3 pt-2">
-          <Button variant="secondary" onClick={onClose} className="flex-1">Cancel</Button>
-          <Button variant="primary" onClick={handleSave} disabled={saving || !name.trim()} className="flex-1">{saving ? 'Saving...' : event ? 'Save' : 'Create'}</Button>
-        </div>
       </div>
-    </Modal>
+    </AdminModal>
   )
 }
