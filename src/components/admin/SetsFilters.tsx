@@ -55,7 +55,7 @@ interface SetsFiltersProps {
 /** Search box, sort and filter selects for the sets list. */
 export function SetsFilters(p: SetsFiltersProps) {
   return (
-    <div className="mb-4 flex flex-col gap-2 rounded-card bg-b4/40 p-3 shadow-inset">
+    <div className="flex flex-col gap-2 rounded-card bg-surface-overlay/40 p-3 shadow-[var(--item-inset)]">
       <div className="flex flex-wrap items-center gap-2">
         <div className="min-w-[200px] flex-1">
           <Input

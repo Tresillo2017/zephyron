@@ -307,188 +307,190 @@ export function SetsListTab({ editId }: { editId?: string }) {
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div role="group" aria-label="Sets view" className="flex items-center gap-1">
-          <AdminButton variant={setsView === 'all' ? 'primary' : 'ghost'} size="sm" aria-pressed={setsView === 'all'} onClick={() => setSetsView('all')}>
-            All Sets ({total})
-          </AdminButton>
-          <AdminButton variant={setsView === 'requests' ? 'primary' : 'ghost'} size="sm" aria-pressed={setsView === 'requests'} onClick={() => setSetsView('requests')}>
-            Requested Sets
-          </AdminButton>
-        </div>
-        {setsView === 'all' && (
-          <div className="flex items-center gap-2">
-            <div role="group" aria-label="Layout" className="flex items-center gap-1">
-              <AdminButton variant={viewMode === 'list' ? 'primary' : 'ghost'} size="sm" aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')}>
-                List
-              </AdminButton>
-              <AdminButton variant={viewMode === 'grid' ? 'primary' : 'ghost'} size="sm" aria-pressed={viewMode === 'grid'} onClick={() => setViewMode('grid')}>
-                Grid
-              </AdminButton>
-            </div>
-            <AdminButton variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
-              Add Set
+      <div className="flex flex-col gap-[15px] px-[var(--card-padding,20px)]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div role="group" aria-label="Sets view" className="flex items-center gap-1">
+            <AdminButton variant={setsView === 'all' ? 'primary' : 'ghost'} size="sm" aria-pressed={setsView === 'all'} onClick={() => setSetsView('all')}>
+              All Sets ({total})
+            </AdminButton>
+            <AdminButton variant={setsView === 'requests' ? 'primary' : 'ghost'} size="sm" aria-pressed={setsView === 'requests'} onClick={() => setSetsView('requests')}>
+              Requested Sets
             </AdminButton>
           </div>
+          {setsView === 'all' && (
+            <div className="flex items-center gap-2">
+              <div role="group" aria-label="Layout" className="flex items-center gap-1">
+                <AdminButton variant={viewMode === 'list' ? 'primary' : 'ghost'} size="sm" aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')}>
+                  List
+                </AdminButton>
+                <AdminButton variant={viewMode === 'grid' ? 'primary' : 'ghost'} size="sm" aria-pressed={viewMode === 'grid'} onClick={() => setViewMode('grid')}>
+                  Grid
+                </AdminButton>
+              </div>
+              <AdminButton variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
+                Add Set
+              </AdminButton>
+            </div>
+          )}
+        </div>
+
+        {setsView === 'requests' && (
+          <RequestsPanel
+            requestsTab={requestsTab}
+            onRequestsTabChange={setRequestsTab}
+            sourceRequests={sourceRequests}
+            setRequests={setRequests}
+            loading={requestsLoading}
+            actionMsg={requestActionMsg}
+            onDismissMsg={() => setRequestActionMsg(null)}
+            onRefresh={loadRequests}
+            onSourceApprove={handleSourceApprove}
+            onSourceReject={handleSourceReject}
+            onSetApprove={handleSetApprove}
+            onSetReject={handleSetReject}
+          />
+        )}
+
+        {setsView === 'all' && (
+          <>
+            <SetsFilters
+              search={search}
+              onSearchChange={setSearch}
+              sort={sort}
+              onSortChange={(v) => { setSort(v); setPage(1) }}
+              genre={genre}
+              onGenreChange={handleFilterChange(setGenre)}
+              streamType={streamType}
+              onStreamTypeChange={handleFilterChange(setStreamType)}
+              detectionStatus={detectionStatus}
+              onDetectionStatusChange={handleFilterChange(setDetectionStatus)}
+              hasSource={hasSource}
+              onHasSourceChange={handleFilterChange(setHasSource)}
+              activeFilterCount={activeFilterCount}
+              onClearFilters={() => { setGenre(''); setStreamType(''); setDetectionStatus(''); setHasSource(''); setPage(1) }}
+            />
+
+            {someSelected && (
+              <div className="flex flex-wrap items-center gap-2 rounded-card bg-accent/5 p-3 shadow-[var(--item-inset)]">
+                <span className="text-[12px] font-medium text-accent">{selectedIds.size} selected</span>
+                <span className="mx-1 h-4 w-px bg-surface-overlay/40" aria-hidden="true" />
+                <Select
+                  label="Batch action"
+                  value={batchAction}
+                  onChange={(v) => setBatchAction(v as typeof batchAction)}
+                  options={[
+                    { value: '', label: 'Choose action...' },
+                    { value: 'detect', label: 'Run Detection' },
+                    { value: 'redetect', label: 'Re-detect' },
+                    { value: 'update', label: 'Batch Update' },
+                    { value: 'delete', label: 'Delete' },
+                  ]}
+                />
+
+                {batchAction === 'update' && (
+                  <>
+                    <Select
+                      label="Batch genre"
+                      value={batchGenre}
+                      onChange={setBatchGenre}
+                      options={GENRE_OPTIONS_BATCH}
+                    />
+                    <Select
+                      label="Batch detection status"
+                      value={batchDetectionStatus}
+                      onChange={setBatchDetectionStatus}
+                      options={[{ value: '', label: 'Detection status...' }, ...DETECTION_OPTIONS.filter((o) => o.value)]}
+                    />
+                    <AutocompleteInput
+                      value={batchArtist}
+                      onChange={setBatchArtist}
+                      onSelect={(opt) => setBatchArtistId(opt.id)}
+                      onClear={() => setBatchArtistId(null)}
+                      selectedId={batchArtistId}
+                      fetchOptions={async (q) => {
+                        const res = await fetchArtists(q)
+                        return (res.data || []).map((a: Record<string, unknown>) => ({
+                          id: a.id as string,
+                          label: a.name as string,
+                          sublabel: a.set_count ? `${a.set_count} sets` : undefined,
+                        }))
+                      }}
+                      placeholder="Artist..."
+                      className="!text-xs !py-1.5"
+                    />
+                    <AutocompleteInput
+                      value={batchEvent}
+                      onChange={setBatchEvent}
+                      onSelect={(opt) => setBatchEventId(opt.id)}
+                      onClear={() => setBatchEventId(null)}
+                      selectedId={batchEventId}
+                      fetchOptions={async (q) => {
+                        const res = await fetchEvents(q)
+                        return (res.data || []).map((e: Record<string, unknown>) => ({
+                          id: e.id as string,
+                          label: e.name as string,
+                          sublabel: (e.series as string) || undefined,
+                        }))
+                      }}
+                      placeholder="Event/Festival..."
+                      className="!text-xs !py-1.5"
+                    />
+                    <Input
+                      aria-label="Venue (stage/room)"
+                      value={batchVenue}
+                      onChange={(e) => setBatchVenue(e.target.value)}
+                      placeholder="Venue (stage/room)..."
+                      className="!h-8 !py-1 !text-xs"
+                    />
+                  </>
+                )}
+
+                <AdminButton variant={batchAction === 'delete' ? 'danger' : 'primary'} size="sm" onClick={handleBatch} disabled={!batchAction || isBatching}>
+                  {isBatching ? 'Working...' : 'Apply'}
+                </AdminButton>
+                <AdminButton variant="ghost" size="sm" onClick={() => { setSelectedIds(new Set()); setBatchAction(''); setBatchMsg(null) }}>
+                  Cancel
+                </AdminButton>
+
+                {batchMsg && (
+                  <p role="status" className={batchMsg.type === 'error' ? 'w-full text-[12px] text-danger' : 'w-full text-[12px] text-accent'}>
+                    {batchMsg.text}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {isLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <Skeleton key={i} height={40} borderRadius={10} />
+                ))}
+              </div>
+            ) : sets.length === 0 ? (
+              <p className="py-12 text-center text-[13px] text-text-muted">
+                {debouncedSearch || activeFilterCount > 0 ? 'No sets match your filters.' : 'No sets in the catalog yet. Click "Add Set" to upload your first DJ set.'}
+              </p>
+            ) : (
+              <>
+                <SetsTable
+                  sets={sets}
+                  viewMode={viewMode}
+                  selectedIds={selectedIds}
+                  allSelected={allSelected}
+                  onToggleAll={toggleAll}
+                  onToggleOne={toggleOne}
+                  onEdit={setEditingSet}
+                />
+                {totalPages > 1 && (
+                  <div>
+                    <Pagination page={page} pageSize={PAGE_SIZE} total={total} onChange={setPage} />
+                  </div>
+                )}
+              </>
+            )}
+          </>
         )}
       </div>
-
-      {setsView === 'requests' && (
-        <RequestsPanel
-          requestsTab={requestsTab}
-          onRequestsTabChange={setRequestsTab}
-          sourceRequests={sourceRequests}
-          setRequests={setRequests}
-          loading={requestsLoading}
-          actionMsg={requestActionMsg}
-          onDismissMsg={() => setRequestActionMsg(null)}
-          onRefresh={loadRequests}
-          onSourceApprove={handleSourceApprove}
-          onSourceReject={handleSourceReject}
-          onSetApprove={handleSetApprove}
-          onSetReject={handleSetReject}
-        />
-      )}
-
-      {setsView === 'all' && (
-        <>
-          <SetsFilters
-            search={search}
-            onSearchChange={setSearch}
-            sort={sort}
-            onSortChange={(v) => { setSort(v); setPage(1) }}
-            genre={genre}
-            onGenreChange={handleFilterChange(setGenre)}
-            streamType={streamType}
-            onStreamTypeChange={handleFilterChange(setStreamType)}
-            detectionStatus={detectionStatus}
-            onDetectionStatusChange={handleFilterChange(setDetectionStatus)}
-            hasSource={hasSource}
-            onHasSourceChange={handleFilterChange(setHasSource)}
-            activeFilterCount={activeFilterCount}
-            onClearFilters={() => { setGenre(''); setStreamType(''); setDetectionStatus(''); setHasSource(''); setPage(1) }}
-          />
-
-          {someSelected && (
-            <div className="mb-4 flex flex-wrap items-center gap-2 rounded-card bg-accent/5 p-3 shadow-inset">
-              <span className="text-[12px] font-medium text-accent-2">{selectedIds.size} selected</span>
-              <span className="mx-1 h-4 w-px bg-b4/40" aria-hidden="true" />
-              <Select
-                label="Batch action"
-                value={batchAction}
-                onChange={(v) => setBatchAction(v as typeof batchAction)}
-                options={[
-                  { value: '', label: 'Choose action...' },
-                  { value: 'detect', label: 'Run Detection' },
-                  { value: 'redetect', label: 'Re-detect' },
-                  { value: 'update', label: 'Batch Update' },
-                  { value: 'delete', label: 'Delete' },
-                ]}
-              />
-
-              {batchAction === 'update' && (
-                <>
-                  <Select
-                    label="Batch genre"
-                    value={batchGenre}
-                    onChange={setBatchGenre}
-                    options={GENRE_OPTIONS_BATCH}
-                  />
-                  <Select
-                    label="Batch detection status"
-                    value={batchDetectionStatus}
-                    onChange={setBatchDetectionStatus}
-                    options={[{ value: '', label: 'Detection status...' }, ...DETECTION_OPTIONS.filter((o) => o.value)]}
-                  />
-                  <AutocompleteInput
-                    value={batchArtist}
-                    onChange={setBatchArtist}
-                    onSelect={(opt) => setBatchArtistId(opt.id)}
-                    onClear={() => setBatchArtistId(null)}
-                    selectedId={batchArtistId}
-                    fetchOptions={async (q) => {
-                      const res = await fetchArtists(q)
-                      return (res.data || []).map((a: Record<string, unknown>) => ({
-                        id: a.id as string,
-                        label: a.name as string,
-                        sublabel: a.set_count ? `${a.set_count} sets` : undefined,
-                      }))
-                    }}
-                    placeholder="Artist..."
-                    className="!text-xs !py-1.5"
-                  />
-                  <AutocompleteInput
-                    value={batchEvent}
-                    onChange={setBatchEvent}
-                    onSelect={(opt) => setBatchEventId(opt.id)}
-                    onClear={() => setBatchEventId(null)}
-                    selectedId={batchEventId}
-                    fetchOptions={async (q) => {
-                      const res = await fetchEvents(q)
-                      return (res.data || []).map((e: Record<string, unknown>) => ({
-                        id: e.id as string,
-                        label: e.name as string,
-                        sublabel: (e.series as string) || undefined,
-                      }))
-                    }}
-                    placeholder="Event/Festival..."
-                    className="!text-xs !py-1.5"
-                  />
-                  <Input
-                    aria-label="Venue (stage/room)"
-                    value={batchVenue}
-                    onChange={(e) => setBatchVenue(e.target.value)}
-                    placeholder="Venue (stage/room)..."
-                    className="!h-8 !py-1 !text-xs"
-                  />
-                </>
-              )}
-
-              <AdminButton variant={batchAction === 'delete' ? 'danger' : 'primary'} size="sm" onClick={handleBatch} disabled={!batchAction || isBatching}>
-                {isBatching ? 'Working...' : 'Apply'}
-              </AdminButton>
-              <AdminButton variant="ghost" size="sm" onClick={() => { setSelectedIds(new Set()); setBatchAction(''); setBatchMsg(null) }}>
-                Cancel
-              </AdminButton>
-
-              {batchMsg && (
-                <p role="status" className={batchMsg.type === 'error' ? 'w-full text-[12px] text-error' : 'w-full text-[12px] text-accent-2'}>
-                  {batchMsg.text}
-                </p>
-              )}
-            </div>
-          )}
-
-          {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} height={40} borderRadius={10} />
-              ))}
-            </div>
-          ) : sets.length === 0 ? (
-            <p className="py-12 text-center text-[13px] text-muted">
-              {debouncedSearch || activeFilterCount > 0 ? 'No sets match your filters.' : 'No sets in the catalog yet. Click "Add Set" to upload your first DJ set.'}
-            </p>
-          ) : (
-            <>
-              <SetsTable
-                sets={sets}
-                viewMode={viewMode}
-                selectedIds={selectedIds}
-                allSelected={allSelected}
-                onToggleAll={toggleAll}
-                onToggleOne={toggleOne}
-                onEdit={setEditingSet}
-              />
-              {totalPages > 1 && (
-                <div className="mt-4">
-                  <Pagination page={page} pageSize={PAGE_SIZE} total={total} onChange={setPage} />
-                </div>
-              )}
-            </>
-          )}
-        </>
-      )}
 
       {showAddModal && (
         <Modal title="Add DJ Set" onClose={() => setShowAddModal(false)} width={896}>
@@ -507,7 +509,7 @@ export function SetsListTab({ editId }: { editId?: string }) {
           </>
         }
       >
-        <p className="text-[13px] text-text">
+        <p className="text-[13px] text-text-secondary">
           {`Delete ${pendingDeleteIds?.length ?? 0} set${(pendingDeleteIds?.length ?? 0) > 1 ? 's' : ''}? This cannot be undone.`}
         </p>
       </AdminModal>

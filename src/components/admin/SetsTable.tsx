@@ -38,7 +38,7 @@ function CompletenessBadge({ set }: { set: DjSet }) {
         {complete ? 'Complete' : 'Incomplete'}
       </AdminBadge>
       <div
-        className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1 -translate-x-1/2 whitespace-nowrap rounded-md bg-b3 px-2 py-1.5 text-[11px] text-heading opacity-0 transition-opacity group-hover:opacity-100"
+        className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1 -translate-x-1/2 whitespace-nowrap rounded-md bg-surface-hover px-2 py-1.5 text-[11px] text-text-primary opacity-0 transition-opacity group-hover:opacity-100"
         style={{ boxShadow: 'var(--menu-shadow)' }}
       >
         <div className="text-left">
@@ -93,26 +93,26 @@ function SetsList({ sets, selectedIds, allSelected, onToggleAll, onToggleOne, on
               </Td>
               <Td className="min-w-0">
                 <Link to={`/app/sets/${set.id}`} className="group block min-w-0 no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-2 rounded-sm">
-                  <span className="block truncate text-[13px] text-heading group-hover:underline">{set.title}</span>
-                  <span className="flex items-center gap-2 text-[12px] text-muted">
+                  <span className="block truncate text-[13px] text-text-primary group-hover:underline">{set.title}</span>
+                  <span className="flex items-center gap-2 text-[12px] text-text-muted">
                     <span className="truncate">{set.artist}</span>
                     {set.event && <span className="hidden max-w-28 truncate text-[11px] opacity-70 lg:inline">{set.event}</span>}
                   </span>
                 </Link>
               </Td>
               <Td className="hidden text-center sm:table-cell">
-                {set.genre ? <AdminBadge variant="muted">{set.genre}</AdminBadge> : <span className="text-[12px] text-muted">—</span>}
+                {set.genre ? <AdminBadge variant="muted">{set.genre}</AdminBadge> : <span className="text-[12px] text-text-muted">—</span>}
               </Td>
               <Td className="hidden text-center md:table-cell">
-                <span className={getSourceLabel(set) === 'None' ? 'text-[11px] text-error' : 'text-[11px] text-muted'}>
+                <span className={getSourceLabel(set) === 'None' ? 'text-[11px] text-danger' : 'text-[11px] text-text-muted'}>
                   {getSourceLabel(set)}
                 </span>
               </Td>
-              <Td className="hidden text-center font-mono text-[12px] text-muted tabular-nums md:table-cell">
+              <Td className="hidden text-center font-mono text-[12px] text-text-muted tabular-nums md:table-cell">
                 {formatDuration(set.duration_seconds)}
               </Td>
               <Td className="text-center"><CompletenessBadge set={set} /></Td>
-              <Td className="hidden text-right font-mono text-[12px] text-muted tabular-nums sm:table-cell">
+              <Td className="hidden text-right font-mono text-[12px] text-text-muted tabular-nums sm:table-cell">
                 {set.play_count > 0 ? set.play_count : '—'}
               </Td>
               <Td className="text-right">
@@ -136,22 +136,22 @@ function SetsGrid({ sets, selectedIds, onToggleOne, onEdit }: SetsTableProps) {
         return (
           <div
             key={set.id}
-            className="relative flex flex-col gap-3 rounded-card bg-b4/40 p-4 shadow-inset"
+            className="relative flex flex-col gap-3 rounded-card bg-surface-overlay/40 p-4 shadow-[var(--item-inset)]"
             data-selected={isSelected ? '' : undefined}
           >
             <div className="absolute right-3 top-3">
               <Checkbox checked={isSelected} onChange={() => onToggleOne(set.id)} aria-label={`Select ${set.title}`} />
             </div>
             <Link to={`/app/sets/${set.id}`} className="group block pr-8 no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-2 rounded-sm">
-              <span className="block text-[15px] text-heading group-hover:underline">{set.title}</span>
-              <span className="mt-1 block text-[13px] text-text">{set.artist}</span>
-              {set.event && <span className="block truncate text-[12px] text-muted">{set.event}</span>}
+              <span className="block text-[15px] text-text-primary group-hover:underline">{set.title}</span>
+              <span className="mt-1 block text-[13px] text-text-secondary">{set.artist}</span>
+              {set.event && <span className="block truncate text-[12px] text-text-muted">{set.event}</span>}
             </Link>
             <div className="flex flex-wrap gap-2">
               {set.genre && <AdminBadge variant="muted">{set.genre}</AdminBadge>}
               <CompletenessBadge set={set} />
             </div>
-            <div className="flex items-center justify-between text-[12px] text-muted">
+            <div className="flex items-center justify-between text-[12px] text-text-muted">
               <span className="font-mono tabular-nums">{formatDuration(set.duration_seconds)}</span>
               <span>{getSourceLabel(set)}</span>
               <span>{set.play_count > 0 ? `${set.play_count} plays` : '—'}</span>
