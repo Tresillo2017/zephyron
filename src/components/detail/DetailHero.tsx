@@ -21,7 +21,7 @@ interface DetailHeroProps {
 
 export function DetailHero({ media, art, artShape = 'cover', eyebrow, title, meta, actions, className }: DetailHeroProps) {
   return (
-    <section className={cn('sh-hero dt-hero', className)} data-art={artShape}>
+    <section className={cn('sh-hero', className)} data-art={artShape}>
       <div className="sh-hero-banner" aria-hidden="true">
         {media}
       </div>

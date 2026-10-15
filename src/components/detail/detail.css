@@ -1,8 +1,6 @@
 /* Detail pages (Set / Artist / Event): hero media, actions bar, tracklist, side cards. */
 
 /* ── hero media (bottom-only gradient comes from .sh-hero-banner::after) ── */
-/* The banner sits at z-index -1; isolating the hero keeps it above the page background. */
-.dt-hero { isolation: isolate; }
 .dt-hero-media {
   position: absolute;
   inset: 0;

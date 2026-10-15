@@ -30,6 +30,16 @@
   height: var(--masthead-height);
   contain: layout;
 }
+/* top scrim (sc-dashboard): keeps the transparent bar legible over bright banner photos */
+.sh-masthead::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--masthead-height);
+  background: linear-gradient(180deg, oklch(var(--b6)), transparent);
+  opacity: 0.7;
+  pointer-events: none;
+}
 .sh-glass {
   position: absolute;
   inset: 0;
@@ -68,12 +78,14 @@
 
 .sh-logo { gap: 8px; padding: 0 9px; color: oklch(var(--h3)); flex: none; }
 .sh-logo-word { font-size: 15px; font-weight: var(--fw-bold); letter-spacing: -0.01em; color: oklch(var(--h3)); }
+/* over a banner the wordmark drops to text colour: the accent washes out on bright photos (light theme) */
+.sh-masthead[data-banner]:not([data-scrolled]) .sh-logo-word { color: oklch(var(--c1)); }
 .sh-logo-version { font-size: 12px; font-family: var(--font-code, monospace); font-variant-numeric: tabular-nums; color: oklch(var(--c3)); }
 @media (max-width: 639px) { .sh-logo-version { display: none; } }
 
 .sh-nav { display: none; align-items: center; gap: 2px; margin-left: 6px; }
 @media (min-width: 768px) { .sh-nav { display: flex; } }
-.sh-masthead .sh-nav-link { color: oklch(var(--c3)); font-weight: var(--fw-default, 400); text-decoration: none; }
+.sh-masthead .sh-nav-link { color: oklch(var(--c2)); font-weight: var(--fw-default, 400); text-decoration: none; }
 .sh-masthead .sh-nav-link:hover { color: oklch(var(--c1)); text-decoration: none; }
 .sh-masthead .sh-nav-link[aria-current='page'] { color: oklch(var(--c1)); font-weight: var(--fw-medium); background: oklch(var(--b4) / 40%); }
 
@@ -146,7 +158,8 @@
 .sh-menu-foot { padding: 4px 6px 2px; font-family: var(--font-code, monospace); font-size: 12px; line-height: 16px; color: oklch(var(--c3)); cursor: default; user-select: none; }
 
 /* ── hero: full-bleed banner, overlapping art, title block ── */
-.sh-hero { position: relative; margin-top: calc(-1 * var(--masthead-height)); }
+/* isolation: the banner sits at z-index -1 and must paint above the page background, not beneath it */
+.sh-hero { position: relative; isolation: isolate; margin-top: calc(-1 * var(--masthead-height)); }
 .sh-hero-banner {
   position: absolute;
   inset: 0 0 auto 0;
