@@ -21,9 +21,16 @@ export async function createArtist(
   const name = typeof body.name === 'string' ? body.name.trim() : ''
   if (!name) return errorResponse('name is required', 400)
 
-  // Check for duplicate by name
-  const existing = await env.DB.prepare('SELECT id, slug FROM artists WHERE name = ?').bind(name).first<{ id: string; slug: string }>()
-  if (existing) return errorResponse(`Artist "${name}" already exists (id: ${existing.id})`, 409)
+  // Duplicate check: 1001Tracklists source id first (stable key), then name.
+  // 409 carries the existing row's id/slug so importers can link to it and update it.
+  const sourceDjIdIn = typeof body.source_1001_id === 'string' ? body.source_1001_id.trim() || null : null
+  const existing = sourceDjIdIn
+    ? await env.DB.prepare('SELECT id, slug FROM artists WHERE source_1001_id = ?').bind(sourceDjIdIn).first<{ id: string; slug: string }>()
+    : null
+  const existingByName = existing ?? await env.DB.prepare('SELECT id, slug FROM artists WHERE name = ?').bind(name).first<{ id: string; slug: string }>()
+  if (existingByName) {
+    return json({ error: `Artist "${name}" already exists (id: ${existingByName.id})`, ok: false, data: existingByName }, 409)
+  }
 
   const id = generateId()
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')

@@ -45,6 +45,7 @@ import { handleDetectionQueue, handleCoverArtQueue } from './queues/index'
 import { handleScheduled } from './cron'
 import { followArtist, unfollowArtist, getFollowStatus } from './routes/follows'
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from './routes/notifications'
+import { syncSet1001Tracklists } from './routes/sets-1001-sync'
 
 // Re-export Durable Object class for Cloudflare runtime
 export { AudioSessionDO } from './durable-objects/audio-session'
@@ -271,6 +272,7 @@ router.post('/api/admin/sets/:id/waveform', withAdmin(regenerateWaveform))
 router.post('/api/admin/sets/:id/fetch-1001tracklists', withAdmin(fetch1001Tracklists))
 router.post('/api/admin/sets/:id/parse-1001tracklists-html', withAdmin(parse1001TracklistsHtml))
 router.post('/api/admin/sets/:id/import-1001tracklists', withAdmin(import1001Tracklists))
+router.put('/api/admin/sets/:id/sync-1001tracklists', withAdmin(syncSet1001Tracklists))
 router.get('/api/sets/:id/video-stream-url', getVideoStreamUrl)
 
 // Admin / Set Requests
