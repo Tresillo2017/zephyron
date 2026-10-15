@@ -7,11 +7,10 @@ import { ArtistBannerSkeleton } from '../components/ui/Skeleton'
 import { FollowButton } from '../components/artists/FollowButton'
 import { SetGrid } from '../components/sets/SetGrid'
 import { SocialLinks, countSocialLinks } from '../components/ui/SocialLinks'
-import { Badge, Button, ContentCard } from '../components/bleh'
+import { Badge, Button, ContentCard, Section } from '../components/bleh'
 import { PageFrame } from '../components/shell'
 import { DetailHero } from '../components/detail/DetailHero'
 import { DetailTabs, type DetailTab } from '../components/detail/DetailTabs'
-import { DetailCard } from '../components/detail/DetailCard'
 import { StatStrip, type StatItem } from '../components/detail/StatStrip'
 import { Home1Filled, HeadphoneFilled, FileFilled, EditFilled } from '@mingcute/react/core-filled'
 import NumberFlow from '@number-flow/react'
@@ -84,12 +83,12 @@ export function ArtistPage() {
   ]
 
   const setsCard = (
-    <DetailCard
+    <Section
       title="Live Sets"
       action={<span className="dt-mono-count">{sets.length} {sets.length === 1 ? 'set' : 'sets'}</span>}
     >
       <SetGrid sets={sets} />
-    </DetailCard>
+    </Section>
   )
 
   const renderMain = () => {
@@ -97,13 +96,13 @@ export function ArtistPage() {
       return (
         <>
           {bio && (
-            <DetailCard title="About" action={bioToggle}>
+            <Section title="About" action={bioToggle}>
               <p className="dt-prose">{bio}</p>
-            </DetailCard>
+            </Section>
           )}
           {sets.length > 0 && setsCard}
           {similarArtists.length > 0 && (
-            <DetailCard title="Similar Artists">
+            <Section title="Similar Artists">
               <div className="dt-similar">
                 {similarArtists.map((sa) => (
                   <a key={sa.name} href={sa.url} target="_blank" rel="noopener noreferrer" className="dt-similar-item">
@@ -117,7 +116,7 @@ export function ArtistPage() {
                   </a>
                 ))}
               </div>
-            </DetailCard>
+            </Section>
           )}
         </>
       )
@@ -127,7 +126,7 @@ export function ArtistPage() {
       return sets.length > 0 ? (
         setsCard
       ) : (
-        <div className="dt-empty-card">
+        <div className="dt-empty">
           <p>No sets from {artist.name} on Zephyron yet.</p>
         </div>
       )
@@ -136,16 +135,16 @@ export function ArtistPage() {
     return (
       <>
         {bio && (
-          <DetailCard title="Biography" action={bioToggle}>
+          <Section title="Biography" action={bioToggle}>
             <p className="dt-prose">{bio}</p>
-          </DetailCard>
+          </Section>
         )}
         {tags.length > 0 && (
-          <DetailCard title="Tags">
+          <Section title="Tags">
             <div className="dt-tags">
               {tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}
             </div>
-          </DetailCard>
+          </Section>
         )}
       </>
     )

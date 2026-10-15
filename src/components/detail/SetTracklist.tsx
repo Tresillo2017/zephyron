@@ -1,5 +1,5 @@
 import { AddFilled } from '@mingcute/react/core-filled'
-import { Button } from '../bleh'
+import { Button, Section } from '../bleh'
 import { DetectionGroup } from '../annotations/DetectionRow'
 import { DETECTION_STATUS_LABELS } from '../../lib/constants'
 import type { Detection, DjSet } from '../../lib/types'
@@ -34,12 +34,9 @@ export function SetTracklist({
       : DETECTION_STATUS_LABELS[detectionStatus] || detectionStatus
 
   return (
-    <section className="dt-card" aria-labelledby="dt-tracklist-title">
-      <div className="dt-tracklist-head">
-        <div>
-          <h2 id="dt-tracklist-title" className="dt-card-title">Tracklist</h2>
-          <p className="dt-sub">{subtitle}</p>
-        </div>
+    <Section
+      title="Tracklist"
+      action={
         <Button
           appearance="ghost"
           size="sm"
@@ -47,7 +44,9 @@ export function SetTracklist({
           onClick={onAddTrack}
           icon={<AddFilled className="dt-ico--sm" aria-hidden="true" />}
         />
-      </div>
+      }
+    >
+      <p className="dt-sub">{subtitle}</p>
 
       {detections.length === 0 ? (
         <div className="dt-empty">
@@ -88,6 +87,6 @@ export function SetTracklist({
           })}
         </div>
       )}
-    </section>
+    </Section>
   )
 }

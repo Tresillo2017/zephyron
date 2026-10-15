@@ -5,11 +5,10 @@ import { useSession } from '../lib/auth-client'
 import { Skeleton } from '../components/ui/Skeleton'
 import { SetGrid } from '../components/sets/SetGrid'
 import { SocialLinks, countSocialLinks } from '../components/ui/SocialLinks'
-import { Badge, Button, ContentCard } from '../components/bleh'
+import { Badge, Button, ContentCard, Section } from '../components/bleh'
 import { PageFrame } from '../components/shell'
 import { DetailHero } from '../components/detail/DetailHero'
 import { DetailTabs, type DetailTab } from '../components/detail/DetailTabs'
-import { DetailCard } from '../components/detail/DetailCard'
 import { formatPlayCount } from '../lib/formatTime'
 import { getPlaceholder } from '../lib/placeholders'
 import type { EventArtist, EventGenreBreakdown, EventEdition } from '../lib/types'
@@ -166,7 +165,7 @@ function EventDetails({
 }
 
 function EmptyCard({ children }: { children: ReactNode }) {
-  return <div className="dt-empty-card"><p>{children}</p></div>
+  return <div className="dt-empty"><p>{children}</p></div>
 }
 
 export function EventPage() {
@@ -263,7 +262,7 @@ export function EventPage() {
         main: (
           <>
             {genres.length > 0 && (
-              <DetailCard title="Genres">
+              <Section title="Genres">
                 <div className="dt-genres">
                   {genres.map((g) => (
                     <div key={g.genre}>
@@ -277,10 +276,10 @@ export function EventPage() {
                     </div>
                   ))}
                 </div>
-              </DetailCard>
+              </Section>
             )}
             {artists.length > 0 && (
-              <DetailCard
+              <Section
                 title="Artist Lineup"
                 action={artists.length > 6 && (
                   <button type="button" className="dt-link-btn" onClick={() => setActiveTab('lineup')}>
@@ -291,14 +290,14 @@ export function EventPage() {
                 <div className="dt-people">
                   {artists.slice(0, 6).map((artist) => <PersonLink key={artist.id} artist={artist} />)}
                 </div>
-              </DetailCard>
+              </Section>
             )}
             {socialBlock}
           </>
         ),
         side: (
           <>
-            <DetailCard title="Event stats">
+            <Section title="Event stats">
               <div className="dt-grid2">
                 <div className="dt-stat-block">
                   <span className="dt-stat-value">{stats.set_count}</span>
@@ -317,10 +316,10 @@ export function EventPage() {
                   <span className="dt-stat-label">Total Plays</span>
                 </div>
               </div>
-            </DetailCard>
-            <DetailCard title="Details">
+            </Section>
+            <Section title="Details">
               <EventDetails event={event} dateLabel="Date" />
-            </DetailCard>
+            </Section>
           </>
         ),
       }
@@ -329,14 +328,14 @@ export function EventPage() {
     if (activeTab === 'lineup') {
       return {
         main: artists.length > 0 ? (
-          <DetailCard
+          <Section
             title="Artist Lineup"
             action={<span className="dt-mono-count">{artists.length} {artists.length === 1 ? 'artist' : 'artists'}</span>}
           >
             <div className="dt-people dt-people--wide">
               {artists.map((artist) => <PersonLink key={artist.id} artist={artist} large />)}
             </div>
-          </DetailCard>
+          </Section>
         ) : (
           <EmptyCard>No artist lineup data available.</EmptyCard>
         ),
@@ -346,12 +345,12 @@ export function EventPage() {
     if (activeTab === 'sets') {
       return {
         main: sets.length > 0 ? (
-          <DetailCard
+          <Section
             title="DJ Sets"
             action={<span className="dt-mono-count">{sets.length} {sets.length === 1 ? 'set' : 'sets'}</span>}
           >
             <SetGrid sets={sets} />
-          </DetailCard>
+          </Section>
         ) : (
           <EmptyCard>No sets linked to this event yet.</EmptyCard>
         ),
@@ -362,19 +361,19 @@ export function EventPage() {
       main: (
         <>
           {event.description && (
-            <DetailCard title="About">
+            <Section title="About">
               <p className="dt-prose">{event.description}</p>
-            </DetailCard>
+            </Section>
           )}
           {tags.length > 0 && (
-            <DetailCard title="Tags">
+            <Section title="Tags">
               <div className="dt-tags">
                 {tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}
               </div>
-            </DetailCard>
+            </Section>
           )}
           {allEditions.length > 1 && (
-            <DetailCard title="Editions">
+            <Section title="Editions">
               <div className="dt-fields">
                 {allEditions.map((ed) => {
                   const isCurrent = ed.id === event.id
@@ -393,15 +392,15 @@ export function EventPage() {
                   )
                 })}
               </div>
-            </DetailCard>
+            </Section>
           )}
         </>
       ),
       side: (
         <>
-          <DetailCard title="Details">
+          <Section title="Details">
             <EventDetails event={event} year={eventYear} dateLabel="Dates" />
-          </DetailCard>
+          </Section>
           {socialBlock}
         </>
       ),

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router'
 import { fetchMonthlyWrapped, type MonthlyWrappedData } from '../lib/api'
-import { DetailCard } from '../components/detail/DetailCard'
+import { Section } from '../components/bleh'
 import {
   RecapLink,
   RecapMessage,
@@ -112,18 +112,18 @@ export function MonthlyWrappedPage() {
         <RecapStat label="NEW DISCOVERIES" value={wrapped.discoveries_count} sub="new tracks" />
       </div>
 
-      <DetailCard title="Top 3 Artists">
+      <Section title="Top 3 Artists">
         <RecapRank items={(wrapped.top_artists ?? []).slice(0, 3)} emptyText="No artist data available" />
-      </DetailCard>
+      </Section>
 
       {wrapped.longest_set && (
-        <DetailCard title="Longest Set">
+        <Section title="Longest Set">
           <RecapLink
             to={`/app/sets/${wrapped.longest_set.id}`}
             title={wrapped.longest_set.title}
             subtitle={`by ${wrapped.longest_set.artist}`}
           />
-        </DetailCard>
+        </Section>
       )}
 
       <p className="dt-recap-sub dt-center">Generated {new Date(wrapped.generated_at).toLocaleDateString()}</p>

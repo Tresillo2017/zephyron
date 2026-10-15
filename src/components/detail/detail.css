@@ -2,7 +2,7 @@
 
 /* ── hero media (bottom-only gradient comes from .sh-hero-banner::after) ── */
 /* The banner sits at z-index -1; isolating the hero keeps it above the page background. */
-.sh-hero { isolation: isolate; }
+.dt-hero { isolation: isolate; }
 .dt-hero-media {
   position: absolute;
   inset: 0;
@@ -45,9 +45,9 @@
 .dt-amp { color: oklch(var(--c3)); font-size: 14px; }
 
 /* ── main column: actions bar + stacked cards ── */
-.dt-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.dt-main { display: flex; flex-direction: column; gap: var(--card-padding-v, 40px); min-width: 0; }
 .dt-main > * { min-width: 0; }
-.dt-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.dt-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 0 var(--card-padding, 20px); }
 .dt-stats-inline {
   margin-left: auto;
   display: flex;
@@ -75,16 +75,10 @@
 .dt-ico { width: 16px; height: 16px; margin-right: 8px; flex: none; }
 .dt-ico--sm { width: 14px; height: 14px; margin-right: 6px; }
 
-.dt-card {
-  overflow: hidden;
-  border-radius: var(--card-radius);
-  background: oklch(var(--b5));
-  box-shadow: var(--card-border), var(--card-shadow);
-}
-.dt-wave { padding: 16px; border-radius: var(--card-radius); background: oklch(var(--b5)); box-shadow: var(--card-border), var(--card-shadow); }
+.dt-wave { padding: 0 var(--card-padding, 20px); }
 
 /* ── source suggestion popover ── */
-.dt-popover { padding: 20px; border-radius: var(--card-radius); background: oklch(var(--b5)); box-shadow: var(--card-border), var(--card-shadow); }
+.dt-popover { margin: 0 var(--card-padding, 20px); padding: 16px 20px; border-radius: var(--card-radius); background: oklch(var(--b4) / 30%); }
 .dt-popover-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .dt-popover-title { margin: 0; font-size: 14px; font-weight: var(--fw-medium); color: oklch(var(--c1)); }
 .dt-popover-sub { margin: 2px 0 0; font-size: 12px; color: oklch(var(--c3)); }
@@ -141,15 +135,7 @@
 .dt-icon-btn svg { width: 16px; height: 16px; }
 
 /* ── tracklist ── */
-.dt-tracklist-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 20px;
-  box-shadow: inset 0 -1px 0 oklch(var(--b4) / 15%);
-}
-.dt-sub { margin: 2px 0 0; font-size: 10px; color: oklch(var(--c3)); font-family: var(--font-code, monospace); }
+.dt-sub { margin: 0 0 8px; font-size: 10px; color: oklch(var(--c3)); font-family: var(--font-code, monospace); }
 .dt-tracklist { display: flex; flex-direction: column; }
 .dt-track { position: relative; transition: background-color 0.2s var(--trans-function); }
 .dt-track:nth-child(odd) { background: var(--tracklist-odd); }
@@ -160,7 +146,7 @@
 
 /* ── side column ── */
 .dt-side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-.dt-side-card { overflow: hidden; border-radius: var(--card-radius); box-shadow: var(--card-border), var(--card-shadow); }
+.dt-side-card { overflow: hidden; padding: 0 var(--card-padding, 20px); }
 .dt-event { position: relative; display: block; height: 110px; overflow: hidden; text-decoration: none; }
 .dt-event-media {
   position: absolute;
@@ -186,6 +172,8 @@
 
 /* ── detail tabs: buttons reuse the .sh-tab look ── */
 .dt-tab { background: none; border: 0; padding: 0 9px 0 29px; font: inherit; cursor: pointer; }
+.dt-tab[aria-pressed='true'] { color: oklch(var(--h3)); }
+.dt-tab[aria-pressed='true']::after { opacity: 1; translate: 0 0; transition: none; }
 .dt-tab:focus-visible { outline: 2px solid oklch(var(--h3)); outline-offset: -2px; border-radius: 4px; }
 .dt-tab:active { transform: scale(0.98); }
 
@@ -366,17 +354,18 @@
 .dt-eyebrow { margin: 0 0 2px; font-family: var(--font-code, monospace); font-size: 10px; letter-spacing: 0.08em; color: oklch(var(--c2)); }
 .dt-event-name { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; line-height: 18px; font-weight: var(--fw-bold); color: oklch(var(--c1)); }
 .dt-event-loc { margin: 2px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: oklch(var(--c3)); }
-.dt-meta-block { padding: 20px; background: oklch(var(--b5)); }
+.dt-meta-block { padding: 16px 0 0; }
 .dt-meta-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
 .dt-meta-venue { margin: 0 0 8px; font-size: 14px; color: oklch(var(--c2)); }
 .dt-meta-date { margin: 0; font-family: var(--font-code, monospace); font-size: 12px; color: oklch(var(--c3)); }
 
-.dt-stats { display: flex; gap: 24px; padding: 20px; border-radius: var(--card-radius); background: oklch(var(--b5)); box-shadow: var(--card-border), var(--card-shadow); }
+.dt-stats { display: flex; gap: 24px; padding: 0 var(--card-padding, 20px); }
 .dt-stat-block { display: flex; flex-direction: column; gap: 2px; }
 .dt-stat-value { font-size: 20px; line-height: 24px; font-weight: var(--fw-bold); color: oklch(var(--c1)); font-variant-numeric: tabular-nums; }
 .dt-stat-label { font-size: 11px; color: oklch(var(--c3)); }
 
-.dt-about { padding: 20px; border-radius: var(--card-radius); background: oklch(var(--b5)); box-shadow: var(--card-border), var(--card-shadow); }
+/* flat section inside the bleh card (sc-dashboard cc-section): horizontal padding only */
+.dt-about { padding: 0 var(--card-padding, 20px); }
 .dt-about p { margin: 0; font-size: 14px; line-height: 1.6; color: oklch(var(--c2)); }
 .dt-dj-link { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; text-decoration: none; color: inherit; }
 .dt-dj-link:focus-visible { outline: 2px solid oklch(var(--h3)); outline-offset: 2px; border-radius: 8px; }

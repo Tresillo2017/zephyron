@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router'
 import { fetchWrapped, type WrappedData } from '../lib/api'
-import { Button } from '../components/bleh'
-import { DetailCard } from '../components/detail/DetailCard'
+import { Button, Section } from '../components/bleh'
 import { RecapMessage, RecapPage, RecapRank, RecapSkeleton, RecapStat } from '../components/detail/RecapParts'
 import { WarningFilled } from '@mingcute/react/core-filled'
 
@@ -71,9 +70,9 @@ export function WrappedPage() {
         <RecapStat label="NEW DISCOVERIES" value={wrapped.discoveries_count} sub="new tracks" />
       </div>
 
-      <DetailCard title="Top 5 Artists">
+      <Section title="Top 5 Artists">
         <RecapRank items={(wrapped.top_artists ?? []).slice(0, 5)} emptyText="No artist data available" />
-      </DetailCard>
+      </Section>
 
       <div className="dt-center">
         {wrapped.image_url ? (

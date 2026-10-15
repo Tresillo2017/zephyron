@@ -31,7 +31,7 @@ export function DetailTabs<T extends string>({ tabs, active, onChange, label, cl
               key={id}
               type="button"
               className="sh-tab dt-tab"
-              aria-current={isActive ? 'page' : undefined}
+              aria-pressed={isActive}
               onClick={() => onChange(id)}
             >
               {Icon && <Icon className="sh-tab-icon" aria-hidden="true" />}
