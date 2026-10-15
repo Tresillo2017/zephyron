@@ -1,5 +1,9 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
-import { Button, Badge, Modal, type BadgeTone, type ButtonAppearance } from '../bleh'
+import { More2Filled } from '@mingcute/react/core-filled'
+import {
+  Button, Badge, Modal, IconButton, Popout, usePopout, MenuItem, MenuSeparator,
+  type BadgeTone, type ButtonAppearance,
+} from '../bleh'
 import { cn } from '../../lib/cn'
 
 /*
@@ -94,6 +98,50 @@ export function AdminModal({
     >
       {children}
     </Modal>
+  )
+}
+
+export type RowMenuItem =
+  | { type: 'separator' }
+  | { label: string; icon?: ReactNode; tone?: 'default' | 'danger'; disabled?: boolean; onSelect: () => void }
+
+/**
+ * Per-row kebab menu on the bleh Popout (no app-wide ContextMenuHost needed).
+ * Closes itself on select via the Popout context.
+ */
+export function RowMenu({ label, items, disabled }: { label: string; items: RowMenuItem[]; disabled?: boolean }) {
+  const { mounted, btnRef, triggerProps, popoutProps } = usePopout()
+  return (
+    <>
+      <IconButton
+        ref={btnRef}
+        label={label}
+        size="sm"
+        tooltip={false}
+        disabled={disabled}
+        {...triggerProps}
+      >
+        <More2Filled />
+      </IconButton>
+      {mounted && (
+        <Popout {...popoutProps} align="end" width={208}>
+          {items.map((item, i) =>
+            'type' in item ? (
+              <MenuSeparator key={`sep-${i}`} />
+            ) : (
+              <MenuItem
+                key={item.label}
+                icon={item.icon}
+                label={item.label}
+                tone={item.tone}
+                disabled={item.disabled}
+                onClick={item.onSelect}
+              />
+            ),
+          )}
+        </Popout>
+      )}
+    </>
   )
 }
 
